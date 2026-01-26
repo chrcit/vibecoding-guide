@@ -18,17 +18,17 @@ No local setup. No terminal. Just chat and build.
 
 **Made by:** Vercel (creators of Next.js)
 
-**What it builds:** React components and pages using Next.js, Tailwind CSS, and shadcn/ui
+**What it builds:** Full-stack Next.js apps and UI components (React, Tailwind, shadcn/ui by default)
 
 **Best for:**
-- UI components (buttons, cards, forms)
-- Landing pages
-- Dashboards
-- Starting new Next.js projects
+- Full-stack prototypes (data + UI)
+- UI components and pages
+- Landing pages and dashboards
+- New Next.js projects
 
 **Limitations:**
-- Frontend-focused (no database, no backend logic)
-- You'll need to add backend functionality yourself
+- Best results with Next.js; other frameworks are less reliable
+- Complex backends or non-Next stacks may require exporting
 
 **Pricing:**
 - Free tier available
@@ -45,9 +45,10 @@ No local setup. No terminal. Just chat and build.
 - Non-technical founders
 
 **Key features:**
-- **Lovable Cloud:** Built-in hosting with Supabase (database, auth, storage)
+- **Lovable Cloud:** Built-in database, auth, and storage
+- **Supabase integration:** Connect a managed PostgreSQL backend
 - **Agent Mode:** AI works autonomously to debug and fix issues
-- **GitHub sync:** Code is saved to your repository
+- **GitHub sync:** Export and two-way sync with your repo
 - **Visual editing:** Drag-and-drop alongside chat
 
 **Limitations:**
@@ -71,8 +72,8 @@ No local setup. No terminal. Just chat and build.
 
 **Key features:**
 - Runs entirely in browser (WebContainers)
-- Can install npm packages
-- Deploy to Netlify
+- Built-in hosting with a `.bolt.host` domain
+- Optional Netlify publishing
 
 **Limitations:**
 - Smaller context window than competitors
@@ -90,9 +91,9 @@ No local setup. No terminal. Just chat and build.
 
 **Key features:**
 - Built-in IDE
-- Instant deployment
-- Database included
-- AI assistant (Ghostwriter)
+- Deployments (static or server-backed)
+- Built-in databases (key-value and SQL)
+- AI assistant (Replit Agent)
 
 **Limitations:**
 - Less AI-focused than others
@@ -173,16 +174,16 @@ Time to export.
 **Prompting tips:**
 - Describe the component, who uses it, and design constraints
 - Attach screenshots or images of designs you like
-- v0 will recreate designs from images
+- v0 can use images as visual references
 
 **Using projects:**
 1. Create a project for related work
 2. Add custom instructions in project settings
 3. All chats in the project follow those instructions
 
-**Exporting:**
-- Copy code directly into your project
-- Or use "Add to Codebase" if connected to Vercel
+**Exporting & publishing:**
+- Publish to Vercel from v0 for a live URL
+- Connect GitHub to sync code and pull it locally
 
 ### Lovable
 
@@ -195,9 +196,9 @@ Be comprehensive in your initial description. Lovable works best when it underst
 - Risky for: Unspecified changes
 
 **Database setup:**
-Lovable uses Supabase. When you need a database:
-1. Connect your Supabase project in settings
-2. Or let Lovable create one via Lovable Cloud
+Lovable supports both Lovable Cloud and Supabase:
+1. Use Lovable Cloud for built-in database/auth/storage
+2. Or connect a Supabase project via the integration
 
 **Exporting to GitHub:**
 1. Go to project settings
@@ -213,9 +214,8 @@ Lovable uses Supabase. When you need a database:
 - Use "Enhance" for improvements to existing code
 
 **Deploying:**
-- Click Deploy → Choose Netlify
-- Follow the connection flow
-- Get a live URL
+- Use built-in hosting for a quick live URL
+- Or publish to Netlify from the Deploy menu
 
 ## Common Patterns
 
@@ -323,10 +323,10 @@ Export from web builders when:
 2. Clone repo: `git clone [url]`
 3. Open in Cursor: `cursor your-project`
 
-**v0 → Your Project:**
-1. Copy the generated code
-2. Paste into your codebase
-3. Adjust imports as needed
+**v0 → GitHub/Vercel:**
+1. Connect GitHub from Project Settings or the GitHub icon in chat
+2. Publish to Vercel from v0 (creates/updates a Vercel project)
+3. Pull the repo locally if you need deeper control
 
 **Bolt → GitHub:**
 1. Use Bolt's export feature
@@ -361,3 +361,6 @@ If you're regularly hitting limits:
 ---
 
 **Next:** [Agentic Coding with Codex and Claude](./agentic-coding-web.md)
+**Publishing & GitHub:**
+- Publish to Vercel directly from v0
+- Connect GitHub to sync code and use Vercel deploys

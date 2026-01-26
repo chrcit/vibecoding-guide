@@ -155,7 +155,7 @@ Vercel: Serves your app
 **Where to buy:**
 - [Namecheap](https://namecheap.com) - Good prices, easy to use
 - [Cloudflare](https://cloudflare.com) - At-cost pricing
-- [Google Domains](https://domains.google) - Simple
+- [Squarespace Domains](https://domains.squarespace.com) - Simple
 - [Porkbun](https://porkbun.com) - Affordable
 
 **Typical cost:** $10-15/year for a `.com`
@@ -370,15 +370,12 @@ npm install missing-package
 
 ### Free Tiers
 
-**Vercel:**
-- Unlimited sites
-- 100GB bandwidth/month
-- Serverless function limits
+Free tiers change often. Check current limits before launching anything public.
 
-**Railway:**
-- $5/month free credit
-- Database charges for storage and compute
-- Easy to exceed on active projects
+**Common patterns:**
+- Bandwidth and function limits on app hosting
+- Usage-based billing for databases
+- Easy to exceed limits on active projects
 
 ### When You'll Pay
 

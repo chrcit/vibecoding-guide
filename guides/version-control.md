@@ -153,12 +153,12 @@ Your future self will thank you when debugging.
 
 **Discard all uncommitted changes:**
 ```bash
-git checkout .
+git restore .
 ```
 
 **Discard changes to one file:**
 ```bash
-git checkout path/to/file.js
+git restore path/to/file.js
 ```
 
 ### Undo the Last Commit
@@ -308,7 +308,7 @@ Local Tool (Cursor/Codex)
 ### "I made changes but want to start over"
 
 ```bash
-git checkout .
+git restore .
 ```
 Discards all uncommitted changes.
 
@@ -400,7 +400,7 @@ git pull                # Get from GitHub
 
 ### Recovery Commands
 ```bash
-git checkout .          # Discard uncommitted changes
+git restore .           # Discard uncommitted changes
 git reset --soft HEAD~1 # Undo last commit, keep changes
 git reset --hard HEAD~1 # Undo last commit and changes
 git log --oneline       # See history
