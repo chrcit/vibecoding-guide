@@ -1,214 +1,124 @@
 # Vibe Coding 101
 
-A beginner's guide to building web apps with AI—no programming experience required.
+> Build web apps by describing what you want. No coding experience required.
 
-## What is Vibe Coding?
+**Vibe coding** = Telling AI what you want and letting it write the code. You focus on *what* to build, AI handles *how*.
 
-Vibe coding is building software by describing what you want in plain language, and letting AI write the code for you. The term was [coined by Andrej Karpathy](https://x.com/karpathy/status/1886192184808149383) in 2025:
+This guide helps you go from "I have an idea" to "I shipped an app" using tools like [v0](https://v0.dev), [Lovable](https://lovable.dev), and [Codex](https://chatgpt.com/codex).
 
-> "There's a new kind of coding I call 'vibe coding', where you fully give in to the vibes, embrace exponentials, and forget that the code even exists."
-
-**You don't need to become a programmer.** You need to learn:
-- How to describe what you want clearly
-- When to trust the AI and when to question it
-- How to test that things actually work
-- Where the dangerous pitfalls are
-
-## The 70% Problem
-
-Here's the hard truth: AI tools can get you 70% of the way to a working product surprisingly fast. But that last 30%—the edge cases, error handling, security, accessibility—is where things get frustrating.
-
-This is called the **70% problem**. You'll hit a wall where:
-- Fixing one bug creates two new ones
-- The AI confidently produces code that doesn't work
-- You don't understand enough to know what's wrong
-
-These guides exist to push that number higher and help you recognize when you're stuck.
-
-## Who This Is For
-
-You're a good fit if you:
-- Are comfortable using web tools (Notion, Figma, etc.)
-- Have built something with v0, Loveable, Bolt, or Replit
-- Understand GitHub holds your code (even if git commands are confusing)
-- Know databases store data (even if SQL looks alien)
-- Want to build real products, not just demos
-
-You don't need to:
-- Know how to code from scratch
-- Understand every line of code
-- Have a technical background
-
-## How AI Coding Actually Works
-
-Think of AI as an **overconfident intern** who:
-- Works incredibly fast
-- Has read a lot of documentation
-- Will confidently do the wrong thing if you're not specific
-- Needs clear instructions and frequent check-ins
-- Can't be left unsupervised on important work
-
-The AI isn't magic. It predicts what code probably comes next based on patterns it learned. It doesn't understand your business, your users, or whether the code actually works.
-
-## The Two Modes
-
-**AI as Copilot:** You're in charge. You use AI to speed up specific tasks—generating a component, explaining an error, writing boilerplate. You review everything.
-
-**AI as Pilot (Vibe Coding):** You describe, AI builds. You accept code without fully understanding it. Great for prototypes and experiments, risky for production.
-
-**The rule:** The more important the project, the more you should be copiloting. The more throwaway it is, the more you can let the AI pilot.
-
-## What's In This Guide
-
-### [Skills](./skills/) — System Prompts for AI Tools
-Copy these into your AI tool's custom instructions to shape how it helps you.
-
-| Skill | Purpose |
-|-------|---------|
-| [Base](./skills/vibe-coder-base.md) | Foundation for all interactions—clear communication, progressive detail |
-| [UI Builder](./skills/ui-builder.md) | Design-focused help for building polished interfaces |
-| [Project Audit](./skills/project-audit.md) | Security and quality review before shipping |
-| [Web Fundamentals](./skills/web-fundamentals.md) | Learn web dev concepts while building |
-
-→ [Full skills reference](./skills-table.md)
-
-### [Workflows](./workflows.md) — Web Tools vs Agentic Coding
-Understanding the two distinct modes of AI coding:
-- **Web tools** (v0, Lovable): Live preview, one-click deploy, great for starting
-- **Agentic tools** (Codex, Cursor): Work with existing code, full control
-- **Moving between tools**: Using GitHub to keep your code portable
-- **When to switch**: Signs it's time to export from web tools
-
-### [The Guide](./guide.md) — Complete Walkthrough
-Step-by-step instructions covering:
-- Detailed tool breakdown (what each tool does and doesn't do)
-- Setting up system prompts in each tool
-- The build workflow (plan → build → test → audit)
-- Common problems and solutions
-- Learning to evaluate AI output
-
-### [Web Rules](./web-rules.md) — Non-Negotiable Standards
-Rules for production apps:
-- Security (don't get hacked)
-- Accessibility (don't exclude users)
-- Performance (don't be slow)
-- Deployment (don't break production)
+---
 
 ## Quick Start
 
-### 1. Pick Your Tool
+1. **Pick a tool:** [v0](https://v0.dev) (UI/components) or [Lovable](https://lovable.dev) (full apps)
+2. **Use the [base prompt](./skills/vibe-coder-base.md):** Copy into your AI tool's instructions
+3. **Start small:** Build one feature, test it, then add more
+4. **Export when ready:** Move to GitHub for more control
 
-**Never coded before:**
-- [Loveable](https://lovable.dev) - Full apps from descriptions
-- [v0](https://v0.dev) - UI components with Next.js
-- [Bolt](https://bolt.new) - Quick prototypes
-- [Replit](https://replit.com) - Learning-friendly environment
+---
 
-**Ready for more control:**
-- [Cursor](https://cursor.com) - AI-powered code editor
-- [Windsurf](https://windsurf.com) - Alternative to Cursor
-- [Codex](https://chatgpt.com/codex) - OpenAI's agent (works on your codebase)
+## 📚 Guides
 
-### 2. Set Up Your System Prompt
+### Getting Started
+| Guide | What You'll Learn |
+|-------|-------------------|
+| [Web Concepts](./guides/web-concepts.md) | How websites work, frontend vs backend, URLs, APIs |
+| [Full-Stack Apps](./guides/fullstack-apps.md) | Server + client + database, how they connect |
+| [Authentication](./guides/authentication.md) | Login systems, permissions, keeping users safe |
 
-Copy the [base prompt](./skills/vibe-coder-base.md) into your tool's custom instructions. This teaches the AI how to communicate with you effectively.
+### Building
+| Guide | What You'll Learn |
+|-------|-------------------|
+| [Vibe Coding (Web Builders)](./guides/vibe-coding-web.md) | Using v0, Lovable, Bolt to build by describing |
+| [Agentic Coding](./guides/agentic-coding.md) | How AI agents work with your code |
+| [Codex & Claude Web](./guides/agentic-coding-web.md) | Using Codex and Claude through web interfaces |
 
-### 3. Plan Before You Build
+### Shipping
+| Guide | What You'll Learn |
+|-------|-------------------|
+| [GitHub & Version Control](./guides/version-control.md) | Saving your code, undoing mistakes, collaboration |
+| [Cloud Infrastructure](./guides/cloud-infrastructure.md) | Deploying to Vercel/Railway, domains, DNS |
+| [Web Rules](./guides/web-rules.md) | Security, accessibility, performance checklists |
 
-Don't just type "build me an app." Start with a conversation:
+---
 
-```
-I want to build [your idea].
+## 🛠 Skills (System Prompts)
 
-Ask me questions one at a time to understand:
-- What problem this solves
-- Who will use it
-- What features are essential vs nice-to-have
-- Any technical constraints I should know about
+Copy these into your AI tool to shape how it helps you.
 
-After we discuss, create a simple spec document.
-```
+| Skill | When to Use |
+|-------|-------------|
+| [**Base**](./skills/vibe-coder-base.md) | Always — foundation for all interactions |
+| [UI Builder](./skills/ui-builder.md) | Building interfaces, improving design |
+| [Project Audit](./skills/project-audit.md) | Before launch, checking for security issues |
+| [Web Fundamentals](./skills/web-fundamentals.md) | When you want to learn while building |
 
-### 4. Build in Small Steps
+**How to stack them:** Base first, then add specialized skills, then your project context.
 
-Never ask for everything at once. Instead:
+→ [Full skills reference](./skills-table.md)
 
-1. Get the core feature working first
-2. Test it actually works
-3. Add the next feature
-4. Test again
-5. Repeat
+---
 
-### 5. Test Like a User
+## ⚡ The Essentials
 
-After every change:
-- Click through everything
-- Try to break it (weird inputs, fast clicking, back button)
-- Check on mobile
-- Look for error messages in the browser console (F12 → Console tab)
+### The 70% Problem
 
-### 6. Audit Before Sharing
+AI gets you 70% of the way fast. The last 30%—edge cases, security, polish—is where you'll struggle. These guides exist to push that number higher.
 
-Before anyone else uses your app, run the [project audit](./skills/project-audit.md) to catch security issues and common mistakes.
+### AI = Overconfident Intern
 
-## The Golden Rules
+Think of AI as someone who:
+- Works incredibly fast
+- Knows a lot of documentation
+- Will confidently do the wrong thing if you're vague
+- Needs supervision on important work
 
-1. **Plan before prompting.** Spend 20% of your time on specs, save 80% on debugging.
+### Golden Rules
 
-2. **Build throwaway projects first.** Your first attempt teaches you the tool's limitations. Plan to delete it.
+1. **Plan before prompting** — Spend 20% of time on specs, save 80% on debugging
+2. **Small steps** — One feature → test → commit → repeat
+3. **Screenshots > descriptions** — Show the AI what you want
+4. **Commit often** — Git is your save game
+5. **Never ship secrets** — API keys never go in code files
 
-3. **Small steps, frequent tests.** One feature → test → commit. Repeat.
+---
 
-4. **Commit working versions.** Git is your save game. Commit before trying anything risky.
-
-5. **Screenshots > descriptions.** Show the AI what you want, don't just describe it.
-
-6. **Simple > clever.** The fancier the solution, the more ways it can break.
-
-7. **Ask "why?" not just "fix it."** Understanding problems prevents them from recurring.
-
-8. **Never ship secrets.** API keys, passwords, and database credentials never go in code files.
-
-## When You're Stuck
-
-1. **Start a new conversation.** AI context gets polluted over long chats.
-2. **Be more specific.** "It doesn't work" tells the AI nothing.
-3. **Roll back and try again.** Sometimes the cleanest fix is undoing the last few changes.
-4. **Ask a different AI.** Claude, ChatGPT, and Gemini have different strengths.
-5. **Take a break.** Seriously. Fresh eyes find problems faster.
-
-## Learning More
-
-You don't need to learn programming, but understanding a few concepts helps:
-
-- **How to read error messages** (the file and line number, what it's complaining about)
-- **How to use browser DevTools** (F12 → Console shows errors, Network shows loading)
-- **How Git works** (commits save versions, push sends to GitHub, pull gets latest)
-- **How environment variables work** (secrets go in .env files, not code)
-
-The [guide](./guide.md) covers these in detail.
-
-## Resources
+## 🔗 External Resources
 
 ### Essential Reading
-- [The 70% Problem](https://addyo.substack.com/p/the-70-problem-hard-truths-about) - Why AI coding is harder than it looks
-- [Not All AI Programming is Vibe Coding](https://simonwillison.net/2025/Mar/19/vibe-coding/) - When to vibe and when to verify
-- [Using LLMs for Code](https://simonwillison.net/2025/Mar/11/using-llms-for-code/) - Practical tips from an expert
-- [My LLM Codegen Workflow](https://harper.blog/2025/02/16/my-llm-codegen-workflow-atm/) - A structured approach
-- [Claude Code Best Practices](https://www.anthropic.com/engineering/claude-code-best-practices) - Official guidance (applies to all AI tools)
+- [AI Code Guide](https://github.com/automata/aicodeguide) — Comprehensive guide by Vilson Vieira & Eric S. Raymond
+- [The 70% Problem](https://addyo.substack.com/p/the-70-problem-hard-truths-about) — Why AI coding is harder than it looks
+- [Using LLMs for Code](https://simonwillison.net/2025/Mar/11/using-llms-for-code/) — Practical tips from Simon Willison
+- [Claude Code Best Practices](https://www.anthropic.com/engineering/claude-code-best-practices) — Official guidance (applies to all AI tools)
 
-### Comprehensive Guides
-- [AI Code Guide](https://github.com/automata/ai-code-guide) - Deep dive for all skill levels
-- [12 Rules to Vibe Code](https://creatoreconomy.so/p/12-rules-to-vibe-code-without-frustration) - Practical rules
+### Tool Documentation
+- [v0 Docs](https://v0.app/docs/) — Official v0 documentation
+- [Lovable Docs](https://docs.lovable.dev/) — Official Lovable documentation
+- [Codex Developer Guide](https://developers.openai.com/codex/) — OpenAI Codex documentation
 
 ### Courses
-- [Vibe Coding 101 with Replit](https://www.deeplearning.ai/short-courses/vibe-coding-101-with-replit/) - Free intro course
-- [Intro to Vibe Coding](https://www.codecademy.com/learn/intro-to-vibe-coding) - Codecademy's course
+- [Vibe Coding 101 with Replit](https://www.deeplearning.ai/short-courses/vibe-coding-101-with-replit/) — Free intro course
+- [Intro to Vibe Coding](https://www.codecademy.com/learn/intro-to-vibe-coding) — Codecademy course
+
+---
+
+## 📁 Repository Structure
+
+```
+├── README.md                    ← You are here
+├── skills/                      ← System prompts
+├── skills-table.md              ← Skills quick reference
+├── guides/                      ← Educational content
+├── CLAUDE.md                    ← Context for Claude-based tools
+└── AGENTS.md                    ← Context for Codex/agents
+```
+
+---
 
 ## Contributing
 
-Found a problem? Have a suggestion? [Open an issue](https://github.com/chrcit/vibecoding-guide/issues).
+Found an issue? Have a suggestion? [Open an issue](https://github.com/chrcit/vibecoding-guide/issues).
 
 ## License
 
-MIT - Use however you want.
+MIT — Use however you want.
