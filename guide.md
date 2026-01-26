@@ -1,460 +1,470 @@
 # The Vibe Coder's Guide
 
-A practical guide to building web apps with AI tools—without becoming a programmer.
+Everything you need to start building web apps with AI tools.
 
-## Table of Contents
-
-1. [Understanding AI Coding Tools](#understanding-ai-coding-tools)
-2. [Setting Up Your Prompts](#setting-up-your-prompts)
-3. [Tool-Specific Setup](#tool-specific-setup)
-4. [The Vibe Coding Workflow](#the-vibe-coding-workflow)
-5. [Common Scenarios](#common-scenarios)
-6. [When Things Go Wrong](#when-things-go-wrong)
-7. [Leveling Up](#leveling-up)
+**What this covers:**
+1. [Understanding Your Tools](#understanding-your-tools)
+2. [Setting Up](#setting-up)
+3. [The Workflow](#the-workflow)
+4. [Common Problems](#common-problems)
+5. [Learning to Evaluate AI Output](#learning-to-evaluate-ai-output)
 
 ---
 
-## Understanding AI Coding Tools
+## Understanding Your Tools
 
-AI coding tools come in a few flavors. Understanding the difference helps you pick the right one for the job.
+AI coding tools come in different flavors. Understanding the differences helps you pick the right one.
 
-### Chat-Based Tools
+### Tool Categories
 
-**Examples:** ChatGPT, Claude, Gemini
+| Type | Examples | Best For |
+|------|----------|----------|
+| **Chat-based** | ChatGPT, Claude | Learning, explanations, one-off code |
+| **Component builders** | v0, Lovable, Bolt | UI design, new pages, prototyping |
+| **Agent-based** | Codex, Cursor, Claude Code | Complex features, working with existing code |
 
-You have a conversation. You describe what you want, the AI writes code, you copy it into your project. Good for learning, explaining code, and getting help with specific problems.
+### Detailed Tool Breakdown
 
-**Best for:** Understanding code, fixing bugs, learning concepts, one-off code generation.
+#### v0 (v0.dev)
+**What it does:** Generates React components and pages using Next.js, Tailwind CSS, and shadcn/ui.
 
-### Component Builders
+**How it works:**
+- Describe a component or page in natural language
+- v0 generates code you can preview immediately
+- Iterate with follow-up prompts
+- Export code to your project
 
-**Examples:** v0 (Vercel), Loveable
+**Key features:**
+- Attach screenshots and v0 will recreate the design
+- Organize chats into projects with custom instructions
+- Generates complete, copy-paste-ready code
+- Built-in preview rendering
 
-You describe a component or page, the AI generates it visually. You can see the result immediately and iterate on it. Often exports directly to your codebase.
+**Good for:** UI components, landing pages, forms, dashboards. Starting new projects with Next.js.
 
-**Best for:** UI design, building new pages, prototyping, visual iteration.
+**Limitations:** Frontend-focused. For backend/database functionality, you'll need to add that yourself or use another tool.
 
-### Agent-Based Tools
-
-**Examples:** Codex (OpenAI), Claude Code, Cursor, Windsurf
-
-The AI can read your entire codebase, make changes across multiple files, run commands, and complete complex tasks with less back-and-forth. Most powerful, but requires more setup and trust.
-
-**Best for:** Complex features, refactoring, bug fixes across multiple files, project-wide changes.
-
-### How to Choose
-
-| Task | Best Tool |
-|------|-----------|
-| "Explain what this code does" | Chat-based |
-| "Build me a pricing page" | Component builder |
-| "Add user authentication to my app" | Agent-based |
-| "Why isn't this working?" | Chat-based or Agent-based |
-| "Make my app mobile responsive" | Agent-based |
-| "Create a signup form" | Component builder |
-
-You'll probably use multiple tools. That's normal.
+**Prompting tips:** Be specific about what you're building, who uses it, and design constraints. Attach reference images when possible.
 
 ---
 
-## Setting Up Your Prompts
+#### Lovable (lovable.dev)
+**What it does:** Full-stack app generation from natural language descriptions.
 
-### Where to Put System Prompts
+**How it works:**
+- Describe your app in plain English
+- Lovable generates frontend, backend, and database
+- Built-in Supabase integration for data and auth
+- Deploy directly from the platform
 
-Every AI tool has a place for "system prompts" or "custom instructions"—text that shapes how the AI behaves for all your conversations. This is where you put the skills from this repository.
+**Key features:**
+- **Lovable Cloud:** Built-in databases, authentication, storage, and edge functions
+- **Agent Mode:** Autonomous AI development with debugging and problem-solving
+- **GitHub integration:** Sync your code to a repository
+- **Visual editing:** Modify UI through conversation or drag-and-drop
+
+**Good for:** MVPs, full-stack apps, dashboards, admin tools, SaaS prototypes. Non-technical founders.
+
+**Limitations:** Can get stuck in debugging loops. Minor changes sometimes cascade to unexpected files. More complex customization may require exporting to Cursor.
+
+**Prompting tips:** Start with your core use case. Be clear about user flows. Describe what success looks like.
+
+---
+
+#### Codex (OpenAI)
+**What it does:** AI agent that works on your existing codebase through GitHub.
+
+**How it works:**
+- Connect your GitHub repository
+- Ask Codex to work on tasks (features, bugs, reviews)
+- Codex creates pull requests with its changes
+- Review and merge like normal code
+
+**Key features:**
+- **GitHub integration:** PR reviews, issue work, CI/CD automation
+- **Cloud tasks:** Runs in isolated sandboxes with your repo
+- **Context preservation:** Move work between web, terminal, and IDE
+- **Automatic environment setup:** Detects and runs setup scripts
+
+**Good for:** Adding features to existing projects, code reviews, bug fixes, working with established codebases.
+
+**Limitations:** Requires GitHub account and repo. More complex setup than web-based tools. Works best with well-organized codebases.
+
+**How to use it:**
+1. Go to [chatgpt.com/codex](https://chatgpt.com/codex)
+2. Connect your GitHub account
+3. Select a repository
+4. Describe your task
+
+---
+
+#### Cursor / Windsurf
+**What they do:** AI-powered code editors. You write code with AI assistance.
+
+**How they work:**
+- Open your project in the editor
+- AI suggests completions, answers questions, makes changes
+- Agent mode can make multi-file changes autonomously
+- You review and accept changes
+
+**Good for:** Developers who want AI assistance. More control than web tools. Working with any tech stack.
+
+**Limitations:** More of a learning curve. Requires local development setup. Better with some coding knowledge.
+
+---
+
+### Choosing Your Tool
+
+**Just starting out?**
+→ Start with Lovable or v0. Build something simple. Learn how AI coding feels.
+
+**Have a working prototype?**
+→ Export to GitHub. Use Cursor or Codex for more complex work.
+
+**Existing codebase?**
+→ Codex or Cursor. They understand project context.
+
+**Just need a component?**
+→ v0 is fastest. Copy the code into your project.
+
+---
+
+## Setting Up
+
+### Using the System Prompts
+
+Every tool has a place for "system prompts" or "custom instructions" that shape how the AI behaves.
+
+#### v0
+v0 supports project-level custom instructions:
+1. Create a new project in v0
+2. Open project settings
+3. Add your custom instructions there
+4. All chats in that project use those instructions
+
+For one-off chats, paste your system prompt at the start of the conversation before your actual request.
+
+#### Lovable
+Include system prompts in your initial project description, or paste them at the start of conversations for ongoing projects.
+
+#### Codex
+Uses `AGENTS.md` file in your repository root for persistent instructions:
+1. Create `AGENTS.md` in your repo
+2. Add your guidelines and preferences
+3. Codex reads this file for every task
+
+For web interface, paste instructions in the task description.
+
+#### Cursor / Windsurf
+Create rules files in your project:
+- Cursor: `.cursor/rules/*.md`
+- Windsurf: `.windsurf/rules/*.md`
+
+These are automatically applied to all AI interactions in that project.
 
 ### The Stacking Method
 
 Layer prompts from general to specific:
 
 ```
-1. [Base vibe coder prompt]    ← Always include this
-2. [Specialized skill prompt]   ← Add based on current task
-3. [Your project context]       ← Specific to your project
-4. [Current task]               ← What you're working on now
+1. [Base prompt]           ← Always include
+2. [Specialized skill]     ← Add for specific tasks
+3. [Project context]       ← Your tech stack, constraints
+4. [Current task]          ← What you're doing now
 ```
 
 **Example:**
-
 ```
-[Paste vibe-coder-base.md content here]
+[Paste vibe-coder-base.md]
 
-[Paste ui-builder.md content here]
+[Paste ui-builder.md]
 
 ---
-
-MY PROJECT:
+PROJECT CONTEXT:
 - App: Recipe sharing platform
-- Tech: Next.js 14 with App Router, Tailwind CSS, Supabase
-- Deployed on: Vercel
-- Database: Supabase (PostgreSQL)
+- Tech: Next.js 14, Tailwind, Supabase
+- Deployed: Vercel
+- Style: Clean and minimal
 
-CURRENT TASK:
-Building the recipe detail page. Should show the recipe title,
-image, ingredients list, and step-by-step instructions.
-Users should be able to save recipes to their collection.
+TASK:
+Build the recipe detail page with:
+- Large hero image
+- Ingredients list
+- Step-by-step instructions
+- Save to favorites button
 ```
 
 ---
 
-## Tool-Specific Setup
+## The Workflow
 
-### v0 (v0.dev)
+### Phase 1: Planning (20% of your time)
 
-v0 doesn't have persistent system prompts, but you can include instructions at the start of your conversation.
+Don't skip this. Good planning prevents most debugging.
 
-**How to use it:**
-
-1. Start a new chat
-2. Before describing what you want, paste the relevant skills
-3. Add your project context
-4. Then describe what you want built
-
-**Example first message:**
+**Start a conversation:**
 ```
-I want you to help me with these guidelines in mind:
+I want to build [your idea].
 
-[Paste ui-builder.md prompt here]
+Ask me questions one at a time to understand:
+- What problem this solves
+- Who will use it
+- What features are essential vs nice-to-have
+- Any constraints I should know about
 
-My project uses Next.js 14 and Tailwind CSS.
-
-Build me a user profile card that shows:
-- Avatar image
-- Name and username
-- Bio
-- Follow button
-- Stats (posts, followers, following)
-
-Make it feel premium and modern.
+After we discuss, create a simple spec document.
 ```
 
-**Tips for v0:**
-- v0 is best for individual components and pages
-- Export your components and integrate them into your codebase
-- Use the "Edit in v0" button from Vercel deployments to iterate
-- v0 understands Tailwind CSS natively
+Let the AI ask questions. Answer thoroughly. When done, save the spec as `docs/spec.md` in your project.
 
-### Loveable (loveable.dev)
-
-Loveable builds full applications from descriptions.
-
-**How to use it:**
-
-1. Go to loveable.dev
-2. When creating a new project, include the base prompt in your initial description
-3. For ongoing work, paste relevant skills at the start of conversations
-
-**Example initial prompt:**
+**Then get a task list:**
 ```
-[Paste vibe-coder-base.md here]
-
-Build me a simple invoicing app for freelancers. Features:
-- Create and send invoices
-- Track payment status
-- Basic client management
-- Dashboard showing outstanding invoices
-
-Use a clean, professional design. I'll be deploying this on Vercel.
+Based on this spec, create a step-by-step build plan.
+Break it into small tasks that build on each other.
+Each task should be testable before moving to the next.
+Use a checklist format.
 ```
 
-**Tips for Loveable:**
-- Great for full app scaffolding
-- Connect to GitHub early to save your work
-- Use the Supabase integration for database features
-- Export regularly and commit to Git
+Save this as `docs/tasks.md`.
 
-### Codex (chatgpt.com/codex)
+### Phase 2: Building (60% of your time)
 
-OpenAI's Codex is an agent that can work on your entire codebase.
+**One feature at a time:**
+1. Pick the first task from your list
+2. Ask the AI to implement it
+3. Test that it works
+4. Commit the working code
+5. Move to next task
 
-**Setup:**
+**Do not:**
+- Ask for multiple features at once
+- Skip testing between features
+- Make many changes without committing
 
-1. Connect your GitHub repository to Codex
-2. Go to Settings or use the system prompt area
-3. Paste your skills as custom instructions
+**When something breaks:**
+1. Stop adding features
+2. Describe the problem specifically
+3. Fix it before continuing
+4. Commit the fix
 
-**Using custom instructions:**
+### Phase 3: Testing (15% of your time)
 
-In ChatGPT/Codex, go to Settings → Personalization → Custom Instructions
+After each feature and before sharing:
 
-Paste the base prompt, then add:
+**Basic testing:**
+- Click through everything
+- Try on mobile (resize browser or use a real phone)
+- Check browser console for errors (F12 → Console)
+- Try to break it (weird inputs, fast clicking, back button)
+
+**Edge cases:**
+- What happens with no data?
+- What happens with lots of data?
+- What happens with very long text?
+- What if the network is slow?
+
+### Phase 4: Audit (5% of your time)
+
+Before sharing your app, use the [project audit skill](./skills/project-audit.md):
+
 ```
-When working on code projects, also follow these guidelines:
+[Base prompt]
 
-[Paste any specialized skills here]
+[Project audit prompt]
+
+Audit this project before I share it with users.
+Check for security issues, accessibility problems,
+and common mistakes.
 ```
 
-**Example task:**
-```
-I just pushed a new feature for user profiles. Can you:
-1. Review it for security issues
-2. Add proper error handling
-3. Make sure it's accessible
-
-[Paste project-audit.md if not in custom instructions]
-```
-
-**Tips for Codex:**
-- Works best with clear, specific tasks
-- Let it read and understand your codebase first
-- Review changes before accepting them
-- Use for multi-file changes and refactoring
-
-### Other Tools
-
-**Cursor / Windsurf:**
-- Put prompts in `.cursorrules` or settings file
-- These tools have excellent codebase understanding
-- Good for ongoing development work
-
-**Claude (claude.ai):**
-- Use Projects to save system prompts
-- Add skills to Project Instructions
-- Good for complex reasoning and explanations
-
-**ChatGPT:**
-- Use Custom Instructions in settings
-- Or create a Custom GPT with your prompts built in
-- Good for explanations and one-off code help
+Fix critical issues before deploying.
 
 ---
 
-## The Vibe Coding Workflow
+## Common Problems
 
-### Phase 1: Planning
+### "The AI keeps breaking things"
 
-Before asking the AI to build anything:
+**Symptom:** Fixing one bug creates new bugs. Endless loops.
 
-1. **Describe what you want in plain English.** Not technical requirements, but what the user should be able to do.
+**Solutions:**
+1. **Roll back.** Return to the last working version.
+2. **Start fresh.** New conversation, clearer prompt.
+3. **Smaller steps.** Break the feature into smaller pieces.
+4. **Different approach.** Ask for an alternative solution.
 
-2. **List the must-haves.** What absolutely needs to work?
-
-3. **Note any constraints.** Budget, timeline, tools you're already using.
-
-**Example:**
-> "I want a page where users can see all their saved recipes. They should be able to filter by category (breakfast, lunch, dinner, dessert) and search by name. Each recipe card should show the image, name, and cook time. Clicking it goes to the full recipe."
-
-### Phase 2: Building
-
-**Start small.** Don't ask for everything at once.
-
-Good: "Build me the recipe card component first"
-Bad: "Build me the entire recipe app with all features"
-
-**Iterate visually.** Look at what's generated. Does it match your vision? Give specific feedback:
-
-Good: "The cards are too close together. Add more spacing between them."
-Bad: "Make it better."
-
-**Test as you go.** Click around. Try edge cases. What happens with no recipes? With 100 recipes? With a really long recipe name?
-
-### Phase 3: Review
-
-Before sharing your app with users:
-
-1. **Run an audit.** Use the project-audit skill
-2. **Test on mobile.** Resize your browser or use a real phone
-3. **Try breaking it.** Enter weird data, click things fast, use the back button
-4. **Check the basics:**
-   - Does it work without logging in? (if it shouldn't, that's a bug)
-   - Can users do what they came to do?
-   - Is the text readable?
-   - Do buttons and links work?
-
-### Phase 4: Ship & Iterate
-
-**Deploy early and often.** Modern hosting (Vercel, Railway) makes this free and easy. Every push to main can be live in minutes.
-
-**Collect feedback.** Watch people use your app. Their confusion is your next todo list.
-
-**Keep improving.** Vibe coding is iterative. Version 1 won't be perfect. That's fine.
+**Prevention:** Commit working code frequently. Test after every change.
 
 ---
 
-## Common Scenarios
+### "I don't understand what it built"
 
-### "The AI keeps doing weird things"
+**Symptom:** The code works but you have no idea why.
 
-**Reset context.** Start a new conversation. AI tools accumulate confusion over long chats.
+**Solutions:**
+1. Ask: "Explain this code to me like I'm not a developer. What does each part do?"
+2. Ask: "What happens when a user does X? Walk me through the code path."
+3. Ask: "What could go wrong with this code?"
 
-**Be more specific.** Instead of "that's not right," explain exactly what you expected vs. what happened.
+**The goal:** You should be able to explain the general structure to someone else, even if you don't understand every line.
 
-**Provide examples.** "I want it to look more like [this site]" or "The animation should feel like [this]"
+---
 
-### "I don't understand what it wrote"
+### "Something broke and I can't find why"
 
-**Ask for explanation.** "Explain this code to me like I'm not a developer. What does each part do and why?"
+**Symptom:** Error messages you don't understand. Things stopped working.
 
-**Ask for analogies.** "Compare how this authentication system works to something in the real world."
+**How to get help:**
 
-**Ask about risks.** "What could go wrong with this code? What should I watch out for?"
+1. **Copy the full error.** Include everything in the red text.
+2. **Note what changed.** What did you do right before it broke?
+3. **Describe the symptom.** "When I click X, nothing happens" is better than "it's broken."
 
-### "Something broke and I don't know why"
+**Ask the AI:**
+```
+I'm getting this error:
+[paste full error]
 
-**Describe the symptom.** "When I click the save button, nothing happens" is better than "it's broken."
+This started after I [what you changed].
+I expected [what should happen] but instead [what actually happens].
 
-**Share the error.** If there's a red error message, copy the whole thing.
+What's wrong and how do I fix it?
+```
 
-**Note what changed.** "It worked yesterday. Since then I added the profile feature."
+---
 
-**Use the audit skill.** It might catch the problem automatically.
+### "I need to do something on Vercel/Supabase/GitHub"
 
-### "I need to do something on Vercel/Supabase/GitHub but don't know how"
+**Symptom:** The code works locally but you need to configure something on a platform.
 
-**Ask the AI.** "Give me step-by-step instructions to add an environment variable in Vercel. Assume I've never done this before."
+**Solution:** Ask the AI for step-by-step platform instructions.
 
-The prompts tell the AI to give you click-by-click instructions for platform tasks.
+```
+I need to [what you need to do] on Vercel.
+Give me click-by-click instructions.
+Assume I've never done this before.
+Include where to find each setting.
+```
+
+The base prompt tells the AI to give platform instructions in this format.
+
+---
 
 ### "The app is slow"
 
-Ask: "My app feels slow when loading the recipes page. What could be causing this and how do we fix it?"
-
-Common causes:
-- Loading too much data at once (need pagination)
-- Images not optimized (need compression)
-- Too many database queries (need optimization)
-- Too much JavaScript (need code splitting)
-
-The AI should identify and fix these automatically with the base prompt.
-
----
-
-## When Things Go Wrong
-
-### The Codebase is a Mess
-
-This happens. Vibe coding can accumulate technical debt fast.
-
-**Recovery steps:**
-1. **Commit what works.** Make sure your current (working) code is saved
-2. **Start an audit.** Let the AI identify the biggest problems
-3. **Pick one thing.** Don't try to fix everything at once
-4. **Refactor incrementally.** Small improvements over time
-
-### You're Stuck on a Bug
-
-1. **Describe everything:** What you expected, what happens, when it started
-2. **Share context:** Recent changes, full error messages, what you tried
-3. **Try a different AI tool:** Sometimes fresh context helps
-4. **Ask for debugging help:** "How would you approach debugging this?"
-
-### The App Won't Deploy
-
-**Check the build logs.** Vercel/Netlify show you exactly what failed.
-
-**Share the error.** Copy the entire error message to your AI tool.
+**Symptom:** Pages take a long time to load. Interactions feel sluggish.
 
 **Common causes:**
-- Missing environment variables (need to set them in Vercel)
-- TypeScript errors (code issues that need fixing)
-- Missing dependencies (packages not installed)
-- File path issues (works on your computer, not on server)
+- Loading too much data at once (need pagination)
+- Unoptimized images (need compression)
+- Too many database queries (need optimization)
+- Heavy JavaScript bundles (need code splitting)
 
-### You Lost Code
-
-**Check Git history.** If you've been committing, your code is saved.
-
-**On GitHub:** Look at the commit history, you can restore old versions.
-
-**On Vercel:** Each deployment is saved, you can roll back.
-
-**Prevention:** Commit early, commit often. Every meaningful change should be a commit.
+**Ask the AI:**
+```
+The [page name] feels slow to load.
+Help me identify what's causing the slowness
+and how to fix it.
+```
 
 ---
 
-## Leveling Up
+### "I'm stuck and nothing is working"
 
-### Skills Worth Learning
+**Symptom:** Tried everything. Going in circles.
 
-You don't need to become a developer. But knowing a bit helps:
+**Solutions:**
+1. **Take a break.** Seriously. 15 minutes away helps.
+2. **Start over.** New conversation, explain the problem fresh.
+3. **Try a different AI.** Claude, ChatGPT, and Gemini have different strengths.
+4. **Simplify.** Remove features until something works, then add back gradually.
+5. **Ask for alternatives.** "Give me 3 different ways to solve this problem."
 
-**Git basics:**
-- `git add` and `git commit` (saving work)
-- `git push` and `git pull` (syncing with GitHub)
-- How to read a diff (what changed between versions)
+---
 
-**Browser DevTools:**
-- How to open them (F12 or right-click → Inspect)
-- Console tab (shows errors)
-- Network tab (shows what's loading)
-- Elements tab (shows the page structure)
+## Learning to Evaluate AI Output
 
-**Reading error messages:**
-- The file name and line number tell you where
-- The message tells you what
-- Stack traces read bottom-to-top
+The AI will make mistakes. Learning to spot them is a core skill.
 
-### Recognizing AI Mistakes
+### Red Flags
 
-Common AI errors to watch for:
+**Hallucinated features:**
+- AI invents APIs or functions that don't exist
+- References libraries or methods that sound real but aren't
+- **Check:** Search for the function/library name. If you can't find documentation, it might not exist.
 
-**Hallucinated features:** AI invents APIs or functions that don't exist. If something doesn't work, ask "Does this API/function actually exist?"
+**Outdated patterns:**
+- AI training data has a cutoff date
+- May use old versions of libraries
+- **Check:** "Is this the current recommended way to do X in [library name]?"
 
-**Outdated patterns:** AI training data has a cutoff. Ask "Is this the current recommended way to do this?"
+**Over-engineering:**
+- AI loves adding "just in case" code
+- Creates abstractions for one-time uses
+- **Check:** "Do we actually need this? What's the simplest version?"
 
-**Over-engineering:** AI loves adding "just in case" code. Ask "Do we actually need this? What's the simplest version?"
+**Subtle bugs:**
+- Code looks correct but has edge case issues
+- Logic errors that aren't obvious
+- **Check:** Test edge cases. What happens with empty data? With too much data?
 
-**Inconsistent style:** AI might mix patterns. Watch for sudden changes in how code is written.
+### Questions to Ask
+
+After the AI generates code, ask:
+
+1. "What could go wrong with this code?"
+2. "Are there any security concerns?"
+3. "What happens if [edge case]?"
+4. "Is there a simpler way to do this?"
+5. "What dependencies does this add and why?"
 
 ### Building Judgment
 
 Over time, you'll develop intuition for:
-
 - When to trust the AI vs. when to question it
 - What "good code" looks like (consistent, readable, not overly complex)
 - When something will cause problems later
-- What questions to ask before implementing
+- What questions to ask
 
-This comes from experience. Keep building, keep learning.
+This comes from experience. Keep building, keep questioning, keep learning.
 
 ---
 
 ## Quick Reference
 
-### Starting a New Project
-
-```
-1. Create repo on GitHub
-2. Clone locally or use tool's GitHub integration
-3. Set up system prompts with vibe-coder-base + relevant skills
-4. Describe project context (tech stack, requirements)
-5. Start with the core feature first
+### Starting a Project
+1. Plan with AI (spec + task list)
+2. Set up version control (Git + GitHub)
+3. Configure system prompts
+4. Build one feature at a time
+5. Test after each feature
 6. Deploy early (even if incomplete)
-7. Iterate based on feedback
-```
 
-### Before Every Session
+### Daily Workflow
+1. Pull latest changes (if using Git)
+2. Review task list
+3. Pick one task
+4. Build it
+5. Test it
+6. Commit it
+7. Push to GitHub
 
-```
-1. Pull latest changes (if collaborating)
-2. Run the app locally
-3. Note what you want to accomplish
-4. Clear/focused conversation with AI
-5. Test changes before committing
-6. Push working code to GitHub
-```
-
-### Before Going Live
-
-```
-1. Run project audit skill
-2. Fix all critical and important issues
+### Before Sharing
+1. Run project audit
+2. Fix critical issues
 3. Test on mobile
-4. Check authentication/authorization works
-5. Verify environment variables are set in hosting
-6. Test the deployed version (not just local)
-```
+4. Check deployed version (not just local)
 
 ### When Stuck
-
-```
-1. Step back and describe the actual goal
-2. Ask AI to explain the problem in simple terms
-3. Try a simpler approach
-4. Start a new conversation if context is polluted
-5. Take a break (seriously)
-```
+1. Roll back to working version
+2. Start new conversation
+3. Be more specific
+4. Try different AI
+5. Take a break
 
 ---
 
-That's it. Happy building.
+**Next steps:**
+- [Skills Reference](./skills-table.md) - All available system prompts
+- [Web Development Rules](./web-rules.md) - Non-negotiable rules for production apps
+- [README](./README.md) - Quick start guide
