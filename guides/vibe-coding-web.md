@@ -360,7 +360,7 @@ If you're regularly hitting limits:
 
 ---
 
-**Next:** [Agentic Coding with Codex and Claude](./agentic-coding-web.md)
+**Next:** [Agentic Coding Basics](./agentic-coding.md) · [Ways of Working](./ways-of-working.md)
 **Publishing & GitHub:**
 - Publish to Vercel directly from v0
 - Connect GitHub to sync code and use Vercel deploys

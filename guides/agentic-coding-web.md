@@ -1,6 +1,8 @@
-# Agentic Coding with Codex and Claude
+# Agentic Coding with Codex and Claude on the Web
 
 Using OpenAI Codex and Anthropic Claude through web interfaces to work with your existing code.
+
+> **Note:** Web interfaces are the no-install option. For daily work, running agents in a desktop ADE like [T3 Code](./t3-code.md) (on your machine or a server) gives you parallel threads, a built-in browser for self-verification, and models from several providers. Claude Code is also available on the web at claude.ai/code and can work directly on GitHub repos.
 
 ## Overview
 
@@ -372,6 +374,7 @@ Let's start over with this approach.
 ---
 
 **Related:**
-- [Agentic Coding General Guide](./agentic-coding.md) - Core concepts
+- [Agentic Coding Basics](./agentic-coding.md) - Core concepts
+- [T3 Code](./t3-code.md) - Run agents from several providers in one place
 - [Version Control](./version-control.md) - Git and GitHub basics
 - [Vibe Coding with Web Builders](./vibe-coding-web.md) - v0, Lovable, etc.

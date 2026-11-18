@@ -30,6 +30,30 @@ Your Code → Hosting Platform → Domain Name → Users
 | **Netlify** | Static sites, frontend | Generous |
 | **Render** | Full-stack, databases | Limited |
 | **Fly.io** | Global distribution | Limited |
+| **Cloudflare** | Static sites, Workers, storage, anything small | Very generous |
+| **GitHub Pages** | Static sites straight from a repo | Free |
+
+### Cloudflare
+
+Cloudflare started as a network and security company for big enterprises and runs its own global cloud (not on AWS). Because enterprises are the paying customers, a lot is free for everyone else:
+
+- Static hosting with unlimited bandwidth (Cloudflare Pages / Workers static assets)
+- Serverless functions (Workers), storage (R2), databases (D1), key-value (KV)
+- Access control: put a login in front of a site so only you (or your team) can see it
+
+Connecting a GitHub repo takes a few clicks; it detects how to build most projects. Dozens of small projects can run for a few dollars a month. Ask your agent to set it up.
+
+### GitHub Pages
+
+The simplest way to put a static site (HTML, an Astro build, an exported notebook) online. Turn it on in the repo settings, or ask your agent to "deploy this to GitHub Pages". Restricting who can see a Pages site needs GitHub Enterprise Cloud, so on normal plans assume the site is public, even when the repo is private.
+
+### Previewing Agent Work From Another Device
+
+Your agent's browser sees your dev server; your phone and colleagues don't. Options:
+
+- **Deploy** to Cloudflare or GitHub Pages (with access control if it's private)
+- **Private network:** run the dev server on a machine in a Tailscale network and open it from any of your devices
+- **Download and run it locally:** fine for notebooks and one-off tools
 
 ### Vercel (Most Common for Vibe Coding)
 

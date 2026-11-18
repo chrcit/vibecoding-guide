@@ -1,14 +1,14 @@
-# Agentic Coding: The General Guide
+# Agentic Coding: The Basics
 
-Understanding how AI agents work with your code—the concepts behind Codex, Claude, Cursor, and similar tools.
+How AI agents work with your code: the concepts behind Claude Code, Codex, Cursor, and the tools that run them, like [T3 Code](./t3-code.md).
 
 ## What Is Agentic Coding?
 
 **Vibe coding:** You describe, AI builds from scratch. Usually in a web interface.
 
-**Agentic coding:** AI works with your existing code. It reads your project, understands context, makes changes across files, and can run commands.
+**Agentic coding:** AI agents work in a real project. They read files, make changes across them, run commands, open a browser to check their work, and keep going for long stretches without you.
 
-The agent is more like a collaborator than a generator.
+The agent is more like a team of collaborators than a generator. Since mid-2026 the best models stay on track for hours, so you can hand over whole features (or whole apps) and spend your time directing and verifying.
 
 ## How Agents Work
 
@@ -27,7 +27,7 @@ Agent plans approach
 Agent makes changes
      │
      ▼
-Agent tests/validates (optional)
+Agent tests/validates its own work
      │
      ▼
 You review and approve
@@ -46,7 +46,9 @@ Repeat or commit
 | **Delete files** | Remove unnecessary code |
 | **Run commands** | Execute tests, builds, etc. |
 | **Search code** | Find relevant files and patterns |
-| **Web access** | Look up documentation (some agents) |
+| **Web access** | Look up documentation and research |
+| **Use a browser** | Open your app, click through it, fix what looks wrong |
+| **Start subagents** | Split work into parallel tasks |
 
 ### What Agents Need
 
@@ -55,7 +57,9 @@ Repeat or commit
 Context sources:
 - Files it reads
 - Instructions you give (CLAUDE.md, AGENTS.md)
-- Conversation history
+- Conversation history (talk a lot; voice-to-text helps)
+- Screenshots, transcripts, voice notes, data files you add
+- Skills (see [Skills](../skills-table.md))
 - Project structure
 
 ## Setting Up for Success
@@ -150,10 +154,12 @@ You can also specify coding standards:
 
 | Task | Why It's Hard |
 |------|---------------|
-| "Make it better" | Too vague |
-| Architectural decisions | Needs human judgment |
-| Complex debugging | May not have full context |
-| Security-critical code | Requires careful review |
+| "Make it better" (with no way to check) | Nothing to verify against; tell it what "better" means or how to check |
+| Taste and vision | Models get to "decent", not to "exactly what I imagined" |
+| Security-critical code | Requires careful human review |
+| Anything you can't verify yourself | You can't tell if it's right |
+
+Notice the pattern: hard tasks are the ones without a way to verify the result. Give the agent that way and most "hard" tasks become doable. See [Self-Verification](./ways-of-working.md#self-verification-is-the-goal).
 
 ### Writing Good Prompts
 
@@ -311,10 +317,10 @@ In your context file:
 ### From "Write Code" to "Direct AI"
 
 Your job becomes:
-- **Architect:** Design the overall structure
-- **PM:** Break down tasks clearly
-- **Reviewer:** Evaluate AI output critically
-- **Tester:** Verify things actually work
+- **Director:** Give context, set the goal, aim high
+- **Orchestrator:** Keep several agents busy in parallel
+- **Verifier:** Make sure the agent can check its work, then check the result yourself
+- **Domain expert:** Judge whether the result is actually right
 
 ### What to Learn
 
@@ -334,4 +340,4 @@ Over time, you'll develop intuition for:
 
 ---
 
-**Next:** [Agentic Coding with Codex and Claude](./agentic-coding-web.md)
+**Next:** [Ways of Working](./ways-of-working.md) · [T3 Code](./t3-code.md) · [Codex and Claude on the Web](./agentic-coding-web.md)
