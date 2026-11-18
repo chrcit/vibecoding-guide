@@ -1,20 +1,18 @@
 ---
-// The context explainer: what an agent can see, why the window fills, what to give it, where
-// standing instructions live, and the habits that keep a thread useful. Fig. 3 and Fig. 4.
-import Article from '../../layouts/Article.astro';
-import Deeper from '../../components/level/Deeper.astro';
-import Fact from '../../components/data/Fact.astro';
-import Verified from '../../components/data/Verified.astro';
-import CopyPrompt from '../../components/site/CopyPrompt.astro';
-import Embed from '../../components/site/Embed.astro';
-import Note from '../../components/site/Note.astro';
-import Term from '../../components/site/Term.astro';
-import WindowFills from '../../components/fig/window-fills/WindowFills.astro';
-import SamePrompt from '../../components/fig/same-prompt/SamePrompt.astro';
-import { models } from '../../data/models';
-import { harnesses } from '../../data/harnesses';
-import { links } from '../../data/links';
-import { url } from '../../lib/nav';
+// The context explainer's long read: what an agent can see, why the window fills, what to give it,
+// where standing instructions live, and the habits that keep a thread useful. The figures live on
+// the board at explain/context/; the last section lists the assumptions behind the board's model.
+import Article from '../../../layouts/Article.astro';
+import Deeper from '../../../components/level/Deeper.astro';
+import Fact from '../../../components/data/Fact.astro';
+import Verified from '../../../components/data/Verified.astro';
+import CopyPrompt from '../../../components/site/CopyPrompt.astro';
+import Embed from '../../../components/site/Embed.astro';
+import Note from '../../../components/site/Note.astro';
+import Term from '../../../components/site/Term.astro';
+import { HARNESS_TOKENS, TOKENS_PER_LINE, TOOLS_PER_CONNECTOR, TOKENS_PER_TOOL, TOKENS_PER_DEFERRED_TOOL, SKILL_BODY_TOKENS, FILE_TOKENS, TURNS_PER_HOUR, MESSAGE_TOKENS, RESULT_TOKENS, SUMMARY_TOKENS, DEFAULT_COMPACT_SHARE } from '../../../components/fig/context-lab/model';
+import { links } from '../../../data/links';
+import { url } from '../../../lib/nav';
 
 const headings = [
   { depth: 2, slug: 'what-the-agent-can-see', text: 'What the agent can see' },
@@ -23,12 +21,11 @@ const headings = [
   { depth: 2, slug: 'a-prompt-you-can-copy', text: 'A prompt you can copy' },
   { depth: 2, slug: 'standing-instructions', text: 'Standing instructions live in a file' },
   { depth: 2, slug: 'habits', text: 'Habits that keep a thread useful' },
+  { depth: 2, slug: 'how-the-model-works', text: 'How the model works' },
   { depth: 2, slug: 'related', text: 'Related pages' },
 ];
 
-const windowTokens = models['claude-opus-5-5'].context.value;
-const compactAt = harnesses.claudeCode.autoCompactAt.value;
-
+const n = (x: number) => x.toLocaleString('en-GB');
 const factIds = [
   'models.claude-opus-5-5.context',
   'models.gpt-6-2-sol.context',
@@ -73,7 +70,7 @@ const agentsMd = `# Commands
 - Never edit the live site's settings; ask first`;
 ---
 <Article
-  title="Context"
+  title="Context: the long read"
   description="What an AI coding agent knows right now, why its context window fills up, what to give it, where standing instructions live, and the habits that keep a thread useful."
   section="explain"
   updated="2026-11-18"
@@ -116,20 +113,10 @@ const agentsMd = `# Commands
 
   <h2 id="the-window-fills-up">The window fills up</h2>
   <p>
-    The window is large, but it is finite, and it fills as the agent works. Step through one thread below. It starts on the
-    contact tidy, a script that cleans an exported spreadsheet, and then the same thread is asked about the club list app.
-    Watch which layers are thick.
-  </p>
-
-  <WindowFills
-    windowTokens={windowTokens}
-    compactAt={compactAt}
-    source={{ label: 'Window size and compaction point: Claude Code model configuration docs. The sizes of the steps are illustrative.', href: 'https://code.claude.com/docs/en/model-config' }}
-  />
-
-  <p>
-    In that thread your prompt is under one per cent of the window. What fills it is what the agent's tools hand back. That is why a thread can feel fine for
-    an hour and then go strange: nobody typed much, but the agent read a lot.
+    The window is large, but it is finite, and it fills as the agent works. Your prompt is usually under one per cent of
+    it. What fills it is what the agent's tools hand back: files it read, test runs, logs, printed output. That is why a
+    thread can feel fine for an hour and then go strange: nobody typed much, but the agent read a lot. The
+    <a href={url('explain/context/')}>board</a> lets you fill a window yourself and watch it compact.
   </p>
   <p>
     A fuller window costs you in three ways. Every new turn sends the whole window to the model again, so each step is slower
@@ -177,7 +164,7 @@ const agentsMd = `# Commands
     </p>
   </Deeper>
 
-  <Deeper level="engineer" title="Prompt caching and why a stable prefix keeps cost down">
+  <Deeper level="engineer" title="Prompt caching and why a stable prefix keeps cost down" id="prompt-caching">
     <p>
       Each turn re-sends the whole conversation, so without caching a long session pays for its history again and again.
       Prompt caching stores the processed start of a prompt and reuses it. <Fact id="lineup.cacheExactPrefix" show="claim" />
@@ -197,7 +184,7 @@ const agentsMd = `# Commands
     </p>
   </Deeper>
 
-  <Deeper level="engineer" title="Compaction: what survives and how to steer it">
+  <Deeper level="engineer" title="Compaction: what survives and how to steer it" id="compaction">
     <p>
       <Fact id="harnesses.claudeCode.compactionKeeps" show="claim" /> Instruction files in subdirectories and path-scoped rules
       load again only when the agent next touches a matching file, and anything that only existed in the conversation is
@@ -214,11 +201,11 @@ const agentsMd = `# Commands
 
   <h2 id="context-is-capability">Context is capability</h2>
   <p>
-    The same model, given the same sentence, does very different work depending on what else it can see. Here is the holiday
-    hours bug sent twice with the same one-line request.
+    The same model, given the same sentence, does very different work depending on what else it can see. Send "The opening
+    hours are wrong on holidays. Fix it." with nothing else, and the agent has to guess which days count as holidays, what
+    the page should say on them and how to check the fix. Each guess can be wrong. The board shows the guesses for all three
+    running examples, and which piece of context removes each one.
   </p>
-
-  <SamePrompt />
 
   <p>Most bad results trace back to something the agent could not see. Before you send a task, check it has these:</p>
   <ul>
@@ -286,7 +273,7 @@ const agentsMd = `# Commands
     </p>
   </Deeper>
 
-  <Deeper level="engineer" title="Retrieval, memory files and subagents as context firewalls">
+  <Deeper level="engineer" title="Retrieval, memory files and subagents as context firewalls" id="subagents">
     <p>
       Loading whole files is the expensive default. A better pattern is to load just in time: the agent keeps cheap pointers
       (paths, a grep, a test name) and reads the slice it needs when it needs it. Point the agent at the function, not the
@@ -330,6 +317,28 @@ const agentsMd = `# Commands
   <Note title="Before a long run">
     <Fact id="harnesses.claudeCode.bestPractice" show="claim" /> Most of that is context: it is what you put in the prompt and the instruction file before you leave it alone.
   </Note>
+
+  <h2 id="how-the-model-works">How the model works</h2>
+  <p>
+    The board's window lab is a model, not a measurement. Window sizes, the compaction point, prices, the size of a skill
+    description, the skill listing budget and the number of files re-read after compaction come from the sources listed at
+    the foot of the board. Everything else is an assumption, sized the way sessions tend to run, and set here so you can
+    check it:
+  </p>
+  <ul>
+    <li>The harness's own system prompt and built-in tools: {n(HARNESS_TOKENS)} tokens.</li>
+    <li>One line of an instruction file: {TOKENS_PER_LINE} tokens.</li>
+    <li>A connector offers {TOOLS_PER_CONNECTOR} tools. A tool definition loaded up front costs {n(TOKENS_PER_TOOL)} tokens; a deferred one, only its name and a share of the server's instructions, {TOKENS_PER_DEFERRED_TOOL}.</li>
+    <li>A skill loaded in full: {n(SKILL_BODY_TOKENS)} tokens. A file read in full: {n(FILE_TOKENS)} tokens, about 300 lines of code.</li>
+    <li>An hour of steady work is {TURNS_PER_HOUR} turns. Each turn adds {n(MESSAGE_TOKENS)} tokens of messages, plus tool results of {n(RESULT_TOKENS.trimmed)} tokens when output is trimmed, {n(RESULT_TOKENS.typical)} when typical and {n(RESULT_TOKENS.whole)} when whole logs come back.</li>
+    <li>A compaction leaves a summary of {n(SUMMARY_TOKENS)} tokens. In Claude Code the most recent files are read again; for Codex the model keeps only the summary.</li>
+    <li>Codex's compaction point is not in the sources, so the model uses Claude Code's share of the window, {Math.round(DEFAULT_COMPACT_SHARE * 1000) / 10}%.</li>
+    <li>The agent reads its files and loads its skills at the start, then works turn by turn. The cost of a turn assumes everything but that turn's new tokens is read from the cache.</li>
+  </ul>
+  <p>
+    The other tiles use the same sizes. The same-request examples are written to show the kind of guess an agent makes, not
+    recorded from a run.
+  </p>
 
   <h2 id="related">Related pages</h2>
   <ul>

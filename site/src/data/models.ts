@@ -24,6 +24,8 @@ export interface Model {
   links: ModelLinks;
   released?: Fact<string>;
   context?: Fact<number>;
+  /** The window the harness uses by default, where it is smaller than the model's own. */
+  harnessContext?: Fact<number>;
   maxOutput?: Fact<number>;
   /** Per million tokens, standard tier. */
   price?: {
@@ -185,6 +187,7 @@ export const models = {
     links: { docs: OPENAI_MODELS },
     released: unverified('2026-11-17', 'GPT-6.2 Astra was released on 17 November 2026.', OPENAI_MODELS, 'The OpenAI models page no longer shows release dates. Artificial Analysis covered the release on this date.', { unit: 'date' }),
     context: fact(1_000_000, 'GPT-6.2 Astra supports a context window of up to 1M tokens; Codex uses 272,000 by default.', OPENAI_MODELS, { unit: 'tokens' }),
+    harnessContext: fact(272_000, 'Codex runs GPT-6.2 Astra with a 272,000-token context window by default.', OPENAI_MODELS, { unit: 'tokens', note: 'Split out of the context claim above, same page and date.' }),
     price: {
       input: fact(8, 'GPT-6.2 Astra costs $8 per million input tokens (standard tier, up to 272K input tokens).', OPENAI_PRICING, { unit: 'usd' }),
       output: fact(40, 'GPT-6.2 Astra costs $40 per million output tokens (standard tier, up to 272K input tokens).', OPENAI_PRICING, { unit: 'usd' }),
@@ -201,6 +204,7 @@ export const models = {
     links: { docs: OPENAI_MODELS },
     released: unverified('2026-11-17', 'GPT-6.2 Sol was released on 17 November 2026.', OPENAI_MODELS, 'The OpenAI models page no longer shows release dates.', { unit: 'date' }),
     context: fact(1_000_000, 'GPT-6.2 Sol supports a context window of up to 1M tokens; Codex uses 500,000 by default.', OPENAI_MODELS, { unit: 'tokens' }),
+    harnessContext: fact(500_000, 'Codex runs GPT-6.2 Sol with a 500,000-token context window by default.', OPENAI_MODELS, { unit: 'tokens', note: 'Split out of the context claim above, same page and date.' }),
     price: {
       input: fact(2, 'GPT-6.2 Sol costs $2 per million input tokens.', OPENAI_PRICING, { unit: 'usd' }),
       output: fact(10, 'GPT-6.2 Sol costs $10 per million output tokens.', OPENAI_PRICING, { unit: 'usd' }),

@@ -1,0 +1,78 @@
+---
+// The context board: a window the reader fills (Fig. 3), the same request with and without
+// context (Fig. 4), and tiles on instruction files, fresh threads, caching, compaction and
+// subagents. The long read is at explain/context/read/.
+import Board from '../../../layouts/Board.astro';
+import Tile from '../../../components/board/Tile.astro';
+import Explain from '../../../components/board/Explain.astro';
+import Verified from '../../../components/data/Verified.astro';
+import ContextLab from '../../../components/fig/context-lab/ContextLab.astro';
+import { DEFAULT_COMPACT_SHARE, type Facts, type ModelInfo } from '../../../components/fig/context-lab/model';
+import { fact } from '../../../lib/facts';
+import { url } from '../../../lib/nav';
+
+const READ = 'explain/context/read/';
+const v = (id: string) => fact(id).value as number;
+
+const compactAt = v('harnesses.claudeCode.autoCompactAt');
+const claude = (id: string, name: string): ModelInfo => ({
+  id,
+  name,
+  window: v(`models.${id}.context`),
+  compactAt,
+  claudeCode: true,
+  input: v(`models.${id}.price.input`),
+  cacheRead: v(`models.${id}.price.cacheRead`),
+});
+const codex = (id: string, name: string): ModelInfo => {
+  const window = v(`models.${id}.harnessContext`);
+  return { id, name, window, compactAt: Math.round(window * DEFAULT_COMPACT_SHARE), claudeCode: false, input: v(`models.${id}.price.input`) };
+};
+const haiku = claude('claude-haiku-5-5', 'Haiku 5.5');
+haiku.longAbove = v('models.claude-haiku-5-5.price.longPrompt.threshold');
+haiku.longInput = v('models.claude-haiku-5-5.price.longPrompt.input');
+
+const facts: Facts = {
+  models: [
+    claude('claude-opus-5-5', 'Opus 5.5'),
+    claude('claude-sonnet-5-5', 'Sonnet 5.5'),
+    haiku,
+    claude('claude-fable-5-2', 'Fable 5.2'),
+    codex('gpt-6-2-sol', 'GPT-6.2 Sol in Codex'),
+    codex('gpt-6-2-astra', 'GPT-6.2 Astra in Codex'),
+  ],
+  skillMeta: v('skillFacts.specMetadataTokens'),
+  skillBudget: v('skillFacts.claudeCodeListing') / 100,
+  reread: v('harnesses.claudeCode.compactionReread'),
+  lineAdvice: v('harnesses.claudeCode.claudeMdLines'),
+};
+
+const labSide = {
+  harness: url(READ + '#what-the-agent-can-see'),
+  file: url(READ + '#standing-instructions'),
+  tools: url('explain/connectors/'),
+  skills: url('explain/skills/'),
+  loaded: url('explain/skills/'),
+  summary: url(READ + '#compaction'),
+  results: url(READ + '#the-window-fills-up'),
+  compact: url(READ + '#compaction'),
+};
+
+const factIds = [
+  'harnesses.claudeCode.autoCompactAt',
+  'harnesses.claudeCode.compactionReread',
+  'harnesses.claudeCode.claudeMdLines',
+  'skillFacts.specMetadataTokens',
+  'skillFacts.claudeCodeListing',
+  ...facts.models.flatMap((m) => [m.claudeCode ? `models.${m.id}.context` : `models.${m.id}.harnessContext`, `models.${m.id}.price.input`]),
+  ...facts.models.filter((m) => m.cacheRead !== undefined).map((m) => `models.${m.id}.price.cacheRead`),
+];
+---
+<Board title="Context" description="What an AI coding agent can see: fill a context window, watch it compact, and see what the agent guesses when it is not told." section="explain">
+  <Tile title="Everything the agent knows sits in one window" span={12} side={READ}>
+    <ContextLab facts={facts} side={labSide} />
+    <Fragment slot="foot"><Explain to={READ + '#how-the-model-works'}>Token sizes are modelled</Explain></Fragment>
+  </Tile>
+
+  <Verified slot="foot" ids={factIds} />
+</Board>
