@@ -102,12 +102,6 @@ export const t3code = {
     usage: fact('mod+u', 'mod+u opens the Usage page.', doc('usage')),
     palette: fact('mod+k', 'mod+k opens the command palette.', doc('source-control')),
   },
-  handoffCap: fact(16000, 'A handoff starts with a history allowance of 16,000 tokens by default; server operators can set it between 1,024 and 64,000.', doc('portable-handoffs'), { unit: 'tokens' }),
-  handoffLeavesOut: fact(
-    ['reasoning', 'tool-call state', 'attachments'],
-    "A handoff does not copy the outgoing provider's reasoning, tool-call state or attachments. The new agent can read omitted history with T3 Code's thread-reading tool.",
-    doc('portable-handoffs'),
-  ),
   delegate: fact(
     'delegate_task',
     'An agent in a thread can hand a task to another agent with delegate_task, including to a linked machine, and its thread wakes with the result. Typing @ and a model name, such as @opus, names that model for the agent without changing the thread\'s model.',
