@@ -50,6 +50,41 @@ export const harnesses = {
       CC('best-practices'),
     ),
     enterpriseCost: fact(13, 'Across enterprise deployments Claude Code averages about $13 per developer per active day and $150 to $250 per month.', CC('costs'), { unit: 'usd' }),
+    checkToRun: fact(
+      'Give Claude something it can run that comes back pass or fail.',
+      'Anthropic\'s best practices: "Give Claude something it can run that comes back pass or fail. Once it has that, it can keep going on its own and you don\'t have to watch." A test file, a build\'s exit code, a linter, a script that diffs output against a fixture or a browser screenshot all count.',
+      CC('best-practices'),
+    ),
+    askForEvidence: fact(
+      'ask for evidence',
+      'Anthropic\'s best practices: ask Claude for evidence, the command it ran and its output or the screenshot. "All tests pass" on its own tells you very little.',
+      CC('best-practices'),
+    ),
+    codeReview: fact(
+      '/code-review',
+      'In a terminal session, /code-review reviews the changes on your branch in a background subagent with its own context window, which never saw the conversation that produced the code.',
+      CC('code-review-local'),
+    ),
+    reviewerAlwaysFinds: fact(
+      'skip style',
+      'Anthropic\'s best practices warn that a reviewer asked to find problems will always find something, and suggest telling it to report gaps that affect correctness and skip style.',
+      CC('best-practices'),
+    ),
+    sameModelReviewer: fact(
+      'a fresh pair of eyes',
+      'By default a Claude Code subagent is the same model (or a smaller one) on the same task: you get a fresh pair of eyes out of it, not a smarter answer. A fresh reviewer helps because it has not seen your reasoning.',
+      CC('best-practices'),
+    ),
+    permissionModes: fact(
+      ['default (Manual)', 'acceptEdits', 'plan', 'auto', 'dontAsk', 'bypassPermissions'],
+      'Claude Code has six permission modes: Manual (default), acceptEdits, plan, auto, dontAsk and bypassPermissions. In Manual it asks before most edits, shell commands and network access; bypassPermissions is meant for isolated containers and VMs only.',
+      CC('permission-modes'),
+    ),
+    autoModeDefault: fact(
+      'auto mode',
+      'New interactive terminal and VS Code sessions of Claude Code start in auto mode, where a separate classifier model checks actions before they run. Deny rules apply in every mode.',
+      CC('best-practices'),
+    ),
   },
   codex: {
     openSource: fact('Apache-2.0', 'The Codex CLI is open source under Apache-2.0. The models behind it are proprietary.', 'https://github.com/openai/codex'),
@@ -91,6 +126,11 @@ export const harnesses = {
       'learn.chatgpt.com/docs',
       'The Codex docs moved: developers.openai.com/codex/* now redirects (308) to learn.chatgpt.com/docs/*.',
       CX('pricing'),
+    ),
+    approvals: fact(
+      ['on-request', 'never'],
+      'Codex approval policies are on-request (works inside the sandbox and asks before going beyond it) and never (does not stop for approval). workspace-write is the default low-friction sandbox mode for local work.',
+      CX('sandboxing'),
     ),
   },
   t3code: {

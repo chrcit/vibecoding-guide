@@ -1,0 +1,23 @@
+---
+// Review page for the verification explainer's figures (Fig. 13, 14 and 15). Routed at
+// /dev/fig-verification/ in `pnpm dev`. None of them shows sourced data: the examples are fictional.
+import Base from '../layouts/Base.astro';
+import ThreeJudges from '../components/fig/three-judges/ThreeJudges.astro';
+import NoiseBias from '../components/fig/noise-bias/NoiseBias.astro';
+import SummaryDiff from '../components/fig/summary-diff/SummaryDiff.astro';
+---
+<Base title="Figures: verification" description="Development-only review page for Fig. 13, 14 and 15." noindex>
+  <div class="fig-review">
+    <h1>Verification figures</h1>
+    <p>Fig. 13, 14 and 15 in their frames. Try ?level=plain and ?level=technical for Fig. 15’s readout.</p>
+    <ThreeJudges />
+    <NoiseBias />
+    <SummaryDiff />
+  </div>
+</Base>
+
+<style>
+  .fig-review { max-width: 46rem; margin: 2rem auto 4rem; padding: 0 var(--gutter); }
+  h1 { margin: 0 0 0.5rem; }
+  p { color: var(--muted); margin: 0; }
+</style>

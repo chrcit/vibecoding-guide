@@ -1,0 +1,78 @@
+---
+/*
+ * Fig. 15, "The summary and the diff".
+ *
+ * Idea: the summary is the agent's account of its work; the diff is the work, and it can hold a
+ * change the summary leaves out. Elements: a note card on a stand (the summary), a box of changed
+ * lines with a lid (the diff), three strips inside, one lit (the change nobody asked for).
+ * States: summary (lid on) and diff (lid off). The diff readout is in words for plain readers and
+ * names files for technical and engineer readers; it follows the `acg:level` event.
+ * Data: none; the fictional holiday hours fix. Interaction: one two-way toggle. Alt text: below.
+ */
+import Figure from '../Figure.astro';
+import { drawSummaryDiff } from './draw';
+import { describe } from './model';
+
+interface Props { n?: number | string }
+const { n = 15 } = Astro.props;
+const { svg, labels, motion } = drawSummaryDiff();
+---
+<div class="fig-sd" data-fig-summary-diff data-state="summary" data-motion={JSON.stringify(motion)}>
+  <Figure
+    n={n}
+    title="The summary and the diff"
+    hint="Switch between what the agent says it did and what it changed."
+    alt="A note card on a stand, with two lines of writing: the agent’s summary of its fix. Beside it, a closed box: the diff, what the change really contains."
+    labels={labels}
+  >
+    <Fragment set:html={svg} />
+    <div slot="control" class="seg" role="group" aria-label="Show">
+      <button type="button" data-view="summary" aria-pressed="true">The summary</button>
+      <button type="button" data-view="diff" aria-pressed="false">The diff</button>
+    </div>
+    <Fragment slot="readout">{describe('summary', 'plain')}</Fragment>
+    <Fragment slot="caption">
+      The summary is written by the same agent that made the change, so it describes what the agent meant to do. The diff is what it did. Here the extra change also slips past the tests, because no test covers Boxing Day.
+    </Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .fig-sd [data-label='extra'] { transition: opacity var(--fig-ms, 400ms) ease; }
+  .fig-sd[data-state='summary'] .fig-drawing [data-label='extra'] { opacity: 0; }
+  .fig-sd .seg button { min-height: 40px; }
+</style>
+
+<script>
+  import { describe, type View } from './model';
+  import { getLevel, onLevel } from '../../../lib/levels';
+
+  type Flat = [number, number];
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const tr = ([x, y]: Flat) => `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fig-summary-diff]')) {
+    const m: { lift: Flat } = JSON.parse(root.dataset.motion!);
+    const lid = root.querySelector<SVGGElement>('[data-lid]')!;
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-view]')];
+    const readout = root.querySelector<HTMLElement>('[data-fig-readout]')!;
+    const labels = [...root.querySelectorAll<HTMLElement>('[data-label]')];
+    let view: View = 'summary';
+
+    root.querySelector<HTMLElement>('[data-fig-control]')!.hidden = false;
+
+    function show() {
+      root.style.setProperty('--fig-ms', reduced.matches ? '0ms' : '');
+      root.dataset.state = view;
+      lid.style.transform = view === 'diff' ? tr(m.lift) : 'translate(0px, 0px)';
+      lid.style.opacity = view === 'diff' ? '0.35' : '1';
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.view === view));
+      for (const l of labels) l.toggleAttribute('data-active', view === 'summary' ? l.dataset.label === 'summary' : l.dataset.label !== 'summary');
+      readout.textContent = describe(view, getLevel());
+    }
+
+    for (const b of buttons) b.addEventListener('click', () => { view = b.dataset.view as View; show(); });
+    onLevel(() => show());
+    show();
+  }
+</script>

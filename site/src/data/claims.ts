@@ -60,6 +60,31 @@ export const claims = {
       'https://arxiv.org/abs/1608.07323',
       { unit: 'multiplier' },
     ),
+    judgeBiases: fact(
+      'position, verbosity, self-enhancement',
+      'Zheng et al. (2023) found that models used as judges show position bias, verbosity bias and self-enhancement bias, while a strong judge still agreed with human preferences over 80% of the time.',
+      'https://arxiv.org/abs/2306.05685',
+    ),
+    selfPreference: fact(
+      'self-preference',
+      'Panickssery et al. (2024) found that a model used as an evaluator scores its own outputs higher than others\' that human annotators judge equal, and the better it recognises its own text the stronger the bias.',
+      'https://arxiv.org/abs/2404.13076',
+    ),
+    sycophancy: fact(
+      'sycophancy',
+      'Sharma et al. (2023) found sycophancy in five leading AI assistants across four kinds of task, and that people and preference models sometimes prefer a convincing sycophantic answer over a correct one.',
+      'https://arxiv.org/abs/2310.13548',
+    ),
+    selfCorrection: fact(
+      'needs external feedback',
+      'Huang et al. (2023) found that models struggle to correct their own reasoning without external feedback, and sometimes do worse after trying.',
+      'https://arxiv.org/abs/2310.01798',
+    ),
+    selfConsistency: fact(
+      'sample several, take the most consistent',
+      'Wang et al. (2022) showed that sampling several reasoning paths and taking the answer most of them agree on (self-consistency) improves accuracy over a single greedy answer.',
+      'https://arxiv.org/abs/2203.11171',
+    ),
   },
   hardware: {
     unifiedMemory: fact(
