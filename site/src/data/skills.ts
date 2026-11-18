@@ -43,7 +43,7 @@ export const skills = {
     install: 'npx skills add mattpocock/skills',
     licence: fact('MIT', "grilling is in the same MIT-licensed collection as grill-me.", 'https://github.com/mattpocock/skills'),
     what: fact(
-      'the interview routine the agent can call',
+      'is the interview routine the agent can call',
       'grilling is the model-invoked interview routine behind grill-me and several other skills in the same collection: the agent can reach for it on its own.',
       'https://github.com/mattpocock/skills',
     ),
@@ -53,6 +53,7 @@ export const skills = {
     author: 'robonuggets',
     authorUrl: 'https://github.com/robonuggets',
     url: 'https://github.com/robonuggets/be-ambitious',
+    install: 'git clone https://github.com/robonuggets/be-ambitious ~/.claude/skills/be-ambitious',
     licence: fact('MIT', 'The robonuggets be-ambitious skill is MIT-licensed.', 'https://github.com/robonuggets/be-ambitious'),
     what: fact(
       'turns the article into steps',
@@ -94,7 +95,7 @@ export const skills = {
     install: 'npx skills@latest add emilkowalski/skills',
     licence: fact('MIT', "Emil Kowalski's skills collection is MIT-licensed.", 'https://github.com/emilkowalski/skills'),
     what: fact(
-      'build, review and remove interface animation',
+      'is a set of skills to build, review and remove interface animation',
       'emilkowalski/skills holds animate, review-animations, improve-animations, remove-animations, choreograph, gestures and other skills for interface motion and design.',
       'https://github.com/emilkowalski/skills',
     ),
@@ -215,4 +216,15 @@ export const skillFacts = {
     status: 'observation',
     note: 'Theo, "These 3 skills changed my life", 26 October 2026, at 4:05.',
   } satisfies Fact<string>,
+  claudeCodePrecedence: fact(
+    'enterprise, personal, project',
+    'When two Claude Code skills share a name, enterprise wins over personal and personal over project.',
+    'https://code.claude.com/docs/en/skills',
+  ),
+  codexDuplicates: fact('not merged', 'If two Codex skills share a name, Codex does not merge them, and both can appear in skill selectors.', 'https://learn.chatgpt.com/docs/build-skills'),
+  claudeCodeShellPolicy: fact(
+    'disableSkillShellExecution',
+    'Setting disableSkillShellExecution to true in Claude Code replaces the shell commands a skill injects with a notice; it is most useful in managed settings, where users cannot override it.',
+    'https://code.claude.com/docs/en/skills',
+  ),
 } as const;
