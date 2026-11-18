@@ -50,6 +50,46 @@ export const harnesses = {
       CC('best-practices'),
     ),
     enterpriseCost: fact(13, 'Across enterprise deployments Claude Code averages about $13 per developer per active day and $150 to $250 per month.', CC('costs'), { unit: 'usd' }),
+    subagentFiles: fact(
+      ['.claude/agents/', '~/.claude/agents/'],
+      'Claude Code subagents are Markdown files with YAML frontmatter (name and description required) in .claude/agents/ for one project or ~/.claude/agents/ for all of them.',
+      CC('sub-agents'),
+    ),
+    subagentModel: fact(
+      ['sonnet', 'opus', 'haiku', 'fable', 'a full model ID', 'inherit'],
+      "A Claude Code subagent's model field takes sonnet, opus, haiku, fable, a full model ID or inherit; by default a subagent runs on the same model as the conversation that starts it.",
+      CC('sub-agents'),
+    ),
+    subagentFreshContext: fact(
+      'fresh context, summary back',
+      "Each Claude Code subagent starts with a fresh context window that does not see the conversation history, the skills already invoked or the files already read, and returns only a summary. A fork is the exception: it inherits the parent conversation.",
+      CC('sub-agents'),
+    ),
+    subagentBackground: fact(
+      'background by default',
+      'With nothing configured, a subagent that Claude Code spawns from the main conversation runs in the background, and its result arrives as a notification in a later turn. Foreground subagents block the main conversation until they finish.',
+      CC('sub-agents'),
+    ),
+    subagentWorktree: fact(
+      'isolation: worktree',
+      'Setting isolation: worktree runs a Claude Code subagent in a temporary Git worktree, an isolated copy of the repository, which is removed if the subagent changes nothing.',
+      CC('sub-agents'),
+    ),
+    subagentAttribution: fact(
+      '/usage',
+      'On a Claude plan, /usage in Claude Code shows what share of recent usage went to skills, subagents, plugins and each MCP server.',
+      CC('costs'),
+    ),
+    smallSubagentModel: fact(
+      'model: haiku',
+      "Anthropic's cost advice for Claude Code: for simple subagent tasks, set model: haiku in the subagent's configuration.",
+      CC('costs'),
+    ),
+    agentTeamSize: fact(
+      'proportional to team size',
+      'Each agent-team teammate runs its own context window, so token use is roughly proportional to team size, and a teammate keeps using tokens until it exits.',
+      CC('costs'),
+    ),
   },
   codex: {
     openSource: fact('Apache-2.0', 'The Codex CLI is open source under Apache-2.0. The models behind it are proprietary.', 'https://github.com/openai/codex'),
@@ -91,6 +131,26 @@ export const harnesses = {
       'learn.chatgpt.com/docs',
       'The Codex docs moved: developers.openai.com/codex/* now redirects (308) to learn.chatgpt.com/docs/*.',
       CX('pricing'),
+    ),
+    subagentFiles: fact(
+      ['~/.codex/agents/', '.codex/agents/'],
+      'Codex custom agents are TOML files in ~/.codex/agents/ (personal) or .codex/agents/ (project), each defining name, description and developer_instructions.',
+      CX('agent-configuration/subagents'),
+    ),
+    subagentModel: fact(
+      'agents.default_subagent_model',
+      "Codex sets the default model for spawned agents with agents.default_subagent_model; a custom agent file's own model field takes precedence.",
+      CX('agent-configuration/subagents'),
+    ),
+    maxThreads: fact(
+      'agents.max_concurrent_threads_per_session',
+      'Codex caps concurrently open spawned-agent threads with agents.max_concurrent_threads_per_session (legacy alias agents.max_threads); left unset, Codex chooses the default.',
+      CX('agent-configuration/subagents'),
+    ),
+    subagentResults: fact(
+      'consolidated response',
+      'When several Codex subagents run, Codex waits until all requested results are in and returns a consolidated response in the main thread.',
+      CX('agent-configuration/subagents'),
     ),
   },
   t3code: {

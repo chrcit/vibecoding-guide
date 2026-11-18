@@ -1,0 +1,19 @@
+---
+// Review page for the orchestration explainer's figures. Routed at /dev/fig-orchestration/ in
+// `pnpm dev`. Fig. 12 takes no data: its costs are relative and in words.
+import Base from '../layouts/Base.astro';
+import TeamShapes from '../components/fig/team-shapes/TeamShapes.astro';
+---
+<Base title="Figures: orchestration" description="Development-only review page for the orchestration figures." noindex>
+  <div class="fig-review">
+    <h1>Figures: orchestration</h1>
+    <p>Fig. 12 as it appears on /explain/orchestration/. It shows no prices or limits.</p>
+    <TeamShapes />
+  </div>
+</Base>
+
+<style>
+  .fig-review { max-width: 46rem; margin: 2rem auto 4rem; padding: 0 var(--gutter); }
+  h1 { margin: 0 0 0.5rem; }
+  p { color: var(--muted); margin: 0; }
+</style>

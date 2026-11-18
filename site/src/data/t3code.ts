@@ -69,4 +69,15 @@ export const t3code = {
     "The T3 Code FAQ is written in Theo's voice and links one t3.gg blog post, one post on X, one YouTube video and one GitHub gist. It links no account pages.",
     doc('faq'),
   ),
+  handoffCap: fact(
+    16_000,
+    'A T3 Code handoff starts with a history allowance of 16,000 tokens by default; T3CODE_CONTEXT_HANDOFF_TOKEN_CAP changes it within 1,024 to 64,000.',
+    doc('portable-handoffs'),
+    { unit: 'tokens' },
+  ),
+  handoffLeavesOut: fact(
+    ['reasoning', 'tool-call state', 'attachments'],
+    "A T3 Code handoff keeps the selected messages in full, in order and with their roles, but leaves out the previous provider's reasoning, tool-call state and attachments. Omitted history can be fetched with T3 Code's thread-reading tool.",
+    doc('portable-handoffs'),
+  ),
 } as const;

@@ -66,6 +66,20 @@ export const estimates = {
     '$3,000–5,000',
     'A $100 Claude subscription gets "like three to five grand" of API-priced usage.',
   ),
+  'theo-2026-10-09-haiku-fanout': theo(
+    '38_6C0dkKmU',
+    '2026-10-09',
+    '22:23',
+    'under 1 minute and $0.14 against 3.5 minutes and $0.47',
+    "Theo, describing Anthropic's demo: Opus 5.5 directing ten Haiku 5.5 subagents made 86 attempts in under a minute for $0.14, where Opus 5.5 alone made 25 attempts in three and a half minutes for $0.47.",
+  ),
+  'theo-2026-11-16-council-runaway': theo(
+    'TWoS5Nmyoc8',
+    '2026-11-16',
+    '21:19',
+    '50+ loops, 600+ subagents',
+    'In a council of reviewing models that would not agree, the coding agent kept going for 50 or more loops; one thread spun up more than 600 subagents over at least 20 review rounds and grew a planned 1,000-line change past 20,000 lines.',
+  ),
 } satisfies Record<string, Estimate>;
 
 /** Other attributed experience: public cases and the first version's own readings. */
