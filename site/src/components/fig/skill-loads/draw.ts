@@ -131,13 +131,10 @@ export function drawSkillLoads(uid: string) {
   return {
     svg: k.svg(W, H, body),
     labels: [
-      // Each name sits just above its own card, its left edge over the card's left edge, so the
-      // staggered row of names never covers a neighbouring card.
-      ...CARDS.map((c, i) => {
-        const [x, y] = k.iso([cardX(i) - CARD.w / 2, CARD_Y + CARD.d / 2, RACK_H + CARD.h], P);
-        const half = c.name.length * 4.2 + 6;
-        return { name: c.name, id: c.id, at: { left: `${(((x + half) / W) * 100).toFixed(2)}%`, top: `${(((y - 14) / H) * 100).toFixed(2)}%` } };
-      }),
+      // Anchored at each card's top left corner. SkillLoads.astro sets the names above and to the
+      // right of it on wide frames and centres the numbered keys on the card on narrow ones, so the
+      // staggered names never cover a neighbouring card.
+      ...CARDS.map((c, i) => ({ name: c.name, id: c.id, at: at([cardX(i) - CARD.w / 2, CARD_Y + CARD.d / 2, RACK_H + CARD.h]) })),
       { name: 'Context', id: 'context', at: at([GLASS.x + 22, GLASS.y + GLASS.d + 12, 0]) },
       { name: 'Your request', id: 'request', at: at([STAND.x + STAND.w + 6, STAND.y + STAND.d + 6, 0]) },
     ],

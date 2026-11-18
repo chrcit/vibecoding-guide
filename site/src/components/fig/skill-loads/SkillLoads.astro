@@ -43,6 +43,11 @@ const last = STEPS.length - 1;
 
 <style is:global>
   .fig-skill-count { color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+  /* The four card names: the anchor is the card's top left corner. */
+  .fig-skill-loads .fig-drawing > .fig-label:nth-of-type(-n + 4) { transform: translate(-0.35rem, -135%); }
+  @container (max-width: 34rem) {
+    .fig-skill-loads .fig-drawing > .fig-label:nth-of-type(-n + 4) { transform: translate(-25%, -110%); }
+  }
 </style>
 
 <script>
