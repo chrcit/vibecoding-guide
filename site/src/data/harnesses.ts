@@ -131,6 +131,7 @@ export const harnesses = {
     autoModeDefault: fact(
       'auto mode',
       'New interactive terminal and VS Code sessions of Claude Code start in auto mode, where a separate classifier model checks actions before they run. Deny rules apply in every mode.',
+    ),
     startupContext: fact(
       ['CLAUDE.md', 'auto memory', 'MCP tool names', 'skill descriptions'],
       'Before you type anything, Claude Code loads CLAUDE.md (or AGENTS.md), auto memory, MCP tool names and skill descriptions into the context window.',
