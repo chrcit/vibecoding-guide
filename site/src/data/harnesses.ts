@@ -97,6 +97,7 @@ export const harnesses = {
       'proportional to team size',
       'Each agent-team teammate runs its own context window, so token use is roughly proportional to team size, and a teammate keeps using tokens until it exits.',
       CC('costs'),
+    ),
     checkToRun: fact(
       'Give Claude something it can run that comes back pass or fail.',
       'Anthropic\'s best practices: "Give Claude something it can run that comes back pass or fail. Once it has that, it can keep going on its own and you don\'t have to watch." A test file, a build\'s exit code, a linter, a script that diffs output against a fixture or a browser screenshot all count.',
@@ -193,6 +194,7 @@ export const harnesses = {
       'consolidated response',
       'When several Codex subagents run, Codex waits until all requested results are in and returns a consolidated response in the main thread.',
       CX('agent-configuration/subagents'),
+    ),
     approvals: fact(
       ['on-request', 'never'],
       'Codex approval policies are on-request (works inside the sandbox and asks before going beyond it) and never (does not stop for approval). workspace-write is the default low-friction sandbox mode for local work.',
