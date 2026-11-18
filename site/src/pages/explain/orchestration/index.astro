@@ -1,0 +1,54 @@
+---
+// The orchestration board: one job run six ways in the lab (Fig. 30), with smaller tiles around it.
+// The long read is at ./read.astro. See site/AGENTS.md, "Boards".
+import Board from '../../../layouts/Board.astro';
+import Tile from '../../../components/board/Tile.astro';
+import Explain from '../../../components/board/Explain.astro';
+import Verified from '../../../components/data/Verified.astro';
+import TeamLab from '../../../components/fig/team-lab/TeamLab.astro';
+import { PRESETS } from '../../../components/fig/team-lab/model';
+
+const READ = 'explain/orchestration/read/';
+// TODO wiki: orchestration, parallel-work, subagent, review, worktree. Until the wiki is merged
+// these open sections of the long read.
+const roles = {
+  you: `${READ}#several-threads`,
+  planner: `${READ}#way-plan`,
+  lead: `${READ}#subagents`,
+  builders: `${READ}#worktrees`,
+  reviewer: `${READ}#across-providers`,
+};
+const ways = {
+  solo: `${READ}#way-solo`,
+  review: `${READ}#way-review`,
+  plan: `${READ}#way-plan`,
+  parallel: `${READ}#way-parallel`,
+  lead: `${READ}#way-lead`,
+  best: `${READ}#way-best`,
+};
+
+const factIds: string[] = ['harnesses.claudeCode.subagents'];
+---
+<Board
+  title="Orchestration"
+  description="One job run six ways by a team of agents and one person: who works, who waits for you, who is blocked, and what it costs."
+  section="explain"
+>
+  <Tile title="One job, six ways to run the team" span={12} side={READ} id="lab">
+    <div slot="tools" class="pick lab-presets" role="group" aria-label="Presets">
+      {PRESETS.map((p) => <button type="button" data-lab-preset={p.id} aria-pressed="false">{p.name}</button>)}
+    </div>
+    <TeamLab roles={roles} ways={ways} />
+  </Tile>
+
+  <Verified slot="foot" ids={factIds} />
+</Board>
+
+<style>
+  .lab-presets { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; }
+  .lab-presets button { min-height: 2.25rem; }
+  @media (max-width: 760px) {
+    :global(#lab .tile-head) { flex-wrap: wrap; padding-bottom: 0.5rem; }
+    :global(#lab .tile-tools) { order: 3; flex-basis: 100%; }
+  }
+</style>
