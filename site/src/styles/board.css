@@ -48,9 +48,9 @@
 }
 /* Docked side view: the page is narrower, so fall back one step. */
 @media (min-width: 1180px) and (max-width: 1700px) {
-  html[data-side='open'] .tile { grid-column: span 6; }
-  html[data-side='open'] .tile[data-span='7'], html[data-side='open'] .tile[data-span='8'],
-  html[data-side='open'] .tile[data-span='9'], html[data-side='open'] .tile[data-span='12'] { grid-column: span 12; }
+  html[data-sideview='open'] .tile { grid-column: span 6; }
+  html[data-sideview='open'] .tile[data-span='7'], html[data-sideview='open'] .tile[data-span='8'],
+  html[data-sideview='open'] .tile[data-span='9'], html[data-sideview='open'] .tile[data-span='12'] { grid-column: span 12; }
 }
 .tile-head {
   display: flex; align-items: center; gap: var(--space-2);
