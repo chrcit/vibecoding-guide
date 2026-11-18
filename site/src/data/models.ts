@@ -226,4 +226,11 @@ export const lineup = {
     'Codex offers reasoning effort low (called light in the app), medium, high, extra high, and on some models max and ultra. Ultra uses subagents.',
     OPENAI_MODELS,
   ),
+  cacheDefaultTtl: fact('5 minutes', 'On the Claude API a prompt cache entry lives 5 minutes by default, refreshed free each time it is used; a 1-hour cache costs extra.', 'https://platform.claude.com/docs/en/build-with-claude/prompt-caching'),
+  cacheWriteMultiplier: fact(1.25, 'Writing to the 5-minute prompt cache costs 1.25 times the base input price on Claude models.', 'https://platform.claude.com/docs/en/build-with-claude/prompt-caching', { unit: 'multiplier' }),
+  cacheExactPrefix: fact(
+    'tools, system, messages',
+    'A Claude prompt cache hit needs the prompt identical up to the cache point, in the order tools, system prompt, messages; any change earlier in that order misses the cache.',
+    'https://platform.claude.com/docs/en/build-with-claude/prompt-caching',
+  ),
 } as const;

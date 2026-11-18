@@ -60,6 +60,11 @@ export const claims = {
       'https://arxiv.org/abs/1608.07323',
       { unit: 'multiplier' },
     ),
+    contextRot: fact(
+      'context rot',
+      'Anthropic (29 September 2025): as the number of tokens in the context window grows, a model\'s ability to recall information from it declines, which they call context rot. Context is a finite resource with diminishing returns.',
+      'https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents',
+    ),
   },
   hardware: {
     unifiedMemory: fact(

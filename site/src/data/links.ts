@@ -72,6 +72,12 @@ export const links = {
   cloudflareAccessPin: { label: 'Cloudflare Access one-time PIN', url: 'https://developers.cloudflare.com/cloudflare-one/identity/one-time-pin/', checked: C },
   cloudflareWorkersPricing: { label: 'Cloudflare Workers pricing', url: 'https://developers.cloudflare.com/workers/platform/pricing/', checked: C },
   tailscaleServe: { label: 'tailscale serve', url: 'https://tailscale.com/kb/1312/serve', checked: C },
+
+  // Context
+  claudeCodeContextWindow: { label: 'Claude Code: explore the context window', url: 'https://code.claude.com/docs/en/context-window', checked: C },
+  claudePromptCaching: { label: 'Claude prompt caching', url: 'https://platform.claude.com/docs/en/build-with-claude/prompt-caching', checked: C },
+  anthropicContextEngineering: { label: 'Effective context engineering for AI agents, Anthropic', url: 'https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents', checked: C },
+  theoOpusPrompting: { label: 'Getting the most out of Opus 5.5, Theo (25 September 2026)', url: 'https://www.youtube.com/watch?v=ejjBbaq9RmY', checked: C },
 } satisfies Record<string, Link>;
 
 /** People and projects whose work the guide uses. The sources page lists them. */
