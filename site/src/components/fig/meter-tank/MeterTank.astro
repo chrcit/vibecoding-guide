@@ -1,0 +1,93 @@
+---
+// Fig. 8, "A meter and a tank". All prices and limits arrive as props from the data layer.
+import Figure from '../Figure.astro';
+import Pane from '../Pane.astro';
+import { drawMeterTank, COINS } from './draw';
+import { stateAt, maxHours, describe, type MeterTankInputs } from './model';
+
+interface Props extends MeterTankInputs {
+  n?: number | string;
+  source?: { label: string; href?: string };
+}
+const { n = 8, source, ...inputs } = Astro.props;
+const { panes, motion } = drawMeterTank(`fig${n}`);
+const [meterLabels, tankLabels] = panes.map((p) => p.labels.map((l) => (l.id === 'tank' ? { ...l, name: `${inputs.windowHours}-hour tank` } : l)));
+const max = maxHours(inputs);
+const first = stateAt(0, inputs);
+const plan = `${inputs.currency}${inputs.planPricePerMonth}`;
+---
+<div class="fig-meter-tank" data-fig-meter-tank data-inputs={JSON.stringify(inputs)} data-motion={JSON.stringify({ ...motion, coins: COINS, max })}>
+  <Figure
+    n={n}
+    title="A meter and a tank"
+    hint="Drag the slider to add hours of steady work."
+    alt={`Two objects on plinths. On the left, a meter with a dial and an empty coin tray: the API, which bills every token. On the right, a full glass tank on a stand, fed by a pipe from a wider glass trough, the weekly allowance, with a clock beside it: a plan that refills every ${inputs.windowHours} hours.`}
+    legend={[...meterLabels!, ...tankLabels!].map((l) => l.name)}
+    source={source}
+  >
+    <div class="fig-panes">
+      <Pane labels={meterLabels}><Fragment set:html={panes[0]!.svg} /></Pane>
+      <Pane labels={tankLabels} start={meterLabels!.length + 1}><Fragment set:html={panes[1]!.svg} /></Pane>
+    </div>
+    <label slot="control" class="fig-range">
+      <span>Hours of steady work <output data-hours>0</output></span>
+      <input type="range" min="0" max={max} step="0.5" value="0" data-work />
+    </label>
+    <Fragment slot="readout">{describe(first, inputs)}</Fragment>
+    <Fragment slot="caption">
+      On the API every token is counted and billed, so the bill only ever climbs. A plan costs {plan} a month however much you use it: work drains the tank, an empty tank means waiting for the next {inputs.windowHours}-hour refill, and every refill also counts against the week.
+    </Fragment>
+  </Figure>
+</div>
+
+<script>
+  import { stateAt, describe, type MeterTankInputs } from './model';
+
+  type Flat = [number, number];
+  type Motion = { unit: Flat; tankH: number; weekH: number; coinDrop: Flat; coins: number; max: number };
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const tr = ([x, y]: Flat, by = 1) => `translate(${(x * by).toFixed(1)}px, ${(y * by).toFixed(1)}px)`;
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fig-meter-tank]')) {
+    const x: MeterTankInputs = JSON.parse(root.dataset.inputs!);
+    const m: Motion = JSON.parse(root.dataset.motion!);
+    const q = <T extends Element>(s: string) => root.querySelector<T>(s)!;
+    const input = q<HTMLInputElement>('[data-work]');
+    const hoursOut = q<HTMLOutputElement>('[data-hours]');
+    const readout = q<HTMLElement>('[data-fig-readout]');
+    const needle = q<SVGGElement>('[data-needle]');
+    const hand = q<SVGGElement>('[data-hand]');
+    const tank = q<SVGGElement>('[data-water="tank"]');
+    const week = q<SVGGElement>('[data-water="week"]');
+    const coins = [...root.querySelectorAll<SVGGElement>('[data-coin]')];
+    const maxBill = stateAt(m.max, x).bill || 1;
+    let timer = 0;
+
+    q<HTMLElement>('[data-fig-control]').hidden = false;
+
+    function show() {
+      root.style.setProperty('--fig-ms', reduced.matches ? '0ms' : '');
+      const s = stateAt(Number(input.value), x);
+      hoursOut.textContent = String(s.hours);
+      // The meter's needle turns once per tenth of the full bill; the clock's hand once per window.
+      needle.style.transform = `rotate(${-90 + (s.bill / maxBill) * 3600}deg)`;
+      hand.style.transform = `rotate(${-90 + (s.hours / x.windowHours) * 360}deg)`;
+      tank.style.transform = tr(m.unit, (1 - s.tankLeft) * m.tankH);
+      tank.style.opacity = s.tankLeft > 0.01 ? '1' : '0';
+      week.style.transform = tr(m.unit, (1 - s.weekLeft) * m.weekH);
+      week.style.opacity = s.weekLeft > 0.01 ? '1' : '0';
+      const shown = Math.ceil((s.bill / maxBill) * m.coins - 1e-9);
+      coins.forEach((c, i) => {
+        const on = i < shown;
+        c.style.opacity = on ? '1' : '0';
+        c.style.transform = on ? 'translate(0px, 0px)' : tr(m.coinDrop);
+      });
+      // Announce the words once the slider settles, not on every step of a drag.
+      clearTimeout(timer);
+      timer = window.setTimeout(() => (readout.textContent = describe(s, x)), 350);
+    }
+
+    input.addEventListener('input', show);
+    show();
+  }
+</script>

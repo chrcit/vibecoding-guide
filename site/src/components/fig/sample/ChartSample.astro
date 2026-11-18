@@ -1,0 +1,55 @@
+---
+// A reference for the flat-chart mode, shown only on the review page. Made-up numbers.
+// The pattern to copy: draw once at build time for the no-JS frame, then redraw at the drawing's
+// real pixel width so 13 px labels stay 13 px. One toggle switches the vertical scale.
+import Figure from '../Figure.astro';
+import { draw, type Point } from './chart-sample';
+
+interface Props { n?: number | string; points: Point[] }
+const { n = 'C', points } = Astro.props;
+---
+<div data-fig-chart-sample data-points={JSON.stringify(points)}>
+  <Figure
+    n={n}
+    title="Chart kit sample"
+    hint="Switch the vertical scale."
+    alt="A line chart of made-up values rising steeply from left to right, on a linear scale."
+    source={{ label: 'Made-up values for the review page' }}
+  >
+    <div data-chart set:html={draw(points, 640, 'linear')} />
+    <div slot="control" class="seg" role="group" aria-label="Vertical scale">
+      <button type="button" aria-pressed="true" data-scale="linear">Linear</button>
+      <button type="button" aria-pressed="false" data-scale="log">Log</button>
+    </div>
+    <Fragment slot="readout">Linear scale: the last points dwarf the first ones.</Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  [data-fig-chart-sample] .seg button { min-height: 40px; }
+</style>
+
+<script>
+  import { draw, type Point } from './chart-sample';
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fig-chart-sample]')) {
+    const points: Point[] = JSON.parse(root.dataset.points!);
+    const box = root.querySelector<HTMLElement>('[data-chart]')!;
+    const readout = root.querySelector<HTMLElement>('[data-fig-readout]')!;
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-scale]')];
+    let scale: 'linear' | 'log' = 'linear';
+    root.querySelector<HTMLElement>('[data-fig-control]')!.hidden = false;
+    const render = () => (box.innerHTML = draw(points, Math.round(box.clientWidth), scale));
+    for (const b of buttons) {
+      b.addEventListener('click', () => {
+        scale = b.dataset.scale as 'linear' | 'log';
+        for (const o of buttons) o.setAttribute('aria-pressed', String(o === b));
+        render();
+        readout.textContent = scale === 'log'
+          ? 'Log scale: each gridline is ten times the one below, so steady growth shows as a straight line.'
+          : 'Linear scale: the last points dwarf the first ones.';
+      });
+    }
+    new ResizeObserver(render).observe(box);
+  }
+</script>
