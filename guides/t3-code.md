@@ -4,7 +4,7 @@ T3 Code is the tool this guide is written around. It is an **agentic development
 
 - Website: [t3.codes](https://t3.codes)
 - Source: [github.com/pingdotgg/t3code](https://github.com/pingdotgg/t3code), MIT licence, copyright T3 Tools Inc.
-- Created by Theo ([YouTube](https://www.youtube.com/@theo)), whose channel is also good background on where agentic work is heading
+- Made by Theo and T3 Tools Inc. Theo: [YouTube](https://www.youtube.com/@theo), [t3.gg](https://t3.gg), [X](https://x.com/theo), [GitHub](https://github.com/t3dotgg). His overview video: [T3 Code broke me](https://www.youtube.com/watch?v=uLGxb4F3SyI) (29 October 2026)
 - Free, with no paid tier. It does not resell tokens.
 
 ## Harness vs. ADE
@@ -88,7 +88,7 @@ A strong model can manage the work and hand pieces to cheaper models, across pro
 Block one hour this week and do real work while you learn.
 
 1. **Get one subscription.** A $20 a month Claude Pro or ChatGPT Plus plan is enough to start. Both include their coding agent.
-2. **Install an agent CLI and sign in.** Claude Code: `claude auth login`. Codex: `codex login`.
+2. **Install an agent CLI and sign in.** Claude Code: `claude auth login`. Codex: `codex login`, or connect Codex with your ChatGPT account from T3 Code's Welcome page, which installs it for you.
 3. **Install T3 Code** from [t3.codes](https://t3.codes) (desktop app for macOS, Windows and Linux), or try it with `npx t3@latest`.
 4. **Choose a permission mode** for your first threads. Supervised is a good way to see what the agent does before you let it run.
 5. **Start a thread with no project.** Talk to it. Tell it what you work on and two problems you would like solved this month: one easy, one hard.

@@ -1,0 +1,95 @@
+---
+/*
+  One step of a first-hour path, with a "done" checkbox that is remembered in
+  this browser (localStorage, key "acg-start"). Without JavaScript or storage
+  the checkbox still works for the visit; nothing else depends on it.
+  Props: id (string, unique on the page, also the anchor), n (number shown),
+  title (string, the step heading).
+  Slots: default (the step's content).
+*/
+interface Props { id: string; n: number; title: string }
+const { id, n, title } = Astro.props;
+---
+<section class="step" id={id} data-step={id}>
+  <h3><span class="n" aria-hidden="true">{n}</span><span class="visually-hidden">Step {n}: </span>{title}</h3>
+  <div class="body"><slot /></div>
+  <label class="done">
+    <input type="checkbox" data-step-done={id} />
+    <span>Done<span class="visually-hidden"> with step {n}, {title}</span></span>
+  </label>
+</section>
+
+<script>
+  const KEY = 'acg-start';
+  const read = (): Set<string> => {
+    try {
+      const raw = localStorage.getItem(KEY);
+      const list = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(list) ? list.filter((x) => typeof x === 'string') : []);
+    } catch {
+      return new Set();
+    }
+  };
+  const write = (done: Set<string>) => {
+    try {
+      localStorage.setItem(KEY, JSON.stringify([...done]));
+    } catch {}
+  };
+  const done = read();
+  document.querySelectorAll<HTMLInputElement>('[data-step-done]').forEach((box) => {
+    const id = box.dataset.stepDone!;
+    box.checked = done.has(id);
+    box.closest('.step')?.classList.toggle('is-done', box.checked);
+    box.addEventListener('change', () => {
+      if (box.checked) done.add(id);
+      else done.delete(id);
+      box.closest('.step')?.classList.toggle('is-done', box.checked);
+      write(done);
+    });
+  });
+</script>
+
+<style>
+  .step {
+    position: relative;
+    margin: var(--space-7) 0;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--rule);
+  }
+  h3 {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    margin: 0 0 var(--space-3);
+  }
+  .n {
+    flex: none;
+    display: inline-grid;
+    place-items: center;
+    min-width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: var(--text-s);
+    transform: translateY(-0.1em);
+  }
+  .is-done .n { background: var(--green-soft); color: var(--green); }
+  .done {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 40px;
+    padding: 0 var(--space-3);
+    margin-top: var(--space-2);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius-s);
+    color: var(--ink-2);
+    font-size: var(--text-s);
+    cursor: pointer;
+  }
+  .done input { width: 1.1rem; height: 1.1rem; accent-color: var(--green); margin: 0; }
+  .done:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .is-done .done { border-color: var(--green); color: var(--ink); }
+</style>

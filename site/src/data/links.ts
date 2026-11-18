@@ -72,6 +72,14 @@ export const links = {
   cloudflareAccessPin: { label: 'Cloudflare Access one-time PIN', url: 'https://developers.cloudflare.com/cloudflare-one/identity/one-time-pin/', checked: C },
   cloudflareWorkersPricing: { label: 'Cloudflare Workers pricing', url: 'https://developers.cloudflare.com/workers/platform/pricing/', checked: C },
   tailscaleServe: { label: 'tailscale serve', url: 'https://tailscale.com/kb/1312/serve', checked: C },
+
+  // Added with the T3 Code and first-hour pages
+  t3codeOverview: { label: 'T3 Code broke me, Theo (29 Oct 2026)', url: 'https://www.youtube.com/watch?v=uLGxb4F3SyI', checked: C, note: 'The T3 Code overview video.' },
+  t3codeDownload: { label: 'Download T3 Code', url: 'https://t3.codes/download', checked: C },
+  t3codeWeb: { label: 'T3 Code web client', url: 'https://app.t3.codes', checked: C },
+  theoX: { label: 'Theo on X', url: 'https://x.com/theo', checked: C },
+  theoGithub: { label: 'Theo on GitHub', url: 'https://github.com/t3dotgg', checked: C },
+  theoHarnessPost: { label: 'What is a harness?, Theo on t3.gg', url: 'https://t3.gg/blog/post/what-is-a-harness', checked: C },
 } satisfies Record<string, Link>;
 
 /** People and projects whose work the guide uses. The sources page lists them. */
