@@ -1,0 +1,23 @@
+---
+/*
+ * One drawing inside a figure that has several (a comparison). Panes sit side by side on wide
+ * screens and stack on narrow ones. Wrap them in <div class="fig-panes">, and give the Figure
+ * a `legend` with every label name in order, so the numbered keys match.
+ */
+import type { Label } from './Figure.astro';
+
+interface Props {
+  labels?: Label[];
+  /** Number of the first label in this pane. */
+  start?: number;
+}
+const { labels = [], start = 1 } = Astro.props;
+---
+<div class="fig-pane">
+  <slot />
+  {labels.map((l, i) => (
+    <span class="fig-label" style={`left:${l.at.left};top:${l.at.top}`} data-label={l.id ?? String(start + i)} aria-hidden="true">
+      <span class="fig-key">{start + i}</span><span class="fig-name">{l.name}</span>
+    </span>
+  ))}
+</div>
