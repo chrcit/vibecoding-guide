@@ -1,7 +1,7 @@
 ---
 // Review page for the design system: every token and component in every
 // state, on one page. Dev only (/dev/kit/). Toggle the theme in the header,
-// or open with ?theme=dark / ?theme=light.
+// or open with ?theme=dark / ?theme=light (works on every page).
 import Base from '../layouts/Base.astro';
 import PageHeader from '../components/site/PageHeader.astro';
 import Note from '../components/site/Note.astro';
@@ -217,12 +217,6 @@ export function hoursFor(date: Date): string {
   </div>
 </Base>
 
-<script is:inline>
-  (function () {
-    var t = new URLSearchParams(location.search).get('theme');
-    if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
-  })();
-</script>
 
 <style>
   .kit { padding-top: clamp(2rem, 6vw, 4.5rem); }

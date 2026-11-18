@@ -96,7 +96,7 @@
   vertical-align: top;
   padding: 0.6em 1.4em 0.6em 0;
   border-bottom: 1px solid var(--rule);
-  min-width: 6rem;
+  min-width: 7.5rem;
   max-width: 28rem;
 }
 .prose th:last-child, .prose td:last-child { padding-right: 0; }

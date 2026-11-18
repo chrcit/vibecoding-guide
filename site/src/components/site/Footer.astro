@@ -45,7 +45,8 @@ const builtText = built.toLocaleDateString('en-GB', { day: 'numeric', month: 'lo
     display: flex; flex-wrap: wrap; gap: 0.25rem 1.5rem;
     font-variant-numeric: lining-nums;
   }
-  .links li { display: flex; align-items: center; min-height: 2.5rem; }
-  .links a { color: var(--ink-2); }
+  .links li { display: block; }
+  .links a { color: var(--ink-2); display: inline-block; padding: 0.6rem 0; }
+  .links li:not(:has(a)) { padding: 0.6rem 0; }
   .links a:hover { color: var(--accent); }
 </style>
