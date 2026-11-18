@@ -66,6 +66,7 @@ export const plans = {
         'Claude Code sends the full conversation with every request, so a one-line question in a session open all day still draws usage for the whole conversation.',
         CLAUDE_COSTS,
       ),
+      windowHours: fact(5, 'The Claude session limit resets in full five hours after the first message of the period.', CLAUDE_LIMITS),
     },
     programmes: {
       aiForScience: fact('API credits', 'Anthropic runs AI for Science, which gives API credits to researchers.', 'https://support.claude.com/en/articles/11199177'),
