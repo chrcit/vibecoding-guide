@@ -50,6 +50,14 @@ export const harnesses = {
       CC('best-practices'),
     ),
     enterpriseCost: fact(13, 'Across enterprise deployments Claude Code averages about $13 per developer per active day and $150 to $250 per month.', CC('costs'), { unit: 'usd' }),
+    init: fact('/init', 'In Claude Code, /init generates a starting CLAUDE.md from the codebase: build commands, test instructions and conventions it finds. It suggests improvements when one exists.', CC('memory')),
+    permissionRules: fact(
+      '.claude/settings.json',
+      'Claude Code permission rules live in settings files such as .claude/settings.json, as permissions.allow and permissions.deny lists like "Bash(npm run *)". They are enforced by Claude Code, not by the model; /permissions shows and edits them.',
+      CC('permissions'),
+    ),
+    usageCommand: fact('/usage', 'In Claude Code, /usage shows plan usage bars and a breakdown of what counted against the limits for subscribers; the session dollar figure is for API users.', CC('costs')),
+    mcpAdd: fact('claude mcp add --transport http <name> <url>', 'Add a remote MCP server to Claude Code with claude mcp add --transport http <name> <url>.', CC('mcp')),
   },
   codex: {
     openSource: fact('Apache-2.0', 'The Codex CLI is open source under Apache-2.0. The models behind it are proprietary.', 'https://github.com/openai/codex'),
