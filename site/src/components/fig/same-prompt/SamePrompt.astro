@@ -1,0 +1,88 @@
+---
+/*
+ * Fig. 4, "Same prompt, with and without context".
+ *
+ * Idea: the same request gives a different result depending on what the agent can see.
+ * Elements: the code and the prompt card (the same in both), the orange tray of what it was told,
+ * the output tray with its sheets, the check lamp.
+ * States: bare prompt; with context (model.ts).
+ * Data: none. The two outcomes are illustrative, written for the running example, and the caption
+ * says so.
+ * Interaction: one toggle, Bare prompt / With context.
+ * Alt: model.ts ALT.
+ */
+import Figure from '../Figure.astro';
+import { drawSamePrompt } from './draw';
+import { MODES, ALT } from './model';
+
+interface Props { n?: number | string }
+const { n = 4 } = Astro.props;
+const { svg, labels } = drawSamePrompt();
+---
+<div class="fig-sp" data-fig-sp data-modes={JSON.stringify(MODES)}>
+  <Figure n={n} title="Same prompt, with and without context" hint="Switch between the bare prompt and the prompt with context." alt={ALT} labels={labels}>
+    <Fragment set:html={svg} />
+    <div slot="control" class="seg" role="group" aria-label="What the agent could see">
+      <button type="button" aria-pressed="true" data-mode="bare">{MODES.bare.label}</button>
+      <button type="button" aria-pressed="false" data-mode="context">{MODES.context.label}</button>
+    </div>
+    <Fragment slot="readout">{MODES.bare.says}</Fragment>
+    <Fragment slot="caption">
+      The request and the model are the same both times; what changed is what the agent could see. Both outcomes are written to illustrate the running example, not recorded from a run.
+    </Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .fig-sp [data-lamp='pass'] .k-solid .k-fill,
+  .fig-sp [data-lamp='pass'] .k-solid .k-top { fill: color-mix(in oklab, var(--green) 45%, var(--card)); }
+  .fig-sp [data-lamp='pass'] .k-solid .k-left,
+  .fig-sp [data-lamp='pass'] .k-solid .k-right,
+  .fig-sp [data-lamp='pass'] .k-solid .k-shadow { fill: var(--green); }
+  .fig-sp [data-lamp='pass'] .k-edge { stroke: var(--green); }
+  .fig-sp .seg button { min-height: 40px; }
+</style>
+
+<script>
+  type Mode = 'bare' | 'context';
+  type Modes = Record<Mode, { sheets: number; lamp: string; says: string }>;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fig-sp]')) {
+    const modes: Modes = JSON.parse(root.dataset.modes!);
+    const q = <T extends Element>(s: string) => root.querySelector<T>(s)!;
+    const readout = q<HTMLElement>('[data-fig-readout]');
+    const lamp = q<SVGGElement>('[data-lamp]');
+    const items = [...root.querySelectorAll<SVGGElement>('[data-ctx]')];
+    const sheets = [...root.querySelectorAll<SVGGElement>('[data-sheet]')];
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-mode]')];
+    const rest = new Map<Element, string>();
+    for (const el of [...items, ...sheets]) rest.set(el, el.style.transform);
+
+    q<HTMLElement>('[data-fig-control]').hidden = false;
+
+    function show(mode: Mode) {
+      root.style.setProperty('--fig-ms', reduced.matches ? '0ms' : '');
+      const m = modes[mode];
+      const on = mode === 'context';
+      items.forEach((el, i) => {
+        el.style.transitionDelay = on && !reduced.matches ? `${i * 70}ms` : '0ms';
+        el.style.opacity = on ? '1' : '0';
+        el.style.transform = on ? 'translate(0px, 0px)' : rest.get(el)!;
+      });
+      sheets.forEach((el, i) => {
+        if (i === 0) return;
+        const shown = i < m.sheets;
+        el.style.transitionDelay = shown && !reduced.matches ? `${300 + i * 80}ms` : '0ms';
+        el.style.opacity = shown ? '1' : '0';
+        el.style.transform = shown ? 'translate(0px, 0px)' : rest.get(el)!;
+      });
+      lamp.dataset.lamp = m.lamp;
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
+      readout.textContent = m.says;
+    }
+
+    for (const b of buttons) b.addEventListener('click', () => show(b.dataset.mode as Mode));
+    show('bare');
+  }
+</script>

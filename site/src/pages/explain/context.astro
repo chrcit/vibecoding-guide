@@ -1,4 +1,344 @@
 ---
-import Stub from '../../components/site/Stub.astro';
+// The context explainer: what an agent can see, why the window fills, what to give it, where
+// standing instructions live, and the habits that keep a thread useful. Fig. 3 and Fig. 4.
+import Article from '../../layouts/Article.astro';
+import Deeper from '../../components/level/Deeper.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import Embed from '../../components/site/Embed.astro';
+import Note from '../../components/site/Note.astro';
+import Term from '../../components/site/Term.astro';
+import WindowFills from '../../components/fig/window-fills/WindowFills.astro';
+import SamePrompt from '../../components/fig/same-prompt/SamePrompt.astro';
+import { models } from '../../data/models';
+import { harnesses } from '../../data/harnesses';
+import { links } from '../../data/links';
+import { url } from '../../lib/nav';
+
+const headings = [
+  { depth: 2, slug: 'what-the-agent-can-see', text: 'What the agent can see' },
+  { depth: 2, slug: 'the-window-fills-up', text: 'The window fills up' },
+  { depth: 2, slug: 'context-is-capability', text: 'Context is capability' },
+  { depth: 2, slug: 'a-prompt-you-can-copy', text: 'A prompt you can copy' },
+  { depth: 2, slug: 'standing-instructions', text: 'Standing instructions live in a file' },
+  { depth: 2, slug: 'habits', text: 'Habits that keep a thread useful' },
+  { depth: 2, slug: 'related', text: 'Related pages' },
+];
+
+const windowTokens = models['claude-opus-5-5'].context.value;
+const compactAt = harnesses.claudeCode.autoCompactAt.value;
+
+const factIds = [
+  'models.claude-opus-5-5.context',
+  'models.gpt-6-2-sol.context',
+  'models.claude-opus-5-5.price.input',
+  'models.claude-opus-5-5.price.cacheRead',
+  'lineup.cacheDefaultTtl',
+  'lineup.cacheWriteMultiplier',
+  'lineup.cacheExactPrefix',
+  'harnesses.claudeCode.defaultModel',
+  'harnesses.claudeCode.startupContext',
+  'harnesses.claudeCode.autoCompactAt',
+  'harnesses.claudeCode.compactionKeeps',
+  'harnesses.claudeCode.compactionReread',
+  'harnesses.claudeCode.contextFile',
+  'harnesses.codex.contextFile',
+  'harnesses.claudeCode.claudeMdLines',
+  'harnesses.claudeCode.claudeMdNesting',
+  'harnesses.claudeCode.autoMemoryLoad',
+  'harnesses.claudeCode.promptCacheTtl',
+  'harnesses.claudeCode.clearAfterTwo',
+  'harnesses.claudeCode.focusedContext',
+  'harnesses.claudeCode.subagents',
+  'harnesses.claudeCode.subagentUsage',
+  'harnesses.claudeCode.bestPractice',
+  'claims.research.contextRot',
+];
+
+const skeleton = `The bakery's website shows the normal opening hours on public holidays. On 25 December it should say Closed, and on Easter Monday 9:00 to 13:00. The holiday list is in data/holidays.csv and the hours are worked out in src/hours.ts.
+
+Done means: tests for 25 December, Easter Monday and an ordinary Tuesday pass, the whole test suite passes, and you show me a screenshot of the page for 25 December.
+
+Don't change how the normal hours are worked out, and don't add a library. Stop and ask me only if the holiday list itself looks wrong, or a test fails for a reason you can't explain.`;
+
+const agentsMd = `# Commands
+- Install: pnpm install
+- Run one test file: pnpm vitest run path/to/file.test.ts
+- Check everything: pnpm test && pnpm typecheck
+
+# Things the code won't tell you
+- Opening hours come from src/hours.ts; the holiday list in data/holidays.csv is edited by hand every December
+- Dates in the holiday list are written 25/12/2026, everywhere else 2026-12-25
+- Never edit the live site's settings; ask first`;
 ---
-<Stub title="Context" section="explain" />
+<Article
+  title="Context"
+  description="What an AI coding agent knows right now, why its context window fills up, what to give it, where standing instructions live, and the habits that keep a thread useful."
+  section="explain"
+  updated="2026-11-18"
+  headings={headings}
+  prev={{ href: 'explain/plans-and-api/', title: 'Plans against the API' }}
+  next={{ href: 'explain/verification/', title: 'Verification' }}
+>
+  <h2 id="what-the-agent-can-see">What the agent can see</h2>
+  <p>
+    A coding agent does not see your screen, and it does not remember yesterday. Each time it takes a step it reads one long
+    document from the top: its instructions, everything you have typed in this conversation, every file it has opened, the
+    output of every command it has run, and its own earlier replies. That document is its
+    <Term def="Everything the model reads before it writes its next reply: instructions, your messages, files it has opened, results of commands, its own earlier replies. Nothing outside it exists for the model.">context window</Term>.
+    What is in it, the agent can use. What is not in it does not exist for the agent, however obvious it is to you.
+  </p>
+  <p>
+    Think of a capable contractor who arrives every morning with no memory of the day before and works only from the papers on
+    the desk. If the papers say which page is broken and what right looks like, the work goes well. If they say "fix the
+    holidays", the contractor guesses, and agents rarely stop to ask before guessing.
+  </p>
+  <p>
+    A new conversation, which most tools call a thread, starts with an empty desk apart from the standing instructions. Close
+    the thread and open another, and everything you explained in the first one is gone unless it was written into a file.
+  </p>
+
+  <Deeper level="technical" title="Tokens and window sizes">
+    <p>
+      Models read text in <Term def="A piece of text a few characters long, the unit models read, write and bill in. A short English word is usually one token; code costs more tokens than prose of the same length.">tokens</Term>,
+      and the window is measured in them. Claude Code's default model on every paid plan is set out in the docs (<Fact id="harnesses.claudeCode.defaultModel" show="claim" />),
+      and Claude Opus 5.5 has a <Fact id="models.claude-opus-5-5.context" /> window. On the OpenAI side: <Fact id="models.gpt-6-2-sol.context" show="claim" />
+      So the harness you use, not only the model, decides how much room a session has.
+    </p>
+    <p>
+      Everything the agent does goes into the window as text. Its instructions and tool descriptions sit at the top. Your
+      messages are usually the smallest part. The large items are tool results: a file it read in full, a test run, a server
+      log, a page of search results, a screenshot. A spreadsheet printed to the terminal can be hundreds of thousands of
+      tokens on its own.
+    </p>
+  </Deeper>
+
+  <h2 id="the-window-fills-up">The window fills up</h2>
+  <p>
+    The window is large, but it is finite, and it fills as the agent works. Step through one thread below. It starts on the
+    contact tidy, a script that cleans an exported spreadsheet, and then the same thread is asked about the club list app.
+    Watch which layers are thick.
+  </p>
+
+  <WindowFills
+    windowTokens={windowTokens}
+    compactAt={compactAt}
+    source={{ label: 'Window size and compaction point: Claude Code model configuration docs. The sizes of the steps are illustrative.', href: 'https://code.claude.com/docs/en/model-config' }}
+  />
+
+  <p>
+    Your prompt is a sliver. What fills the window is what the agent's tools hand back. That is why a thread can feel fine for
+    an hour and then go strange: nobody typed much, but the agent read a lot.
+  </p>
+  <p>
+    A fuller window costs you in three ways. Every new turn sends the whole window to the model again, so each step is slower
+    and uses more of your plan. The model has more to sift, including old attempts that failed and details from a task you
+    finished an hour ago, and answers get worse well before the window is full. And when it is nearly full, the tool
+    <Term def="Squeezing a long conversation into a short summary so the work can carry on. The summary keeps what the harness judges important; everything else is dropped.">compacts</Term>
+    it: the conversation is replaced by a summary, and whatever the summary left out is gone. That might be the exact error
+    message, a constraint you mentioned once, or why the first fix was abandoned.
+  </p>
+  <p>
+    Anthropic's own advice is blunt about it: <Fact id="harnesses.claudeCode.focusedContext" show="claim" />
+  </p>
+
+  <Deeper level="technical" title="What fills it in Claude Code, and the commands that help">
+    <p>
+      <Fact id="harnesses.claudeCode.startupContext" show="claim" /> Then each file read, each command and each reply adds to it. Run
+      <code>/context</code> in a session to see the breakdown by category, with the instruction files that loaded. The
+      <a href={links.claudeCodeContextWindow.url}>context window page</a> in the Claude Code docs plays a whole session as a timeline.
+    </p>
+    <ul>
+      <li><code>/clear</code> starts a fresh conversation in the same session. Use it between unrelated tasks.</li>
+      <li><code>/compact keep the API changes and the test commands</code> compacts now, with your say over what the summary keeps.</li>
+      <li><code>/rewind</code> (or <kbd>Esc</kbd> twice) rolls the conversation, the code or both back to an earlier prompt, and can summarise part of a conversation that has gone stale.</li>
+      <li><code>/autocompact</code> sets how full the window gets before automatic compaction. By default it runs at about <Fact id="harnesses.claudeCode.autoCompactAt" /> on models with a 1M window.</li>
+    </ul>
+    <p>
+      Large tool output is the thing to watch. Ask for a summary, a count or the first twenty lines rather than the whole file;
+      ask for the failing tests rather than the full log.
+    </p>
+  </Deeper>
+
+  <Deeper level="engineer" title="Why quality drops before the window is full">
+    <p>
+      <Fact id="claims.research.contextRot" show="claim" /> The practical version: retrieval of one fact from a long context is
+      less reliable than from a short one, and everything in the window competes for the model's attention, relevant or not.
+    </p>
+    <p>
+      Two things make a long thread worse than its length alone. It holds distractors: files from a finished task, superseded
+      plans, an old version of the code the agent has since changed. And it holds failures. <Fact id="harnesses.claudeCode.clearAfterTwo" show="claim" />
+      The model treats its own earlier attempts as evidence about what to do next, so a thread that has gone wrong tends to stay wrong.
+    </p>
+    <p>
+      A bigger window moves the cliff; it does not remove the slope. Size a task so one thread can finish it with room to spare,
+      and treat compaction as a fallback rather than a plan.
+    </p>
+  </Deeper>
+
+  <Deeper level="engineer" title="Prompt caching and why a stable prefix keeps cost down">
+    <p>
+      Each turn re-sends the whole conversation, so without caching a long session pays for its history again and again.
+      Prompt caching stores the processed start of a prompt and reuses it. <Fact id="lineup.cacheExactPrefix" show="claim" />
+      On the API, Opus 5.5 input costs <Fact id="models.claude-opus-5-5.price.input" /> per million tokens and a cache read
+      <Fact id="models.claude-opus-5-5.price.cacheRead" />; writing to the cache costs <Fact id="lineup.cacheWriteMultiplier" />
+      the input price. <Fact id="lineup.cacheDefaultTtl" show="claim" />
+    </p>
+    <p>
+      Harnesses build the prompt in a fixed order for this reason: tool definitions, then the system prompt and instruction
+      files, then the conversation, growing only at the end. Anything that changes the front of that order invalidates
+      everything after it: editing the instruction file mid-session, connecting or removing a tool server, switching model.
+      Appending a message is cheap; rewriting the top is not.
+    </p>
+    <p>
+      <Fact id="harnesses.claudeCode.promptCacheTtl" show="claim" /> A long, idle session that comes back after the cache expired pays full
+      price for its whole history on the next turn, which is one more reason to clear between tasks.
+    </p>
+  </Deeper>
+
+  <Deeper level="engineer" title="Compaction: what survives and how to steer it">
+    <p>
+      <Fact id="harnesses.claudeCode.compactionKeeps" show="claim" /> Instruction files in subdirectories and path-scoped rules
+      load again only when the agent next touches a matching file, and anything that only existed in the conversation is
+      reduced to whatever the summary kept.
+    </p>
+    <p>Ways to keep control:</p>
+    <ul>
+      <li>Compact on purpose at a natural break, with a focus, rather than letting it happen mid-task.</li>
+      <li>Before a long run, have the agent keep a progress file (what is done, what is next, decisions and why). After compaction, or in a new thread, it reads the file and carries on. This is the same structured note-taking Anthropic describes in <a href={links.anthropicContextEngineering.url}>its context engineering write-up</a>.</li>
+      <li>Put rules that must survive in the root instruction file, not in a message.</li>
+      <li>For a fresh start with a handover, ask for a short summary first, check it, then paste it into a new thread. You decide what crosses over.</li>
+    </ul>
+  </Deeper>
+
+  <h2 id="context-is-capability">Context is capability</h2>
+  <p>
+    The same model, given the same sentence, does very different work depending on what else it can see. Here is the holiday
+    hours bug sent twice with the same one-line request.
+  </p>
+
+  <SamePrompt />
+
+  <p>Most bad results trace back to something the agent could not see. Before you send a task, check it has these:</p>
+  <ul>
+    <li>The goal, in plain words: what is wrong or what you want, and who it is for.</li>
+    <li>What done looks like: the check that proves it works, such as a test that passes or a page that shows the right thing.</li>
+    <li>The relevant material: the file, the page, the error, the screenshot. Point at it or paste it in, rather than describe it.</li>
+    <li>The constraints: what must not change, what it may not touch, anything you have already tried.</li>
+    <li>An example, when you have one: a row of the spreadsheet as it should look, a page that already does it right.</li>
+  </ul>
+  <p>
+    You do not need all of it every time. A quick question needs a quick prompt. The longer the agent will work without you,
+    the more of this it needs up front, because it will not come back to ask.
+  </p>
+
+  <h2 id="a-prompt-you-can-copy">A prompt you can copy</h2>
+  <p>
+    A good working prompt has three parts: what you want, what done looks like, and when to stop and ask. The third gives the
+    agent permission to stop when it is unsure, which it otherwise tends not to take. Here it is for the holiday hours bug.
+  </p>
+
+  <CopyPrompt title="Fix the holiday hours bug" id="prompt-skeleton">{skeleton}</CopyPrompt>
+
+  <p>
+    The three-part shape comes from Anthropic's guidance on working with Opus 5.5, which Theo reads through and tries out in
+    <a href={links.theoOpusPrompting.url}>Getting the most out of Opus 5.5</a> (25 September 2026). The part on "what done
+    means" starts at about eleven minutes in.
+  </p>
+
+  <Embed id="ejjBbaq9RmY" title="Getting the most out of Opus 5.5, by Theo" start={669} />
+
+  <h2 id="standing-instructions">Standing instructions live in a file</h2>
+  <p>
+    Some things are true of every task in a project: how to run the tests, where the holiday list lives, what must never be
+    touched. Rather than type them every time, put them in a project instruction file. The agent reads it at the start of
+    every thread. Codex and most other tools read a file called <code>AGENTS.md</code>; Claude Code reads <code>CLAUDE.md</code>,
+    and falls back to <code>AGENTS.md</code> when there is none.
+  </p>
+  <p>Keep it short, and keep it to what the agent cannot work out by reading the code:</p>
+  <ul>
+    <li>How to check work: the exact commands for tests, type checks and linting.</li>
+    <li>Things the code gets wrong or hides: an old pattern not to copy, a folder that looks unused and is not.</li>
+    <li>Decisions that are not written anywhere else: how deploys work, who edits the holiday list.</li>
+    <li>Anything you have had to correct twice.</li>
+  </ul>
+  <p>
+    Leave out what it can find for itself: a tour of the folders, general coding advice, long lists of style rules, and
+    instructions that only matter for one task. Every line is read on every task, so a long file costs room and gets followed
+    less reliably. A small one for the bakery site might look like this:
+  </p>
+  <pre><code>{agentsMd}</code></pre>
+
+  <Deeper level="technical" title="How instruction files load and nest">
+    <p>
+      <Fact id="harnesses.claudeCode.contextFile" show="claim" /> <Fact id="harnesses.claudeCode.claudeMdNesting" show="claim" />
+      Codex works down the tree instead: <Fact id="harnesses.codex.contextFile" show="claim" />
+    </p>
+    <p>
+      Either way, a file in a subfolder adds rules for that part of the project, and a file in your home folder applies to every
+      project. Keep personal preferences there or in a local file that is not committed, so the project file stays about the
+      project. Anthropic suggests a size: <Fact id="harnesses.claudeCode.claudeMdLines" show="claim" />
+    </p>
+    <p>
+      A line in the file is a request, not a guarantee. A rule that must never be broken, such as "never push to main", belongs
+      in the harness's permission settings or a hook, where it is enforced.
+    </p>
+  </Deeper>
+
+  <Deeper level="engineer" title="Retrieval, memory files and subagents as context firewalls">
+    <p>
+      Loading whole files is the expensive default. A better pattern is to load just in time: the agent keeps cheap pointers
+      (paths, a grep, a test name) and reads the slice it needs when it needs it. Point the agent at the function, not the
+      folder, and prefer commands that return a little, like <code>grep -n</code> or a single failing test, to ones that return a lot.
+    </p>
+    <p>
+      Memory files carry state across threads. Claude Code keeps its own: <Fact id="harnesses.claudeCode.autoMemoryLoad" show="claim" />
+      A plain progress file in the repo does the same job in any harness and is visible in review.
+    </p>
+    <p>
+      A subagent is the strongest tool here. <Fact id="harnesses.claudeCode.subagents" show="claim" /> It can read fifty files and
+      return a one-paragraph answer, so the main thread receives the conclusion without the reading. That makes it a firewall
+      for noise: big searches, log trawls and independent review belong there. It is not free. <Fact id="harnesses.claudeCode.subagentUsage" show="claim" />
+      A fresh subagent also has to gather context the main thread already had, so for small jobs it can be slower than doing the work in place.
+    </p>
+  </Deeper>
+
+  <h2 id="habits">Habits that keep a thread useful</h2>
+  <p>
+    One task per thread. When the contact tidy is done, start a new thread for the club list. The new thread starts small and
+    clean, and the old one is still there if you need to go back.
+  </p>
+  <p>
+    Start fresh rather than dragging a long thread on. If a thread has wandered, ask for a short summary of where things
+    stand, open a new one and paste it in. It is quicker than steering a confused agent.
+  </p>
+  <p>
+    Edit your last message and retry, instead of arguing. If the agent misread you, a correction adds a second message to a
+    conversation that still holds the first misreading. Most tools let you edit the message you sent, or roll back to it, and
+    run it again with the missing piece added. The bad attempt then never enters the window.
+  </p>
+  <p>
+    Let helpers do the reading. When a task needs a lot of searching, ask the agent to hand the search to a helper agent and
+    report back. The main thread gets the answer and stays clean. <a href={url('explain/orchestration/')}>Orchestration</a> covers how.
+  </p>
+  <p>
+    Write things down in files. Anything that should outlive the thread, such as a decision, a plan or a list of what is left,
+    belongs in a file in the project. Files survive compaction, new threads and switching tools; the conversation does not.
+  </p>
+
+  <Note title="Before a long run">
+    <Fact id="harnesses.claudeCode.bestPractice" show="claim" /> Most of that is context: it is what you put in the prompt and the instruction file before you leave it alone.
+  </Note>
+
+  <h2 id="related">Related pages</h2>
+  <ul>
+    <li><a href={url('explain/plans-and-api/')}>Plans against the API</a>: what a fuller window costs on a plan and on a key.</li>
+    <li><a href={url('explain/verification/')}>Verification</a>: giving the agent a check, the most useful piece of context there is.</li>
+    <li><a href={url('explain/orchestration/')}>Orchestration</a>: helpers, threads and teams of agents.</li>
+    <li><a href={url('explain/skills/')}>Skills</a>: know-how that loads into the window only when a task calls for it.</li>
+    <li><a href={url('explain/connectors/')}>Connectors and MCP</a>: what each connected tool costs in room.</li>
+  </ul>
+
+  <Verified ids={factIds} />
+</Article>
