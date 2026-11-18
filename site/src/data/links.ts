@@ -84,6 +84,11 @@ export const links = {
   claudeCodePermissionModes: { label: 'Claude Code permission modes', url: 'https://code.claude.com/docs/en/permission-modes', checked: C },
   claudeCodeReview: { label: 'Claude Code /code-review', url: 'https://code.claude.com/docs/en/code-review-local', checked: C },
   codexSandboxing: { label: 'Codex sandboxing and approvals', url: 'https://learn.chatgpt.com/docs/sandboxing', checked: C },
+  // Context
+  claudeCodeContextWindow: { label: 'Claude Code: explore the context window', url: 'https://code.claude.com/docs/en/context-window', checked: C },
+  claudePromptCaching: { label: 'Claude prompt caching', url: 'https://platform.claude.com/docs/en/build-with-claude/prompt-caching', checked: C },
+  anthropicContextEngineering: { label: 'Effective context engineering for AI agents, Anthropic', url: 'https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents', checked: C },
+  theoOpusPrompting: { label: 'Getting the most out of Opus 5.5, Theo (25 September 2026)', url: 'https://www.youtube.com/watch?v=ejjBbaq9RmY', checked: C },
 } satisfies Record<string, Link>;
 
 /** People and projects whose work the guide uses. The sources page lists them. */

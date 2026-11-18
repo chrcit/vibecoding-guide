@@ -249,5 +249,11 @@ export const lineup = {
     ['switching model', 'changing effort on most models', 'fast mode', 'adding an MCP server', 'compaction'],
     'Switching model, changing effort on most models, turning on fast mode, connecting an MCP server when tools load up front, and compacting all make the next Claude Code request miss some or all of the cache.',
     'https://code.claude.com/docs/en/prompt-caching',
+  cacheDefaultTtl: fact('5 minutes', 'On the Claude API a prompt cache entry lives 5 minutes by default, refreshed free each time it is used; a 1-hour cache costs extra.', 'https://platform.claude.com/docs/en/build-with-claude/prompt-caching'),
+  cacheWriteMultiplier: fact(1.25, 'Writing to the 5-minute prompt cache costs 1.25 times the base input price on Claude models.', 'https://platform.claude.com/docs/en/build-with-claude/prompt-caching', { unit: 'multiplier' }),
+  cacheExactPrefix: fact(
+    'tools, system, messages',
+    'A Claude prompt cache hit needs the prompt identical up to the cache point, in the order tools, system prompt, messages; any change earlier in that order misses the cache.',
+    'https://platform.claude.com/docs/en/build-with-claude/prompt-caching',
   ),
 } as const;

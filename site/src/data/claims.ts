@@ -84,6 +84,10 @@ export const claims = {
       'sample several, take the most consistent',
       'Wang et al. (2022) showed that sampling several reasoning paths and taking the answer most of them agree on (self-consistency) improves accuracy over a single greedy answer.',
       'https://arxiv.org/abs/2203.11171',
+    contextRot: fact(
+      'context rot',
+      'Anthropic (29 September 2025): as the number of tokens in the context window grows, a model\'s ability to recall information from it declines, which they call context rot. Context is a finite resource with diminishing returns.',
+      'https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents',
     ),
   },
   hardware: {

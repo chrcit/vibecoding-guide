@@ -131,6 +131,47 @@ export const harnesses = {
     autoModeDefault: fact(
       'auto mode',
       'New interactive terminal and VS Code sessions of Claude Code start in auto mode, where a separate classifier model checks actions before they run. Deny rules apply in every mode.',
+    startupContext: fact(
+      ['CLAUDE.md', 'auto memory', 'MCP tool names', 'skill descriptions'],
+      'Before you type anything, Claude Code loads CLAUDE.md (or AGENTS.md), auto memory, MCP tool names and skill descriptions into the context window.',
+      CC('context-window'),
+    ),
+    autoCompactAt: fact(
+      967_000,
+      'Claude Code compacts a session on a model with a native 1M-token window at about 967K tokens by default; /autocompact sets an earlier point.',
+      CC('model-config'),
+      { unit: 'tokens' },
+    ),
+    compactionKeeps: fact(
+      'a summary, plus instructions and recent files reloaded',
+      'Compaction replaces the conversation with a summary. The project-root CLAUDE.md and auto memory are re-injected from disk, and Claude Code re-reads up to five of the files it read or edited, most recently modified first.',
+      CC('context-window'),
+    ),
+    compactionReread: fact(5, 'After compaction Claude Code re-reads up to five of the files Claude read or edited in the session.', CC('context-window')),
+    claudeMdLines: fact(200, 'Anthropic recommends keeping each CLAUDE.md under 200 lines: longer files consume more context and reduce adherence.', CC('memory')),
+    claudeMdNesting: fact(
+      'above at launch, below on demand',
+      'CLAUDE.md files in the directories above the working directory load at launch; those in subdirectories load once Claude works with a file there.',
+      CC('memory'),
+    ),
+    autoMemoryLoad: fact(
+      '200 lines or 25KB',
+      'Claude Code loads the first 200 lines or 25KB of its auto memory file, MEMORY.md, whichever comes first, at the start of every conversation.',
+      CC('memory'),
+    ),
+    promptCacheTtl: fact(
+      'about an hour on a plan, five minutes on an API key',
+      'In Claude Code the prompt cache lasts about an hour on a subscription and five minutes on an API key, a cloud provider or usage credits. Subagents get five minutes unless you change it.',
+      CC('best-practices'),
+    ),
+    clearAfterTwo: fact(
+      'after two failed corrections, /clear',
+      'Anthropic: after two failed corrections, run /clear and write a better prompt instead of a third; a third correction mostly adds to a conversation that already holds two failed attempts.',
+      CC('best-practices'),
+    ),
+    focusedContext: fact(
+      'focused context gives better answers',
+      'Running out of context is rare on 1M-token windows, but Anthropic still advises /clear between tasks, because a focused context gets better answers and costs less.',
       CC('best-practices'),
     ),
   },
