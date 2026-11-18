@@ -89,6 +89,10 @@ export const links = {
   claudePromptCaching: { label: 'Claude prompt caching', url: 'https://platform.claude.com/docs/en/build-with-claude/prompt-caching', checked: C },
   anthropicContextEngineering: { label: 'Effective context engineering for AI agents, Anthropic', url: 'https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents', checked: C },
   theoOpusPrompting: { label: 'Getting the most out of Opus 5.5, Theo (25 September 2026)', url: 'https://www.youtube.com/watch?v=ejjBbaq9RmY', checked: C },
+  // Skills (explain/skills)
+  theoThreeSkills: { label: 'These 3 skills changed my life, Theo (26 October 2026)', url: 'https://www.youtube.com/watch?v=5Bmp9cz1JN8', checked: C },
+  agentSkillsSpec: { label: 'Agent Skills specification', url: 'https://agentskills.io/specification', checked: C },
+  t3codeComposer: { label: 'T3 Code composer docs', url: 'https://github.com/pingdotgg/t3code/blob/main/docs/user/composer.md', checked: C },
 } satisfies Record<string, Link>;
 
 /** People and projects whose work the guide uses. The sources page lists them. */
@@ -105,4 +109,8 @@ export const credits: Credit[] = [
   { name: 'METR', url: 'https://metr.org', for: 'Time-horizon measurements', checked: C },
   { name: 'Model Context Protocol', url: 'https://modelcontextprotocol.io', for: 'The standard for connecting agents to outside systems', checked: C },
   { name: 'llms.txt', url: 'https://llmstxt.org', for: 'The proposal for markdown twins of every page', checked: C },
+  { name: 'Dan McAteer (DannyMac180)', url: 'https://github.com/DannyMac180/skills', for: 'The first be-ambitious skill', checked: C },
+  { name: 'Cathryn Lavery', url: 'https://github.com/cathrynlavery/diagram-design', for: 'diagram-design', checked: C },
+  { name: 'Emil Kowalski', url: 'https://github.com/emilkowalski/skills', for: 'Animation and design skills', checked: C },
+  { name: 'Paul Bakaus', url: 'https://github.com/pbakaus/impeccable', for: 'Impeccable', checked: C },
 ];
