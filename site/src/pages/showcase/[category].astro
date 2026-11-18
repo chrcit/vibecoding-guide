@@ -1,0 +1,46 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHeader from '../../components/site/PageHeader.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import { categories, piecesIn } from '../../lib/showcase';
+import { url } from '../../lib/nav';
+
+export function getStaticPaths() {
+  return categories.map((c) => ({ params: { category: c.id }, props: { category: c } }));
+}
+const { category } = Astro.props;
+const list = piecesIn(category.id);
+const date = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+---
+<Base title={`${category.title} · Showcase · Agentic Coding Guide`} description={`${category.title}: ${category.blurb} Built by an agent for this guide.`} section="showcase" noindex={list.length === 0}>
+  <div class="wrap">
+    <PageHeader title={category.title}>
+      <p>{category.blurb} <a href={url('showcase/')}>All of the showcase</a>.</p>
+    </PageHeader>
+    {list.length === 0 && <p>Nothing here yet.</p>}
+    {list.map((p) => (
+      <section class="piece" id={p.slug} aria-labelledby={`${p.slug}-h`}>
+        <h2 id={`${p.slug}-h`}>{p.title}</h2>
+        <p class="summary">{p.summary}</p>
+        <div class="stage" style={`--h: ${p.height ?? 560}px`}>
+          <iframe src={url(p.path)} title={p.title} loading="lazy"></iframe>
+        </div>
+        <p class="meta"><a href={url(p.path)}>Open it full screen</a> · Built {date(p.built)} with {p.builtWith}</p>
+        <div class="story prose">
+          {p.story.map((s) => <p>{s}</p>)}
+          <CopyPrompt title="The prompt that started it">{p.prompt}</CopyPrompt>
+        </div>
+      </section>
+    ))}
+  </div>
+</Base>
+<style>
+  .wrap { max-width: var(--wide); margin: 0 auto; padding: var(--space-7) var(--gutter) 0; }
+  .piece { margin-top: var(--space-8); }
+  .piece h2 { font-size: var(--text-2xl); font-weight: 500; letter-spacing: -0.01em; margin: 0 0 var(--space-2); }
+  .summary { color: var(--ink-2); max-width: var(--measure); margin: 0 0 var(--space-4); }
+  .stage { border: 1px solid var(--rule); border-radius: var(--radius-l); overflow: hidden; background: var(--card); box-shadow: var(--shadow); height: min(var(--h), 80vh); }
+  .stage iframe { display: block; width: 100%; height: 100%; border: 0; }
+  .meta { font-family: var(--mono); font-size: var(--text-xs); color: var(--muted); margin: var(--space-3) 0 var(--space-5); }
+  .story { max-width: var(--measure); }
+</style>
