@@ -102,8 +102,8 @@ const agentsMd = `# Commands
   <Deeper level="technical" title="Tokens and window sizes">
     <p>
       Models read text in <Term def="A piece of text a few characters long, the unit models read, write and bill in. A short English word is usually one token; code costs more tokens than prose of the same length.">tokens</Term>,
-      and the window is measured in them. Claude Code's default model on every paid plan is set out in the docs (<Fact id="harnesses.claudeCode.defaultModel" show="claim" />),
-      and Claude Opus 5.5 has a <Fact id="models.claude-opus-5-5.context" /> window. On the OpenAI side: <Fact id="models.gpt-6-2-sol.context" show="claim" />
+      and the window is measured in them. <Fact id="harnesses.claudeCode.defaultModel" show="claim" />
+      Opus 5.5 has a context window of <Fact id="models.claude-opus-5-5.context" />. On the OpenAI side, <Fact id="models.gpt-6-2-sol.context" show="claim" />
       So the harness you use, not only the model, decides how much room a session has.
     </p>
     <p>
@@ -128,7 +128,7 @@ const agentsMd = `# Commands
   />
 
   <p>
-    Your prompt is a sliver. What fills the window is what the agent's tools hand back. That is why a thread can feel fine for
+    In that thread your prompt is under one per cent of the window. What fills it is what the agent's tools hand back. That is why a thread can feel fine for
     an hour and then go strange: nobody typed much, but the agent read a lot.
   </p>
   <p>
@@ -140,7 +140,7 @@ const agentsMd = `# Commands
     message, a constraint you mentioned once, or why the first fix was abandoned.
   </p>
   <p>
-    Anthropic's own advice is blunt about it: <Fact id="harnesses.claudeCode.focusedContext" show="claim" />
+    The Claude Code documentation is plain about it. <Fact id="harnesses.claudeCode.focusedContext" show="claim" />
   </p>
 
   <Deeper level="technical" title="What fills it in Claude Code, and the commands that help">
@@ -172,8 +172,8 @@ const agentsMd = `# Commands
       The model treats its own earlier attempts as evidence about what to do next, so a thread that has gone wrong tends to stay wrong.
     </p>
     <p>
-      A bigger window moves the cliff; it does not remove the slope. Size a task so one thread can finish it with room to spare,
-      and treat compaction as a fallback rather than a plan.
+      A bigger window only moves the point where this starts to bite. Size a task so one thread can finish it with room to
+      spare, and treat compaction as a fallback.
     </p>
   </Deeper>
 
@@ -189,7 +189,7 @@ const agentsMd = `# Commands
       Harnesses build the prompt in a fixed order for this reason: tool definitions, then the system prompt and instruction
       files, then the conversation, growing only at the end. Anything that changes the front of that order invalidates
       everything after it: editing the instruction file mid-session, connecting or removing a tool server, switching model.
-      Appending a message is cheap; rewriting the top is not.
+      Appending a message at the end keeps the cache intact.
     </p>
     <p>
       <Fact id="harnesses.claudeCode.promptCacheTtl" show="claim" /> A long, idle session that comes back after the cache expired pays full
@@ -253,7 +253,7 @@ const agentsMd = `# Commands
   <p>
     Some things are true of every task in a project: how to run the tests, where the holiday list lives, what must never be
     touched. Rather than type them every time, put them in a project instruction file. The agent reads it at the start of
-    every thread. Codex and most other tools read a file called <code>AGENTS.md</code>; Claude Code reads <code>CLAUDE.md</code>,
+    every thread. Codex reads a file called <code>AGENTS.md</code>; Claude Code reads <code>CLAUDE.md</code>,
     and falls back to <code>AGENTS.md</code> when there is none.
   </p>
   <p>Keep it short, and keep it to what the agent cannot work out by reading the code:</p>
@@ -281,7 +281,7 @@ const agentsMd = `# Commands
       project. Anthropic suggests a size: <Fact id="harnesses.claudeCode.claudeMdLines" show="claim" />
     </p>
     <p>
-      A line in the file is a request, not a guarantee. A rule that must never be broken, such as "never push to main", belongs
+      The model follows a line in the file most of the time. A rule that must never be broken, such as "never push to main", belongs
       in the harness's permission settings or a hook, where it is enforced.
     </p>
   </Deeper>
@@ -324,7 +324,7 @@ const agentsMd = `# Commands
   </p>
   <p>
     Write things down in files. Anything that should outlive the thread, such as a decision, a plan or a list of what is left,
-    belongs in a file in the project. Files survive compaction, new threads and switching tools; the conversation does not.
+    belongs in a file in the project. A file survives compaction and a new thread, and any tool can read it.
   </p>
 
   <Note title="Before a long run">

@@ -90,7 +90,7 @@ export const harnesses = {
     ),
     focusedContext: fact(
       'focused context gives better answers',
-      'Anthropic: running out of context is rare on 1M-token windows, but /clear between tasks is still worth doing, because a focused context gets better answers and costs less.',
+      'Running out of context is rare on 1M-token windows, but Anthropic still advises /clear between tasks, because a focused context gets better answers and costs less.',
       CC('best-practices'),
     ),
   },
