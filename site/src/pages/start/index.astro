@@ -1,383 +1,322 @@
 ---
-// The first hour (plan item X7). One page, three paths: the shared
-// explanation is shared, the steps differ by reader level through <ForLevel>.
-// Steps remember "done" in this browser (components/start/Step.astro).
+// The first hour, as a board. Everyone does the same eight moves on the thing
+// they picked; the reader level changes the wording of the first prompt and
+// adds tiles, never the path. Prompts live in lib/start.ts.
 import { Code } from 'astro:components';
-import Article from '../../layouts/Article.astro';
-import Deeper from '../../components/level/Deeper.astro';
-import ForLevel from '../../components/level/ForLevel.astro';
+import Board from '../../layouts/Board.astro';
+import Tile from '../../components/board/Tile.astro';
 import Fact from '../../components/data/Fact.astro';
 import Verified from '../../components/data/Verified.astro';
-import Note from '../../components/site/Note.astro';
-import Term from '../../components/site/Term.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
-import CardGrid from '../../components/site/CardGrid.astro';
-import Card from '../../components/site/Card.astro';
-import Step from '../../components/start/Step.astro';
+import { LEVELS, levelInfo } from '../../lib/levels';
 import { links } from '../../data/links';
 import { url } from '../../lib/nav';
+import * as p from '../../lib/start';
+import img3d from '../../assets/start/3d.webp';
+import imgApp from '../../assets/start/app.webp';
+import imgSite from '../../assets/start/site.webp';
 
-const headings = [
-  { depth: 2, slug: 'before-you-start', text: 'Before you start' },
-  { depth: 2, slug: 'the-hour', text: 'The hour' },
-  { depth: 2, slug: 'when-it-goes-wrong', text: 'When it goes wrong' },
-  { depth: 2, slug: 'what-next', text: 'What to read next' },
-];
+const images = { '3d': img3d, app: imgApp, site: imgSite };
 
 const factIds = [
-  'plans.claude.pro.price', 'plans.claude.pro.claudeCode', 'plans.chatgpt.plus.price', 'plans.chatgpt.limits.codexOnEveryPlan',
-  'plans.claude.limits.fiveHour', 't3code.price', 't3code.welcome', 't3code.codexWithChatGPT', 't3code.newProject',
-  't3code.defaultMode', 't3code.localServers', 't3code.worktrees', 't3code.manyModels', 't3code.githubAuth',
-  't3code.limited', 't3code.providerMissing', 't3code.editFromHere', 't3code.usagePage', 't3code.skillsInComposer',
-  'harnesses.claudeCode.contextFile', 'harnesses.codex.contextFile', 'harnesses.claudeCode.permissionRules',
-  'harnesses.claudeCode.skills', 'harnesses.codex.skills', 'harnesses.claudeCode.mcpAdd', 'harnesses.claudeCode.usageCommand',
-  'harnesses.codex.sandbox', 'harnesses.codex.mcpConfig', 't3code.claudePermissionsStillApply', 'harnesses.claudeCode.login', 'harnesses.codex.login',
+  'plans.claude.pro.price', 'plans.claude.pro.claudeCode', 'plans.chatgpt.limits.codexOnEveryPlan', 'plans.claude.limits.fiveHour',
+  't3code.price', 't3code.welcome', 't3code.codexWithChatGPT', 't3code.newProject', 't3code.defaultMode', 't3code.localServers',
+  't3code.worktrees', 't3code.manyModels', 't3code.githubAuth', 't3code.limited', 't3code.providerMissing', 't3code.editFromHere',
+  't3code.usagePage', 't3code.claudePermissionsStillApply', 'harnesses.claudeCode.contextFile', 'harnesses.codex.contextFile',
+  'harnesses.claudeCode.permissionRules', 'harnesses.claudeCode.usageCommand', 'harnesses.codex.sandbox',
+  'harnesses.claudeCode.login', 'harnesses.codex.login',
 ];
 
-// ---- Plain path prompts: the club list ----
-const clubDescribe = `I want a small web app for a neighbourhood football club to track which members have paid this season.
-
-What it needs:
-- A list of members with their name, their team (for example Under 9s, Under 12s, Veterans) and whether they have paid.
-- A form to add a member.
-- A way to mark someone as paid.
-- The data should be kept on this computer, so it is still there when I close and reopen the app.
-
-No login yet, and nothing online. Keep it as simple as you can.
-
-Before you start, ask me anything you need to know. Then build it and tell me, in plain words, how to open it.`;
-
-const clubLook = `Start the app so I can try it in the browser here. Tell me what to click first.`;
-
-const clubChange = `Three changes:
-- Sort the list by team, then by name.
-- Make the members who have not paid easy to spot.
-- At the top, show how many members have paid out of the total, like "18 of 25 paid".
-
-Show me when it is done.`;
-
-const clubCheck = `How can we check this works properly?
-
-1. Add checks that run on their own and test adding a member, marking someone as paid, and the "paid out of total" count. Run them and show me the result.
-2. Tell me in plain words what those checks cover and what they do not.
-3. Give me three things to try by hand in the browser, including one that might break it.`;
-
-const clubSave = `Save this version with Git. Write a short message that says what the app does now. Then tell me how I would get back to this exact version if a later change goes wrong.`;
-
-// ---- Technical path prompts: the holiday hours bug ----
-const techInstructions = `Read this repository and write an AGENTS.md at its root for coding agents. Include:
-- How to install dependencies, run the site locally, run the tests and the type check, with the exact commands.
-- Where things live: the main folders and what is in each.
-- Conventions you can see in the code (naming, test style, formatting).
-- What not to touch without asking.
-
-Keep it under 60 lines. Then create a CLAUDE.md that contains only the line @AGENTS.md, so Claude Code reads the same file. Do not change anything else. Show me both files.`;
-
-const techFix = `The bakery site shows the normal opening hours on public holidays. On Christmas Day it should say Closed, and on Easter Monday 09:00 to 13:00.
-
-1. Find where the opening hours are worked out.
-2. Write a test that pins the date to 25 December and one for Easter Monday. Run them and show me that they fail.
-3. Fix the code so they pass. Then run the whole test suite and the type check.
-
-Done means: both new tests pass, nothing else broke, and you tell me which files you changed and why. If the holidays come from somewhere you cannot see, stop and ask.`;
-
-const techSecond = `The footer shows a fixed copyright year. Make it use the current year, add a test for it, and run the test suite. Tell me which files you changed.`;
-
-// ---- Engineer path prompts ----
-const engTest = `The bakery site shows the normal opening hours on public holidays.
-
-Step 1, and stop after it: write failing tests for 25 December (Closed) and Easter Monday (09:00 to 13:00), with the date pinned so they do not depend on today. Also a test that the day after Easter Monday keeps the normal hours. Run them and paste the output. Do not touch the implementation yet.`;
-
-const engFix = `The tests look right. Now make them pass with the smallest change. The holiday list must not be hard-coded inside the hours function: pass the calendar in, so tests can give it a fixed one. Run the full suite and the type check, and paste the output.`;
-
-const engReview = `Review the changes on this branch against the base branch. You did not write them.
-
-List problems in order of how much they matter: bugs first, then missing tests, then anything that will be hard to maintain. For each, name the file and line and say what you would change. Check time zones and holidays that move each year in particular.
-
-Do not edit any files.`;
-
-const permissions = `{
-  "permissions": {
-    "allow": [
-      "Bash(npm run *)",
-      "Bash(git commit *)"
-    ],
-    "deny": [
-      "Bash(git push *)"
-    ]
-  }
-}`;
-
-const skill = `---
-name: holiday-hours
-description: Use when changing opening hours, holiday dates or anything that decides whether the bakery is open on a given day.
+// The loop drawing: six moves on a ring, at 1:1 on a phone.
+const ring = [
+  { id: 'describe', label: 'Describe', x: 180, y: 104 },
+  { id: 'try', label: 'Try', x: 271, y: 156 },
+  { id: 'change', label: 'Change', x: 271, y: 262 },
+  { id: 'ask', label: 'Ask', x: 180, y: 314 },
+  { id: 'check', label: 'Check', x: 89, y: 262 },
+  { id: 'save', label: 'Save', x: 89, y: 156 },
+];
 ---
-
-Opening hours are computed in one function that takes the holiday calendar
-as an argument. Tests pass a fixed calendar; production passes the real one.
-
-When you change anything here:
-1. Add a test with the date pinned, in the shop's own time zone.
-2. Check one holiday that moves each year (Easter Monday).
-3. Run the full test suite before you say it is done.`;
----
-<Article
+<Board
   title="The first hour"
-  description="From nothing to a first real result with a coding agent in about an hour. Three paths: no terminal, a terminal and Git, or the full engineering setup."
+  description="From nothing to something that works, built by a coding agent you direct: set up, say who you are, describe it, try it, change it, ask, check, save."
   section="start"
-  updated="2026-11-18"
-  headings={headings}
 >
-  <Fragment slot="lede">
-    <p>One hour, one real result. The steps change with the level you picked at the top of the page; the explanations around them are the same for everyone.</p>
-  </Fragment>
+  <script is:inline>
+    (function () {
+      var b = null;
+      try { b = localStorage.getItem('acg-build'); } catch (e) {}
+      if (b === '3d' || b === 'app' || b === 'site') document.documentElement.dataset.build = b;
+    })();
+  </script>
 
-  <h2 id="before-you-start">Before you start</h2>
-  <p>
-    By the end of the hour you will have asked an agent to build or fix something real, looked at what it did, asked it to change something, checked that the result works, and saved it. That loop is most of the job, and the rest of this guide is about doing it with more care and at a larger scale.
-  </p>
-  <p>
-    You need a computer you can install an app on, and one plan with an AI provider. A <Fact id="plans.claude.pro.price" /> a month Claude Pro plan includes Claude Code. A <Fact id="plans.chatgpt.plus.price" /> a month ChatGPT Plus plan includes Codex, and Codex is on the free ChatGPT plan too, so you can try it before paying. Plans have limits that reset over time, and an hour of building fits in them. <a href={url('explain/plans-and-api/')}>Plans and the API</a> explains what each plan gets you.
-  </p>
-  <p>
-    The app you will work in is <a href={url('t3-code/')}>T3 Code</a>. It is <Fact id="t3code.price" />, and it lets you run the agent from whichever provider you have a plan with.
-  </p>
-  <p>
-    The paths:
-  </p>
-  <ul>
-    <li>No terminal. You build the club list, a small app a football club uses to track who has paid, by talking to the agent.<ForLevel is="plain" inline> This is your path.</ForLevel></li>
-    <li>With a terminal and Git. You fix the holiday hours bug in a real repository, with a test, and open a pull request.<ForLevel is="technical" inline> This is your path.</ForLevel></li>
-    <li>The full setup: instructions and permissions, a failing test first, two agents in parallel, a review by a different model, one skill, one connector, and what it all cost.<ForLevel is="engineer" inline> This is your path.</ForLevel></li>
-  </ul>
-  <p>Change the level with the switch at the top of the page to see another path. The examples are fictional.</p>
+  <Tile title="Pick what to build" span={8} id="pick">
+    <fieldset class="builds">
+      <legend class="visually-hidden">What to build</legend>
+      {p.builds.map((b) => (
+        <label class="build">
+          <input type="radio" name="build" value={b.id} checked={b.id === p.DEFAULT_BUILD} />
+          <img src={images[b.id].src} width={images[b.id].width} height={images[b.id].height} alt={b.alt} decoding="async" />
+          <span class="build-name">{b.label}</span>
+        </label>
+      ))}
+    </fieldset>
+  </Tile>
 
-  <h2 id="the-hour">The hour</h2>
+  <Tile title="Then go round" span={4} side="explain/context/">
+    <svg class="loop" viewBox="0 0 360 344" role="img" aria-label="Set up and say who you are once. Then go round: describe, try, change, ask, check, save. Each lap adds a line to AGENTS.md.">
+      <g class="once">
+        <a href="#set-up"><rect x="52" y="6" width="96" height="36" rx="8" /><text x="100" y="29">Set up</text></a>
+        <path class="arrow" d="M150 24h18" />
+        <a href="#who"><rect x="172" y="6" width="136" height="36" rx="8" /><text x="240" y="29">Who you are</text></a>
+        <path class="arrow" d="M180 44v36" />
+      </g>
+      <circle class="track" cx="180" cy="209" r="105" />
+      <circle class="runner" r="6" />
+      <g class="file" aria-hidden="true">
+        <path d="M148 172h46l18 18v58h-64z" />
+        <path class="fold" d="M194 172v18h18" />
+        <path class="line" d="M158 204h44" /><path class="line" d="M158 214h36" /><path class="line" d="M158 224h44" /><path class="line new" d="M158 234h28" />
+        <text x="180" y="268">AGENTS.md</text>
+      </g>
+      {ring.map((n) => (
+        <a href={`#${n.id}`}><rect x={n.x - 44} y={n.y - 18} width="88" height="36" rx="18" /><text x={n.x} y={n.y + 5}>{n.label}</text></a>
+      ))}
+    </svg>
+  </Tile>
 
-  <ForLevel is="plain">
-    <Step id="plain-plan" n={1} title="Pick a plan">
-      <p>
-        Sign up for one: Claude Pro on <a href={links.claudePricing.url}>claude.com</a>, or ChatGPT (free or Plus) on chatgpt.com. If you already pay for one of them, use that. You do not need both.
-      </p>
-    </Step>
+  <Tile title="1 · Set up" span={5} id="set-up" side="t3-code/">
+    <ol class="moves">
+      <li>Get one plan: Claude Pro (<Fact id="plans.claude.pro.price" /> a month) or ChatGPT, where the free plan will do.</li>
+      <li>Install <a href={links.t3codeDownload.url}>T3 Code</a>. It is <Fact id="t3code.price" />.</li>
+      <li>On its Welcome page, connect your agent. Codex: <b>Set up</b>, then <b>Continue with ChatGPT</b>. Claude Code: <b>Install</b>, then <b>Sign in</b>.</li>
+      <li><kbd>Cmd</kbd>+<kbd>K</kbd> (<kbd>Ctrl</kbd>+<kbd>K</kbd>), <b>New project</b>, name it.</li>
+      <li>Under the message box, change <b><Fact id="t3code.defaultMode" /></b> to <b>Supervised</b>.</li>
+    </ol>
+  </Tile>
 
-    <Step id="plain-install" n={2} title="Install T3 Code and connect your agent">
-      <p>
-        Download T3 Code from <a href={links.t3codeDownload.url}>t3.codes</a> and open it. The first screen is a Welcome page listing the agents it can see on your computer.
-      </p>
-      <ul>
-        <li>With ChatGPT: choose <strong>Set up</strong> next to Codex, then <strong>Continue with ChatGPT</strong>. Sign in on OpenAI's page and allow T3 Code to use your plan. T3 Code installs Codex itself; you never see a terminal.</li>
-        <li>With Claude: choose <strong>Install</strong> next to Claude Code. A terminal window opens with the install command already typed. Press Enter and wait for it to finish, then do the same with <strong>Sign in</strong> and follow what it says to log in with your Claude account.</li>
-      </ul>
-      <p>
-        You will see the agent marked as ready. Choose <strong>Start</strong>.
-      </p>
-    </Step>
+  <Tile title="2 · Say who you are" span={7} id="who" side="explain/context/">
+    <div class="who">
+      <label class="who-field"><span>I am</span><input type="text" data-who-input placeholder={p.who.placeholder} autocomplete="off" spellcheck="true" /></label>
+      <div class="pick" role="group" aria-label="How much you know">
+        {LEVELS.map((id) => <button type="button" data-who-level={id} aria-pressed={id === 'plain' ? 'true' : 'false'}>{levelInfo[id].label}</button>)}
+      </div>
+    </div>
+    <CopyPrompt title="The first message" id="prompt-who" compact>{p.first.before}<span data-who-text>{p.who.empty}</span>{'. '}<span data-lv="plain">{p.who.plain}</span><span data-lv="technical">{p.who.technical}</span><span data-lv="engineer">{p.who.engineer}</span>{p.first.after}</CopyPrompt>
+  </Tile>
 
-    <Step id="plain-project" n={3} title="Make a folder for the project">
-      <p>
-        Press <kbd>Cmd</kbd>+<kbd>K</kbd> on a Mac (<kbd>Ctrl</kbd>+<kbd>K</kbd> on Windows), choose <strong>New project</strong> and type <em>Club list</em>. T3 Code makes a folder for it, saves a first empty version, and opens a thread: a conversation with the agent about this project (<Fact id="t3code.newProject" show="claim" />).
-      </p>
-      <p>
-        Under the message box you will see the permission mode. New threads start on <Fact id="t3code.defaultMode" />, where the agent acts without asking. For this hour, click it and choose <strong>Supervised</strong>, so the agent asks before it runs a command or changes a file. You will learn a lot from what it asks.
-      </p>
-    </Step>
+  <Tile title="3 · Describe it" span={6} id="describe" side="explain/context/">
+    {p.builds.map((b) => <div data-build-is={b.id}><CopyPrompt title={`Describe ${b.label.toLowerCase()}`} id={`prompt-describe-${b.id}`} compact>{p.describe[b.id]}</CopyPrompt></div>)}
+    <p class="then">It asks before each command. When you do not follow one: <button type="button" class="say" data-say>{p.say.approval}</button></p>
+  </Tile>
 
-    <Step id="plain-describe" n={4} title="Describe what you want">
-      <p>
-        Say what the app is for and what it needs, not how to build it. Paste this, or write your own version:
-      </p>
-      <CopyPrompt title="Describe the club list" id="prompt-club-describe">{clubDescribe}</CopyPrompt>
-      <p>
-        What you will see: a few questions first, which you answer in plain words. Then the agent starts working, and in Supervised mode it stops to ask for approval, for example to install something or to create files. Each request shows the command or the file. If it is about this project, approve it. If you do not understand one, type "What does this do, and why do you need it?" instead of approving. After a few minutes it tells you it is done and how to open the app.
-      </p>
-    </Step>
+  <Tile title="4 · Try it" span={6} id="try" side="t3-code/">
+    <CopyPrompt title="Open it" id="prompt-try" compact>{p.look}</CopyPrompt>
+    <p class="then">It shows up as a local server in the thread’s details. Select it. Yours will look different from the <a href={url('showcase/')} data-side>showcase</a> ones pictured above.</p>
+  </Tile>
 
-    <Step id="plain-look" n={5} title="Look at the result">
-      <CopyPrompt title="Open it" id="prompt-club-look">{clubLook}</CopyPrompt>
-      <p>
-        When the agent starts the app, the thread's details panel lists it as a local server. Select it and the app opens in T3 Code's own browser (<Fact id="t3code.localServers" show="claim" />). Add two or three made-up members and mark one as paid. Close the browser tab and open it again: the members should still be there.
-      </p>
-    </Step>
+  <Tile title="5 · Change it" span={6} id="change">
+    {p.builds.map((b) => <div data-build-is={b.id}><CopyPrompt title={`Change ${b.label.toLowerCase()}`} id={`prompt-change-${b.id}`} compact>{p.change[b.id]}</CopyPrompt></div>)}
+    <p class="then">After a correction that will come up again: <button type="button" class="say" data-say>{p.say.remember}</button></p>
+  </Tile>
 
-    <Step id="plain-change" n={6} title="Ask for a change">
-      <p>
-        The first version is a starting point. Say what you see and what you want instead:
-      </p>
-      <CopyPrompt title="Change it" id="prompt-club-change">{clubChange}</CopyPrompt>
-      <p>
-        Under its answer you will see which files changed, with the removed lines in one colour and the added lines in another. You do not have to read code to get something from this: if a change you asked for touched ten files, ask why.
-      </p>
-    </Step>
+  <Tile title="6 · Ask what it did" span={6} id="ask">
+    <CopyPrompt title="Ask for an explanation" id="prompt-ask" compact>{p.ask}</CopyPrompt>
+    <p class="then"><button type="button" class="say" data-say>{p.say.simpler}</button> <button type="button" class="say" data-say>{p.say.where}</button></p>
+  </Tile>
 
-    <Step id="plain-check" n={7} title="Ask the agent how to check it works">
-      <p>
-        The agent saying "done" is a claim. Ask it to show you:
-      </p>
-      <CopyPrompt title="Check it" id="prompt-club-check">{clubCheck}</CopyPrompt>
-      <p>
-        You should get a short list of checks that passed, a plain description of what they do not cover, and three things to try. Try them. If one breaks, describe exactly what you did and what you saw, and ask for a fix.
-      </p>
-    </Step>
+  <Tile title="7 · Have it checked" span={6} id="check" side="explain/verification/">
+    <CopyPrompt title="Check it" id="prompt-check" compact>{p.check}</CopyPrompt>
+    <p class="then">Try the three things. When it says done: <button type="button" class="say" data-say>{p.say.proof}</button></p>
+  </Tile>
 
-    <Step id="plain-save" n={8} title="Save your work">
-      <p>
-        Saving a version with Git is called a <Term def="A saved snapshot of all the project's files, with a short message. You can always go back to it.">commit</Term>. It is your undo button for everything that comes later.
-      </p>
-      <CopyPrompt title="Save this version" id="prompt-club-save">{clubSave}</CopyPrompt>
-      <p>
-        You now have a working club list on your own computer. It is not online, and anyone with your computer can open it; putting it online with a login is a later step, and a good next conversation with the agent.
-      </p>
-    </Step>
-  </ForLevel>
+  <Tile title="8 · Save it, and write it down" span={6} id="save">
+    <CopyPrompt title="Save and update AGENTS.md" id="prompt-save" compact>{p.save}</CopyPrompt>
+  </Tile>
 
-  <ForLevel is="technical">
-    <Step id="tech-install" n={1} title="Install T3 Code and an agent">
-      <p>
-        Install the desktop app from <a href={links.t3codeDownload.url}>t3.codes</a>, or with <code>brew install --cask t3-code</code> or <code>winget install T3Tools.T3Code</code>. Install at least one agent and sign in on the same machine: <code><Fact id="harnesses.claudeCode.login" /></code> for Claude Code, <code><Fact id="harnesses.codex.login" /></code> for Codex. The Welcome page should show the agent as ready. If it does not, see <a href="#when-it-goes-wrong">when it goes wrong</a>.
-      </p>
-    </Step>
+  <Tile title="Build on a branch" span={4} level="technical" side="t3-code/">
+    <p>New thread, then <b>New worktree</b> (<kbd>mod</kbd>+<kbd>shift</kbd>+<kbd>x</kbd>). Commit, push and open the pull request from the thread. GitHub needs one of: <Fact id="t3code.githubAuth" />.</p>
+  </Tile>
 
-    <Step id="tech-repo" n={2} title="Open a real repository">
-      <p>
-        Use a repository you work on, with tests. The guide's example is a bakery's website with the holiday hours bug; substitute your own bug. Drag the repository's folder onto the T3 Code sidebar, or run <code>t3 app</code> inside it. Set the permission mode to <strong>Supervised</strong> or <strong>Auto-accept edits</strong> for now (<kbd>mod</kbd>+<kbd>shift</kbd>+<kbd>a</kbd>); the default is <Fact id="t3code.defaultMode" />.
-      </p>
-    </Step>
+  <Tile title="A failing test first" span={4} level="technical" side="explain/verification/">
+    <CopyPrompt title="Test first" id="prompt-test-first" compact>{p.testFirst}</CopyPrompt>
+  </Tile>
 
-    <Step id="tech-instructions" n={3} title="Write a project instruction file">
-      <p>
-        An instruction file is read by the agent at the start of every session: how to build and test, where things are, what to leave alone. Codex reads <code>AGENTS.md</code>; <Fact id="harnesses.claudeCode.contextFile" show="claim" /> One <code>AGENTS.md</code> plus a one-line <code>CLAUDE.md</code> covers both.
-      </p>
-      <CopyPrompt title="Write AGENTS.md" id="prompt-tech-agents">{techInstructions}</CopyPrompt>
-      <p>
-        Read both files. Fix anything wrong by hand: a wrong test command here will mislead every future thread. Commit them.
-      </p>
-    </Step>
+  <Tile title="From the terminal" span={4} level="technical">
+    <p><code>brew install --cask t3-code</code> or <code>winget install T3Tools.T3Code</code>. Sign in with <code><Fact id="harnesses.claudeCode.login" /></code> or <code><Fact id="harnesses.codex.login" /></code>. Open a folder with <code>t3 app</code>.</p>
+  </Tile>
 
-    <Step id="tech-fix" n={4} title="Fix the holiday hours bug, with a test">
-      <p>
-        Start a new thread and choose <strong>New worktree</strong> in the workspace menu (<kbd>mod</kbd>+<kbd>shift</kbd>+<kbd>x</kbd>), so the fix happens on its own branch in its own folder.
-      </p>
-      <CopyPrompt title="Fix the holiday hours" id="prompt-tech-fix">{techFix}</CopyPrompt>
-      <p>
-        Watch for the failing test output before the fix. A test you never saw fail proves little. Then read the diff of each turn: the test should pin the date, and the fix should be in the hours logic, not a special case for one date.
-      </p>
-    </Step>
+  <Tile title="Two models, one prompt" span={4} level="engineer" side="explain/orchestration/">
+    <p>In a new thread, shift-click two models and send. Each gets its own thread and worktree. Keep the better result.</p>
+  </Tile>
 
-    <Step id="tech-parallel" n={5} title="Run a second thread in parallel">
-      <p>
-        While the first thread works, start another in a new worktree. Type the prompt and press <kbd>mod</kbd>+<kbd>Enter</kbd>: it starts in the background and gives you an empty composer for the next task.
-      </p>
-      <CopyPrompt title="A second, independent task" id="prompt-tech-second">{techSecond}</CopyPrompt>
-      <p>
-        The two threads work on separate branches and cannot edit each other's files. Move between them in the sidebar; answer whichever is waiting for you.
-      </p>
-    </Step>
+  <Tile title="A different model reviews" span={4} level="engineer" side="explain/verification/">
+    <CopyPrompt title="Review, do not edit" id="prompt-review" compact>{p.review}</CopyPrompt>
+  </Tile>
 
-    <Step id="tech-pr" n={6} title="Commit and open a pull request">
-      <p>
-        When the fix is right, use the thread's Git actions to commit, push and create a pull request; T3 Code drafts the message and description from the changes and the checks the thread ran (<Fact id="t3code.worktrees" show="claim" />). For GitHub it needs one of: <Fact id="t3code.githubAuth" />. Read the description before you send it: it should say what changed and how it was tested, and nothing it did not do.
-      </p>
-    </Step>
-  </ForLevel>
+  <Tile title="Set what it may do" span={4} level="engineer">
+    <Code code={p.permissions} lang="json" themes={{ light: 'github-light', dark: 'github-dark' }} />
+    <p class="then">In <code>.claude/settings.json</code>; T3 Code passes it through. Codex has sandbox modes instead: <Fact id="harnesses.codex.sandbox" />.</p>
+  </Tile>
 
-  <ForLevel is="engineer">
-    <Step id="eng-setup" n={1} title="Instruction file and permissions">
-      <p>
-        Write <code>AGENTS.md</code> (build, test, layout, conventions, no-go areas) and a <code>CLAUDE.md</code> containing <code>@AGENTS.md</code>; Codex reads the former, Claude Code the latter. Then decide what the agent may do without asking. <Fact id="harnesses.claudeCode.permissionRules" show="claim" /> A starting point for a JavaScript repository, in <code>.claude/settings.json</code>:
-      </p>
-      <Code code={permissions} lang="json" themes={{ light: 'github-light', dark: 'github-dark' }} />
-      <p>
-        For Codex, <Fact id="harnesses.codex.sandbox" show="claim" /> In T3 Code, set the thread's mode deliberately: the default is <Fact id="t3code.defaultMode" />, and T3 Code is not a sandbox. T3 Code passes Claude Code's own settings through: <Fact id="t3code.claudePermissionsStillApply" show="claim" />
-      </p>
-    </Step>
+  <Tile title="What the hour cost" span={12} level="engineer" side="explain/plans-and-api/">
+    <p><kbd>mod</kbd>+<kbd>u</kbd> opens the Usage page: <Fact id="t3code.usagePage" />. In Claude Code, <code><Fact id="harnesses.claudeCode.usageCommand" /></code>.</p>
+  </Tile>
 
-    <Step id="eng-test" n={2} title="A failing test first">
-      <p>
-        Split test and fix into two turns so you can check the test before anything is built to pass it. In a new worktree thread:
-      </p>
-      <CopyPrompt title="Tests only" id="prompt-eng-test">{engTest}</CopyPrompt>
-      <p>Read the tests. When they express the bug, queue the second half:</p>
-      <CopyPrompt title="Now the fix" id="prompt-eng-fix">{engFix}</CopyPrompt>
-    </Step>
+  <Tile title="When it goes wrong" span={12} id="wrong">
+    <dl class="wrong">
+      <div><dt>The agent is not ready</dt><dd>Sign in again on this computer. Still missing: <b>Settings → Providers</b>, and set its <Fact id="t3code.providerMissing" />.</dd></div>
+      <div><dt>The thread says Limited</dt><dd>Your plan’s allowance is used up for now. Wait for the reset, or switch the thread to your other provider.</dd></div>
+      <div><dt>It went the wrong way</dt><dd><b>Edit from here</b>, under the message where it turned. It rewinds the conversation; the files only in a worktree thread.</dd></div>
+      <div><dt>Done, but it is not</dt><dd><button type="button" class="say" data-say>{p.say.proof}</button></dd></div>
+      <div><dt>An approval you do not follow</dt><dd>Do not approve it. <button type="button" class="say" data-say>{p.say.approval}</button></dd></div>
+    </dl>
+  </Tile>
 
-    <Step id="eng-parallel" n={3} title="Two agents on separate worktrees">
-      <p>
-        Give the same task to two providers and compare. In a new thread, shift-click two models in the model picker, for example one Claude and one Codex model, choose the base branch and send. <Fact id="t3code.manyModels" show="claim" /> Compare the two diffs; keep the better one, or take the better test from one and the better fix from the other.
-      </p>
-    </Step>
+  <Verified slot="foot" ids={factIds} />
+</Board>
 
-    <Step id="eng-review" n={4} title="Have a different model review">
-      <p>
-        On the branch you keep, use <strong>New thread in this worktree</strong> from the branch toolbar and pick a model from the other provider. It sees the same files and none of the first thread's conversation, which is the point.
-      </p>
-      <CopyPrompt title="Review, do not edit" id="prompt-eng-review">{engReview}</CopyPrompt>
-      <p>Take the findings back to the implementing thread, or fix them in the review thread with its permission mode raised.</p>
-    </Step>
+<script>
+  import { getLevel, isLevel, onLevel, setLevel } from '../../lib/levels';
 
-    <Step id="eng-skill" n={5} title="Add one skill">
-      <p>
-        A skill is a folder with a <code>SKILL.md</code>: instructions the agent loads when its description matches the task. <Fact id="harnesses.claudeCode.skills" show="claim" /> <Fact id="harnesses.codex.skills" show="claim" /> A small project skill for the bakery:
-      </p>
-      <Code code={skill} lang="markdown" themes={{ light: 'github-light', dark: 'github-dark' }} />
-      <p>
-        Save it as <code>.claude/skills/holiday-hours/SKILL.md</code> (and in <code>.agents/skills/</code> for Codex), run <strong>Restart agent session</strong> from the command palette, and mention it in the composer with <code>$</code> to check it loads. <a href={url('explain/skills/')}>Skills</a> covers what makes a description trigger.
-      </p>
-    </Step>
+  const root = document.documentElement;
+  const store = {
+    get: (k: string) => { try { return localStorage.getItem(k); } catch { return null; } },
+    set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch {} },
+  };
 
-    <Step id="eng-connector" n={6} title="Add one connector">
-      <p>
-        A connector, or MCP server, gives the agent a tool outside your files: an issue tracker, a docs workspace, a database. Add one you actually use. For Claude Code the command is <code><Fact id="harnesses.claudeCode.mcpAdd" /></code>, run on the machine where T3 Code's server runs; for Codex, <Fact id="harnesses.codex.mcpConfig" show="claim" /> Restart the agent session, then ask the agent to list its tools and use one. <a href={url('explain/connectors/')}>Connectors</a> covers what each one costs in context.
-      </p>
-    </Step>
+  // What to build.
+  const radios = [...document.querySelectorAll<HTMLInputElement>('input[name="build"]')];
+  const current = root.dataset.build;
+  radios.forEach((r) => {
+    if (current) r.checked = r.value === current;
+    r.addEventListener('change', () => {
+      if (!r.checked) return;
+      root.dataset.build = r.value;
+      store.set('acg-build', r.value);
+    });
+  });
 
-    <Step id="eng-cost" n={7} title="Measure what the hour cost">
-      <p>
-        Open T3 Code's Usage page (<kbd>mod</kbd>+<kbd>u</kbd>). It shows tokens, cache reads and a model breakdown across providers, with an estimated API-priced cost (<Fact id="t3code.usagePage" />). In a Claude Code terminal, <code><Fact id="harnesses.claudeCode.usageCommand" /></code> shows how much of your plan's limits you used and what took it. Write down three numbers: share of the five-hour window used, share of the weekly limit, and the API-equivalent estimate. That is your baseline for deciding how many threads to run at once.
-      </p>
-    </Step>
-  </ForLevel>
+  // Who you are, written into the first message as you type.
+  const input = document.querySelector<HTMLInputElement>('[data-who-input]');
+  const out = document.querySelector<HTMLElement>('[data-who-text]');
+  if (input && out) {
+    const empty = out.textContent ?? '';
+    const show = () => { out.textContent = input.value.trim().replace(/^i am\s+/i, '').replace(/[.\s]+$/, '') || empty; out.toggleAttribute('data-filled', !!input.value.trim()); };
+    input.value = store.get('acg-who') ?? '';
+    show();
+    input.addEventListener('input', () => { show(); store.set('acg-who', input.value); });
+  }
 
-  <Deeper level="technical" title="Why the steps are in this order">
-    <p>
-      Every path follows the same loop: say what done looks like, let the agent work, look at the evidence, correct, save. The instruction file comes before the first task because every later thread reads it. The test comes before the fix because a test written after the fix tends to describe the fix rather than the bug. Saving comes last in each round so there is always a known good version to return to.
-    </p>
-  </Deeper>
+  // The level buttons are the site's level switch.
+  const levelButtons = [...document.querySelectorAll<HTMLButtonElement>('[data-who-level]')];
+  const mark = () => levelButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.whoLevel === getLevel())));
+  levelButtons.forEach((b) => b.addEventListener('click', () => { const l = b.dataset.whoLevel; if (isLevel(l)) setLevel(l); }));
+  onLevel(mark);
+  mark();
 
-  <h2 id="when-it-goes-wrong">When it goes wrong</h2>
-  <ul>
-    <li>The agent does not show up as ready. <Fact id="t3code.providerMissing" show="claim" /> Sign in again on that machine, then check <strong>Settings → Providers</strong>.</li>
-    <li>The thread says Limited. You used your plan's allowance for now. <Fact id="t3code.limited" show="claim" /> <Fact id="plans.claude.limits.fiveHour" show="claim" /></li>
-    <li>The agent went the wrong way. Do not argue with it for five messages. Choose <strong>Edit from here</strong> under the message where it went wrong, fix your request and send it again. To throw away file changes too, ask the agent to go back to your last commit; that is what step one of saving is for.</li>
-    <li>It says it is done, but it is not. Ask for the evidence: the test output, a screenshot, the exact steps it took to check. "Show me" works better than "are you sure?".</li>
-    <li>You do not understand an approval request. Do not approve it. Ask what it does and why it is needed, in plain words.</li>
-  </ul>
-  <Note title="Undo has limits">
-    <p><Fact id="t3code.editFromHere" show="claim" /> A commit is the undo you control.</p>
-  </Note>
+  // Short things to send: one press copies them.
+  document.querySelectorAll<HTMLButtonElement>('[data-say]').forEach((b) => {
+    let timer = 0;
+    b.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(b.textContent?.trim() ?? '');
+        b.setAttribute('data-copied', '');
+        clearTimeout(timer);
+        timer = window.setTimeout(() => b.removeAttribute('data-copied'), 1600);
+      } catch {
+        const range = document.createRange();
+        range.selectNodeContents(b);
+        getSelection()?.removeAllRanges();
+        getSelection()?.addRange(range);
+      }
+    });
+  });
+</script>
 
-  <h2 id="what-next">What to read next</h2>
-  <ForLevel is="plain">
-    <CardGrid>
-      <Card href="explain/plans-and-api/" title="Plans and the API">What your plan runs, and what happens at the limit.</Card>
-      <Card href="explain/verification/" title="Checking the work">How to tell whether the agent got it right.</Card>
-      <Card href="explain/context/" title="Context">Why telling the agent more gets better results.</Card>
-    </CardGrid>
-  </ForLevel>
-  <ForLevel is="technical">
-    <CardGrid>
-      <Card href="explain/context/" title="Context">What goes in an instruction file, and what stays out.</Card>
-      <Card href="explain/verification/" title="Checking the work">Tests, evidence and what to read in a diff.</Card>
-      <Card href="t3-code/" title="T3 Code">The rest of the working surface, and its limits.</Card>
-    </CardGrid>
-  </ForLevel>
-  <ForLevel is="engineer">
-    <CardGrid>
-      <Card href="explain/orchestration/" title="Orchestration">One model plans, others build, a third reviews.</Card>
-      <Card href="explain/skills/" title="Skills">Descriptions as triggers, and what belongs in one.</Card>
-      <Card href="explain/connectors/" title="Connectors">MCP servers, their cost in context, and their risks.</Card>
-    </CardGrid>
-  </ForLevel>
+<style is:global>
+  /* One build at a time. With no choice stored, the mini app. */
+  html:not([data-build]) [data-build-is]:not([data-build-is='app']),
+  html[data-build='3d'] [data-build-is]:not([data-build-is='3d']),
+  html[data-build='app'] [data-build-is]:not([data-build-is='app']),
+  html[data-build='site'] [data-build-is]:not([data-build-is='site']) { display: none; }
 
-  <Verified ids={factIds} />
-</Article>
+  /* One wording of the first message per reader level. Plain when unset. */
+  html:not([data-level]) [data-lv]:not([data-lv='plain']),
+  html[data-level='plain'] [data-lv]:not([data-lv='plain']),
+  html[data-level='technical'] [data-lv]:not([data-lv='technical']),
+  html[data-level='engineer'] [data-lv]:not([data-lv='engineer']) { display: none; }
+</style>
+
+<style>
+  .builds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; margin: 0; padding: 0; border: 0; min-width: 0; height: 100%; }
+  @container (max-width: 34rem) { .builds { gap: 0.375rem; } .build { padding: 0.25rem 0.25rem 0.5rem; } .build :global(img) { min-height: 5.5rem; } .build-name { padding: 0 0.125rem; font-size: var(--text-xs); } .build:has(input:checked) .build-name::after { display: none; } }
+  .build {
+    position: relative; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 0.5rem; min-width: 0; padding: 0.375rem 0.375rem 0.625rem;
+    border: 1.5px solid var(--rule); border-radius: var(--radius); background: var(--paper); cursor: pointer;
+    transition: border-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out);
+  }
+  .build:hover { border-color: var(--rule-strong); }
+  .build:active { transform: scale(0.985); }
+  .build input { position: absolute; opacity: 0; pointer-events: none; }
+  .build :global(img) { display: block; width: 100%; height: 100%; min-height: 9rem; object-fit: cover; object-position: top left; border-radius: calc(var(--radius) - 4px); background: var(--paper-2); }
+  .build:nth-child(1) :global(img) { object-position: 30% 70%; }
+  .build-name { padding: 0 0.375rem; font-weight: 650; color: var(--ink); }
+  .build:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1.5px var(--accent); }
+  .build:has(input:checked) .build-name::after { content: ''; display: inline-block; width: 0.5rem; height: 0.5rem; margin-left: 0.5rem; border-radius: 50%; background: var(--accent); vertical-align: 0.05em; }
+  .build:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 3px; }
+
+  .loop { display: block; width: 100%; max-width: 27rem; height: auto; margin: 0 auto; overflow: visible; }
+  .loop text { font-family: var(--sans); font-size: 14px; font-weight: 600; text-anchor: middle; fill: var(--ink); }
+  .loop a { text-decoration: none; }
+  .loop a rect { fill: var(--card); stroke: var(--rule-strong); stroke-width: 1.5; transition: stroke var(--dur-fast) ease, fill var(--dur-fast) ease; }
+  .loop a:hover rect, .loop a:focus-visible rect { stroke: var(--accent); fill: var(--accent-soft); }
+  .loop a:focus-visible { outline: none; }
+  .loop .once rect { fill: var(--paper-2); }
+  .loop .arrow { fill: none; stroke: var(--rule-strong); stroke-width: 1.5; stroke-linecap: round; marker-end: none; }
+  .loop .track { fill: none; stroke: var(--rule-strong); stroke-width: 1.5; stroke-dasharray: 2 6; stroke-linecap: round; }
+  .loop .file path { fill: var(--paper); stroke: var(--ink-2); stroke-width: 1.5; stroke-linejoin: round; }
+  .loop .file .fold { fill: none; }
+  .loop .file .line { stroke: var(--rule-strong); stroke-width: 2; stroke-linecap: round; }
+  .loop .file .new { stroke: var(--accent); }
+  .loop .file text { font-family: var(--mono); font-size: 13px; font-weight: 500; fill: var(--ink-2); }
+  .loop .runner { fill: var(--accent); offset-path: path('M180 104a105 105 0 1 1 0 210a105 105 0 1 1 0-210'); offset-distance: 0%; }
+  @media (prefers-reduced-motion: no-preference) {
+    .loop .runner { animation: lap 9s linear infinite; }
+    .loop .file .new { animation: write 9s linear infinite; stroke-dasharray: 28; }
+    @keyframes lap { to { offset-distance: 100%; } }
+    @keyframes write { 0%, 78% { stroke-dashoffset: 28; } 92%, 100% { stroke-dashoffset: 0; } }
+  }
+
+  .moves { margin: 0; padding-left: 1.3em; display: grid; gap: 0.45rem; }
+  .moves li { padding-left: 0.2em; }
+  .moves li::marker { font-family: var(--mono); font-size: var(--text-xs); color: var(--muted); }
+
+  .who { display: flex; flex-wrap: wrap; align-items: center; gap: 0.625rem 0.875rem; margin-bottom: 0.75rem; }
+  .who-field { flex: 1 1 16rem; display: flex; align-items: center; gap: 0.5rem; min-width: 0; font-weight: 650; color: var(--ink); }
+  .who-field span { flex: none; }
+  .who-field input {
+    flex: 1 1 auto; min-width: 0; min-height: 2.75rem; padding: 0 0.75rem;
+    border: 1px solid var(--rule-strong); border-radius: var(--radius-s);
+    background: var(--paper); color: var(--ink); font: inherit; font-weight: 400;
+  }
+  .who-field input::placeholder { color: var(--muted); opacity: 1; }
+  :global([data-who-text]) { background: var(--accent-soft); border-radius: 3px; padding: 0 0.15em; }
+  :global([data-who-text][data-filled]) { background: none; padding: 0; }
+
+  .then { margin: 0.75rem 0 0; }
+  .say {
+    display: inline; padding: 0.15em 0.5em; margin: 0.1em 0;
+    border: 1px solid var(--rule-strong); border-radius: var(--radius-s);
+    background: var(--paper); color: var(--ink); cursor: copy;
+    font-family: var(--mono); font-size: var(--text-xs); line-height: 1.5; text-align: left;
+    box-decoration-break: clone; -webkit-box-decoration-break: clone;
+  }
+  .say:hover { border-color: var(--ink); }
+  .say[data-copied] { border-color: var(--green); background: var(--green-soft); }
+
+  .wrong { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.75rem; margin: 0; }
+  .wrong div { min-width: 0; }
+  .wrong dt { font-weight: 650; color: var(--ink); margin-bottom: 0.25rem; }
+  .wrong dd { margin: 0; }
+</style>

@@ -7,7 +7,6 @@ import { LEVELS, levelInfo } from '../../lib/levels';
 import './levels.css';
 ---
 <aside class="level-offer" aria-label="Reading level" data-level-offer hidden>
-  <p>Pages start with the simple version. If you know your way around code, pick how much detail to show. The switch stays at the top of the page.</p>
   <div class="level-offer-choices">
     {LEVELS.map((id) => <button type="button" data-offer-level={id} aria-pressed="false">{levelInfo[id].label}</button>)}
   </div>
