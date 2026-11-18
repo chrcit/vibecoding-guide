@@ -1,0 +1,112 @@
+---
+/*
+ * Fig. 1, "Three agents, one of you". The home page hero.
+ *
+ * Idea: work runs in parallel; your attention does not.
+ * Elements: a desk; three terminals, one per lane of the club list (sign-up form, who has paid,
+ *   login), each with screen lines for work done and a flag that goes up when the agent has
+ *   finished and waits for you; your seat with an arm that points at the one agent you attend to.
+ * States: six moments of one short session (model.ts).
+ * Data: none. No numbers.
+ * Interaction: Back and Next step through the moments; the arm swings, lines fill, flags rise.
+ * Alt: see `alt` below; it describes the first moment.
+ */
+import Figure from '../Figure.astro';
+import { drawThreeAgents } from './draw';
+import { MOMENTS, describe } from './model';
+
+interface Props { n?: number | string }
+const { n = 1 } = Astro.props;
+const { svg, labels, motion } = drawThreeAgents();
+const last = MOMENTS.length - 1;
+---
+<div class="fig-three" data-fig-three data-motion={JSON.stringify(motion)}>
+  <Figure
+    n={n}
+    title="Three agents, one of you"
+    hint="Press Next to follow a few minutes of one session."
+    alt="A desk seen from above at an angle. Three small terminals stand around a seat, each working on one part of the club list: the sign-up form, the list of who has paid, and the login. An orange arm on the seat, you, points at the sign-up form, whose screen shows the first line of work. The other two screens are empty and every flag is down."
+    labels={labels}
+    wide
+  >
+    <Fragment set:html={svg} />
+    <Fragment slot="control">
+      <button type="button" class="btn ghost" data-back disabled>Back</button>
+      <button type="button" class="btn" data-next>Next moment</button>
+      <span class="fig-three-count" data-count>Moment 1 of {last + 1}</span>
+    </Fragment>
+    <Fragment slot="readout">{describe(MOMENTS[0]!)}</Fragment>
+    <Fragment slot="caption">
+      Three agents triple the work in progress. They do not triple you: briefing, reading and correcting still happen one at a time, and a finished agent waits until you get to it.
+    </Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .fig-three [data-line] .k-line { stroke-width: 2.5px; }
+  .fig-three .fig-arm-side { fill: var(--fig-lit-shadow); stroke: var(--fig-lit); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+  .fig-three-count { color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+  /* A raised flag is the agent saying it is done: paint it like a passed check. */
+  .fig-three [data-flag][data-up] .k-solid .k-fill,
+  .fig-three [data-flag][data-up] .k-solid .k-top { fill: color-mix(in oklab, var(--green) 40%, var(--card)); }
+  .fig-three [data-flag][data-up] .k-solid .k-left,
+  .fig-three [data-flag][data-up] .k-solid .k-right,
+  .fig-three [data-flag][data-up] .k-solid .k-shadow { fill: var(--green); }
+  .fig-three [data-flag][data-up] .k-edge { stroke: var(--green); }
+</style>
+
+<script>
+  import { MOMENTS, LINES, describe } from './model';
+
+  type Flat = [number, number];
+  type Motion = { angles: number[]; flagUp: Flat; flagDown: Flat; lines: number };
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const tr = ([x, y]: Flat) => `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fig-three]')) {
+    const m: Motion = JSON.parse(root.dataset.motion!);
+    const q = <T extends Element>(s: string) => root.querySelector<T>(s)!;
+    const arms = [...root.querySelectorAll<SVGGElement>('[data-arm]')];
+    const back = q<HTMLButtonElement>('[data-back]');
+    const next = q<HTMLButtonElement>('[data-next]');
+    const count = q<HTMLElement>('[data-count]');
+    const readout = q<HTMLElement>('[data-fig-readout]');
+    const labels = [...root.querySelectorAll<HTMLElement>('[data-label]')];
+    const last = MOMENTS.length - 1;
+    let at = 0;
+
+    q<HTMLElement>('[data-fig-control]').hidden = false;
+
+    function show(i: number, announce: boolean) {
+      const s = MOMENTS[i]!;
+      root.style.setProperty('--fig-ms', reduced.matches ? '0ms' : '');
+      for (const arm of arms) arm.style.transform = `rotate(${m.angles[s.you]!.toFixed(1)}deg)`;
+      for (let a = 0; a < 3; a++) {
+        for (let j = 0; j < LINES; j++) {
+          const line = q<SVGGElement>(`[data-line="${a}-${j}"]`);
+          line.style.opacity = j < s.lines[a]! ? '1' : '0';
+        }
+        const f = q<SVGGElement>(`[data-flag="${a}"]`);
+        f.style.transform = tr(s.waiting[a] ? m.flagUp : m.flagDown);
+        f.style.opacity = s.waiting[a] ? '1' : '0';
+        f.toggleAttribute('data-up', s.waiting[a]!);
+      }
+      for (const l of labels) l.toggleAttribute('data-active', l.dataset.label === `lane-${s.you}`);
+      if (announce) readout.textContent = describe(s);
+      count.textContent = `Moment ${i + 1} of ${last + 1}`;
+      back.disabled = i === 0;
+      next.textContent = i === last ? 'Start again' : 'Next moment';
+    }
+
+    next.addEventListener('click', () => {
+      at = at === last ? 0 : at + 1;
+      show(at, true);
+    });
+    back.addEventListener('click', () => {
+      at = Math.max(0, at - 1);
+      show(at, true);
+      if (at === 0) next.focus();
+    });
+    show(0, false);
+  }
+</script>

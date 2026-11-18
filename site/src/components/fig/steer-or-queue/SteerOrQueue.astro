@@ -1,0 +1,87 @@
+---
+/*
+ * Fig. 5, "Steer or queue".
+ *
+ * Idea: a message sent while an agent works either joins the running turn at its next step
+ *   (steer) or waits until the turn ends (queue); queued corrections can cost a turn of work.
+ * Elements: two belts, one per turn of the agent; the step boxes on them; your message, lit;
+ *   a glass bin for steps that were done and then had to be done again.
+ * States: queue (the default in most harnesses) and steer (model.ts).
+ * Data: none. The example is the holiday hours bug.
+ * Interaction: one toggle, Queue or Steer. The message moves, boxes drop into the bin or stay.
+ * Alt: see `alt` below; it describes the queued state.
+ */
+import Figure from '../Figure.astro';
+import { drawSteerOrQueue } from './draw';
+import { stateOf, describe, MESSAGE, SENT_AFTER } from './model';
+
+interface Props { n?: number | string }
+const { n = 5 } = Astro.props;
+const { svg, labels, motion } = drawSteerOrQueue();
+---
+<div class="fig-steer" data-fig-steer data-motion={JSON.stringify(motion)}>
+  <Figure
+    n={n}
+    title="Steer or queue"
+    hint="Switch between queueing your message and steering with it."
+    alt={`Two conveyor belts, one for each turn of an agent fixing the holiday hours bug. On the back belt, turn 1, two step boxes are done. Your message, an orange card that says "${MESSAGE}", waits at the start of the front belt, turn 2, which carries four boxes: the steps done again. The four steps turn 1 did after the message was sent lie in a glass bin.`}
+    labels={labels}
+  >
+    <Fragment set:html={svg} />
+    <div slot="control" class="seg" role="group" aria-label="What happens to your message">
+      <button type="button" aria-pressed="true" data-mode="queue">Queue</button>
+      <button type="button" aria-pressed="false" data-mode="steer">Steer</button>
+    </div>
+    <Fragment slot="readout">{describe(stateOf('queue'))}</Fragment>
+    <Fragment slot="caption">
+      You sent “{MESSAGE}” after the agent had done {SENT_AFTER} steps. A queued message waits for the turn to end; a steer is read at the next step. Queueing suits additions. A correction to the work in progress is worth steering, where the tool allows it.
+    </Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .fig-steer [data-redo], .fig-steer [data-step] { transition-duration: var(--fig-ms, 600ms); }
+</style>
+
+<script>
+  import { stateOf, describe, STEPS, SENT_AFTER, type Mode } from './model';
+
+  type Flat = [number, number];
+  type Pos = { left: string; top: string };
+  type Motion = { toBin: Flat[]; cardAt: Record<Mode, Flat>; messageLabel: Record<Mode, Pos> };
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const tr = ([x, y]: Flat) => `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fig-steer]')) {
+    const m: Motion = JSON.parse(root.dataset.motion!);
+    const q = <T extends Element>(s: string) => root.querySelector<T>(s)!;
+    const card = q<SVGGElement>('[data-card]');
+    const label = q<HTMLElement>('[data-label="message"]');
+    const binLabel = q<HTMLElement>('[data-label="bin"]');
+    const turn2 = q<HTMLElement>('[data-label="turn-2"]');
+    const readout = q<HTMLElement>('[data-fig-readout]');
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-mode]')];
+
+    q<HTMLElement>('[data-fig-control]').hidden = false;
+
+    function show(mode: Mode, announce: boolean) {
+      root.style.setProperty('--fig-ms', reduced.matches ? '0ms' : '');
+      const queued = mode === 'queue';
+      card.style.transform = tr(m.cardAt[mode]);
+      label.style.left = m.messageLabel[mode].left;
+      label.style.top = m.messageLabel[mode].top;
+      for (let j = SENT_AFTER; j < STEPS.length; j++) {
+        const box = q<SVGGElement>(`[data-step="${j}"]`);
+        box.style.transform = queued ? tr(m.toBin[j - SENT_AFTER]!) : 'translate(0px, 0px)';
+      }
+      root.querySelectorAll<SVGGElement>('[data-redo]').forEach((b) => (b.style.opacity = queued ? '1' : '0'));
+      binLabel.toggleAttribute('data-active', queued);
+      turn2.toggleAttribute('data-active', queued);
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
+      if (announce) readout.textContent = describe(stateOf(mode));
+    }
+
+    for (const b of buttons) b.addEventListener('click', () => show(b.dataset.mode as Mode, true));
+    show('queue', false);
+  }
+</script>
