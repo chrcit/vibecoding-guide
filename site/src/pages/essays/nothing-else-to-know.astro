@@ -1,0 +1,44 @@
+---
+import Essay from '../../layouts/Essay.astro';
+import Fact from '../../components/data/Fact.astro';
+import { url } from '../../lib/nav';
+import { anchor } from '../../lib/facts';
+import { links } from '../../data/links';
+
+export const meta = {
+  title: 'There is nothing else to know: try it, and say what annoys you',
+  description: 'Nobody can teach you this better than an hour on your own problems. There is no hidden vocabulary. When something about the workflow annoys you, say so and the agent changes it.',
+  order: 16,
+};
+
+const src = (id: string) => `sources/#${anchor(id)}`;
+const leansOn = [
+  { href: 'explain/skills/', title: 'Skills: how a skill loads (Fig. 16)' },
+  { href: 'explain/connectors/', title: 'Connectors: what you can wire in (Fig. 17)' },
+  { href: src('t3code.htmlRenders'), title: 'Pages that render inside a T3 Code thread' },
+  { href: src('skills.grill-me.what'), title: 'grill-me, the questioning skill' },
+  { href: src('skillFacts.installer'), title: 'Installing a skill with one command' },
+  { href: links.theo.url, title: links.theo.label },
+];
+---
+<Essay meta={meta} leansOn={leansOn}>
+  <p>Nobody can teach you this better than an hour spent trying it on your own problems. There is no hidden vocabulary and no course you are missing. The tools are a chat box and some projects. When something about the way you work with them annoys you, say so, and the agent changes it.</p>
+
+  <p>I mean that literally. When I explain how I work to someone, I usually end up promising them the same thing: you don't need anything else. You can repeat the words I just used, or the ideas behind them, to the agent, and it will do it.</p>
+
+  <h2>A complaint is a feature request</h2>
+
+  <p>My favourite example is a small one. I use a questioning skill, <a href={links.mattPocockSkills.url}>grill-me</a> by Matt Pocock, which <Fact id="skills.grill-me.what" />. Normally the agent asks its questions as a plain list and you answer by number. That got tedious. The tool I use, T3 Code, can show a page right in the conversation: <Fact id="t3code.htmlRenders" show="claim" /> So I told it I wanted multiple choice. From then on the questions came back as a form I could click through.</p>
+
+  <p>Nobody showed me that was possible. I was annoyed, and I said what I wanted. Later the same thing happened with a long list of ideas the agent had proposed. I asked for it as a yes, no or maybe list, and sorting it took a minute. You can reshape the workflow in the smallest ways just by asking.</p>
+
+  <p>Changing the setup itself works the same way. I wanted three skills on a second machine, so I told the agent to install them. For most agents a skill installs with <Fact id="skillFacts.installer" />, but I didn't have to know that. The <a href={url('explain/skills/')}>skills explainer</a> shows what happens when one loads <!-- FIG 16 -->, and the <a href={url('explain/connectors/')}>connectors explainer</a> shows what else you can plug in the same way. <!-- FIG 17 --> The models can write code, and code can do almost anything a computer does, so you can get almost anything done by telling the model what you want. That is why I say there is nothing else to know.</p>
+
+  <h2>How to learn it</h2>
+
+  <p>I give one recommendation for background: <a href={links.theo.url}>Theo</a>, who makes T3 Code and explains this world on video. Beyond that, it is you, trying things. Nobody is smarter than you at what you want to do. Someone out there may be doing exactly the same thing, but nobody is writing articles about it, and no video will teach you more than an hour of your own attempts.</p>
+
+  <p>So book one hour this week. Pick a real problem, such as the messy contact spreadsheet you have been meaning to clean, and ask the agent to fix it. If you are in a project you don't know, ask it to help you get started. You will be getting work done during that hour, and by the end of the week you will have the basics. That is a promise from my own experience. I have no study behind it.</p>
+
+  <p>I forget this myself. I once tried to read some numbers off a slow, confusing website for far too long before asking an AI search instead. My mistake, for trying to understand things on my own.</p>
+</Essay>
