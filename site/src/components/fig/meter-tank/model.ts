@@ -1,74 +1,61 @@
-// Fig. 8, a meter and a tank. The API bills every token; a plan is a tank that refills every few
-// hours and sits inside a weekly allowance. Every number comes in as an input; nothing is hard-coded.
+// Fig. 8, a meter and a tank. The API bills every token; a plan is a tank that refills on a clock and
+// draws on a weekly allowance. No provider publishes how much a window or a week holds, so the figure
+// works in steps and relative levels: it shows what happens, in order, without inventing a quantity.
+// Every number the words use (price, window length) comes in as an input from src/data/.
 
 export interface MeterTankInputs {
   /** Currency symbol for the readout, such as "$". */
   currency: string;
-  /** API price per million tokens (a blended rate). */
-  apiPricePerMillion: number;
-  /** Tokens a steady session of agent work uses per hour. */
-  tokensPerHour: number;
   /** What the plan costs per month. */
   planPricePerMonth: number;
   /** Length of the plan's usage window, in hours. */
   windowHours: number;
-  /** Tokens one window allows. */
-  windowTokens: number;
-  /** Tokens one week allows. */
-  weeklyTokens: number;
 }
 
-export type Status = 'idle' | 'working' | 'tank-dry' | 'week-dry';
+export type Watch = 'meter' | 'tank' | 'week' | 'clock';
 
-export interface MeterTankState {
-  hours: number;
-  /** What the meter has billed so far. */
+export interface Step {
+  /** Share of the meter's full travel, 0 to 1: what the same work would have cost on the API, relative. */
   bill: number;
-  /** Share of the current window still available, 0 to 1. */
-  tankLeft: number;
-  /** Share of the week still available, 0 to 1. */
-  weekLeft: number;
-  /** Which window this is, from 1. */
-  window: number;
-  status: Status;
-  /** Hours until the tank refills (0 when it is not dry). */
-  refillIn: number;
+  /** Share of the window's allowance still in the tank, 0 to 1. */
+  tank: number;
+  /** Share of the week's allowance still in the trough, 0 to 1. */
+  week: number;
+  /** How far the refill clock has turned since the first message, in windows (1 = one full turn). */
+  clock: number;
+  /** Which labels to highlight. */
+  watch: Watch[];
+  says: (x: MeterTankInputs) => string;
 }
 
-/** Work at a steady pace for `hours`. The API meter never stops; the plan stops when a tank is dry. */
-export function stateAt(hours: number, x: MeterTankInputs): MeterTankState {
-  const bill = (x.tokensPerHour * hours * x.apiPricePerMillion) / 1e6;
-  const index = Math.floor(hours / x.windowHours + 1e-9);
-  let used = 0;
-  for (let w = 0; w < index; w++) used += Math.min(x.windowTokens, x.tokensPerHour * x.windowHours, x.weeklyTokens - used);
-  const into = hours - index * x.windowHours;
-  const cap = Math.min(x.windowTokens, x.weeklyTokens - used);
-  const now = Math.min(x.tokensPerHour * into, cap);
-  used += now;
-  const weekLeft = Math.max(0, 1 - used / x.weeklyTokens);
-  const tankLeft = weekLeft <= 1e-9 ? 0 : Math.max(0, 1 - now / x.windowTokens);
-  const dry = x.tokensPerHour * into >= cap - 1e-6 && hours > 0;
-  const status: Status = hours === 0 ? 'idle' : weekLeft <= 1e-9 ? 'week-dry' : dry ? 'tank-dry' : 'working';
-  return { hours, bill, tankLeft, weekLeft, window: index + 1, status, refillIn: status === 'tank-dry' ? x.windowHours - into : 0 };
-}
+const price = (x: MeterTankInputs) => `${x.currency}${x.planPricePerMonth}`;
+const hours = (x: MeterTankInputs) => `${x.windowHours} hours`;
 
-/** A slider range that runs a little past the point where the week is used up. */
-export function maxHours(x: MeterTankInputs) {
-  for (let t = 0; t < 24 * 7; t += 0.5) if (stateAt(t, x).status === 'week-dry') return Math.ceil(t + x.windowHours / 2);
-  return 24 * 7;
-}
+export const STEPS: Step[] = [
+  {
+    bill: 0, tank: 1, week: 1, clock: 0, watch: [],
+    says: (x) => `Nothing has run yet. The API meter reads zero. On the ${price(x)} plan the tank is full, and so is the trough that holds the week.`,
+  },
+  {
+    bill: 0.25, tank: 0.5, week: 0.82, clock: 0.4, watch: ['meter', 'tank'],
+    says: (x) => `Two hours into building the club list. On the API the meter counts every token in and out, and the bill climbs. On the plan the same work drains the tank and the week drops with it, while the price stays ${price(x)} a month.`,
+  },
+  {
+    bill: 0.42, tank: 0, week: 0.68, clock: 0.7, watch: ['tank', 'clock'],
+    says: (x) => `The tank runs dry before the clock comes round. On the plan you stop and wait until ${hours(x)} after your first message. On the API nothing stops: the meter keeps counting for as long as you work.`,
+  },
+  {
+    bill: 0.55, tank: 1, week: 0.68, clock: 1, watch: ['tank', 'week'],
+    says: (x) => `${hours(x)[0]!.toUpperCase()}${hours(x).slice(1)} after the first message, the tank refills in full. The week does not: what you used stays used until the weekly reset.`,
+  },
+  {
+    bill: 0.9, tank: 0, week: 0, clock: 3.5, watch: ['week'],
+    says: () => 'Several windows later the week is empty. The tank stays dry even when the clock comes round, until the weekly reset at the fixed time assigned to your account.',
+  },
+  {
+    bill: 1, tank: 0, week: 0, clock: 3.8, watch: ['meter'],
+    says: (x) => `With usage credits turned on, work carries on past the limit and is billed at API rates. The meter is running again, and what it counts is on top of the ${price(x)}.`,
+  },
+];
 
-const hrs = (h: number) => {
-  const v = Math.round(h * 10) / 10;
-  return `${v} hour${v === 1 ? '' : 's'}`;
-};
-const pct = (v: number) => `${Math.round(v * 100)}%`;
-
-export function describe(s: MeterTankState, x: MeterTankInputs) {
-  const money = `${x.currency}${s.bill.toFixed(2)}`;
-  if (s.status === 'idle') return `No work yet. The meter reads ${x.currency}0.00. The tank is full, and so is the week.`;
-  const head = `${hrs(s.hours)} of steady work. The meter reads ${money} and is still counting.`;
-  if (s.status === 'week-dry') return `${head} On the plan, the week is used up: the tank stays empty until the weekly reset.`;
-  if (s.status === 'tank-dry') return `${head} On the plan, the tank is dry; it refills in ${hrs(s.refillIn)}. ${pct(1 - s.weekLeft)} of the week is used.`;
-  return `${head} On the plan, the tank is ${pct(s.tankLeft)} full in window ${s.window}, and ${pct(1 - s.weekLeft)} of the week is used.`;
-}
+export const describe = (i: number, x: MeterTankInputs) => STEPS[i]!.says(x);

@@ -111,6 +111,14 @@ Release dates, context windows, API list prices and effort levels. From `site/sr
 | Anthropic's worked example (an Opus 5.5 session with 50,000 input and 15,000 output tokens) comes to 60% output by cost. | 60% | verified: 50k × $4 = $0.20 input, 15k × $20 = $0.30 output. | [platform.claude.com/docs/en/about-claude/pricing](https://platform.claude.com/docs/en/about-claude/pricing) |
 | Batch API requests are 50% off on Claude models. | 50% | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
 | Codex offers reasoning effort low (called light in the app), medium, high, extra high, and on some models max and ultra. Ultra uses subagents. | low, medium, high, extra high, max, ultra | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
+| Writing to the five-minute prompt cache costs 1.25 times the base input price on Claude models. | 1.25× | verified | [platform.claude.com/docs/en/about-claude/pricing](https://platform.claude.com/docs/en/about-claude/pricing) |
+| Writing to the one-hour prompt cache costs twice the base input price on Claude models. | 2× | verified | [platform.claude.com/docs/en/about-claude/pricing](https://platform.claude.com/docs/en/about-claude/pricing) |
+| Cache reads on Claude Opus 5.5 and Sonnet 5.5 cost 0.05 times the base input price; most other Claude models use 0.1 times, Fable 0.025 times. | 0.05× | verified | [platform.claude.com/docs/en/about-claude/pricing](https://platform.claude.com/docs/en/about-claude/pricing) |
+| A five-minute cache write on Claude Opus 5.5 costs $5 per million tokens. | $5 | verified | [platform.claude.com/docs/en/about-claude/pricing](https://platform.claude.com/docs/en/about-claude/pricing) |
+| A five-minute cache write pays for itself after one cache read; a one-hour write after two. | after one read | verified | [platform.claude.com/docs/en/about-claude/pricing](https://platform.claude.com/docs/en/about-claude/pricing) |
+| Claude 4.6 and later models, except Haiku 5.5, bill the full 1M-token context at standard prices: a 900K-token request pays the same per-token rate as a 9K-token one. | standard price | verified | [platform.claude.com/docs/en/about-claude/pricing](https://platform.claude.com/docs/en/about-claude/pricing) |
+| Claude Code asks for the one-hour cache for the main conversation on a Claude subscription within plan usage, and the five-minute cache with an API key, usage credits or a cloud provider. Subagents get five minutes by default either way. | one hour on a plan, five minutes on a key | verified | [code.claude.com/docs/en/prompt-caching](https://code.claude.com/docs/en/prompt-caching) |
+| Switching model, changing effort on most models, turning on fast mode, connecting an MCP server when tools load up front, and compacting all make the next Claude Code request miss some or all of the cache. | switching model, changing effort on most models, fast mode, adding an MCP server, compaction | verified | [code.claude.com/docs/en/prompt-caching](https://code.claude.com/docs/en/prompt-caching) |
 
 ## Plans and limits
 
@@ -120,9 +128,13 @@ Subscription prices, what each includes, how limits work and what the API credit
 |---|---|---|---|
 | Claude Free costs nothing. | $0 | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Claude Code is not included on the free Claude plan. | no | verified | [claude.com/pricing](https://claude.com/pricing) |
+| Claude Free includes Sonnet and Haiku but not Opus. | Sonnet and Haiku | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Claude Pro costs $20 a month billed monthly ($17 a month billed yearly). | $20 | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Claude Code is included from Pro up. | yes | verified | [claude.com/pricing](https://claude.com/pricing) |
 | On Pro, Fable runs on pay-as-you-go usage credits from the start; it is outside the plan limits. | usage credits | verified | [support.claude.com/en/articles/15424964](https://support.claude.com/en/articles/15424964) |
+| Pro adds Opus to the models Free includes. | yes | verified | [claude.com/pricing](https://claude.com/pricing) |
+| Pro includes Claude on the web, desktop and mobile, Claude in Chrome and Claude Code. Max and Ultra include everything in Pro. | Claude on web, desktop and mobile, Claude Code, Claude in Chrome | verified | [claude.com/pricing](https://claude.com/pricing) |
+| Pro includes no monthly API credit; Max and Ultra do. | no | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Claude Max costs $100 a month. | $100 | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Max gives 5× Pro usage every five hours and every week. | 5× | verified | [claude.com/pricing](https://claude.com/pricing) |
 | On Max, up to 50% of the weekly limit can be spent on Fable at no extra cost; after that Fable continues on usage credits. | 50% | verified | [support.claude.com/en/articles/15424964](https://support.claude.com/en/articles/15424964) |
@@ -138,9 +150,21 @@ Subscription prices, what each includes, how limits work and what the API credit
 | Session and weekly limits are shared across all models, so switching model with /model does not restore access. | yes | verified | [code.claude.com/docs/en/costs](https://code.claude.com/docs/en/costs) |
 | With usage credits enabled, work continues on usage credits instead of stopping. | continue at API rates | verified | [support.claude.com/en/articles/11647753](https://support.claude.com/en/articles/11647753) |
 | Anthropic publishes no dollar, token or message figure for a plan limit. How fast you use it depends on factors including which model you use. | not published | verified | [support.claude.com/en/articles/11647753](https://support.claude.com/en/articles/11647753) |
+| Usage on claude.ai, Claude Code and Claude Desktop counts towards the same usage limit. | yes | verified | [support.claude.com/en/articles/11647753](https://support.claude.com/en/articles/11647753) |
+| How fast you use a limit depends on the model and the effort level you select; higher effort uses more tokens, and tools and connectors are token-intensive. | higher effort uses more | verified | [support.claude.com/en/articles/11647753](https://support.claude.com/en/articles/11647753) |
+| Longer conversations that trigger automatic context management consume more of the usage limit. | use more | verified | [support.claude.com/en/articles/11647753](https://support.claude.com/en/articles/11647753) |
+| At a session or weekly limit you can wait for the reset or upgrade, and a new plan's limits apply right away. With usage credits enabled, work continues on credits instead of stopping. | wait, upgrade or use credits | verified | [support.claude.com/en/articles/11647753](https://support.claude.com/en/articles/11647753) |
+| Claude shows how much of the current session you have used and the time remaining under Settings > Usage. | Settings > Usage | verified | [support.claude.com/en/articles/11647753](https://support.claude.com/en/articles/11647753) |
+| In Claude Code, /usage shows plan usage bars and a breakdown of recent usage by skills, subagents, plugins and MCP servers; its dollar figure is for API users. | /usage | verified | [code.claude.com/docs/en/costs](https://code.claude.com/docs/en/costs) |
+| Every subagent sends its own requests on top of the main conversation's, and they draw on the same plan usage. | yes | verified | [code.claude.com/docs/en/costs](https://code.claude.com/docs/en/costs) |
+| Claude Code sends the full conversation with every request, so a one-line question in a session open all day still draws usage for the whole conversation. | whole conversation each request | verified | [code.claude.com/docs/en/costs](https://code.claude.com/docs/en/costs) |
+| The Claude session limit resets in full five hours after the first message of the period. | 5 | verified | [support.claude.com/en/articles/11647753](https://support.claude.com/en/articles/11647753) |
 | Anthropic runs AI for Science, which gives API credits to researchers. | API credits | verified | [support.claude.com/en/articles/11199177](https://support.claude.com/en/articles/11199177) |
 | A Team plan programme exists for verified principal investigators. | Team plan | verified | [claude.com/programs/team-plan-for-scientists](https://claude.com/programs/team-plan-for-scientists) |
 | The Claude startup programme closed to new applications on 13 October 2026. | 13 Oct 2026 | verified | [claude.com/programs/team-plan-for-scientists](https://claude.com/programs/team-plan-for-scientists) |
+| Claude API rate limits are measured in requests, input tokens and output tokens per minute, per model, and depend on the organisation's usage tier. Capacity refills continuously rather than at fixed times. | RPM, ITPM, OTPM | verified | [platform.claude.com/docs/en/api/rate-limits](https://platform.claude.com/docs/en/api/rate-limits) |
+| Cache reads do not count towards the Claude API input-token rate limit; uncached input and cache writes do. | yes | verified | [platform.claude.com/docs/en/api/rate-limits](https://platform.claude.com/docs/en/api/rate-limits) |
+| The Start usage tier of the Claude API carries a monthly spend cap of $500; Build is $1,000 and Scale $200,000. | $500 | verified | [platform.claude.com/docs/en/api/rate-limits](https://platform.claude.com/docs/en/api/rate-limits) |
 | ChatGPT Free costs nothing and includes Codex. | $0 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 | ChatGPT Go costs $8 a month and includes Codex. | $8 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 | ChatGPT Plus costs $20 a month and includes Codex. | $20 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
@@ -148,11 +172,15 @@ Subscription prices, what each includes, how limits work and what the API credit
 | Estimated local Codex messages per five hours on Plus with GPT-6.2 Sol: 17 to 180. | 17–180 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 | Estimated local Codex messages per five hours on Plus with GPT-6.1 Terra: 35 to 285. | 35–285 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 | Estimated local Codex messages per five hours on Plus with GPT-6 Luna: 350 to 3,000. | 350–3,000 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
-| ChatGPT Pro comes at $100, $200 or $500 a month. | 100, 200, 500 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
+| ChatGPT Pro comes at $100, $200 or $500 a month. | $100, $200, $500 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 | ChatGPT Pro plans currently have no five-hour limit. | yes | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 | ChatGPT Business costs $20 per user a month billed yearly ($25 monthly), for two or more users. | $20 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 | OpenAI publishes estimated message ranges per five hours for Plus and Business; they are estimates, not fixed limits, and weekly limits may also apply. | estimates | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 | Codex is included on every ChatGPT plan, from Free up. | yes | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
+| OpenAI publishes no message estimates for the Pro plans at $100, $200 or $500. | not published | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
+| Codex cloud tasks may use more of the allowance than local messages. | use more | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
+| If a Codex usage limit is reached during an active turn, the agent can finish that turn; Plus and Pro users can buy additional credits to keep working without upgrading. | finish the turn, then credits | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
+| Anyone can run extra local Codex chats with an API key, charged at standard API rates and outside the ChatGPT allowance. | yes | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 
 ## Benchmarks
 

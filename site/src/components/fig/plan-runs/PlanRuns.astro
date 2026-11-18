@@ -1,0 +1,175 @@
+---
+/*
+ * Fig. 9, "What your plan runs". A flat chart.
+ *
+ * Idea: at each price level, what the two providers' plans include and what they publish about one
+ *   five-hour window. Where a figure exists it is drawn; where none is published, no bar is drawn.
+ * Elements: per level, a Claude column (usage per five hours and per week in multiples of Pro, the
+ *   models and Fable rule, the API credit) and a ChatGPT column (OpenAI's estimated Codex message ranges
+ *   per five hours on a log axis, or a plain statement that none are published).
+ * States: one per price level ($20, $100, $200).
+ * Data: src/data/plans.ts and src/data/models.ts, assembled into `levels` by the page.
+ * Interaction: one segmented control picks the level. Without JavaScript every level shows, stacked.
+ * Alt: given per state in the readout; the drawing is HTML text and bars, so it reads without an alt.
+ */
+import Figure from '../Figure.astro';
+import { describe, logShare, maxMultiple, messageAxis, type PlanRunsInputs } from './model';
+
+interface Props extends PlanRunsInputs {
+  n?: number | string;
+  source?: { label: string; href?: string };
+  /** Which level to show first, by index. */
+  start?: number;
+}
+const { n = 9, source, currency, levels, start = 0 } = Astro.props;
+const inputs: PlanRunsInputs = { currency, levels };
+const axis = messageAxis(levels);
+const ticks: number[] = [];
+for (let v = axis[0]; v <= axis[1]; v *= 10) ticks.push(v);
+const top = maxMultiple(levels);
+const num = (v: number) => v.toLocaleString('en-GB');
+const pct = (v: number) => `${(v * 100).toFixed(2)}%`;
+const says = levels.map((l) => describe(l, inputs));
+---
+<div class="fig-plan-runs" data-fig-plan-runs data-says={JSON.stringify(says)} data-start={start}>
+  <Figure
+    n={n}
+    title="What your plan runs"
+    hint="Pick a monthly price to see what each plan publishes about one five-hour window."
+    alt="Two columns per price level. On the left, Claude's plan with bars for usage every five hours and every week in multiples of Pro. On the right, ChatGPT's plan with bars for OpenAI's estimated Codex messages per five hours, where published."
+    source={source}
+  >
+    <div class="pr">
+      {levels.map((l, i) => (
+        <section class="pr-level" data-pr-level={i} aria-label={`Plans at ${currency}${num(l.price)} a month`}>
+          <p class="pr-head">At {currency}{num(l.price)} a month</p>
+          <div class="pr-cols">
+            <div class="pr-col">
+              <p class="pr-plan">{l.claude.name}</p>
+              <p class="pr-sub">Usage, in multiples of Pro</p>
+              <div class="pr-row">
+                <span class="pr-k">Every five hours</span>
+                <span class="pr-track">
+                  {l.claude.window === null
+                    ? <span class="pr-open" style="width:100%" />
+                    : <span class="pr-bar" data-tone="lit" style={`width:${pct(l.claude.window / top)}`} />}
+                </span>
+                <span class="pr-v">{l.claude.window === null ? 'no limit' : `${num(l.claude.window)}×`}</span>
+              </div>
+              <div class="pr-row">
+                <span class="pr-k">Every week</span>
+                <span class="pr-track"><span class="pr-bar" style={`width:${pct(l.claude.week / top)}`} /></span>
+                <span class="pr-v">{num(l.claude.week)}×</span>
+              </div>
+              <ul class="pr-rules">
+                <li>{l.claude.models.join(', ')} share one set of limits.</li>
+                <li>{l.claude.fableShare === null
+                  ? 'Fable runs on usage credits only, outside the limits.'
+                  : `Fable may use up to ${num(l.claude.fableShare)}% of the weekly limit, then credits.`}</li>
+                <li>{l.claude.apiCredit === null
+                  ? 'No monthly API credit.'
+                  : `${currency}${num(l.claude.apiCredit)} a month of API credit, not usable in Claude Code or the apps.`}</li>
+              </ul>
+            </div>
+            <div class="pr-col">
+              <p class="pr-plan">{l.chatgpt.name}</p>
+              {l.chatgpt.messages.length ? (
+                <>
+                  <p class="pr-sub">Estimated Codex messages per five hours, log scale</p>
+                  {l.chatgpt.messages.map((r) => (
+                    <div class="pr-row">
+                      <span class="pr-k">{r.model}</span>
+                      <span class="pr-track pr-log">
+                        <span class="pr-bar" data-tone="lit" style={`left:${pct(logShare(r.lo, axis))};width:${pct(logShare(r.hi, axis) - logShare(r.lo, axis))}`} />
+                      </span>
+                      <span class="pr-v">{num(r.lo)}–{num(r.hi)}</span>
+                    </div>
+                  ))}
+                  <div class="pr-row pr-axis" aria-hidden="true">
+                    <span class="pr-k" />
+                    <span class="pr-track pr-ticks">
+                      {ticks.map((t) => <span class="pr-tick" style={`left:${pct(logShare(t, axis))}`}>{t >= 1000 ? `${num(t / 1000)}k` : num(t)}</span>)}
+                    </span>
+                    <span class="pr-v" />
+                  </div>
+                </>
+              ) : (
+                <p class="pr-none">{l.chatgpt.fiveHourLimit ? 'A five-hour limit applies.' : 'No five-hour limit.'} OpenAI publishes no message estimates for this plan, so there is nothing to draw.</p>
+              )}
+              <ul class="pr-rules">
+                <li>Codex is included, as on every ChatGPT plan.</li>
+                <li>Weekly limits may also apply.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      ))}
+    </div>
+    <div slot="control" class="seg" role="group" aria-label="Monthly price">
+      {levels.map((l, i) => (
+        <button type="button" aria-pressed={String(i === start)} data-pr-pick={i}>{currency}{num(l.price)}</button>
+      ))}
+    </div>
+    <Fragment slot="readout">{says[start]}</Fragment>
+    <Fragment slot="caption">
+      The two labs publish different things. OpenAI gives message estimates per five hours for its {currency}{num(levels[0]!.price)} plan; Anthropic gives multiples of Pro and no absolute figure. A bar appears only where a figure is published, so an empty space here means "not published", not "nothing".
+    </Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .fig-plan-runs .seg button { min-height: 40px; min-width: 4.5rem; }
+  .pr { display: grid; gap: 1.5rem; }
+  .pr-head { margin: 0 0 0.5rem; font-family: var(--mono); font-size: 0.875rem; color: var(--muted); }
+  .fig-plan-runs[data-js] .pr-head { display: none; }
+  .fig-plan-runs[data-js] .pr-level:not([data-on]) { display: none; }
+  .pr-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.5rem; }
+  @container (max-width: 34rem) { .pr-cols { grid-template-columns: 1fr; } }
+  .pr-col { min-width: 0; padding: 0.85rem 0.9rem; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); }
+  .pr-plan { margin: 0; font-size: 1.0625rem; font-weight: 600; line-height: 1.3; }
+  .pr-sub { margin: 0.15rem 0 0.6rem; font-family: var(--mono); font-size: 0.8125rem; color: var(--muted); line-height: 1.35; }
+  .pr-row {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'k v' 't t'; align-items: baseline;
+    gap: 0.2rem 0.6rem; padding: 0.25rem 0; font-family: var(--mono); font-size: 0.8125rem; color: var(--ink-2);
+  }
+  .pr-row .pr-k { grid-area: k; }
+  .pr-row .pr-v { grid-area: v; }
+  .pr-row .pr-track { grid-area: t; }
+  .pr-k { line-height: 1.25; }
+  .pr-v { text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pr-track { position: relative; height: 0.75rem; border-radius: 3px; background: color-mix(in oklab, var(--ink) 6%, var(--paper)); }
+  .pr-log .pr-bar { position: absolute; top: 0; }
+  .pr-bar { display: block; height: 100%; min-width: 3px; border-radius: 3px; background: color-mix(in oklab, var(--ink) 38%, var(--paper)); }
+  .pr-bar[data-tone='lit'] { background: var(--accent); }
+  .pr-open {
+    display: block; height: 100%; border-radius: 3px; border: 1.5px dashed var(--accent); box-sizing: border-box;
+  }
+  .pr-axis { padding-top: 0; }
+  .pr-axis .pr-k, .pr-axis .pr-v { display: none; }
+  .pr-ticks { background: none; border-top: 1px solid var(--fig-line); border-radius: 0; height: 1.2rem; }
+  .pr-tick { position: absolute; top: 0.15rem; transform: translateX(-50%); font-size: 0.8125rem; color: var(--muted); }
+  .pr-tick:first-child { transform: none; }
+  .pr-tick:last-child { transform: translateX(-100%); }
+  .pr-none { margin: 0.4rem 0 0.6rem; font-size: 0.9375rem; line-height: 1.45; color: var(--ink-2); }
+  .pr-rules { margin: 0.7rem 0 0; padding: 0.6rem 0 0 1.1rem; border-top: 1px solid var(--rule); font-size: 0.9375rem; line-height: 1.45; color: var(--ink-2); }
+  .pr-rules li { margin: 0.15rem 0; }
+</style>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fig-plan-runs]')) {
+    const says: string[] = JSON.parse(root.dataset.says!);
+    const readout = root.querySelector<HTMLElement>('[data-fig-readout]')!;
+    const panels = [...root.querySelectorAll<HTMLElement>('[data-pr-level]')];
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-pr-pick]')];
+    root.querySelector<HTMLElement>('[data-fig-control]')!.hidden = false;
+    root.setAttribute('data-js', '');
+
+    function show(i: number) {
+      panels.forEach((p, k) => p.toggleAttribute('data-on', k === i));
+      buttons.forEach((b, k) => b.setAttribute('aria-pressed', String(k === i)));
+      readout.textContent = says[i]!;
+    }
+    buttons.forEach((b, i) => b.addEventListener('click', () => show(i)));
+    show(Number(root.dataset.start ?? 0));
+  }
+</script>

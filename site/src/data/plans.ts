@@ -9,17 +9,26 @@ const CLAUDE_FABLE = 'https://support.claude.com/en/articles/15424964';
 const CLAUDE_CREDITS = 'https://support.claude.com/en/articles/17154008';
 const CLAUDE_COSTS = 'https://code.claude.com/docs/en/costs';
 const CODEX_PRICING = 'https://learn.chatgpt.com/docs/pricing';
+const CLAUDE_RATE_LIMITS = 'https://platform.claude.com/docs/en/api/rate-limits';
 
 export const plans = {
   claude: {
     free: {
       price: fact(0, 'Claude Free costs nothing.', CLAUDE_PRICING, { unit: 'usd' }),
       claudeCode: fact(false, 'Claude Code is not included on the free Claude plan.', CLAUDE_PRICING),
+      models: fact('Sonnet and Haiku', 'Claude Free includes Sonnet and Haiku but not Opus.', CLAUDE_PRICING),
     },
     pro: {
       price: fact(20, 'Claude Pro costs $20 a month billed monthly ($17 a month billed yearly).', CLAUDE_PRICING, { unit: 'usd' }),
       claudeCode: fact(true, 'Claude Code is included from Pro up.', CLAUDE_PRICING),
       fable: fact('usage credits', 'On Pro, Fable runs on pay-as-you-go usage credits from the start; it is outside the plan limits.', CLAUDE_FABLE),
+      opus: fact(true, 'Pro adds Opus to the models Free includes.', CLAUDE_PRICING),
+      surfaces: fact(
+        ['Claude on web, desktop and mobile', 'Claude Code', 'Claude in Chrome'],
+        'Pro includes Claude on the web, desktop and mobile, Claude in Chrome and Claude Code. Max and Ultra include everything in Pro.',
+        CLAUDE_PRICING,
+      ),
+      apiCredit: fact(false, 'Pro includes no monthly API credit; Max and Ultra do.', CLAUDE_PRICING),
     },
     max: {
       price: fact(100, 'Claude Max costs $100 a month.', CLAUDE_PRICING, { unit: 'usd' }),
@@ -45,11 +54,33 @@ export const plans = {
         'Anthropic publishes no dollar, token or message figure for a plan limit. How fast you use it depends on factors including which model you use.',
         CLAUDE_LIMITS,
       ),
+      sharedAcrossSurfaces: fact(true, 'Usage on claude.ai, Claude Code and Claude Desktop counts towards the same usage limit.', CLAUDE_LIMITS),
+      effort: fact('higher effort uses more', 'How fast you use a limit depends on the model and the effort level you select; higher effort uses more tokens, and tools and connectors are token-intensive.', CLAUDE_LIMITS),
+      longConversations: fact('use more', 'Longer conversations that trigger automatic context management consume more of the usage limit.', CLAUDE_LIMITS),
+      atTheLimit: fact('wait, upgrade or use credits', 'At a session or weekly limit you can wait for the reset or upgrade, and a new plan\'s limits apply right away. With usage credits enabled, work continues on credits instead of stopping.', CLAUDE_LIMITS),
+      whereToSee: fact('Settings > Usage', 'Claude shows how much of the current session you have used and the time remaining under Settings > Usage.', CLAUDE_LIMITS),
+      usageCommand: fact('/usage', 'In Claude Code, /usage shows plan usage bars and a breakdown of recent usage by skills, subagents, plugins and MCP servers; its dollar figure is for API users.', CLAUDE_COSTS),
+      subagentsDraw: fact(true, 'Every subagent sends its own requests on top of the main conversation\'s, and they draw on the same plan usage.', CLAUDE_COSTS),
+      wholeConversation: fact(
+        'whole conversation each request',
+        'Claude Code sends the full conversation with every request, so a one-line question in a session open all day still draws usage for the whole conversation.',
+        CLAUDE_COSTS,
+      ),
+      windowHours: fact(5, 'The Claude session limit resets in full five hours after the first message of the period.', CLAUDE_LIMITS),
     },
     programmes: {
       aiForScience: fact('API credits', 'Anthropic runs AI for Science, which gives API credits to researchers.', 'https://support.claude.com/en/articles/11199177'),
       teamForPIs: fact('Team plan', 'A Team plan programme exists for verified principal investigators.', 'https://claude.com/programs/team-plan-for-scientists'),
       startupClosed: fact('2026-10-13', 'The Claude startup programme closed to new applications on 13 October 2026.', 'https://claude.com/programs/team-plan-for-scientists', { unit: 'date' }),
+    },
+    api: {
+      rateLimits: fact(
+        ['RPM', 'ITPM', 'OTPM'],
+        'Claude API rate limits are measured in requests, input tokens and output tokens per minute, per model, and depend on the organisation\'s usage tier. Capacity refills continuously rather than at fixed times.',
+        CLAUDE_RATE_LIMITS,
+      ),
+      cacheAwareLimits: fact(true, 'Cache reads do not count towards the Claude API input-token rate limit; uncached input and cache writes do.', CLAUDE_RATE_LIMITS),
+      startSpendCap: fact(500, 'The Start usage tier of the Claude API carries a monthly spend cap of $500; Build is $1,000 and Scale $200,000.', CLAUDE_RATE_LIMITS, { unit: 'usd' }),
     },
   },
   chatgpt: {
@@ -65,7 +96,7 @@ export const plans = {
       },
     },
     pro: {
-      price: fact([100, 200, 500], 'ChatGPT Pro comes at $100, $200 or $500 a month.', CODEX_PRICING),
+      price: fact([100, 200, 500], 'ChatGPT Pro comes at $100, $200 or $500 a month.', CODEX_PRICING, { unit: 'usd' }),
       noFiveHourLimit: fact(true, 'ChatGPT Pro plans currently have no five-hour limit.', CODEX_PRICING),
     },
     business: {
@@ -80,6 +111,14 @@ export const plans = {
         CODEX_PRICING,
         'Not found on the pricing page when re-read on 2026-11-18.',
       ),
+      proNoEstimates: fact('not published', 'OpenAI publishes no message estimates for the Pro plans at $100, $200 or $500.', CODEX_PRICING),
+      cloudTasks: fact('use more', 'Codex cloud tasks may use more of the allowance than local messages.', CODEX_PRICING),
+      atTheLimit: fact(
+        'finish the turn, then credits',
+        'If a Codex usage limit is reached during an active turn, the agent can finish that turn; Plus and Pro users can buy additional credits to keep working without upgrading.',
+        CODEX_PRICING,
+      ),
+      apiKey: fact(true, 'Anyone can run extra local Codex chats with an API key, charged at standard API rates and outside the ChatGPT allowance.', CODEX_PRICING),
     },
   },
 } as const;
