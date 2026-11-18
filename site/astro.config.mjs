@@ -15,6 +15,8 @@ export default defineConfig({
     shikiConfig: { themes: { light: 'github-light', dark: 'github-dark' } },
   },
   vite: {
-    server: { allowedHosts: ['eternity.tail5d0ee5.ts.net', '.localhost'] },
+    // Extra dev hosts (e.g. a private Tailscale name) come from the environment,
+    // comma-separated, so machine names stay out of the repo.
+    server: { allowedHosts: ['.localhost', ...(process.env.DEV_ALLOWED_HOSTS || '').split(',').filter(Boolean)] },
   },
 });
