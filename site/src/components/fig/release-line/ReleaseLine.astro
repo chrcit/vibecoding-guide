@@ -1,0 +1,78 @@
+---
+/*
+ * Fig. 62, "The list turns over in months". Chart mode.
+ *
+ * Idea: release dates on one line show how fast the list of models changes, and so how fast this
+ * page goes out of date.
+ * Elements: a time axis, the models in our data above it, METR's state-of-the-art models since 2019
+ * below it, a range pick, the newest release and the days since it.
+ * Data: release dates from models.ts (confirmed ones only) and from METR's results file
+ * (benchmarks.ts). Unconfirmed dates are listed as missing, never placed.
+ * Interaction: the range pick; each mark opens its card or its source in the side view.
+ */
+import { draw, type Release } from './draw';
+
+interface Props {
+  releases: Release[];
+  /** The day the data was checked, as days since 1970. */
+  checked: number;
+  /** Models whose release date could not be confirmed. */
+  unconfirmed: { name: string; href: string }[];
+}
+const { releases, checked, unconfirmed } = Astro.props;
+const first = Math.min(...releases.map((r) => r.day));
+const ranges = [
+  { key: 'all', name: `Since ${new Date(first * 864e5).getUTCFullYear()}`, from: first - 120, to: checked + 60 },
+  { key: 'year', name: 'Last 12 months', from: checked - 365, to: checked + 20 },
+  { key: 'q', name: 'Last 90 days', from: checked - 90, to: checked + 6 },
+];
+const start = ranges[1]!;
+---
+<div class="rl" id="fig-62" data-figure="62" data-release-line data-releases={JSON.stringify(releases)} data-ranges={JSON.stringify(ranges)}>
+  <div class="pick" role="group" aria-label="Time range">
+    {ranges.map((r) => <button type="button" aria-pressed={String(r === start)} data-range={r.key}>{r.name}</button>)}
+  </div>
+  <div class="rl-chart" data-chart set:html={draw(releases, start.from, start.to, 640)} />
+  <p class="rl-key"><span class="rl-sw" data-kind="current"></span>In our data <span class="rl-sw" data-kind="metr"></span>METR state of the art</p>
+  {unconfirmed.length > 0 && (
+    <p class="rl-missing">Date not confirmed: {unconfirmed.map((u, i) => <>{i > 0 && ', '}<a href={u.href} data-side>{u.name}</a></>)}</p>
+  )}
+</div>
+
+<style is:global>
+  .rl { display: grid; gap: 0.5rem; }
+  .rl .pick { justify-self: start; }
+  .rl-svg .rl-point { cursor: pointer; outline: none; }
+  .rl-svg .rl-hit { fill: transparent; }
+  .rl-svg .rl-point:focus-visible .rl-hit, .rl-svg .rl-point:hover .rl-hit { fill: color-mix(in oklab, var(--accent) 14%, transparent); }
+  .rl-svg .rl-point:focus-visible .rl-hit { stroke: var(--focus); stroke-width: 2px; }
+  .rl-svg .rl-dot { fill: var(--card); stroke: var(--fig-line); stroke-width: 1.5px; }
+  .rl-svg [data-kind='current'] .rl-dot { fill: var(--accent); stroke: var(--accent); }
+  .rl-svg .rl-stem { stroke: var(--fig-faint); stroke-width: 1px; }
+  .rl-svg [data-kind='current'] .rl-name { fill: var(--ink); }
+  .rl-key { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; margin: 0; font-size: var(--text-xs); color: var(--muted); }
+  .rl-sw { display: inline-block; width: 0.625rem; height: 0.625rem; border-radius: 50%; border: 1.5px solid var(--fig-line); background: var(--card); }
+  .rl-sw[data-kind='current'] { background: var(--accent); border-color: var(--accent); margin-left: 0; }
+  .rl-sw[data-kind='metr'] { margin-left: 0.75rem; }
+  .rl-missing { margin: 0; font-size: var(--text-xs); color: var(--muted); }
+  .rl-missing a { color: var(--ink-2); }
+</style>
+
+<script>
+  import { draw, type Release } from './draw';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-release-line]')) {
+    const rel: Release[] = JSON.parse(root.dataset.releases!);
+    const ranges: { key: string; from: number; to: number }[] = JSON.parse(root.dataset.ranges!);
+    const box = root.querySelector<HTMLElement>('[data-chart]')!;
+    let at = ranges[1]!;
+    const render = () => { const w = Math.round(box.clientWidth); if (w) box.innerHTML = draw(rel, at.from, at.to, w); };
+    for (const b of root.querySelectorAll<HTMLButtonElement>('[data-range]')) {
+      b.addEventListener('click', () => {
+        at = ranges.find((r) => r.key === b.dataset.range)!;
+        for (const o of root.querySelectorAll<HTMLButtonElement>('[data-range]')) o.setAttribute('aria-pressed', String(o === b));
+        render();
+      });
+    }
+    new ResizeObserver(render).observe(box);
+  }
+</script>

@@ -97,23 +97,6 @@ export function modelFactIds(id: ModelId) {
   return s ? [...own, s.factId] : own;
 }
 
-/** Props for Fig. 10: every model with a shown index score and shown prices. */
-export function scorePoints(href: (id: string) => string) {
-  return modelIds.flatMap((id) => {
-    const m = getModel(id);
-    const s = indexScore(id);
-    if (!s || !m.price || !shown(fid(id, 'price.input')) || !shown(fid(id, 'price.output'))) return [];
-    return [{ id, name: m.name, lab: m.lab, score: s.value, effort: s.effort, input: m.price.input.value, output: m.price.output.value, href: href(id) }];
-  });
-}
-
-/** Fact ids behind Fig. 10, for a "last verified" line. */
-export const scorePointIds = () =>
-  modelIds.flatMap((id) => {
-    const s = indexScore(id);
-    return s ? [s.factId, fid(id, 'price.input'), fid(id, 'price.output')] : [];
-  }).filter(shown);
-
 /** Props for Fig. 11. The start is the API default effort of the model whose tokens are shown. */
 export function effortInputs() {
   const d = effortData();

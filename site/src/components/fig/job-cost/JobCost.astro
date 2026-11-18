@@ -1,0 +1,186 @@
+---
+/*
+ * Fig. 61, "What a job costs". Chart mode, HTML bars.
+ *
+ * Idea: the same job priced on every model, from the API list prices, sorted, so the reader sees
+ * how far apart the prices are at the size of job they care about.
+ * Elements: presets, sliders for tokens in, tokens out and the share served from the cache, the
+ * effort level, a linear or log bar scale, one bar per model with its price.
+ * Data: list prices from models.ts; the effort ratio from Opus 5.5's index run in benchmarks.ts.
+ * Assumptions: the job sizes of the presets, one model's effort ratio applied to all, cache
+ * writes not counted. All named in ./model.ts and listed in the tile "How the bars are worked out".
+ * Interaction: every control redraws the bars and the sentence at once. A bar opens the card.
+ */
+import { PRESETS, RANGE, bars, finding, money, tokens, toSlider, type PriceRow } from './model';
+
+interface Props {
+  rows: PriceRow[];
+  /** Effort levels with the output multiplier against the base level; null where the data has none. */
+  effort: { levels: string[]; ratio: (number | null)[]; base: string; model: string };
+}
+const { rows, effort } = Astro.props;
+const start = PRESETS[1];
+const job = { input: start.input, output: start.output, cache: start.cache, effort: 1 };
+const list = bars(rows, job);
+const max = list[list.length - 1]!.cost;
+const baseAt = effort.levels.indexOf(effort.base);
+---
+<div class="jc" id="fig-61" data-figure="61" data-job-cost data-rows={JSON.stringify(rows)} data-effort={JSON.stringify(effort)}>
+  <div class="jc-controls">
+    <div class="pick jc-presets" role="group" aria-label="Size of the job">
+      {PRESETS.map((p) => <button type="button" aria-pressed={String(p.key === start.key)} data-preset={p.key}>{p.name}</button>)}
+    </div>
+    <div class="controls">
+      <label class="control">
+        <span>Tokens in <output data-out="input">{tokens(job.input)}</output></span>
+        <input type="range" min="0" max="1000" step="1" value={toSlider(job.input, RANGE.input)} data-range="input" />
+      </label>
+      <label class="control">
+        <span>Tokens out <output data-out="output">{tokens(job.output)}</output></span>
+        <input type="range" min="0" max="1000" step="1" value={toSlider(job.output, RANGE.output)} data-range="output" />
+      </label>
+      <label class="control">
+        <span>Served from cache <output data-out="cache">{job.cache}%</output></span>
+        <input type="range" min="0" max="99" step="1" value={job.cache} data-range="cache" />
+      </label>
+    </div>
+    <div class="jc-effort">
+      <span class="jc-label" id="jc-effort-label">Effort <output data-out="effort">×1</output></span>
+      <div class="pick" role="group" aria-labelledby="jc-effort-label">
+        {effort.levels.map((l, i) => <button type="button" aria-pressed={String(i === baseAt)} data-effort={i} disabled={effort.ratio[i] == null}>{l}</button>)}
+      </div>
+    </div>
+    <div class="jc-scale">
+      <span class="jc-label" id="jc-scale-label">Bars</span>
+      <div class="pick" role="group" aria-labelledby="jc-scale-label">
+        <button type="button" aria-pressed="true" data-scale="linear">Linear</button>
+        <button type="button" aria-pressed="false" data-scale="log">Log</button>
+      </div>
+    </div>
+  </div>
+  <div class="jc-out">
+    <ol class="jc-bars" data-bars>
+      {list.map((b) => (
+        <li data-id={b.row.id} data-upper={b.upper ? '' : undefined}>
+          <a class="jc-name" href={b.row.card} data-side>{b.row.name}</a>
+          <span class="jc-track"><span class="jc-bar" data-lab={b.row.lab} style={`transform:scaleX(${Math.max(0.004, b.cost / max)})`}></span></span>
+          <span class="jc-cost">{b.upper ? '≤ ' : ''}{money(b.cost)}</span>
+        </li>
+      ))}
+    </ol>
+    <p class="finding" aria-live="polite" data-finding>{finding(list)}</p>
+  </div>
+</div>
+
+<style is:global>
+  .jc { display: grid; gap: 1rem 1.5rem; grid-template-columns: minmax(0, 1fr); }
+  @container (min-width: 44rem) { .jc { grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr); } }
+  .jc-controls { display: grid; gap: 0.75rem; align-content: start; }
+  .jc-controls .controls { display: grid; gap: 0.25rem; }
+  .jc-presets { display: grid; grid-template-columns: 1fr 1fr; }
+  .jc-presets button { white-space: normal; line-height: 1.2; }
+  .jc-label { display: flex; gap: 0.5rem; font-size: var(--text-xs); color: var(--muted); margin-bottom: 0.25rem; }
+  .jc-label output { font-family: var(--mono); font-weight: 600; color: var(--ink); }
+  .jc-effort .pick button, .jc-scale .pick button { padding: 0 0.5rem; }
+  .jc-effort .pick button[disabled] { opacity: 0.4; cursor: not-allowed; }
+  .jc-out { display: grid; gap: 0.75rem; align-content: start; min-width: 0; }
+  .jc-bars { display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+  .jc-bars li {
+    display: grid; grid-template-columns: minmax(7.5rem, 10rem) minmax(0, 1fr) 4.75rem; align-items: center; gap: 0.625rem;
+    min-height: 2.5rem; max-width: none;
+  }
+  .jc-name { color: var(--ink-2); text-decoration: none; font-size: var(--text-xs); line-height: 1.2; }
+  .jc-name:hover { color: var(--accent); }
+  .jc-track { position: relative; height: 1.125rem; border-radius: 3px; background: color-mix(in oklab, var(--ink) 4%, transparent); overflow: hidden; }
+  .jc-bar { position: absolute; inset: 0; transform-origin: left center; border-radius: 3px; background: var(--fig-edge); }
+  .jc-bar[data-lab='OpenAI'] { background: var(--blue); }
+  .jc-bars li[data-upper] .jc-bar { background: repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 9px); color: var(--blue); opacity: 0.85; }
+  .jc-cost { font-family: var(--mono); font-size: var(--text-s); font-weight: 600; color: var(--ink); text-align: right; white-space: nowrap; }
+  @media (prefers-reduced-motion: no-preference) {
+    .jc-bar { transition: transform 420ms var(--fig-ease, ease); }
+  }
+  @container (max-width: 26rem) {
+    .jc-bars li { grid-template-columns: minmax(0, 1fr) 4.75rem; gap: 0.125rem 0.5rem; padding: 0.25rem 0; }
+    .jc-track { grid-column: 1 / -1; grid-row: 2; }
+  }
+</style>
+
+<script>
+  import { PRESETS, RANGE, bars, finding, money, tokens, fromSlider, toSlider, type PriceRow, type Job } from './model';
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-job-cost]')) {
+    const rows: PriceRow[] = JSON.parse(root.dataset.rows!);
+    const effort: { levels: string[]; ratio: (number | null)[]; base: string } = JSON.parse(root.dataset.effort!);
+    const q = <T extends Element>(s: string) => root.querySelector<T>(s)!;
+    const list = q<HTMLOListElement>('[data-bars]');
+    const find = q<HTMLElement>('[data-finding]');
+    const range = (k: string) => q<HTMLInputElement>(`[data-range="${k}"]`);
+    const out = (k: string) => q<HTMLOutputElement>(`[data-out="${k}"]`);
+    const p0 = PRESETS[1];
+    const job: Job = { input: p0.input, output: p0.output, cache: p0.cache, effort: 1 };
+    let log = false;
+    let settle = 0;
+
+    // One <li> per model, kept and reordered so bars can move.
+    const items = new Map([...list.children].map((li) => [(li as HTMLElement).dataset.id!, li as HTMLElement]));
+
+    const render = (announce = true) => {
+      const b = bars(rows, job);
+      const hi = b[b.length - 1]!.cost, lo = Math.max(1e-9, b[0]!.cost);
+      const floor = lo / 4;
+      const frac = (v: number) => (log ? (Math.log10(v / floor) / Math.log10(hi / floor)) : v / hi);
+      for (const x of b) {
+        const li = items.get(x.row.id)!;
+        li.toggleAttribute('data-upper', x.upper);
+        li.querySelector<HTMLElement>('.jc-bar')!.style.transform = `scaleX(${Math.max(0.004, Math.min(1, frac(x.cost)))})`;
+        li.querySelector<HTMLElement>('.jc-cost')!.textContent = `${x.upper ? '≤ ' : ''}${money(x.cost)}`;
+        list.appendChild(li);
+      }
+      out('input').textContent = tokens(job.input);
+      out('output').textContent = tokens(job.output * job.effort) + (job.effort !== 1 ? ` (${tokens(job.output)} ×${job.effort.toFixed(1)})` : '');
+      out('cache').textContent = `${job.cache}%`;
+      out('effort').textContent = `×${job.effort.toFixed(1)}`;
+      clearTimeout(settle);
+      if (announce) settle = window.setTimeout(() => (find.textContent = finding(b)), 350);
+      else find.textContent = finding(b);
+    };
+    const pressPreset = () => {
+      for (const b of root.querySelectorAll<HTMLButtonElement>('[data-preset]')) {
+        const p = PRESETS.find((x) => x.key === b.dataset.preset)!;
+        b.setAttribute('aria-pressed', String(p.input === job.input && p.output === job.output && p.cache === job.cache));
+      }
+    };
+
+    for (const b of root.querySelectorAll<HTMLButtonElement>('[data-preset]')) {
+      b.addEventListener('click', () => {
+        const p = PRESETS.find((x) => x.key === b.dataset.preset)!;
+        Object.assign(job, { input: p.input, output: p.output, cache: p.cache });
+        range('input').value = String(toSlider(p.input, RANGE.input));
+        range('output').value = String(toSlider(p.output, RANGE.output));
+        range('cache').value = String(p.cache);
+        pressPreset();
+        render(false);
+      });
+    }
+    range('input').addEventListener('input', () => { job.input = fromSlider(Number(range('input').value), RANGE.input); pressPreset(); render(); });
+    range('output').addEventListener('input', () => { job.output = fromSlider(Number(range('output').value), RANGE.output); pressPreset(); render(); });
+    range('cache').addEventListener('input', () => { job.cache = Number(range('cache').value); pressPreset(); render(); });
+    for (const b of root.querySelectorAll<HTMLButtonElement>('[data-effort]')) {
+      b.addEventListener('click', () => {
+        const r = effort.ratio[Number(b.dataset.effort)];
+        if (r == null) return;
+        job.effort = r;
+        for (const o of root.querySelectorAll<HTMLButtonElement>('[data-effort]')) o.setAttribute('aria-pressed', String(o === b));
+        render(false);
+      });
+    }
+    for (const b of root.querySelectorAll<HTMLButtonElement>('[data-scale]')) {
+      b.addEventListener('click', () => {
+        log = b.dataset.scale === 'log';
+        for (const o of root.querySelectorAll<HTMLButtonElement>('[data-scale]')) o.setAttribute('aria-pressed', String(o === b));
+        render(false);
+      });
+    }
+    render(false);
+  }
+</script>
