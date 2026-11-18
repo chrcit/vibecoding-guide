@@ -2,7 +2,9 @@
 /*
   A prompt the reader can copy into their agent.
   Props: title (string, what the prompt is for), id? (string, an anchor so
-  the prompt can be linked to).
+  the prompt can be linked to), compact? (boolean: for a board tile, which
+  already carries the title; the title is kept for screen readers only and
+  the copy button sits under the text).
   Slots: default (the prompt text, plain; line breaks are kept).
 
   The copy button writes the plain text to the clipboard and announces
@@ -10,11 +12,11 @@
   refused, it selects the text and says how to copy it by hand. The text is
   always selectable.
 */
-interface Props { title: string; id?: string }
-const { title, id } = Astro.props;
+interface Props { title: string; id?: string; compact?: boolean }
+const { title, id, compact = false } = Astro.props;
 const uid = id ?? 'prompt-' + Math.random().toString(36).slice(2, 9);
 ---
-<figure class="copy-prompt" id={id} data-copy-prompt>
+<figure class="copy-prompt" id={id} data-copy-prompt data-compact={compact ? '' : undefined}>
   <figcaption>
     <span class="title" id={`${uid}-title`}>{title}</span>
     <button type="button" class="copy" data-copy aria-describedby={`${uid}-title`}>
@@ -125,4 +127,12 @@ const uid = id ?? 'prompt-' + Math.random().toString(36).slice(2, 9);
   .text:focus-visible { outline-offset: -3px; }
   .status { margin: 0; padding: 0 var(--space-5); color: var(--muted); font-size: var(--text-s); }
   .status:not(:empty) { padding-bottom: var(--space-3); }
+
+  .copy-prompt[data-compact] { display: flex; flex-direction: column; margin: 0; border-radius: var(--radius); background: var(--paper); }
+  .copy-prompt[data-compact] figcaption { order: 2; justify-content: flex-end; border: 0; padding: 0 var(--space-2) var(--space-2); }
+  .copy-prompt[data-compact] .title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .copy-prompt[data-compact] .text { background: var(--paper) !important; padding: 0.75rem 0.875rem 0.25rem; max-height: 22rem; color: var(--ink); }
+  .copy-prompt[data-compact] .copy { background: var(--card); }
+  .copy-prompt[data-compact] .status { order: 3; padding: 0 0.875rem; }
+  .copy-prompt[data-compact] .status:not(:empty) { padding-bottom: var(--space-2); }
 </style>

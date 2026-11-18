@@ -247,3 +247,6 @@ html[data-level='engineer'] .level-current[data-when='engineer'] { display: inli
   cursor: pointer;
 }
 .level-offer-close:hover { color: var(--ink); }
+
+/* The offer is the three choices and nothing else; keep them clear of the close button. */
+.level-offer-choices { margin-right: 2.5rem; }

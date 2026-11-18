@@ -88,8 +88,8 @@
       frame.title = t;
     };
     const render = () => {
-      if (state) root.dataset.side = state;
-      else delete root.dataset.side;
+      if (state) root.dataset.sideview = state;
+      else delete root.dataset.sideview;
       panel.hidden = !state || state === 'min';
       pill.hidden = state !== 'min';
       // Docked beside the page on wide screens; over it otherwise and when maximised.
@@ -203,11 +203,13 @@
   .side-view[hidden], .sv-pill[hidden], .sv-backdrop[hidden] { display: none; }
   @media (min-width: 1100px) {
     .side-view { width: var(--side-w); box-shadow: none; }
-    /* Docked: the page makes room, so nothing is covered. */
-    html[data-side='open'] body { padding-right: var(--side-w); }
+    /* Docked: under the header, and the page makes room, so nothing is covered. */
+    html[data-sideview='open'] .side-view { top: var(--header-h); }
+    html[data-sideview='open'] main,
+    html[data-sideview='open'] .site-footer { margin-right: var(--side-w); }
   }
-  html[data-side='max'] .side-view { width: min(100vw, 84rem); box-shadow: var(--shadow-pop); }
-  @media (min-width: 700px) { html[data-side='max'] .side-view { width: min(100vw - 3rem, 84rem); } }
+  html[data-sideview='max'] .side-view { width: min(100vw, 84rem); box-shadow: var(--shadow-pop); }
+  @media (min-width: 700px) { html[data-sideview='max'] .side-view { width: min(100vw - 3rem, 84rem); } }
   @media (prefers-reduced-motion: no-preference) {
     .side-view { animation: sv-in var(--dur) var(--ease-out); }
     @keyframes sv-in { from { transform: translateX(1.5rem); opacity: 0; } }
@@ -217,7 +219,7 @@
 
   .sv-bar {
     flex: none; display: flex; align-items: center; gap: 0.125rem;
-    min-height: var(--header-h); padding: 0 0.375rem 0 1rem;
+    min-height: 3rem; padding: 0 0.375rem 0 1rem;
     border-bottom: 1px solid var(--rule);
     background: var(--card);
   }
