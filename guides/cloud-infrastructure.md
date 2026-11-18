@@ -37,23 +37,33 @@ Your Code → Hosting Platform → Domain Name → Users
 
 Cloudflare started as a network and security company for big enterprises and runs its own global cloud (not on AWS). Because enterprises are the paying customers, a lot is free for everyone else:
 
-- Static hosting with unlimited bandwidth (Cloudflare Pages / Workers static assets)
+- Static hosting: requests to static assets are free and unlimited on Workers and Pages
 - Serverless functions (Workers), storage (R2), databases (D1), key-value (KV)
-- Access control: put a login in front of a site so only you (or your team) can see it
+- Access control: put a login in front of a site so only you (or your team) can see it, free for up to 50 users
 
-Connecting a GitHub repo takes a few clicks; it detects how to build most projects. Dozens of small projects can run for a few dollars a month. Ask your agent to set it up.
+Connecting a GitHub repo takes a few clicks; it detects how to build most projects. The paid Workers plan starts at $5 a month, and many small static projects never need it. Ask your agent to set it up.
 
 ### GitHub Pages
 
-The simplest way to put a static site (HTML, an Astro build, an exported notebook) online. Turn it on in the repo settings, or ask your agent to "deploy this to GitHub Pages". Restricting who can see a Pages site needs GitHub Enterprise Cloud, so on normal plans assume the site is public, even when the repo is private.
+The simplest way to put a static site (HTML, an Astro build, an exported notebook) online. Turn it on in the repo settings, or ask your agent to "deploy this to GitHub Pages". A Pages site is public even when the repo is private (publishing from a private repo needs a paid plan, and restricting who can see the site needs GitHub Enterprise Cloud).
 
 ### Previewing Agent Work From Another Device
 
 Your agent's browser sees your dev server; your phone and colleagues don't. Options:
 
 - **Deploy** to Cloudflare or GitHub Pages (with access control if it's private)
-- **Private network:** run the dev server on a machine in a Tailscale network and open it from any of your devices
+- **Private network:** run the dev server on a machine in a Tailscale network and open it from any of your devices (see [Sharing Privately](#sharing-privately))
 - **Download and run it locally:** fine for notebooks and one-off tools
+
+### Sharing Privately
+
+Three ways to show work to a few people without making it public, from most to least private:
+
+- **Only your own devices:** [`tailscale serve`](https://tailscale.com/kb/1312/serve) shares a local port with the devices on your Tailscale network. Nothing is exposed to the internet. The Personal plan is free for up to six users.
+- **A private link for a few people:** deploy to Cloudflare and put [Cloudflare Access](https://developers.cloudflare.com/cloudflare-one/identity/one-time-pin/) in front of it. Visitors enter their email and get a one-time code; only addresses you allow get in. Free for up to 50 users.
+- **Not GitHub Pages.** A Pages site is public even when its repository is private. Publishing from a private repository needs a paid plan, and access control on the site needs GitHub Enterprise Cloud ([docs](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site)).
+
+Ask your agent to set up whichever fits. Sources for these limits are in [Sources and Fact-Check](./fact-check.md#sharing-and-hosting).
 
 ### Vercel (Most Common for Vibe Coding)
 

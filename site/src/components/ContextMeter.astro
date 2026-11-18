@@ -1,53 +1,71 @@
 ---
+// Each piece of context removes guesses the agent would otherwise make silently.
 const chips = [
-  { k: 'who', label: 'Who you are', text: 'I’m a researcher. I’ve worked with software teams but never used agents.' },
-  { k: 'why', label: 'Why it matters', text: 'It’s for a job change, so it should read like a serious researcher, not a CV template.' },
-  { k: 'raw', label: 'Raw material', text: '[screenshot of my LinkedIn] [list of places I’ve lived and worked]' },
-  { k: 'good', label: 'What good looks like', text: 'Light colours. Something with a bit of wow, like this portfolio: [link].' },
-  { k: 'check', label: 'How to check', text: 'Open it in your browser, test the interactions, fix what looks off, then show me.' },
+  { k: 'who', label: 'Who is asking', text: 'I’m a physicist. I know the statistics; I don’t know your plotting library. Skip the tutorial tone.', kills: ['audience', 'depth'] },
+  { k: 'raw', label: 'Raw material', text: '[timings.csv] [photo of the lab sheet] [voice note: “the last three rows were retaken”]', kills: ['data', 'columns'] },
+  { k: 'why', label: 'What it’s for', text: 'This goes into a methods section, so every number needs an uncertainty and a way to reproduce it.', kills: ['purpose'] },
+  { k: 'tried', label: 'What you already tried', text: 'A plain least-squares fit gives 9.2. That can’t be right, and I suspect the release angle.', kills: ['deadend'] },
+  { k: 'done', label: 'What done looks like', text: 'Done means: g within 0.05 of 9.81 on the synthetic set, the same code run on the real set, residuals plotted.', kills: ['done'] },
+  { k: 'check', label: 'How to check', text: 'Generate synthetic data with a known g first. Run the fit five times and compare before you show me anything.', kills: ['check'] },
+];
+const guesses = [
+  { k: 'audience', t: 'who will read the result' },
+  { k: 'depth', t: 'how much to explain' },
+  { k: 'data', t: 'which file is the data' },
+  { k: 'columns', t: 'what the columns mean' },
+  { k: 'purpose', t: 'what the number is for' },
+  { k: 'deadend', t: 'which approaches already failed' },
+  { k: 'done', t: 'when to stop' },
+  { k: 'check', t: 'whether its own answer is right' },
 ];
 ---
-<figure class="widget ctx" data-ctx>
-  <p class="base">“Make me a personal website.”</p>
+<figure class="widget ctx" data-ctx data-chips={JSON.stringify(chips.map((c) => ({ k: c.k, kills: c.kills })))}>
+  <p class="base">“Fit g from the pendulum data.”</p>
   <div class="chips" role="group" aria-label="Add context">
     {chips.map((c) => <button type="button" class="chip" data-k={c.k} aria-pressed="false">+ {c.label}</button>)}
   </div>
   <div class="prompt" aria-live="polite">
     {chips.map((c) => <p data-line={c.k} hidden>{c.text}</p>)}
   </div>
-  <div class="meter" aria-hidden="true"><span data-fill></span></div>
-  <p class="out" data-out>The agent has to guess everything. Expect a generic template.</p>
-  <figcaption class="caption">Illustration. Spoken out loud, all five lines take about 40 seconds.</figcaption>
+  <p class="gh">What the agent has to guess</p>
+  <ul class="guesses">
+    {guesses.map((g) => <li data-g={g.k}>{g.t}</li>)}
+  </ul>
+  <p class="say" data-out aria-live="polite"></p>
+  <figcaption class="caption">An illustration, with a real property: agents rarely stop to ask. Whatever you leave out gets filled in with the most average assumption available. Said out loud, all six lines take under a minute.</figcaption>
 </figure>
 <style>
   .base { font-family: var(--serif); font-size: 1.15rem; margin: 0 0 0.8rem; }
   .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
   .chip { border: 1px dashed var(--rule); background: transparent; border-radius: 999px; padding: 0.35rem 0.7rem; cursor: pointer; color: var(--muted); transition: all 160ms ease; }
   .chip[aria-pressed='true'] { border-style: solid; border-color: var(--green); background: var(--green-soft); color: var(--green); }
-  .prompt p { margin: 0.6rem 0 0; padding-left: 0.8rem; border-left: 2px solid var(--green); color: var(--ink-2); animation: in 220ms ease both; }
+  .prompt p { margin: 0.6rem 0 0; padding-left: 0.8rem; border-left: 2px solid var(--green); color: var(--ink-2); font-family: var(--serif); font-size: 1rem; line-height: 1.45; animation: in 220ms ease both; }
   @keyframes in { from { opacity: 0; translate: 0 4px; } }
-  .meter { height: 6px; border-radius: 99px; background: color-mix(in oklab, var(--rule) 60%, transparent); margin: 1rem 0 0.6rem; overflow: hidden; }
-  .meter span { display: block; height: 100%; width: 8%; background: var(--green); border-radius: inherit; transition: width 320ms cubic-bezier(.2,.8,.2,1); }
-  .out { margin: 0; color: var(--ink); }
+  .gh { color: var(--muted); margin: 1.1rem 0 0.4rem; }
+  .guesses { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .guesses li { border: 1px solid var(--accent); color: var(--accent); border-radius: 6px; padding: 0.15rem 0.5rem; transition: all 220ms ease; }
+  .guesses li.gone { border-color: var(--rule); color: var(--muted); text-decoration: line-through; opacity: 0.6; }
+  .say { min-height: 3em; }
 </style>
 <script>
-  const msgs = [
-    'The agent has to guess everything. Expect a generic template.',
-    'Better: it knows the reader. Still guessing at the purpose.',
-    'Now it knows what the site is for and can aim at that.',
-    'It works from your real details instead of inventing them.',
-    'It has a target to aim at, not just a brief.',
-    'It can check its own work before you see it. This is the one that changes the most.',
-  ];
   document.querySelectorAll<HTMLElement>('[data-ctx]').forEach((root) => {
+    const chips: { k: string; kills: string[] }[] = JSON.parse(root.dataset.chips!);
     const update = () => {
-      const on = [...root.querySelectorAll('[data-k][aria-pressed="true"]')].map((b) => (b as HTMLElement).dataset.k);
+      const on = [...root.querySelectorAll<HTMLElement>('[data-k][aria-pressed="true"]')].map((b) => b.dataset.k!);
       root.querySelectorAll<HTMLElement>('[data-line]').forEach((p) => (p.hidden = !on.includes(p.dataset.line!)));
-      (root.querySelector('[data-fill]') as HTMLElement).style.width = `${8 + on.length * 18.4}%`;
-      root.querySelector('[data-out]')!.textContent = on.includes('check') && on.length === 5 ? msgs[5] : msgs[Math.min(on.length, 4)];
+      const dead = new Set(chips.filter((c) => on.includes(c.k)).flatMap((c) => c.kills));
+      const all = root.querySelectorAll<HTMLElement>('[data-g]');
+      all.forEach((li) => li.classList.toggle('gone', dead.has(li.dataset.g!)));
+      const left = all.length - dead.size;
+      root.querySelector('[data-out]')!.textContent =
+        left === all.length ? 'Eight silent guesses. You’ll get a plausible script, a number, and no way to tell whether either is right.'
+        : left === 0 ? 'Nothing left to guess. The last two matter most: with a definition of done and a way to check, it can keep working after you stop watching.'
+        : !dead.has('check') ? `${left} guesses left, and it still can’t tell whether its own answer is right. That one decides how long it can work alone.`
+        : `${left} guess${left > 1 ? 'es' : ''} left. It can check itself now, so the remaining gaps cost a correction, not a wasted run.`;
     };
     root.querySelectorAll<HTMLButtonElement>('[data-k]').forEach((b) =>
       b.addEventListener('click', () => { b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); update(); }),
     );
+    update();
   });
 </script>

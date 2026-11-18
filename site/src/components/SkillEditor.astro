@@ -1,0 +1,134 @@
+---
+// An editable skill file and a page it acts on. The page reacts to the rules
+// that are present in the text. Whether the skill loads for a prompt is decided
+// by word overlap with its description: a crude stand-in for what a real agent
+// does by meaning.
+const fence = '-'.repeat(3);
+const skill = [
+  fence,
+  'name: quiet-layout',
+  'description: Use when building or reviewing a page, card or dashboard layout.',
+  fence,
+  '',
+  '- Cut taglines.',
+  '- Cut helper text.',
+  '- Cut secondary labels and uppercase eyebrow labels.',
+  '- Headings in sentence case.',
+  '- If a screen needs any of these to make sense, fix the layout instead.',
+].join('\n');
+const prompts = ['Build a dashboard for the pendulum runs', 'Review the layout of this page', 'Fix the failing unit test'];
+---
+<figure class="widget sk" data-sk>
+  <div class="cols">
+    <div class="ed">
+      <label for="sk-text">.claude/skills/quiet-layout/SKILL.md</label>
+      <textarea id="sk-text" data-text spellcheck="false" rows="15">{skill}</textarea>
+      <div class="row-btns">
+        <button type="button" class="btn small ghost" data-reset>Restore</button>
+        <button type="button" class="btn small ghost" data-empty>Delete the rules</button>
+      </div>
+    </div>
+    <div class="out">
+      <div class="mock" data-mock aria-label="What the agent builds with this skill loaded">
+        <p class="eyebrow n-label">About the experiment</p>
+        <h4 data-h data-title="Measuring Gravity With A Kitchen Pendulum" data-sentence="Measuring gravity with a kitchen pendulum"></h4>
+        <p class="tag n-tag">Precise · Reproducible · Open</p>
+        <p class="body">Twelve string lengths, ten swings each, timed by hand. The fit gives 9.81 m/s² once the release angle is accounted for.</p>
+        <div class="facts">
+          <div><span class="lab n-label">Sample size</span><b>120 readings</b><small class="n-help">Total number of timings</small></div>
+          <div><span class="lab n-label">Uncertainty</span><b>± 0.03 m/s²</b><small class="n-help">Across five resamples</small></div>
+        </div>
+        <p class="help n-help">Scroll down to explore the data ↓</p>
+      </div>
+      <ul class="rules" data-rules aria-live="polite"></ul>
+    </div>
+  </div>
+  <h4 class="sub">Does it load?</h4>
+  <ul class="prompts">
+    {prompts.map((p) => <li data-prompt={p}><span class="p">“{p}”</span><b></b></li>)}
+  </ul>
+  <p class="say" data-say aria-live="polite"></p>
+  <figcaption class="caption"><span class="tag-sim">simulation</span> The page responds to rule lines this demo recognises (taglines, helper text, labels, sentence case). Loading is decided by shared words between prompt and description. A real agent reads the whole file as prose and matches on meaning, so write for a reader, not a parser.</figcaption>
+</figure>
+<style>
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 0.9rem; align-items: start; }
+  .ed { display: grid; gap: 0.4rem; min-width: 0; }
+  .ed label { color: var(--muted); font-size: 0.7rem; overflow-wrap: anywhere; }
+  textarea { width: 100%; font-family: var(--mono); font-size: 0.74rem; line-height: 1.55; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; padding: 0.7rem; resize: vertical; min-height: 19rem; }
+  .out { min-width: 0; }
+  .mock { background: var(--paper); border: 1px solid var(--rule); border-radius: 12px; padding: 1rem; font-family: var(--serif); }
+  .mock h4 { font-size: 1.3rem; font-weight: 500; letter-spacing: -0.01em; margin: 0 0 0.4rem; line-height: 1.15; }
+  .body { font-size: 0.98rem; color: var(--ink-2); margin: 0 0 0.8rem; line-height: 1.45; }
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .facts div { display: flex; flex-direction: column; border-top: 1px solid var(--rule); padding-top: 0.4rem; }
+  .facts b { font-weight: 500; font-variant-numeric: tabular-nums; }
+  .eyebrow, .tag, .lab, .mock small, .help { overflow: hidden; max-height: 2.6em; transition: opacity 240ms ease, max-height 280ms ease, margin 280ms ease; }
+  .eyebrow { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.35rem; }
+  .tag { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); margin: 0 0 0.7rem; }
+  .lab { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .mock small { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); }
+  .help { font-family: var(--mono); font-size: 0.66rem; color: var(--muted); margin: 0.8rem 0 0; text-align: center; }
+  .mock.no-label .n-label, .mock.no-tag .n-tag, .mock.no-help .n-help { opacity: 0; max-height: 0; margin: 0; }
+  .rules { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; gap: 0.15rem; font-size: 0.7rem; color: var(--muted); }
+  .rules :global(li.on) { color: var(--green); }
+  .sub { font-family: var(--serif); font-size: 1.1rem; font-weight: 600; margin: 1.2rem 0 0.4rem; }
+  .prompts { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; }
+  .prompts li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.2rem 1rem; border-bottom: 1px solid var(--rule); padding: 0.3rem 0; }
+  .p { font-family: var(--serif); font-size: 0.98rem; color: var(--ink-2); }
+  .prompts b { font-weight: 600; }
+  .prompts li.yes b { color: var(--green); } .prompts li.no b { color: var(--muted); font-weight: 400; }
+  .say { min-height: 3em; }
+</style>
+<script>
+  const STOP = new Set('use when the a an and or of for to this that with your you any it is in on at by be as into from them these'.split(' '));
+  const stem = (w: string) => w.replace(/(ing|ed|es|s)$/, '');
+  const words = (s: string) => new Set(s.toLowerCase().match(/[a-z]{3,}/g)?.filter((w) => !STOP.has(w)).map(stem) ?? []);
+  const RULES: { k: string; label: string; re: RegExp }[] = [
+    { k: 'tag', label: 'taglines cut', re: /tagline/i },
+    { k: 'help', label: 'helper text cut', re: /helper/i },
+    { k: 'label', label: 'secondary and eyebrow labels cut', re: /label|eyebrow/i },
+    { k: 'case', label: 'headings in sentence case', re: /sentence case/i },
+  ];
+  document.querySelectorAll<HTMLElement>('[data-sk]').forEach((root) => {
+    const ta = root.querySelector('[data-text]') as HTMLTextAreaElement;
+    const mock = root.querySelector('[data-mock]') as HTMLElement;
+    const h = root.querySelector('[data-h]') as HTMLElement;
+    const original = ta.value;
+    const update = () => {
+      const text = ta.value;
+      const fm = text.match(/^---\n([\s\S]*?)\n---/);
+      const desc = fm?.[1].match(/^description:\s*(.*)$/m)?.[1] ?? '';
+      const body = (fm ? text.slice(fm[0].length) : text).split('\n').filter((l) => /^\s*[-*]\s+\S/.test(l));
+      const on = RULES.map((r) => ({ ...r, hit: body.some((l) => r.re.test(l)) }));
+      mock.classList.toggle('no-tag', on[0].hit);
+      mock.classList.toggle('no-help', on[1].hit);
+      mock.classList.toggle('no-label', on[2].hit);
+      h.textContent = on[3].hit ? h.dataset.sentence! : h.dataset.title!;
+      const unknown = body.filter((l) => !RULES.some((r) => r.re.test(l))).length;
+      root.querySelector('[data-rules]')!.innerHTML =
+        on.map((r) => `<li class="${r.hit ? 'on' : ''}">${r.hit ? '✓' : '·'} ${r.label}</li>`).join('') +
+        (unknown ? `<li>+ ${unknown} line${unknown > 1 ? 's' : ''} this demo can’t act on. A real agent would.</li>` : '');
+      const dw = words(desc);
+      let loads = 0;
+      root.querySelectorAll<HTMLElement>('[data-prompt]').forEach((li) => {
+        const shared = [...words(li.dataset.prompt!)].filter((w) => dw.has(w));
+        const yes = shared.length > 0;
+        if (yes) loads++;
+        li.className = yes ? 'yes' : 'no';
+        li.querySelector('b')!.textContent = yes ? `loads (matches “${shared[0]}”)` : 'stays on disk';
+      });
+      const say = root.querySelector('[data-say]')!;
+      const hits = on.filter((r) => r.hit).length;
+      say.textContent = !fm || !desc
+        ? 'No description, no trigger. The agent only ever sees the name and description until it decides to open the file, so a skill without one never loads on its own. You can still call it by name.'
+        : !hits ? 'The skill loads and says nothing. Every tic is back: the label above the title, the tagline, a hint on every element. Type a rule back in.'
+        : loads === 3 ? 'Now it loads for the unit test too. A description that matches everything costs context on every task and teaches the agent to ignore it.'
+        : loads === 0 ? 'The rules are fine and nothing triggers them. The description is the part that decides whether any of this is ever read.'
+        : `${hits} of 4 rules active, loading for ${loads} of 3 prompts. Delete a line and the page changes; change the description and the triggers change. That is the whole mechanism.`;
+    };
+    ta.addEventListener('input', update);
+    root.querySelector('[data-reset]')!.addEventListener('click', () => { ta.value = original; update(); });
+    root.querySelector('[data-empty]')!.addEventListener('click', () => { ta.value = ta.value.split('\n').filter((l) => !/^\s*[-*]\s+\S/.test(l)).join('\n'); update(); });
+    update();
+  });
+</script>

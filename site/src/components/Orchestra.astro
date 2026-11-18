@@ -1,60 +1,119 @@
 ---
-// Relative cost units: the top model costs 2, the strong-but-cheaper model 1.
-// Workers do most of the volume (3 units of work each), the manager 1.
+// A team you can rewire. Cost is arithmetic on API list prices (Nov 2026):
+// one "task" costs what Claude Opus 5.5 measurably cost per benchmark task at
+// the chosen effort, scaled by each model's list price relative to Opus.
+// The split of work between roles is an assumption and is stated in the caption.
+const models = [
+  { id: 'fable', n: 'Claude Fable 5.2', x: 2, fam: 'a' },
+  { id: 'opus', n: 'Claude Opus 5.5', x: 1, fam: 'a' },
+  { id: 'sonnet', n: 'Claude Sonnet 5.5', x: 0.5, fam: 'a' },
+  { id: 'astra', n: 'GPT-6.2 Astra', x: 2, fam: 'o' },
+  { id: 'sol', n: 'GPT-6.2 Sol', x: 0.5, fam: 'o' },
+  { id: 'luna', n: 'GPT-6 Luna', x: 0.025, fam: 'o' },
+];
 ---
-<figure class="widget orc" data-orc data-mode="all">
-  <div class="seg" role="group" aria-label="Team setup">
-    <button type="button" data-set="all" aria-pressed="true">Top model everywhere</button>
-    <button type="button" data-set="mix" aria-pressed="false">Smart manager, cheaper workers</button>
+<figure class="widget orc" data-orc data-models={JSON.stringify(models)}>
+  <div class="tree">
+    <div class="node mgr" data-node="mgr">
+      <label><span>Orchestrator</span>
+        <select data-role="mgr">{models.map((m) => <option value={m.id} selected={m.id === 'fable'}>{m.n}</option>)}</select>
+      </label>
+      <small>splits the work, reads every result, decides what happens next</small>
+    </div>
+    <div class="wire" aria-hidden="true"></div>
+    <div class="node wk" data-node="wk">
+      <label><span>Workers</span>
+        <select data-role="wk">{models.map((m) => <option value={m.id} selected={m.id === 'fable'}>{m.n}</option>)}</select>
+      </label>
+      <div class="pips" data-pips aria-hidden="true"></div>
+      <label class="field"><span>How many in parallel</span><output data-o="n"></output><input type="range" min="1" max="8" step="1" value="5" data-i="n" /></label>
+    </div>
+    <div class="wire" aria-hidden="true"></div>
+    <div class="node rv" data-node="rv">
+      <label><span>Second opinion</span>
+        <select data-role="rv"><option value="">none</option>{models.map((m) => <option value={m.id}>{m.n}</option>)}</select>
+      </label>
+      <small>reviews each worker’s diff before the orchestrator accepts it</small>
+    </div>
   </div>
-  <svg viewBox="0 0 600 220" class="chart" role="img" aria-label="An orchestrator thread handing work to five worker threads">
-    <g class="links">
-      {[60, 180, 300, 420, 540].map((x) => <path d={`M300 62 C300 110 ${x} 110 ${x} 150`} />)}
-      <path class="op" d="M352 40 C420 40 470 40 520 40" />
-    </g>
-    <g class="node mgr"><rect x="230" y="18" width="140" height="44" rx="10" /><text x="300" y="45">orchestrator</text></g>
-    <g class="node opinion"><rect x="500" y="18" width="92" height="44" rx="10" /><text x="546" y="45">2nd opinion</text></g>
-    {[60, 180, 300, 420, 540].map((x, i) => (
-      <g class="node worker"><rect x={x - 48} y="150" width="96" height="44" rx="10" /><text x={x} y="177">worker {i + 1}</text></g>
-    ))}
-  </svg>
-  <div class="legend"><span class="sw top"></span>Fable 5.2 (top, ~2× price) <span class="sw mid"></span>Opus 5.5 (strong, cheaper)</div>
-  <div class="cost"><span>Relative cost</span><div class="track"><i data-bar></i></div><b data-val>32</b></div>
-  <figcaption class="caption">Illustrative units. The manager keeps the judgement; the volume runs on the cheaper model. In T3 Code they can even come from different providers.</figcaption>
+  <div class="fields">
+    <label class="field"><span>Effort</span>
+      <select data-effort><option value="2.45">medium</option><option value="3.46">high</option><option value="6.05">xhigh</option></select>
+    </label>
+    <label class="field"><span>Batches like this per working day</span><output data-o="day"></output><input type="range" min="1" max="12" step="1" value="4" data-i="day" /></label>
+  </div>
+  <div class="split" data-split role="img" aria-label="Share of cost by role"></div>
+  <p class="legend"><span><i class="sw mgr"></i>orchestrator</span><span><i class="sw wk"></i>workers</span><span><i class="sw rv"></i>second opinion</span></p>
+  <dl class="stats">
+    <div><dt>One batch, at list price</dt><dd data-batch></dd></div>
+    <div><dt>Against Fable everywhere</dt><dd data-vs></dd></div>
+    <div><dt>A month of this, at list price</dt><dd data-month></dd></div>
+  </dl>
+  <p class="say" data-say aria-live="polite"></p>
+  <figcaption class="caption">
+    Arithmetic, not a benchmark. One worker task is priced at what Opus 5.5 cost per task on the Artificial Analysis index at that effort ($2.45, $3.46 or $6.05), scaled by list price.
+    Assumed: the orchestrator spends half a task plus 15% of each worker’s, a reviewer a quarter of each. Quality is not computed. A subscription does not bill this way; see the note beside the figure.
+  </figcaption>
 </figure>
 <style>
-  .chart { width: 100%; height: auto; display: block; margin: 1rem 0 0.4rem; }
-  .links path { fill: none; stroke: var(--rule); stroke-width: 1.5; stroke-dasharray: 5 5; animation: flow 1.2s linear infinite; }
-  @keyframes flow { to { stroke-dashoffset: -10; } }
-  .node rect { transition: fill 300ms ease, stroke 300ms ease; stroke-width: 1.5; }
-  .node text { font-family: var(--mono); font-size: 12px; text-anchor: middle; transition: fill 300ms ease; }
-  .node rect { fill: var(--accent); stroke: var(--accent); } .node text { fill: var(--paper); }
-  [data-mode='mix'] .worker rect { fill: var(--blue-soft); stroke: var(--blue); } [data-mode='mix'] .worker text { fill: var(--blue); }
-  .opinion, .op { opacity: 0; transition: opacity 300ms ease; }
-  [data-mode='mix'] .opinion, [data-mode='mix'] .op { opacity: 1; }
-  .legend { color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.5rem; }
-  .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-left: 0.3rem; }
-  .sw.top { background: var(--accent); } .sw.mid { background: var(--blue-soft); border: 1px solid var(--blue); }
-  .cost { display: grid; grid-template-columns: auto 1fr auto; gap: 0.7rem; align-items: center; margin-top: 0.9rem; }
-  .cost span { color: var(--muted); } .cost b { font-variant-numeric: tabular-nums; min-width: 2ch; text-align: right; }
-  .track { height: 12px; border-radius: 99px; background: color-mix(in oklab, var(--rule) 60%, transparent); overflow: hidden; }
-  .track i { display: block; height: 100%; width: 100%; background: var(--accent); border-radius: inherit; transition: width 400ms cubic-bezier(.2,.8,.2,1), background-color 300ms; }
-  [data-mode='mix'] .track i { background: var(--blue); }
-  @media (prefers-reduced-motion: reduce) { .links path { animation: none; } }
+  .tree { display: grid; justify-items: center; }
+  .node { width: 100%; border: 1.5px solid var(--rule); border-radius: 12px; padding: 0.7rem 0.8rem; background: var(--paper); display: grid; gap: 0.4rem; transition: border-color 200ms ease; }
+  .node[data-fam='a'] { border-color: var(--accent); } .node[data-fam='o'] { border-color: var(--blue); }
+  .node.mgr, .node.rv { max-width: 24rem; }
+  .node label:not(.field) { display: flex; flex-wrap: wrap; gap: 0.4rem 0.8rem; align-items: center; justify-content: space-between; }
+  .node label:not(.field) > span { font-weight: 600; font-size: 0.85rem; }
+  .node small { color: var(--muted); font-size: 0.7rem; }
+  .wire { width: 1.5px; height: 1.1rem; background: var(--rule); }
+  .pips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .pips :global(i) { width: 1.6rem; height: 1.6rem; border-radius: 6px; display: block; }
+  .pips :global(i.a) { background: var(--accent); } .pips :global(i.o) { background: var(--blue); }
+  .split { display: flex; height: 14px; border-radius: 99px; overflow: hidden; margin: 1rem 0 0; background: color-mix(in oklab, var(--rule) 60%, transparent); }
+  .split :global(i) { display: block; height: 100%; transition: width 380ms cubic-bezier(.2,.8,.2,1); }
+  .split :global(i.mgr) { background: var(--ink); } .split :global(i.wk) { background: var(--green); } .split :global(i.rv) { background: var(--muted); }
+  .legend { color: var(--muted); margin: 0.4rem 0 0; display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; }
+  .legend span { white-space: nowrap; }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 0.4rem; }
+  .sw.mgr { background: var(--ink); } .sw.wk { background: var(--green); } .sw.rv { background: var(--muted); }
+  .say { min-height: 4.6em; }
 </style>
 <script>
+  type M = { id: string; n: string; x: number; fam: string };
   document.querySelectorAll<HTMLElement>('[data-orc]').forEach((root) => {
-    const all = 2 * 1 + 5 * 3 * 2; // manager + 5 workers, all on the top model
-    const mix = 2 * 1 + 5 * 3 * 1 + 2 * 1; // top manager, cheaper workers, one top second opinion
-    root.querySelectorAll<HTMLButtonElement>('[data-set]').forEach((b) =>
-      b.addEventListener('click', () => {
-        const m = b.dataset.set!;
-        root.dataset.mode = m;
-        root.querySelectorAll('[data-set]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-        const v = m === 'all' ? all : mix;
-        (root.querySelector('[data-bar]') as HTMLElement).style.width = `${(v / all) * 100}%`;
-        root.querySelector('[data-val]')!.textContent = String(v);
-      }),
-    );
+    const models: M[] = JSON.parse(root.dataset.models!);
+    const by = (id: string) => models.find((m) => m.id === id);
+    const sel = (role: string) => (root.querySelector(`[data-role="${role}"]`) as HTMLSelectElement).value;
+    const num = (k: string) => Number((root.querySelector(`[data-i="${k}"]`) as HTMLInputElement).value);
+    const money = (v: number) => (v >= 1000 ? `$${Math.round(v).toLocaleString('en-US')}` : v >= 100 ? `$${Math.round(v)}` : `$${v.toFixed(2)}`);
+    const update = () => {
+      const base = Number((root.querySelector('[data-effort]') as HTMLSelectElement).value);
+      const n = num('n'), day = num('day');
+      const mgr = by(sel('mgr'))!, wk = by(sel('wk'))!, rv = by(sel('rv'));
+      root.querySelector('[data-o="n"]')!.textContent = String(n);
+      root.querySelector('[data-o="day"]')!.textContent = String(day);
+      const cm = base * mgr.x * (0.5 + 0.15 * n), cw = base * wk.x * n, cr = rv ? base * rv.x * 0.25 * n : 0;
+      const total = cm + cw + cr;
+      const allTop = base * 2 * (0.5 + 0.15 * n) + base * 2 * n;
+      (root.querySelector('[data-node="mgr"]') as HTMLElement).dataset.fam = mgr.fam;
+      (root.querySelector('[data-node="wk"]') as HTMLElement).dataset.fam = wk.fam;
+      (root.querySelector('[data-node="rv"]') as HTMLElement).dataset.fam = rv ? rv.fam : '';
+      root.querySelector('[data-pips]')!.innerHTML = Array.from({ length: n }, () => `<i class="${wk.fam}"></i>`).join('');
+      root.querySelector('[data-split]')!.innerHTML = [['mgr', cm], ['wk', cw], ['rv', cr]].map(([k, v]) => `<i class="${k}" style="width:${((v as number) / total) * 100}%" title="${k}"></i>`).join('');
+      root.querySelector('[data-batch]')!.textContent = money(total);
+      const d = (total / allTop - 1) * 100;
+      root.querySelector('[data-vs]')!.textContent = Math.abs(d) < 0.5 ? 'same' : `${d < 0 ? '−' : '+'}${Math.abs(d).toFixed(0)}%`;
+      root.querySelector('[data-month]')!.textContent = money(total * day * 22);
+      const say = root.querySelector('[data-say]')!;
+      const share = Math.round((cw / total) * 100);
+      say.textContent =
+        mgr.x < 1 ? 'A cheap orchestrator is the wrong saving. It is a small share of the bill and it makes every decision about what the others do. Put the judgement there and economise below it.'
+        : wk.id === 'fable' || wk.id === 'astra' ? `Top model everywhere. The workers are ${share}% of the bill, and most of what they do is the kind of work the next tier handles well. Change the workers and watch the total.`
+        : wk.x <= 0.03 ? 'Nearly free, and for renames, sweeps and sorting that is right. For work that needs working out, look at where these models sit on the index before trusting five of them unsupervised.'
+        : wk.x >= mgr.x && !rv ? 'Manager and workers cost the same per token here, so there is nothing to trade off. The saving comes from putting a cheaper strong model under a smarter manager.'
+        : !rv ? `The manager keeps the judgement and the volume runs on a model at ${Math.round((wk.x / mgr.x) * 100)}% of its price. Nothing checks the workers except the orchestrator reading their summaries. Add a second opinion and see what it costs.`
+        : rv.fam === wk.fam && rv.id === wk.id ? 'The reviewer is the same model as the workers. It will mostly agree with itself. A different model, ideally a different family, finds different mistakes.'
+        : `A smart manager, cheaper workers, and an independent reviewer for ${Math.round((cr / total) * 100)}% of the bill. In T3 Code the three can come from different providers, and you can set this up by describing it in one message.`;
+    };
+    root.querySelectorAll('select, input').forEach((e) => e.addEventListener('input', update));
+    update();
   });
 </script>

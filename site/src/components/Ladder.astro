@@ -1,12 +1,12 @@
 ---
 const rungs = [
-  { h: 'Polish the first draft', p: 'Tweak the colours on the template it gave you. You get a nicer version of a CV that reads like someone looking for a job.' },
-  { h: 'Take your favourite part 30% further', p: 'The fake little map was the best idea on the page. Make it a real 3D globe with a small plane flying between the places you’ve lived; hover or focus a place and a card opens.' },
-  { h: 'Aim at the goal beyond the goal', p: 'The site isn’t the point. Being seen as the serious researcher you are is. Ask what would do that, show it work you admire, and let it propose things you didn’t know to ask for.' },
+  { h: 'Polish the first draft', p: 'Fix the axis labels on the three charts it gave you. You get a tidier version of the dashboard you would have built yourself in a week.' },
+  { h: 'Take the best part 30% further', p: 'The residual plot was the only chart you looked at twice. Make it the page: every run overlaid, outliers clickable through to the raw rows, a slider for the cut you keep arguing about.' },
+  { h: 'Aim at the goal beyond the goal', p: 'The dashboard isn’t the point. Deciding which runs to trust is. Ask what a careful reviewer would want to see before believing the result, and have it build that: the checks, the failure cases, the one-page argument.' },
 ];
 ---
 <figure class="widget ladder" data-ladder>
-  <p class="task">Task: “a personal website, kind of an interactive CV”</p>
+  <p class="task">Task: “a dashboard for my simulation runs”</p>
   <ol>
     {rungs.map((r, i) => (
       <li>
@@ -17,7 +17,7 @@ const rungs = [
       </li>
     ))}
   </ol>
-  <figcaption class="caption">Each rung makes the result better, not bigger. Climb as high as you can still check.</figcaption>
+  <figcaption class="caption">Each rung asks for a better result, which is different from a bigger one. Climb as high as you can still check.</figcaption>
 </figure>
 <style>
   .task { font-family: var(--serif); font-size: 1.1rem; margin: 0 0 0.8rem; }

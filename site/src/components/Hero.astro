@@ -1,16 +1,16 @@
 ---
 import { url } from '../lib/nav';
 const lanes = [
-  { name: 'portfolio-site', steps: ['read screenshot', 'draft 3 variants', 'open browser', 'fix header', 'loop'] },
-  { name: 'research-notebook', steps: ['plan analysis', 'synthetic data', 'run 5 times', 'compare', 'report'] },
-  { name: 'orchestrator', steps: ['split work', 'start subagents', 'second opinion', 'merge', 'dashboard'] },
+  { name: 'pendulum-fit', steps: ['read timings.csv', 'synthetic data', 'fit', 'run 5 times', 'report'] },
+  { name: 'results-page', steps: ['draft layout', 'open browser', 'fix overflow', 'check contrast', 'loop'] },
+  { name: 'orchestrator', steps: ['split work', 'start 5 workers', 'second opinion', 'review diffs', 'merge'] },
 ];
 ---
 <header class="hero">
   <h1>You describe the outcome. <em>Agents do the work.</em> Your job is to check it.</h1>
   <p class="lede">
-    A visual essay on how software gets built now, for people who are new to this and for experienced engineers and scientists who haven't kept up.
-    About 20 minutes. Every section opens a door into the <a href={url('guide/')}>reference</a>.
+    How software gets built now, written for engineers and scientists who know how to build it the old way and haven’t had time to keep up.
+    About 25 minutes, with sixteen figures you can play with. Every number is <a href={url('guide/guides/fact-check/')}>sourced</a>; the full <a href={url('guide/')}>reference</a> is one click away.
   </p>
   <div class="threads" aria-label="Illustration: three agent threads working in parallel" role="img">
     {lanes.map((l, i) => (
@@ -21,7 +21,7 @@ const lanes = [
         </div>
       </div>
     ))}
-    <div class="you"><span class="dot"></span> you: reading results, 2 min at a time</div>
+    <div class="you"><span class="dot"></span> you: reading results, a few minutes at a time</div>
   </div>
 </header>
 <style>

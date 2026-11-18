@@ -14,6 +14,7 @@ export const groups: RefGroup[] = [
       { id: 'guides/t3-code', title: 'T3 Code', blurb: 'The agentic development environment: what it can do and where it hits walls' },
       { id: 'guides/models-and-costs', title: 'Models and Costs', blurb: 'Which model for what, thinking levels, plans, hardware' },
       { id: 'skills-table', title: 'Skills', blurb: 'Reusable instructions for your agents' },
+      { id: 'guides/fact-check', title: 'Sources and Fact-Check', blurb: 'Every number and tool claim, with its source' },
     ],
   },
   {

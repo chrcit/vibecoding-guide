@@ -2,25 +2,48 @@
 
 ## What Is a Skill?
 
-A skill is a Markdown file with instructions for your agent. That's it. It can describe a persona, a checklist, a workflow, or a set of commands.
+A skill is a folder containing a `SKILL.md` file: YAML frontmatter with a `name` and a `description`, then instructions in Markdown. The folder can also hold scripts, templates or reference files the instructions point to. The format is an open standard ([agentskills.io](https://agentskills.io/)), so the same skill works in Claude Code, Codex and most other agents, including everything you run through [T3 Code](./guides/t3-code.md).
 
-Modern agents (Claude Code, Codex, and everything you run through [T3 Code](./guides/t3-code.md)) load skills on demand:
+How an agent uses one:
 
-- **Install:** Put the skill in your agent's skills folder, usually as a `SKILL.md` inside a folder named after the skill. Or just tell the agent: "Install this skill: [link]."
-- **Use:** Call it by name (`/humanizer` in Claude Code, `$humanizer` in Codex), or describe the task and let the agent pick the right skill itself.
-- **Share:** Skills are plain text, so they live happily in a GitHub repo.
+- **Explicitly:** `/name` in Claude Code, `$name` in Codex.
+- **Implicitly:** the agent sees the `name` and `description` of every installed skill and loads the full instructions when a task matches. The `description` is the trigger, so write it as "use when..." with the words a user would actually say.
 
-You don't need a skill for everything. A prompt you paste often can stay in your clipboard history. Turn it into a skill once you want it everywhere, or want the agent to reach for it on its own.
+Only the descriptions sit in context all the time, so installed skills cost little until they are used.
+
+You do not need a skill for everything. A prompt you paste now and then can stay in your clipboard history. Turn it into a skill when you want it in every project, or want the agent to reach for it without being asked.
+
+## Where Skills Live
+
+| Agent | Project | Everywhere |
+|-------|---------|-----------|
+| **Claude Code** | `.claude/skills/<name>/SKILL.md` | `~/.claude/skills/<name>/SKILL.md` |
+| **Codex** | `.agents/skills/<name>/SKILL.md` in the project or any parent folder | `~/.agents/skills/<name>/SKILL.md` |
+| **T3 Code** | Uses the folders of the agent each thread runs | |
+
+Sources: [Claude Code skills](https://code.claude.com/docs/en/skills), [Codex skills](https://learn.chatgpt.com/docs/build-skills). After adding or changing a skill, start a new agent session so it is picked up.
+
+## Installing Skills
+
+The [`skills` CLI](https://github.com/vercel-labs/skills) installs a skill from a GitHub repository into the right folder for most agents:
+
+```bash
+npx skills add owner/repo
+```
+
+Claude Code can also install skills that come bundled in plugins, through its `/plugin` command. Or tell the agent: "Install this skill: [link]." That works on any machine the agent runs on.
+
+Read a skill before you install it. It is instructions your agent will follow, and it may include scripts.
 
 ## Recommended External Skills
 
-| Skill | What it does |
-|-------|--------------|
-| **Humanizer** | Rewrites AI-sounding text so it reads like a person wrote it. It explains why AI text sounds the way it does and which voice to use instead. |
-| **Be Ambitious** | Reframes a task at a higher level: the goal beyond the goal, what a top expert would do, what other fields would bring. Use it before you start something big. |
-| **Grill Me** | The agent asks you questions until it really understands what you want. Ask it to put the questions in an interactive multiple-choice page so you can answer quickly. |
+| Skill | What it does | Source |
+|-------|--------------|--------|
+| **Humanizer** | Rewrites AI-sounding text so it reads like a person wrote it, based on Wikipedia's "Signs of AI writing". | [blader/humanizer](https://github.com/blader/humanizer) (MIT): `npx skills add blader/humanizer` |
+| **Grill Me** | The agent questions you until it understands what you want. Ask for the questions as a clickable multiple-choice page to answer quickly. | Part of [mattpocock/skills](https://github.com/mattpocock/skills) (MIT): `npx skills add mattpocock/skills` |
+| **Be Ambitious** | Reframes a task at a higher level: the goal beyond the goal (altitude), what a top expert would do (depth), what other fields would bring (range). | Felix Rieseberg's [article](https://felixrieseberg.com/how-to-be-more-ambitious-a-tutorial-for-humans-with-models/). He published no skill; community versions exist, or have your agent write one from the article. |
 
-Combine the last two: **Be Ambitious** widens the problem, **Grill Me** narrows it down to what you actually want.
+Combine the last two: Be Ambitious widens the problem, Grill Me narrows it to what you actually want.
 
 ## A Prompt Worth Keeping
 
@@ -29,6 +52,33 @@ Agents love decorative layout: a tiny uppercase label above every headline, a ta
 ```
 Cut taglines, helper text, and secondary labels. If a screen needs them to make sense, fix the layout instead.
 ```
+
+## Write One in Five Minutes
+
+The prompt above as a skill. Save it as `.claude/skills/cut-decoration/SKILL.md` (Claude Code) or `.agents/skills/cut-decoration/SKILL.md` (Codex):
+
+```markdown
+---
+name: cut-decoration
+description: Use when polishing or reviewing a UI, or when the user says a page feels cluttered, busy or over-designed. Removes decorative eyebrow labels, taglines and helper text.
+---
+
+# Cut decoration
+
+Remove taglines, helper text, eyebrow labels and other secondary labels from the screens in scope.
+
+If a screen stops making sense without them, the layout is the problem. Fix it with hierarchy,
+grouping and spacing instead of putting the text back.
+
+Keep text that carries information the user needs to act: form validation, units, error messages,
+empty states.
+
+When done, list what you removed and any screen where you changed the layout instead.
+```
+
+Then try both ways: `/cut-decoration` explicitly, and "this settings page feels busy" to see whether the description triggers it. If it does not trigger when it should, the description is too vague.
+
+The easiest route is still to ask: "I keep asking you to do X. Write a skill for it, put it in the project's skills folder, and make the description trigger on the way I usually phrase it."
 
 ## Skills in This Repository
 
@@ -67,14 +117,14 @@ These are older-style system prompts aimed at web builders like v0 and Lovable. 
 
 ## Where Instructions Go
 
-| Tool | Where to put skills or standing instructions |
-|------|---------------------------------------------|
-| **Claude Code** | `.claude/skills/<name>/SKILL.md` (project) or `~/.claude/skills/` (everywhere); project context in `CLAUDE.md` |
-| **Codex** | Skills folder per the [Codex docs](https://developers.openai.com/codex/); project context in `AGENTS.md` |
-| **T3 Code** | Uses the skills of the agents it runs; ask the agent to install a skill on every machine you use |
-| **v0** | No persistent system prompt; paste per chat |
-| **Lovable** | Paste into the initial project prompt |
-| **Claude web** | Projects → Project Instructions |
+| Tool | Skills | Standing project context |
+|------|--------|--------------------------|
+| **Claude Code** | `.claude/skills/` or `~/.claude/skills/` | `CLAUDE.md` (reads `AGENTS.md` only if there is no `CLAUDE.md`) |
+| **Codex** | `.agents/skills/` or `~/.agents/skills/` | `AGENTS.md` |
+| **T3 Code** | The folders of the agent each thread runs | Whatever that agent reads |
+| **v0** | No persistent system prompt; paste per chat | |
+| **Lovable** | Paste into the initial project prompt | |
+| **Claude web** | | Projects → Project Instructions |
 
 For web builders, stack prompts in this order:
 
@@ -84,14 +134,12 @@ For web builders, stack prompts in this order:
 [3. Your project context + current task]
 ```
 
-## Create Your Own Skill
-
-Easiest way: tell your agent what you keep repeating and ask it to write the skill. Or start from this template:
+## Skill Template
 
 ```markdown
 ---
 name: my-skill
-description: One line saying when the agent should use this skill.
+description: Use when [the situation, in the words a user would say]. [What it does in one line.]
 ---
 
 # [Skill Name]

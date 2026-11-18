@@ -1,22 +1,22 @@
 # Agentic Coding Guide
 
-> Build real software by directing AI agents. For newcomers, and for experienced engineers and scientists who haven't kept up.
+> How to work with coding agents now. Written for experienced engineers and scientists who haven't kept up with agents; followable by a motivated newcomer.
 
-**Agentic coding** = you describe the outcome, give context, and check the result. AI agents plan, write, run and verify the code, often for an hour at a time and several in parallel.
+**Agentic coding** means you describe the outcome, give context, and set up the checks. Agents plan, write, run and verify the code, often for an hour at a time and several in parallel. The guide is about what that changes in practice: how to give context, how to make an agent verify its own work, how to review what it did, and where it still fails. Claims about models, prices and tools are dated and sourced in [Sources and Fact-Check](./guides/fact-check.md).
 
 **Read it as a visual essay** with interactive figures, plus the full reference: run the site in [`site/`](./site) (`pnpm install && pnpm dev`), or open the GitHub Pages deployment once it's enabled.
 
-This guide started in early 2026 as *Vibe Coding 101*, built around web builders like v0 and Lovable. A lot changed over the summer: the best models now stay on track for hours, agents work in parallel, and tools like [T3 Code](https://t3.codes) let you run models from different providers side by side. This version is rewritten around that way of working. The web-builder material is still here as an on-ramp.
+This guide started in early 2026 as *Vibe Coding 101*, built around web builders like v0 and Lovable. Since then the length of task the best models can finish unattended kept doubling every few months, agents started working in parallel, and tools like [T3 Code](https://t3.codes) made it practical to run models from different providers side by side. This version is rewritten around that way of working. The web-builder material is still here as an on-ramp.
 
 ---
 
 ## Quick Start
 
-1. **Get one AI subscription.** $20/month Claude or ChatGPT is enough to start. → [Models and Costs](./guides/models-and-costs.md)
-2. **Install T3 Code** and sign in to Claude Code or Codex. → [T3 Code](./guides/t3-code.md)
-3. **Talk to it.** Use voice. Tell it who you are and two problems you want solved this month.
-4. **Give it a way to check itself,** then let it run. → [Ways of Working](./guides/ways-of-working.md)
-5. **Block one hour this week.** That's enough to get comfortable.
+1. **Get one subscription.** Claude Pro or ChatGPT Plus ($20 a month) includes the coding agent. → [Models and Costs](./guides/models-and-costs.md)
+2. **Install an agent CLI and sign in** (`claude auth login` or `codex login`), then install [T3 Code](./guides/t3-code.md) (desktop app, or `npx t3@latest`).
+3. **Talk to it.** Use voice. Tell it what you work on and two problems you want solved this month.
+4. **Give it a way to check itself,** then let it run. → [Self-Verification](./guides/ways-of-working.md#self-verification-is-the-goal)
+5. **Read the diff, not the summary.** → [Reviewing Agent Work](./guides/ways-of-working.md#reviewing-agent-work)
 
 ---
 
@@ -25,10 +25,11 @@ This guide started in early 2026 as *Vibe Coding 101*, built around web builders
 ### Start Here
 | Guide | What You Learn |
 |-------|----------------|
-| [Ways of Working](./guides/ways-of-working.md) | Voice, context, parallel work, self-verification, orchestration, ambition |
+| [Ways of Working](./guides/ways-of-working.md) | Context, parallel work, self-verification, reviewing agent work, scientific workflows, permissions, orchestration |
 | [T3 Code](./guides/t3-code.md) | The agentic development environment: what it can do and where it hits walls |
 | [Models and Costs](./guides/models-and-costs.md) | Which model for what, thinking levels, plans, hardware |
-| [Skills](./skills-table.md) | Reusable instructions for your agents |
+| [Skills](./skills-table.md) | Reusable instructions for your agents, and how to write one |
+| [Sources and Fact-Check](./guides/fact-check.md) | Every number and tool claim, with its primary source and date |
 
 ### Agentic Coding Basics
 | Guide | What You Learn |
@@ -57,11 +58,11 @@ This guide started in early 2026 as *Vibe Coding 101*, built around web builders
 
 **Context is capability.** The more the agent knows about you, the problem and what good looks like, the better it gets.
 
-**Self-verification is the goal.** Give the agent a way to judge its own output (a browser to look at, a test, five runs to compare) and it will loop until it's right.
+**Self-verification is the goal.** Give the agent a way to judge its own output (a failing test, a browser to look at, a reference value, five runs to compare) and it will loop until the judge is satisfied. Then check what the judge cannot.
 
-**Never wait.** Runs take 10 to 60 minutes. Queue more information, start another thread, check back.
+**Never wait.** Runs take 10 to 60 minutes. Queue or steer more information, start another thread, check back.
 
-**Your job is verifying.** Ask for the best tool for you to check the work. Look at everything before you ship it.
+**Your job is verifying.** Ask for the best tool for you to check the work. Agents report failure in the same confident tone as success; read the diff before you ship.
 
 **Be ambitious.** The first result is a starting point, not a ceiling. Ask for more than you need.
 
@@ -71,13 +72,14 @@ This guide started in early 2026 as *Vibe Coding 101*, built around web builders
 
 ### Tools
 - [T3 Code](https://t3.codes) · [Source on GitHub](https://github.com/pingdotgg/t3code)
-- [Claude Code Docs](https://docs.anthropic.com/en/docs/claude-code)
-- [Codex Developer Guide](https://developers.openai.com/codex/)
+- [Claude Code Docs](https://code.claude.com/docs/en/overview)
+- [Codex Docs](https://learn.chatgpt.com/docs/)
 - [Artificial Analysis](https://artificialanalysis.ai) (independent model benchmarks, cost and token usage)
 
 ### Watching and Reading
 - [Theo on YouTube](https://www.youtube.com/@theo) (creator of T3 Code; broad context on agentic workflows)
-- [Claude Code Best Practices](https://www.anthropic.com/engineering/claude-code-best-practices)
+- [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices)
+- [METR: Time Horizons](https://metr.org/time-horizons/) (how long a task models can finish, tracked over time)
 - [Using LLMs for Code](https://simonwillison.net/2025/Mar/11/using-llms-for-code/)
 - [The 70% Problem](https://addyo.substack.com/p/the-70-problem-hard-truths-about) (written for the previous generation of tools, still a useful warning)
 
@@ -92,6 +94,7 @@ This guide started in early 2026 as *Vibe Coding 101*, built around web builders
 ```
 ├── README.md                    ← You are here
 ├── guides/                      ← Educational content
+│   └── fact-check.md            ← Sources for every number and tool claim
 ├── skills/                      ← Prompts you can use as skills
 ├── skills-table.md              ← Skills reference
 ├── site/                        ← Visual essay + reference site (Astro); reads guides/ and skills/

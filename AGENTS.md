@@ -6,8 +6,8 @@ Guides and skills for people learning to build software by directing AI agents. 
 
 ## Audience
 
-- Newcomers with digital literacy (Notion, Figma level) who want to build real things
-- Experienced engineers and scientists who know software but haven't kept up with agents
+- Primary: experienced engineers and scientists who know how software gets built but haven't kept up with agents. Skeptical and technical: they want precise claims, honest limits and mechanisms, not slogans.
+- Still welcome: motivated newcomers with digital literacy (Notion, Figma level). The core guides should stay followable for them without explaining basics like Markdown or what a repository is.
 
 ## Repository Structure
 
@@ -24,7 +24,8 @@ Guides and skills for people learning to build software by directing AI agents. 
 ├── site/                  # Astro site: visual essay (src/pages/index.astro + components) and
 │                          #   reference pages rendered straight from guides/ and skills/
 └── guides/
-    ├── ways-of-working.md     # Core habits: context, never wait, self-verification, orchestration
+    ├── fact-check.md          # Sources and status for every number and tool claim (dated)
+    ├── ways-of-working.md     # Core habits: context, never wait, self-verification, review, orchestration
     ├── t3-code.md             # T3 Code capabilities and limits
     ├── models-and-costs.md    # Model landscape, thinking levels, plans, hardware (dated snapshot)
     ├── agentic-coding.md      # Agent loop, context files, prompts, review
@@ -41,7 +42,7 @@ Guides and skills for people learning to build software by directing AI agents. 
 ## Content Guidelines
 
 **Style:**
-- Plain language; explain terms when first used
+- Plain language; explain agent-specific terms when first used, not general software basics
 - Practical and actionable; short sections
 - Write like a person: no hype, no filler, no stock AI phrasing
 
@@ -54,7 +55,7 @@ Guides and skills for people learning to build software by directing AI agents. 
 
 **Priorities:**
 - P0: Accuracy of tool, model and pricing claims; security and privacy info
-- P1: Clarity for newcomers
+- P1: Clarity and precision for experts; still followable for newcomers
 - P2: Broad coverage without bloat
 
 ## When Making Changes
@@ -64,7 +65,8 @@ Guides and skills for people learning to build software by directing AI agents. 
 3. Update README.md when adding or removing content
 4. Verify tool claims against official docs (t3.codes, Claude Code docs, Codex docs, v0, Lovable)
 5. Date time-sensitive facts (model names, prices, limits) and keep them in `models-and-costs.md`
-6. Never include private details from source material (names, employers, clients, research data)
-7. Use TypeScript in code examples
-8. The site renders the markdown directly: keep relative `.md` links (they become site routes). When an essay figure states a fact, keep it in sync with the matching guide
-9. Before committing site changes: `cd site && pnpm build && pnpm check-links` must pass
+6. Every number or tool claim needs a row in `guides/fact-check.md` with a source; personal experience must be labelled as such
+7. Never include private details from source material (names, employers, clients, research data)
+8. Use TypeScript in code examples
+9. The site renders the markdown directly: keep relative `.md` links (they become site routes). When an essay figure states a fact, keep it in sync with the matching guide
+10. Before committing site changes: `cd site && pnpm build && pnpm check-links` must pass

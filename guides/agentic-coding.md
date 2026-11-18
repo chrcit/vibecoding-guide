@@ -8,7 +8,7 @@ How AI agents work with your code: the concepts behind Claude Code, Codex, Curso
 
 **Agentic coding:** AI agents work in a real project. They read files, make changes across them, run commands, open a browser to check their work, and keep going for long stretches without you.
 
-The agent is more like a team of collaborators than a generator. Since mid-2026 the best models stay on track for hours, so you can hand over whole features (or whole apps) and spend your time directing and verifying.
+The agent is more like a team of collaborators than a generator. The length of task the best models can finish has roughly doubled every four months since 2023 ([METR](https://metr.org/time-horizons/); see [What Changed](./ways-of-working.md#what-changed)), so you can hand over whole features or whole apps and spend your time directing and verifying.
 
 ## How Agents Work
 
@@ -85,9 +85,18 @@ my-project/
 
 ### Context Files
 
-Create a file that tells agents about your project:
+Create a file that tells agents about your project. Which file depends on the agent ([Codex](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [Claude Code](https://code.claude.com/docs/en/memory)):
 
-**CLAUDE.md** (for Claude-based tools) or **AGENTS.md** (for Codex):
+- **Codex** reads `~/.codex/AGENTS.md`, then every `AGENTS.md` from the repository root down to the folder it works in, so a subfolder can add its own rules.
+- **Claude Code** reads `CLAUDE.md`. It reads `AGENTS.md` only when there is no `CLAUDE.md`.
+
+To serve both from one source, keep the content in `AGENTS.md` and make `CLAUDE.md` a single line that imports it:
+
+```markdown
+@AGENTS.md
+```
+
+A typical context file:
 
 ```markdown
 # Project Overview
@@ -216,6 +225,8 @@ Never blindly accept AI changes:
 5. Commit if working
 ```
 
+Make tests the judge wherever you can. Write the failing test first (or have the agent write it and review the test before any implementation), then ask the agent to make it pass without editing the test. When it reports success, check the diff for weakened or deleted tests, widened tolerances and hard-coded expected values. More on this in [Self-Verification](./ways-of-working.md#self-verification-is-the-goal) and [Reviewing Agent Work](./ways-of-working.md#reviewing-agent-work).
+
 ### When to Intervene
 
 **Stop the agent and redirect when:**
@@ -311,6 +322,10 @@ In your context file:
 - Always check authentication on API routes
 - Never expose user data without authorization check
 ```
+
+### Sandboxing and Permissions
+
+An agent can run whatever your user account can, unless a permission mode or sandbox stops it. Claude Code has permission modes (including a read-only plan mode) and an optional OS sandbox; Codex runs commands in a sandbox whose default only allows writes inside the workspace; T3 Code starts new threads in Full access and is not itself a sandbox. Keep production secrets out of the agent's environment and run long unattended work in a worktree, container or separate machine. Details in [Permissions and Sandboxing](./ways-of-working.md#permissions-and-sandboxing).
 
 ## The Mindset Shift
 

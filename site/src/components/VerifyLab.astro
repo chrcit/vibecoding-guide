@@ -1,0 +1,181 @@
+---
+// A small results card with real defects, and an agent loop that can only fix
+// what its checks can measure. Every check below is computed against the live
+// DOM or the embedded data when you press the button; the fixes are scripted.
+const rows = [
+  ['0.30', '1.133', '+2.1', '10', 'ok'],
+  ['0.55', '1.534', '−1.4', '10', 'ok'],
+  ['0.80', '1.850', '+0.6', '10', 'string slipped once'],
+  ['1.20', '2.266', '−0.9', '10', 'ok'],
+];
+---
+<figure class="widget vl" data-vl>
+  <fieldset class="judges">
+    <legend>What the agent can check its work against</legend>
+    <label><input type="checkbox" data-judge="browser" /> A browser it can look at</label>
+    <label><input type="checkbox" data-judge="test" /> A test with a known answer</label>
+  </fieldset>
+  <div class="bench">
+    <div class="frame" data-frame aria-label="The page the agent built">
+      <p class="eyebrow noise">Results overview</p>
+      <h4>Pendulum run 7</h4>
+      <p class="tagline noise">Precision insights at a glance</p>
+      <p class="value">g = <b data-g>–</b> m/s²</p>
+      <p class="meta" data-meta>48 timings · 40° release · fitted 14 Nov</p>
+      <div class="tw" data-tw>
+        <table data-table>
+          <thead><tr><th>length_m</th><th>period_s</th><th>residual_ms</th><th>swings</th><th>note</th></tr></thead>
+          <tbody>{rows.map((r) => <tr>{r.map((c) => <td>{c}</td>)}</tr>)}</tbody>
+        </table>
+      </div>
+      <button type="button" class="dl" data-dl tabindex="-1">Download CSV</button>
+      <p class="helper noise">Tip: scroll sideways to see more ↓</p>
+    </div>
+    <ol class="log" data-log role="log" aria-live="polite" aria-label="Agent log"></ol>
+  </div>
+  <div class="row-btns">
+    <button type="button" class="btn small" data-go>Let it work</button>
+    <button type="button" class="btn small ghost" data-eye hidden>Your turn: cut the labels and taglines</button>
+    <button type="button" class="btn small ghost" data-reset>Reset</button>
+  </div>
+  <dl class="stats">
+    <div><dt>Passes before “done”</dt><dd data-passes>–</dd></div>
+    <div><dt>Measurable defects left</dt><dd data-left>–</dd></div>
+    <div><dt>Left for your judgement</dt><dd data-taste>–</dd></div>
+  </dl>
+  <p class="say" data-say aria-live="polite">The agent says the page is finished. Give it something to check against, or nothing, and let it work.</p>
+  <figcaption class="caption">The measurements are real: overflow from the element widths, contrast from the computed colours (WCAG ratio), tap height from the rendered button, and g refitted from 12 synthetic timings. The fixes the agent applies are scripted.</figcaption>
+</figure>
+<style>
+  .judges { border: 1px solid var(--rule); border-radius: 10px; padding: 0.5rem 0.8rem 0.6rem; margin: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; }
+  .judges legend { color: var(--muted); padding: 0 0.3rem; }
+  .judges label { display: flex; gap: 0.45rem; align-items: center; cursor: pointer; }
+  .judges input { accent-color: var(--green); width: 1rem; height: 1rem; }
+  .bench { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: 0.8rem; margin: 0.9rem 0; align-items: start; }
+  /* The mock page keeps its own fixed colours in both themes, like a screenshot. */
+  .frame { background: #fff; color: #1c1b18; border: 1px solid #d0d0d0; border-radius: 12px; padding: 0.9rem; font-family: var(--serif); min-width: 0; overflow: hidden; }
+  .frame h4 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+  .eyebrow { font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.58rem; color: #c8431a; margin: 0 0 0.2rem; }
+  .tagline { font-family: var(--mono); font-size: 0.66rem; color: #8a8a8a; margin: 0.15rem 0 0; }
+  .helper { font-family: var(--mono); font-size: 0.62rem; color: #8a8a8a; margin: 0.5rem 0 0; text-align: center; }
+  .noise { overflow: hidden; max-height: 2.4em; transition: max-height 280ms ease, opacity 220ms ease, margin 280ms ease; }
+  .frame.quiet .noise { max-height: 0; opacity: 0; margin: 0; }
+  .value { font-size: 1.6rem; margin: 0.5rem 0 0; font-variant-numeric: tabular-nums; }
+  .value b { font-weight: 600; transition: color 300ms ease; }
+  .meta { font-family: var(--mono); font-size: 0.68rem; color: #c2c2c2; margin: 0.1rem 0 0.7rem; transition: color 300ms ease; }
+  .frame.fix-contrast .meta { color: #5c5c5c; }
+  .tw { overflow-x: auto; }
+  table { border-collapse: collapse; font-family: var(--mono); font-size: 0.66rem; }
+  th, td { white-space: nowrap; text-align: left; padding: 0.2rem 0.7rem 0.2rem 0; border-bottom: 1px solid #e4e4e4; }
+  th { color: #5c5c5c; font-weight: 400; }
+  .frame.fix-overflow table { width: 100%; table-layout: fixed; }
+  .frame.fix-overflow th, .frame.fix-overflow td { white-space: normal; overflow-wrap: anywhere; padding-right: 0.3rem; }
+  .frame.fix-overflow th:nth-child(3), .frame.fix-overflow td:nth-child(3), .frame.fix-overflow th:nth-child(4), .frame.fix-overflow td:nth-child(4) { display: none; }
+  .dl { margin-top: 0.7rem; font-family: var(--mono); font-size: 0.66rem; height: 22px; padding: 0 0.6rem; border-radius: 6px; border: 1px solid #1c1b18; background: #1c1b18; color: #fff; transition: height 280ms ease; }
+  .frame.fix-tap .dl { height: 44px; padding: 0 1rem; font-size: 0.74rem; }
+  .log { list-style: none; margin: 0; padding: 0.6rem; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); min-height: 12rem; max-height: 19rem; overflow-y: auto; display: grid; align-content: start; gap: 0.25rem; font-size: 0.72rem; }
+  .log :global(li.bad) { color: var(--accent); }
+  .log :global(li.ok) { color: var(--green); }
+  .log :global(li.fix) { color: var(--ink-2); padding-left: 1rem; }
+  .log :global(li.head) { color: var(--muted); margin-top: 0.3rem; }
+  .log :global(li.final) { font-weight: 600; color: var(--ink); border-top: 1px dashed var(--rule); padding-top: 0.35rem; margin-top: 0.3rem; }
+  .say { min-height: 4.6em; }
+</style>
+<script>
+  // Seeded noise so the "measurement" is the same on every visit.
+  const rng = (seed: number) => () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const THETA = (40 * Math.PI) / 180;
+  const AMP = 1 + THETA ** 2 / 16 + (11 * THETA ** 4) / 3072;
+  const data = (() => {
+    const r = rng(7), out: [number, number][] = [];
+    for (let i = 0; i < 12; i++) {
+      const L = 0.3 + (0.9 * i) / 11;
+      const noise = (r() + r() + r() - 1.5) * 0.004;
+      out.push([L, 2 * Math.PI * Math.sqrt(L / 9.81) * AMP + noise]);
+    }
+    return out;
+  })();
+  const fitG = (corrected: boolean) => {
+    let a = 0, b = 0;
+    for (const [L, T0] of data) { const T = corrected ? T0 / AMP : T0; a += L * L; b += L * T * T; }
+    return (4 * Math.PI ** 2 * a) / b;
+  };
+  const lum = (c: string) => {
+    const [r, g, b] = c.match(/[\d.]+/g)!.slice(0, 3).map((v) => { const s = Number(v) / 255; return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4; });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-vl]').forEach((root) => {
+    const frame = root.querySelector('[data-frame]') as HTMLElement;
+    const log = root.querySelector('[data-log]') as HTMLElement;
+    const say = root.querySelector('[data-say]') as HTMLElement;
+    const go = root.querySelector('[data-go]') as HTMLButtonElement;
+    const eye = root.querySelector('[data-eye]') as HTMLButtonElement;
+    const gEl = root.querySelector('[data-g]') as HTMLElement;
+    let corrected = false, timer = 0;
+
+    type Check = { judge: string; name: string; run: () => { ok: boolean; msg: string }; fix: () => string };
+    const checks: Check[] = [
+      { judge: 'browser', name: 'overflow',
+        run: () => { const t = (root.querySelector('[data-table]') as HTMLElement).scrollWidth, w = (root.querySelector('[data-tw]') as HTMLElement).clientWidth; return { ok: t <= w + 1, msg: `table is ${t}px wide in a ${w}px column` }; },
+        fix: () => { frame.classList.add('fix-overflow'); return 'drop two columns, let the rest wrap'; } },
+      { judge: 'browser', name: 'contrast',
+        run: () => { const m = root.querySelector('[data-meta]') as HTMLElement; const a = lum(getComputedStyle(m).color), b = lum(getComputedStyle(frame).backgroundColor); const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); return { ok: ratio >= 4.5, msg: `caption contrast ${ratio.toFixed(1)}:1, needs 4.5:1` }; },
+        fix: () => { frame.classList.add('fix-contrast'); return 'darken the caption'; } },
+      { judge: 'browser', name: 'tap target',
+        run: () => { const h = Math.round((root.querySelector('[data-dl]') as HTMLElement).offsetHeight); return { ok: h >= 44, msg: `button is ${h}px tall, needs 44px` }; },
+        fix: () => { frame.classList.add('fix-tap'); return 'make the button 44px tall'; } },
+      { judge: 'test', name: 'known answer',
+        run: () => { const g = fitG(corrected); return { ok: Math.abs(g - 9.81) < 0.05, msg: `fit gives g = ${g.toFixed(2)}, test expects 9.81 ± 0.05` }; },
+        fix: () => { corrected = true; gEl.textContent = fitG(true).toFixed(2); return 'the data was taken at 40°: add the finite-amplitude term and refit'; } },
+    ];
+    const line = (cls: string, text: string) => { const li = document.createElement('li'); li.className = cls; li.textContent = text; log.append(li); log.scrollTop = log.scrollHeight; };
+    const enabled = () => [...root.querySelectorAll<HTMLInputElement>('[data-judge]:checked')].map((i) => i.dataset.judge!);
+    const noiseLeft = () => (frame.classList.contains('quiet') ? 0 : frame.querySelectorAll('.noise').length);
+    const summary = (passes: number) => {
+      const left = checks.filter((c) => !c.run().ok);
+      root.querySelector('[data-passes]')!.textContent = String(passes);
+      root.querySelector('[data-left]')!.textContent = String(left.length);
+      root.querySelector('[data-taste]')!.textContent = String(noiseLeft());
+      eye.hidden = noiseLeft() === 0;
+      const on = enabled();
+      say.textContent = !on.length
+        ? `With nothing to check against, “done” means “I stopped”. ${left.length} measurable defects shipped, including a result that is 6% off. You are now the only test.`
+        : left.length
+          ? `It looped until its own checks passed, and stopped there. ${left.length} defect${left.length > 1 ? 's' : ''} it had no way to see remain${left.length > 1 ? '' : 's'}: ${left.map((c) => c.name).join(', ')}. An agent is only as good as its judge.`
+          : noiseLeft()
+            ? 'Everything measurable passes, and it got there without you. What is left has no test: the label above the title, the tagline, the hint. That part is taste, and it is yours.'
+            : 'Measured defects fixed by the loop, noise cut by you. The split is the point: it grinds through what can be checked, you spend your attention on what can’t.';
+    };
+    const reset = () => {
+      clearInterval(timer);
+      frame.className = 'frame'; corrected = false; gEl.textContent = fitG(false).toFixed(2);
+      log.replaceChildren(); go.disabled = false; eye.hidden = true;
+      ['passes', 'left', 'taste'].forEach((k) => (root.querySelector(`[data-${k}]`)!.textContent = '–'));
+      say.textContent = 'The agent says the page is finished. Give it something to check against, or nothing, and let it work.';
+    };
+    const work = () => {
+      const on = enabled();
+      go.disabled = true;
+      let pass = 0;
+      if (!on.length) { line('head', 'no checks available'); line('final', 'agent: “Done. The results page is ready.”'); return summary(0); }
+      const step = () => {
+        pass++;
+        line('head', `pass ${pass}`);
+        const mine = checks.filter((c) => on.includes(c.judge));
+        const results = mine.map((c) => ({ c, r: c.run() }));
+        results.forEach(({ c, r }) => line(r.ok ? 'ok' : 'bad', `${r.ok ? '✓' : '✗'} ${c.name}: ${r.msg}`));
+        const bad = results.find((x) => !x.r.ok);
+        if (!bad) { clearInterval(timer); line('final', 'agent: “Done. All checks pass.”'); return summary(pass); }
+        line('fix', `→ ${bad.c.fix()}`);
+      };
+      step();
+      timer = window.setInterval(step, 1300);
+    };
+    go.addEventListener('click', work);
+    eye.addEventListener('click', () => { frame.classList.add('quiet'); line('head', 'you: “Cut taglines, helper text, and secondary labels.”'); summary(Number(root.querySelector('[data-passes]')!.textContent) || 0); });
+    root.querySelector('[data-reset]')!.addEventListener('click', reset);
+    root.querySelectorAll('[data-judge]').forEach((i) => i.addEventListener('change', () => { if (go.disabled) reset(); }));
+    reset();
+  });
+</script>

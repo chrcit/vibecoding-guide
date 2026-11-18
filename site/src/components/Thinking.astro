@@ -1,62 +1,91 @@
 ---
-// Token usage for Claude Opus on the Artificial Analysis suite (snapshot Nov 2026).
+// Claude Opus 5.5 on the Artificial Analysis Intelligence Index v5, by effort
+// level (fetched 2026-11-18): index score, output tokens per task, cost per task.
 const levels = [
-  { k: 'medium', tokens: 44 },
-  { k: 'high', tokens: 60 },
-  { k: 'xhigh', tokens: 103 },
-  { k: 'max', tokens: 173 },
+  { k: 'low', score: 34.8, tok: 19.1, cost: 0.98 },
+  { k: 'medium', score: 48.2, tok: 43.8, cost: 2.45 },
+  { k: 'high', score: 51.8, tok: 60.1, cost: 3.46 },
+  { k: 'xhigh', score: 57.4, tok: 103.4, cost: 6.05 },
+  { k: 'max', score: 59.1, tok: 173.3, cost: 10.04 },
 ];
 ---
 <figure class="widget th" data-th data-levels={JSON.stringify(levels)}>
-  <label class="row" for="th-range">
-    <span>Thinking level</span>
-    <strong data-name>medium</strong>
+  <label class="field">
+    <span>Effort level</span><b data-name>medium</b>
+    <input type="range" min="0" max={levels.length - 1} step="1" value="1" data-range aria-valuetext="medium" />
   </label>
-  <input id="th-range" type="range" min="0" max={levels.length - 1} step="1" value="0" data-range aria-valuetext="medium" />
   <div class="ticks" aria-hidden="true">{levels.map((l) => <span>{l.k}</span>)}</div>
-  <div class="bars">
-    <div class="bar"><span>Tokens it writes while thinking</span><div class="track"><i data-tok></i></div><b data-tokv></b></div>
-    <div class="bar"><span>Cost of the run, relative to medium</span><div class="track"><i data-cost class="cost"></i></div><b data-costv></b></div>
-  </div>
-  <p class="note" data-note></p>
-  <figcaption class="caption">Token counts: Claude Opus on the <a href="https://artificialanalysis.ai">Artificial Analysis</a> benchmark suite, Nov 2026. Cost assumes output is about 80% of the bill.</figcaption>
+  <svg data-chart role="img" aria-label="Benchmark score against cost per task for five effort levels of Claude Opus 5.5"></svg>
+  <dl class="stats">
+    <div><dt>Index score</dt><dd data-score></dd></div>
+    <div><dt>Tokens written per task</dt><dd data-tok></dd></div>
+    <div><dt>Cost per task</dt><dd data-cost></dd></div>
+  </dl>
+  <p class="say" data-say aria-live="polite"></p>
+  <figcaption class="caption">Measured, not estimated: Claude Opus 5.5 on the <a href="https://artificialanalysis.ai/models/claude-opus-5-5">Artificial Analysis Intelligence Index</a>, November 2026. Tokens are output tokens per benchmark task, thinking included. Cost is at API list price.</figcaption>
 </figure>
 <style>
-  .row { display: flex; justify-content: space-between; align-items: baseline; }
-  .row strong { font-size: 1.1rem; }
-  input[type='range'] { width: 100%; accent-color: var(--accent); margin: 0.7rem 0 0.2rem; }
-  .ticks { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.68rem; }
-  .bars { display: grid; gap: 0.8rem; margin-top: 1.1rem; }
-  .bar { display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'l v' 't t'; gap: 0.3rem; }
-  .bar span { grid-area: l; color: var(--muted); } .bar b { grid-area: v; font-variant-numeric: tabular-nums; }
-  .track { grid-area: t; height: 12px; border-radius: 99px; background: color-mix(in oklab, var(--rule) 60%, transparent); overflow: hidden; }
-  .track i { display: block; height: 100%; background: var(--blue); border-radius: inherit; transition: width 380ms cubic-bezier(.2,.8,.2,1); }
-  .track i.cost { background: var(--accent); }
-  .note { font-family: var(--serif); font-size: 1.05rem; color: var(--ink-2); margin: 1rem 0 0; min-height: 3.2em; }
+  .ticks { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.68rem; margin-top: 0.2rem; }
+  svg { display: block; width: 100%; height: 230px; margin: 1rem 0 0.3rem; overflow: visible; }
+  .say { min-height: 4.6em; }
 </style>
 <script>
-  const notes: Record<string, string> = {
-    medium: 'The sensible default. Most everyday work never needs more.',
-    high: 'A good step up for tricky problems.',
-    xhigh: 'For long autonomous runs and orchestrators.',
-    max: 'Only a couple of points above xhigh on the intelligence index, for nearly twice the tokens. Sometimes it overthinks.',
-  };
+  type Lv = { k: string; score: number; tok: number; cost: number };
+  const NS = 'http://www.w3.org/2000/svg';
   document.querySelectorAll<HTMLElement>('[data-th]').forEach((root) => {
-    const levels = JSON.parse(root.dataset.levels!) as { k: string; tokens: number }[];
+    const levels: Lv[] = JSON.parse(root.dataset.levels!);
     const range = root.querySelector('[data-range]') as HTMLInputElement;
-    const top = levels[levels.length - 1].tokens;
-    const cost = (t: number) => 0.2 + 0.8 * (t / levels[0].tokens);
+    const svg = root.querySelector('[data-chart]') as SVGSVGElement;
+    const mk = (tag: string, a: Record<string, string | number>, text?: string) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v)); if (text) e.textContent = text; return e; };
+    const draw = () => {
+      const sel = Number(range.value);
+      const W = Math.max(svg.clientWidth, 280), H = 230, L = 34, R = 14, T = 14, B = 34;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.replaceChildren();
+      const x = (c: number) => L + (c / 11) * (W - L - R);
+      const y = (s: number) => H - B - ((s - 30) / 35) * (H - T - B);
+      for (const s of [30, 40, 50, 60]) {
+        svg.append(mk('line', { x1: L, x2: W - R, y1: y(s), y2: y(s), stroke: 'var(--rule)' }));
+        svg.append(mk('text', { x: L - 6, y: y(s) + 4, 'text-anchor': 'end', 'font-size': 10.5, fill: 'var(--muted)' }, String(s)));
+      }
+      for (const c of [0, 2, 4, 6, 8, 10]) svg.append(mk('text', { x: x(c), y: H - B + 15, 'text-anchor': 'middle', 'font-size': 10.5, fill: 'var(--muted)' }, `$${c}`));
+      svg.append(mk('text', { x: W - R, y: H - 4, 'text-anchor': 'end', 'font-size': 10.5, fill: 'var(--muted)' }, 'cost per task →'));
+      svg.append(mk('text', { x: L + 4, y: T + 2, 'font-size': 10.5, fill: 'var(--muted)' }, '↑ index score'));
+      // shaded up to the selected level: what you pay for
+      const upto = levels.slice(0, sel + 1);
+      svg.append(mk('polygon', { points: [`${x(0)},${y(30)}`, ...upto.map((l) => `${x(l.cost)},${y(l.score)}`), `${x(upto[upto.length - 1].cost)},${y(30)}`].join(' '), fill: 'var(--accent-soft)', opacity: 0.6 }));
+      svg.append(mk('polyline', { points: levels.map((l) => `${x(l.cost)},${y(l.score)}`).join(' '), fill: 'none', stroke: 'var(--ink)', 'stroke-width': 1.5 }));
+      levels.forEach((l, i) => {
+        const on = i === sel, last = i === levels.length - 1;
+        const c = mk('circle', { cx: x(l.cost), cy: y(l.score), r: on ? 6.5 : 4, fill: on ? 'var(--accent)' : 'var(--ink)', stroke: 'var(--card)', 'stroke-width': 1.5 });
+        c.style.cursor = 'pointer';
+        c.addEventListener('click', () => { range.value = String(i); update(); });
+        svg.append(c);
+        svg.append(mk('text', { x: x(l.cost) + (last ? -8 : 8), y: y(l.score) + (last ? -9 : 14), 'text-anchor': last ? 'end' : 'start', 'font-size': 11, 'font-weight': on ? 600 : 400, fill: on ? 'var(--ink)' : 'var(--muted)' }, l.k));
+      });
+    };
     const update = () => {
-      const l = levels[Number(range.value)];
+      const i = Number(range.value), l = levels[i], p = levels[i - 1];
       range.setAttribute('aria-valuetext', l.k);
       root.querySelector('[data-name]')!.textContent = l.k;
-      (root.querySelector('[data-tok]') as HTMLElement).style.width = `${(l.tokens / top) * 100}%`;
-      root.querySelector('[data-tokv]')!.textContent = `~${l.tokens}k`;
-      (root.querySelector('[data-cost]') as HTMLElement).style.width = `${(cost(l.tokens) / cost(top)) * 100}%`;
-      root.querySelector('[data-costv]')!.textContent = `${cost(l.tokens).toFixed(1)}×`;
-      root.querySelector('[data-note]')!.textContent = notes[l.k];
+      root.querySelector('[data-score]')!.textContent = l.score.toFixed(1);
+      root.querySelector('[data-tok]')!.textContent = `${l.tok.toFixed(1)}k`;
+      root.querySelector('[data-cost]')!.textContent = `$${l.cost.toFixed(2)}`;
+      const say = root.querySelector('[data-say]')!;
+      if (!p) say.textContent = 'The floor. A ninth of the tokens of max, and 13 points below medium. Fine for renames and lookups, not for anything that needs working out.';
+      else {
+        const dp = l.score - p.score, dc = l.cost - p.cost;
+        const first = (levels[1].cost - levels[0].cost) / (levels[1].score - levels[0].score);
+        const per = dc / dp;
+        const tail = l.k === 'medium' ? 'The steepest part of the curve, and the default in Claude Code for a reason.'
+          : l.k === 'high' ? 'A modest step. Worth it when medium keeps getting something subtly wrong.'
+          : l.k === 'xhigh' ? 'Still buying real capability. A good setting for an orchestrator or a long unattended run.'
+          : `The curve has gone flat. A point here costs ${Math.round(per / first)} times what it cost at medium.`;
+        say.textContent = `From ${p.k} to ${l.k}: +${dp.toFixed(1)} points for +$${dc.toFixed(2)} per task, or $${per.toFixed(2)} per point. ${tail}`;
+      }
+      draw();
     };
     range.addEventListener('input', update);
+    new ResizeObserver(draw).observe(svg);
     update();
   });
 </script>

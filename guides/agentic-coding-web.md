@@ -110,7 +110,7 @@ A recipe sharing platform built with Next.js 14 and Supabase.
 - Flag any security concerns
 ```
 
-Codex reads this automatically when working on your repo.
+Codex reads this automatically when working on your repo: every `AGENTS.md` from the repository root down to the folder it works in ([docs](https://learn.chatgpt.com/docs/agent-configuration/agents-md)). Claude Code reads `CLAUDE.md` instead; see [Context Files](./agentic-coding.md#context-files).
 
 ### GitHub Integration
 
@@ -200,7 +200,7 @@ When making changes, tell me which files to modify.
 
 ### Workflow
 
-Since Claude can't directly access GitHub, the workflow is:
+In a chat or Project, Claude works on what you give it, so the workflow is:
 
 ```
 1. Copy relevant code to Claude
@@ -279,7 +279,7 @@ Ask: "Create an artifact with a preview" to see your component live.
 
 | Aspect | Codex | Claude (Web) |
 |--------|-------|--------------|
-| **GitHub Integration** | Direct (connects to repos) | Manual (copy/paste) |
+| **GitHub Integration** | Direct (connects to repos) | Manual in chat and Projects (copy/paste or upload) |
 | **Output** | Pull requests | Code in chat |
 | **Best For** | Large changes, PRs | Understanding, planning |
 | **Automation** | Yes (Actions, webhooks) | No |

@@ -1,8 +1,8 @@
 ---
 const layers = [
-  { key: 'ade', name: 'ADE', sub: 'agentic development environment', eg: 'T3 Code', text: 'A layer above the harnesses. Shows the work as threads and projects, runs many agents at once, mixes providers, gives you a browser, files and terminal, and can run on a server while your laptop sleeps.' },
-  { key: 'harness', name: 'Harness', sub: 'gives the model hands', eg: 'Claude Code · Codex · Cursor · OpenCode', text: 'The program that lets a model read files, edit code, run commands and use a browser. Each provider ships its own, and each one only runs that provider’s models.' },
-  { key: 'model', name: 'Model', sub: 'the AI itself', eg: 'Claude Opus · Claude Fable · GPT', text: 'Reads text, writes text. Everything above exists to turn that into work on your computer.' },
+  { key: 'ade', name: 'ADE', sub: 'agentic development environment', eg: 'T3 Code', text: 'A layer above the harnesses. It shows the work as threads and projects, runs many agents at once across providers, gives each thread its own worktree if you want one, and adds a browser, a diff view and a terminal that you and the agent share. It can run on a server and be steered from a laptop or phone.' },
+  { key: 'harness', name: 'Harness', sub: 'gives the model hands', eg: 'Claude Code · Codex · Cursor · OpenCode', text: 'The loop that lets a model act: read files, edit code, run commands, look at the result, repeat. It also owns permissions, sandboxing, skills and context files. Each lab ships one tuned to its own models. Codex is open source; Claude Code is not.' },
+  { key: 'model', name: 'Model', sub: 'the AI itself', eg: 'Claude Fable · Claude Opus · GPT-6.2', text: 'Text in, text out, with a tool-call format bolted on. On its own it can’t touch your files. Everything above exists to turn its output into work on a real machine.' },
 ];
 ---
 <figure class="widget stack" data-stack>
@@ -14,7 +14,7 @@ const layers = [
     ))}
   </div>
   {layers.map((l, i) => <p class="txt" data-txt={l.key} hidden={i !== 0}>{l.text}</p>)}
-  <figcaption class="caption">Pick a layer. T3 Code doesn’t replace Claude Code or Codex. It drives them.</figcaption>
+  <figcaption class="caption">Pick a layer. T3 Code drives the agent CLIs already installed and signed in on your machine. If Claude Code can’t do something, T3 Code can’t either.</figcaption>
 </figure>
 <style>
   .layers { display: grid; gap: 6px; perspective: 900px; }
@@ -29,7 +29,7 @@ const layers = [
   .sb { grid-area: sb; font-size: 0.68rem; opacity: 0.7; }
   .eg { grid-area: eg; text-align: right; font-size: 0.72rem; opacity: 0.85; }
   @media (max-width: 34rem) { .layer { grid-template-columns: 1fr; grid-template-areas: 'nm' 'sb' 'eg'; margin-inline: 0; } .eg { text-align: left; margin-top: 0.3rem; } }
-  .txt { font-family: var(--serif); font-size: 1.05rem; color: var(--ink-2); margin: 1rem 0 0; min-height: 4.8em; }
+  .txt { font-family: var(--serif); font-size: 1.05rem; color: var(--ink-2); margin: 1rem 0 0; min-height: 6.2em; }
 </style>
 <script>
   document.querySelectorAll<HTMLElement>('[data-stack]').forEach((root) => {

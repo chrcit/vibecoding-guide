@@ -244,6 +244,18 @@ git merge feature-search
 git branch -d feature-search
 ```
 
+## Worktrees: Parallel Checkouts for Parallel Agents
+
+A branch alone is not enough when two agents work at the same time. Both would edit files in the same folder, overwrite each other and run each other's half-finished code in their tests. A worktree is a second checkout of the same repository in its own folder, on its own branch, sharing the same history:
+
+```bash
+git worktree add ../proj-feature -b feature   # new folder, new branch
+git worktree list                             # see all checkouts
+git worktree remove ../proj-feature           # clean up after merging
+```
+
+Give each parallel thread its own worktree. Each agent then has its own files, its own dev server and its own test runs, and you merge the branches when they are done. You rarely need to type this: T3 Code can create a worktree per thread, and Claude Code has `claude --worktree`. Each worktree needs its own dependency install (`node_modules` is per folder), and two dev servers need two ports.
+
 ## .gitignore
 
 Files you don't want in version control:
@@ -302,6 +314,8 @@ Local Tool (Cursor/Codex)
 2. **Review AI changes:** Use `git diff` to see what changed
 3. **Commit working states:** Don't let AI make many uncommitted changes
 4. **Use branches for experiments:** Keep main stable
+5. **One worktree per parallel agent:** See [Worktrees](#worktrees-parallel-checkouts-for-parallel-agents)
+6. **No history rewriting unasked:** Tell agents never to force-push or rebase shared branches without asking
 
 ## Common Situations
 
