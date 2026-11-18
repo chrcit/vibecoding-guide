@@ -1,6 +1,7 @@
 import { defineConfig } from 'astro/config';
 import { remarkGuideLinks } from './src/lib/remark-guide-links.mjs';
 import { remarkLevels } from './src/lib/remark-levels.mjs';
+import { remarkWikiLinks } from './src/lib/remark-wiki-links.mjs';
 import comments from './integrations/comments/index.mjs';
 import devPages from './integrations/dev-pages.mjs';
 
@@ -15,7 +16,7 @@ export default defineConfig({
   server: { port: Number(process.env.PORT) || 4321, host: process.env.HOST || false },
   integrations: [comments(), devPages()],
   markdown: {
-    remarkPlugins: [[remarkGuideLinks, { base }], remarkLevels],
+    remarkPlugins: [[remarkWikiLinks, { base }], [remarkGuideLinks, { base }], remarkLevels],
     shikiConfig: { themes: { light: 'github-light', dark: 'github-dark' } },
   },
   vite: {
