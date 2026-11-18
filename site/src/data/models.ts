@@ -226,4 +226,28 @@ export const lineup = {
     'Codex offers reasoning effort low (called light in the app), medium, high, extra high, and on some models max and ultra. Ultra uses subagents.',
     OPENAI_MODELS,
   ),
+  cacheWrite5m: fact(1.25, 'Writing to the five-minute prompt cache costs 1.25 times the base input price on Claude models.', CLAUDE_PRICING, { unit: 'multiplier' }),
+  cacheWrite1h: fact(2, 'Writing to the one-hour prompt cache costs twice the base input price on Claude models.', CLAUDE_PRICING, { unit: 'multiplier' }),
+  cacheReadOpusSonnet: fact(0.05, 'Cache reads on Claude Opus 5.5 and Sonnet 5.5 cost 0.05 times the base input price; most other Claude models use 0.1 times, Fable 0.025 times.', CLAUDE_PRICING, { unit: 'multiplier' }),
+  opusCacheWrite5m: fact(5, 'A five-minute cache write on Claude Opus 5.5 costs $5 per million tokens.', CLAUDE_PRICING, { unit: 'usd' }),
+  cachePaysBack: fact(
+    'after one read',
+    'A five-minute cache write pays for itself after one cache read; a one-hour write after two.',
+    CLAUDE_PRICING,
+  ),
+  fullContextStandardPrice: fact(
+    'standard price',
+    'Claude 4.6 and later models, except Haiku 5.5, bill the full 1M-token context at standard prices: a 900K-token request pays the same per-token rate as a 9K-token one.',
+    CLAUDE_PRICING,
+  ),
+  claudeCodeCacheTtl: fact(
+    'one hour on a plan, five minutes on a key',
+    'Claude Code asks for the one-hour cache for the main conversation on a Claude subscription within plan usage, and the five-minute cache with an API key, usage credits or a cloud provider. Subagents get five minutes by default either way.',
+    'https://code.claude.com/docs/en/prompt-caching',
+  ),
+  cacheBreakers: fact(
+    ['switching model', 'changing effort on most models', 'fast mode', 'adding an MCP server', 'compaction'],
+    'Switching model, changing effort on most models, turning on fast mode, connecting an MCP server when tools load up front, and compacting all make the next Claude Code request miss some or all of the cache.',
+    'https://code.claude.com/docs/en/prompt-caching',
+  ),
 } as const;
