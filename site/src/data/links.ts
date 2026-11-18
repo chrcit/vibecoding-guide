@@ -80,6 +80,10 @@ export const links = {
   theoX: { label: 'Theo on X', url: 'https://x.com/theo', checked: C },
   theoGithub: { label: 'Theo on GitHub', url: 'https://github.com/t3dotgg', checked: C },
   theoHarnessPost: { label: 'What is a harness?, Theo on t3.gg', url: 'https://t3.gg/blog/post/what-is-a-harness', checked: C },
+  theoFixesOwnCode: { label: 'How Claude Fixes Its Own Code, Theo (6 November 2026)', url: 'https://www.youtube.com/watch?v=TFCDWrEBaFM', checked: C },
+  claudeCodePermissionModes: { label: 'Claude Code permission modes', url: 'https://code.claude.com/docs/en/permission-modes', checked: C },
+  claudeCodeReview: { label: 'Claude Code /code-review', url: 'https://code.claude.com/docs/en/code-review-local', checked: C },
+  codexSandboxing: { label: 'Codex sandboxing and approvals', url: 'https://learn.chatgpt.com/docs/sandboxing', checked: C },
 } satisfies Record<string, Link>;
 
 /** People and projects whose work the guide uses. The sources page lists them. */

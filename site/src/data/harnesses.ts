@@ -97,6 +97,40 @@ export const harnesses = {
       'proportional to team size',
       'Each agent-team teammate runs its own context window, so token use is roughly proportional to team size, and a teammate keeps using tokens until it exits.',
       CC('costs'),
+    checkToRun: fact(
+      'Give Claude something it can run that comes back pass or fail.',
+      'Anthropic\'s best practices: "Give Claude something it can run that comes back pass or fail. Once it has that, it can keep going on its own and you don\'t have to watch." A test file, a build\'s exit code, a linter, a script that diffs output against a fixture or a browser screenshot all count.',
+      CC('best-practices'),
+    ),
+    askForEvidence: fact(
+      'ask for evidence',
+      'Anthropic\'s best practices: ask Claude for evidence, the command it ran and its output or the screenshot. "All tests pass" on its own tells you very little.',
+      CC('best-practices'),
+    ),
+    codeReview: fact(
+      '/code-review',
+      'In a terminal session, /code-review reviews the changes on your branch in a background subagent with its own context window, which never saw the conversation that produced the code.',
+      CC('code-review-local'),
+    ),
+    reviewerAlwaysFinds: fact(
+      'skip style',
+      'Anthropic\'s best practices warn that a reviewer asked to find problems will always find something, and suggest telling it to report gaps that affect correctness and skip style.',
+      CC('best-practices'),
+    ),
+    sameModelReviewer: fact(
+      'a fresh pair of eyes',
+      'By default a Claude Code subagent is the same model (or a smaller one) on the same task: you get a fresh pair of eyes out of it, not a smarter answer. A fresh reviewer helps because it has not seen your reasoning.',
+      CC('best-practices'),
+    ),
+    permissionModes: fact(
+      ['default (Manual)', 'acceptEdits', 'plan', 'auto', 'dontAsk', 'bypassPermissions'],
+      'Claude Code has six permission modes: Manual (default), acceptEdits, plan, auto, dontAsk and bypassPermissions. In Manual it asks before most edits, shell commands and network access; bypassPermissions is meant for isolated containers and VMs only.',
+      CC('permission-modes'),
+    ),
+    autoModeDefault: fact(
+      'auto mode',
+      'New interactive terminal and VS Code sessions of Claude Code start in auto mode, where a separate classifier model checks actions before they run. Deny rules apply in every mode.',
+      CC('best-practices'),
     ),
   },
   codex: {
@@ -159,6 +193,10 @@ export const harnesses = {
       'consolidated response',
       'When several Codex subagents run, Codex waits until all requested results are in and returns a consolidated response in the main thread.',
       CX('agent-configuration/subagents'),
+    approvals: fact(
+      ['on-request', 'never'],
+      'Codex approval policies are on-request (works inside the sandbox and asks before going beyond it) and never (does not stop for approval). workspace-write is the default low-friction sandbox mode for local work.',
+      CX('sandboxing'),
     ),
   },
   t3code: {
