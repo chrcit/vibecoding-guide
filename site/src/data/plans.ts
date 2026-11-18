@@ -17,6 +17,7 @@ export const plans = {
       price: fact(0, 'Claude Free costs nothing.', CLAUDE_PRICING, { unit: 'usd' }),
       claudeCode: fact(false, 'Claude Code is not included on the free Claude plan.', CLAUDE_PRICING),
       models: fact('Sonnet and Haiku', 'Claude Free includes Sonnet and Haiku but not Opus.', CLAUDE_PRICING),
+      models: fact(['Sonnet', 'Haiku'], 'Claude Free includes Sonnet and Haiku in the Claude apps, but not Opus or Fable, and not Claude Code.', CLAUDE_PRICING),
     },
     pro: {
       price: fact(20, 'Claude Pro costs $20 a month billed monthly ($17 a month billed yearly).', CLAUDE_PRICING, { unit: 'usd' }),
@@ -29,12 +30,14 @@ export const plans = {
         CLAUDE_PRICING,
       ),
       apiCredit: fact(false, 'Pro includes no monthly API credit; Max and Ultra do.', CLAUDE_PRICING),
+      models: fact(['Opus', 'Sonnet', 'Haiku'], 'Claude Pro includes Opus, Sonnet and Haiku within the plan limits.', CLAUDE_PRICING),
     },
     max: {
       price: fact(100, 'Claude Max costs $100 a month.', CLAUDE_PRICING, { unit: 'usd' }),
       usage: fact(5, 'Max gives 5× Pro usage every five hours and every week.', CLAUDE_PRICING, { unit: 'multiplier' }),
       fable: fact(50, 'On Max, up to 50% of the weekly limit can be spent on Fable at no extra cost; after that Fable continues on usage credits.', CLAUDE_FABLE, { unit: 'percent' }),
       apiCredit: fact(100, 'Max includes $100 a month of Claude API credit. It cannot be spent in interactive Claude Code, the Claude apps or on extra usage, and does not change plan limits.', CLAUDE_CREDITS, { unit: 'usd' }),
+      models: fact(['Opus', 'Sonnet', 'Haiku'], 'Claude Max includes Opus, Sonnet and Haiku within the plan limits.', CLAUDE_PRICING),
     },
     ultra: {
       price: fact(200, 'Claude Ultra costs $200 a month (web subscriptions; mobile prices may differ).', CLAUDE_ULTRA, { unit: 'usd' }),
@@ -43,6 +46,7 @@ export const plans = {
       noFiveHourLimit: fact(true, "Verified Ultra accounts don't have a five-hour limit. Unverified accounts have a temporary one until verification.", CLAUDE_ULTRA),
       fable: fact(50, 'On Ultra, as on Max, up to 50% of the weekly limit can be spent on Fable at no extra cost.', CLAUDE_FABLE, { unit: 'percent' }),
       apiCredit: fact(200, 'Ultra includes $200 a month of Claude API credit, with the same restrictions as on Max.', CLAUDE_CREDITS, { unit: 'usd' }),
+      models: fact(['Opus', 'Sonnet', 'Haiku'], 'Claude Ultra includes Opus, Sonnet and Haiku within the plan limits.', CLAUDE_PRICING),
     },
     limits: {
       fiveHour: fact('five hours', 'Claude plans have a five-hour limit: the period starts with your first message and the limit resets in full five hours later. Verified Ultra accounts have none.', CLAUDE_LIMITS),
@@ -84,7 +88,10 @@ export const plans = {
     },
   },
   chatgpt: {
-    free: { price: fact(0, 'ChatGPT Free costs nothing and includes Codex.', CODEX_PRICING, { unit: 'usd' }) },
+    free: {
+      price: fact(0, 'ChatGPT Free costs nothing and includes Codex.', CODEX_PRICING, { unit: 'usd' }),
+      luna: fact('desktop app', 'On ChatGPT Free and Go, GPT-6 Luna is available in the Codex desktop app.', 'https://learn.chatgpt.com/docs/models'),
+    },
     go: { price: fact(8, 'ChatGPT Go costs $8 a month and includes Codex.', CODEX_PRICING, { unit: 'usd' }) },
     plus: {
       price: fact(20, 'ChatGPT Plus costs $20 a month and includes Codex.', CODEX_PRICING, { unit: 'usd' }),

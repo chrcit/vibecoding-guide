@@ -174,6 +174,10 @@ export const harnesses = {
       'focused context gives better answers',
       'Running out of context is rare on 1M-token windows, but Anthropic still advises /clear between tasks, because a focused context gets better answers and costs less.',
       CC('best-practices'),
+    effort: fact(
+      '/effort',
+      'In Claude Code, set effort with /effort (a slider, or a level name), the --effort flag for one session, CLAUDE_CODE_EFFORT_LEVEL, or effortLevel in settings; max is not accepted as a saved level in settings.',
+      CC('model-config'),
     ),
   },
   codex: {
@@ -241,6 +245,10 @@ export const harnesses = {
       ['on-request', 'never'],
       'Codex approval policies are on-request (works inside the sandbox and asks before going beyond it) and never (does not stop for approval). workspace-write is the default low-friction sandbox mode for local work.',
       CX('sandboxing'),
+    effort: fact(
+      '/model',
+      'In the Codex CLI, pick model and reasoning effort with /model (More reasoning… shows max and ultra); in the desktop app, use the model and reasoning control under the composer.',
+      CX('models'),
     ),
   },
   t3code: {
