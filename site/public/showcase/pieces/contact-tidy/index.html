@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<title>Contact tidy</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f4bff'/%3E%3Cpath d='M8 11h16M8 16h11M8 21h7' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="top">
+  <div class="mark" aria-hidden="true">
+    <svg viewBox="0 0 32 32" width="34" height="34"><rect width="32" height="32" rx="8" class="mark-bg"/><path d="M8 11h16M8 16h11M8 21h7" class="mark-lines"/></svg>
+  </div>
+  <div>
+    <h1>Contact tidy</h1>
+    <p class="lede">Cleans a messy contact list exported from a phone, a mailing tool or a spreadsheet. It runs in this page: <strong>nothing is uploaded</strong>, and the file never leaves your device.</p>
+  </div>
+</header>
+
+<main>
+  <section class="panel input" id="input-panel" aria-labelledby="in-h">
+    <div class="panel-head">
+      <h2 id="in-h"><span class="step">1</span> Your list</h2>
+      <div class="samples">
+        <button type="button" class="btn" id="sample-btn">Load the messy sample</button>
+        <button type="button" class="btn btn-quiet" id="big-btn">Try 3,000 rows</button>
+      </div>
+    </div>
+    <div class="drop" id="drop">
+      <label for="csv-text" class="visually-hidden">CSV text</label>
+      <textarea id="csv-text" spellcheck="false" autocomplete="off" placeholder="Paste CSV here, or drop a .csv file anywhere on this box."></textarea>
+      <div class="drop-veil" aria-hidden="true"><span>Drop the file to read it here</span></div>
+    </div>
+    <div class="input-bar">
+      <label class="btn" for="file">Choose a file…</label>
+      <input type="file" id="file" accept=".csv,.tsv,.txt,text/csv,text/plain" class="visually-hidden">
+      <label class="inline-field">Separator
+        <select id="delim">
+          <option value="auto">Work it out</option>
+          <option value=",">Comma</option>
+          <option value=";">Semicolon</option>
+          <option value="&#9;">Tab</option>
+          <option value="|">Pipe</option>
+        </select>
+      </label>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn-primary" id="run-btn">Tidy the list</button>
+    </div>
+    <p class="input-status" id="input-status" role="status" aria-live="polite"></p>
+  </section>
+
+  <div id="out" hidden>
+    <section class="panel" aria-labelledby="rules-h">
+      <div class="panel-head">
+        <h2 id="rules-h"><span class="step">2</span> What it changed</h2>
+        <p class="totals" id="totals"></p>
+      </div>
+      <p class="sub">Each kind of change can be kept or rejected. Rejected changes stay out of the download. Rows it is unsure about are flagged, never guessed at.</p>
+      <div class="cols" id="cols" aria-label="How each column was read"></div>
+      <fieldset class="rules" id="rules">
+        <legend class="visually-hidden">Kinds of change to keep</legend>
+      </fieldset>
+    </section>
+
+    <section class="panel" aria-labelledby="table-h">
+      <div class="panel-head">
+        <h2 id="table-h"><span class="step">3</span> Before and after</h2>
+        <fieldset class="seg" id="view">
+          <legend class="visually-hidden">Show rows</legend>
+          <label><input type="radio" name="view" value="changed" checked><span>Changed <b id="n-changed"></b></span></label>
+          <label><input type="radio" name="view" value="flagged"><span>To check <b id="n-flagged"></b></span></label>
+          <label><input type="radio" name="view" value="all"><span>All <b id="n-all"></b></span></label>
+        </fieldset>
+      </div>
+      <p class="legend"><span class="key key-new">new value</span> <span class="key key-old">what it was</span> <span class="key key-flag">needs a person to check</span></p>
+      <div class="table-wrap" tabindex="0" role="region" aria-labelledby="table-h">
+        <table id="table"></table>
+      </div>
+      <div class="pager" id="pager"></div>
+    </section>
+
+    <section class="panel download" aria-labelledby="dl-h">
+      <h2 id="dl-h"><span class="step">4</span> Take it away</h2>
+      <p class="sub" id="dl-sub"></p>
+      <div class="input-bar">
+        <label class="check"><input type="checkbox" id="notes-col" checked> Add a <code>needs_checking</code> column with the reasons</label>
+        <span class="spacer"></span>
+        <button type="button" class="btn btn-primary" id="dl-btn">Download the tidied CSV</button>
+      </div>
+    </section>
+  </div>
+
+  <p class="foot">The sample people, phone numbers and addresses are invented. Phone numbers are read as UK numbers unless they start with a country code; the sample uses the ranges Ofcom keeps for drama.</p>
+</main>
+
+<script src="tidy.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
