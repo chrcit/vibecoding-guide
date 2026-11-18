@@ -2,6 +2,8 @@
 
 Proposal dashboard, 18 November 2026. Branch `next-version-plan`, based on `agentic-coding-guide @ f20e1a2`. Nothing here is built yet. The interactive version is [dashboard.html](./dashboard.html); both files are generated from `plan.data.mjs` by `node planning/build.mjs`.
 
+**Decided.** Owner answered all twelve questions on 2026-11-18: pared-down Anatomy figures everywhere with no trial; Playwright allowed for checks; sourced facts only, with the owner's own opinions in a marked box; practitioner estimates in a marked box; plain level first with a picker offered once; hand-written graph and `three` for the hero and showcase only; web-foundation guides rewritten at three levels; Artificial Analysis numbers refreshed by hand; fresh demo pieces for the showcase; hosting moves to Cloudflare; foundations first.
+
 ## Where the current version falls short
 
 - Most figures are a paragraph dressed as a widget. `Stack` is three tabs of text, `Ladder` is an accordion, `Triangle` and `Proxy` are static pictures. Only `Horizon`, `Attention`, `Thinking` and `ModelPicker` are driven by real data or a real simulation.

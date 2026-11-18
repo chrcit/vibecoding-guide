@@ -16,7 +16,7 @@ const idx = allItems.findIndex((i) => i.id === entry.id);
 const prev = idx > 0 ? allItems[idx - 1] : undefined;
 const next = idx >= 0 && idx < allItems.length - 1 ? allItems[idx + 1] : undefined;
 ---
-<Base title={`${h1} · Agentic Coding Guide`} description={allItems[idx]?.blurb ?? h1} current="reference" progress>
+<Base title={`${h1} · Agentic Coding Guide`} description={allItems[idx]?.blurb ?? h1} section="reference" progress>
   <div class="doc">
     <aside class="side" aria-label="Reference sections">
       <details data-side>

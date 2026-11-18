@@ -28,6 +28,7 @@ const table = (head, rows) => {
 };
 P(`# ${plan.meta.title}`);
 P(`Proposal dashboard, ${plan.meta.date}. Branch \`${plan.meta.branch}\`, based on \`${plan.meta.base}\`. Nothing here is built yet. The interactive version is [dashboard.html](./dashboard.html); both files are generated from \`plan.data.mjs\` by \`node planning/build.mjs\`.`);
+if (plan.meta.decided) P(`**Decided.** ${plan.meta.decided}`);
 P('## Where the current version falls short');
 plan.verdict.forEach((v) => P(`- ${v}`));
 P('## Principles for the next version');
@@ -226,6 +227,7 @@ td b,td strong{color:var(--ink)}
 <main>
 <h1>${esc(plan.meta.title)}</h1>
 <p class="lede">${inline(plan.meta.lede)}</p>
+${plan.meta.decided ? `<p class="lede"><b>Decided.</b> ${inline(plan.meta.decided)}</p>` : ''}
 <div class="stats">${plan.meta.stats.map((s) => `<div class="stat"><b>${esc(s[0])}</b><span>${esc(s[1])}</span></div>`).join('')}</div>
 <div class="two">
 <div class="card"><h3>Where the current version falls short</h3>${li(plan.verdict)}</div>

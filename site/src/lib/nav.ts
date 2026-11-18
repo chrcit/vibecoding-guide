@@ -3,6 +3,20 @@ export const url = (p: string) => {
   return base + p.replace(/^\//, '');
 };
 
+// Top-level sections. Shared wiring owned by the lead: a section appears in the
+// header only once its landing page exists, so flip `ready` when it ships.
+export const sections = [
+  { id: 'guide', label: 'Guide', path: '', ready: true },
+  { id: 'start', label: 'Start', path: 'start/', ready: false },
+  { id: 'explain', label: 'Explainers', path: 'explain/', ready: false },
+  { id: 'models', label: 'Models', path: 'models/', ready: false },
+  { id: 't3-code', label: 'T3 Code', path: 't3-code/', ready: false },
+  { id: 'wiki', label: 'Wiki', path: 'wiki/', ready: false },
+  { id: 'showcase', label: 'Showcase', path: 'showcase/', ready: false },
+  { id: 'reference', label: 'Reference', path: 'guide/', ready: true },
+] as const;
+export type SectionId = (typeof sections)[number]['id'];
+
 export type RefItem = { id: string; title: string; blurb: string };
 export type RefGroup = { name: string; items: RefItem[] };
 

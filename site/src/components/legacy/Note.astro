@@ -1,7 +1,7 @@
 ---
 // A margin note: sits beside the text on wide screens, inline on phones.
 // `href` turns it into a "go deeper" door into the reference.
-import { url } from '../lib/nav';
+import { url } from '../../lib/nav';
 interface Props { href?: string; label?: string }
 const { href, label = 'Go deeper' } = Astro.props;
 const link = href ? (href.startsWith('http') ? href : url(href)) : undefined;

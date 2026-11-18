@@ -4,6 +4,7 @@ const yt = (id) => `https://www.youtube.com/watch?v=${id}`;
 
 export default {
   meta: {
+    decided: 'Owner answered all twelve questions on 2026-11-18: pared-down Anatomy figures everywhere with no trial; Playwright allowed for checks; sourced facts only, with the owner\'s own opinions in a marked box; practitioner estimates in a marked box; plain level first with a picker offered once; hand-written graph and `three` for the hero and showcase only; web-foundation guides rewritten at three levels; Artificial Analysis numbers refreshed by hand; fresh demo pieces for the showcase; hosting moves to Cloudflare; foundations first.',
     title: 'Agentic Coding Guide: plan for the next version',
     date: '18 November 2026',
     branch: 'next-version-plan',

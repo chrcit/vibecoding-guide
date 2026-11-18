@@ -1,0 +1,12 @@
+---
+import Base from '../layouts/Base.astro';
+import { url } from '../lib/nav';
+const pages = Object.keys(import.meta.glob('./*.astro')).map((p) => p.slice(2, -6)).filter((n) => n !== 'index').sort();
+---
+<Base title="Review pages" description="Development-only review pages." noindex>
+  <div style="max-width: 40rem; margin: 3rem auto; padding: 0 var(--gutter)">
+    <h1>Review pages</h1>
+    <p>These exist only in the dev server.</p>
+    <ul>{pages.map((p) => <li><a href={url(`dev/${p}/`)}>{p}</a></li>)}</ul>
+  </div>
+</Base>

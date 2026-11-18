@@ -1,61 +1,43 @@
 ---
+// The one page shell. Shared wiring: change it only through the lead.
 import '../styles/global.css';
-import { url } from '../lib/nav';
+import Head from '../components/site/Head.astro';
+import Header from '../components/site/Header.astro';
+import Footer from '../components/site/Footer.astro';
+import LevelBoot from '../components/level/LevelBoot.astro';
+import LevelOffer from '../components/level/LevelOffer.astro';
+import type { SectionId } from '../lib/nav';
 
-interface Props { title: string; description: string; current: 'essay' | 'reference'; progress?: boolean }
-const { title, description, current, progress = false } = Astro.props;
+export interface Props {
+  title: string;
+  description: string;
+  /** Which top-level section this page belongs to (highlights the nav). */
+  section?: SectionId;
+  /** Thin reading-progress bar under the header. */
+  progress?: boolean;
+  /** Keep the page out of search engines and the sitemap. */
+  noindex?: boolean;
+  /** Open Graph type. */
+  type?: 'website' | 'article';
+  /** Legacy prop from the first version; ignored. */
+  current?: string;
+}
+const { title, description, section, progress = false, noindex = false, type = 'website' } = Astro.props;
 ---
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
-    <meta name="description" content={description} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
-    <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet" />
-    <script is:inline>
-      try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
-    </script>
+    <Head title={title} description={description} noindex={noindex} type={type} />
+    <LevelBoot />
+    <slot name="head" />
   </head>
   <body>
-    <header class="topbar">
-      <a class="brand" href={url('')}>Agentic Coding<span class="wide-only"> Guide</span></a>
-      <nav aria-label="Main">
-        <a href={url('')} aria-current={current === 'essay' ? 'page' : undefined}>Essay</a>
-        <a href={url('guide/')} aria-current={current === 'reference' ? 'page' : undefined}>Reference</a>
-      </nav>
-      <button class="theme-toggle" type="button" aria-label="Toggle dark mode" data-theme-toggle>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/></svg>
-      </button>
-      {progress && <div class="progress" data-progress aria-hidden="true"></div>}
-    </header>
-    <slot />
-    <footer class="site">
-      <span>Agentic Coding Guide · formerly Vibe Coding 101 · snapshot November 2026</span>
-      <span><a href="https://github.com/chrcit/vibecoding-guide">Source on GitHub</a> · MIT</span>
-    </footer>
-    <script>
-      const root = document.documentElement;
-      document.querySelector('[data-theme-toggle]')?.addEventListener('click', () => {
-        const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-        const next = dark ? 'light' : 'dark';
-        root.dataset.theme = next;
-        try { localStorage.setItem('theme', next); } catch (e) {}
-      });
-      const bar = document.querySelector<HTMLElement>('[data-progress]');
-      if (bar) {
-        const update = () => {
-          const max = document.documentElement.scrollHeight - innerHeight;
-          bar.style.width = `${max > 0 ? (scrollY / max) * 100 : 0}%`;
-        };
-        addEventListener('scroll', update, { passive: true });
-        update();
-      }
-    </script>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Header section={section} progress={progress} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+    <LevelOffer />
   </body>
 </html>

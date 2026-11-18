@@ -1,24 +1,24 @@
 ---
 import Base from '../layouts/Base.astro';
-import Hero from '../components/Hero.astro';
-import Note from '../components/Note.astro';
-import Term from '../components/Term.astro';
-import Horizon from '../components/Horizon.astro';
-import Stack from '../components/Stack.astro';
-import ContextMeter from '../components/ContextMeter.astro';
-import ThreadSim from '../components/ThreadSim.astro';
-import Attention from '../components/Attention.astro';
-import VerifyLab from '../components/VerifyLab.astro';
-import MonteCarlo from '../components/MonteCarlo.astro';
-import ModelPicker from '../components/ModelPicker.astro';
-import Thinking from '../components/Thinking.astro';
-import Orchestra from '../components/Orchestra.astro';
-import DiffReview from '../components/DiffReview.astro';
-import Ladder from '../components/Ladder.astro';
-import SkillEditor from '../components/SkillEditor.astro';
-import Proxy from '../components/Proxy.astro';
-import Triangle from '../components/Triangle.astro';
-import OneHour from '../components/OneHour.astro';
+import Hero from '../components/legacy/Hero.astro';
+import Note from '../components/legacy/Note.astro';
+import Term from '../components/legacy/Term.astro';
+import Horizon from '../components/legacy/Horizon.astro';
+import Stack from '../components/legacy/Stack.astro';
+import ContextMeter from '../components/legacy/ContextMeter.astro';
+import ThreadSim from '../components/legacy/ThreadSim.astro';
+import Attention from '../components/legacy/Attention.astro';
+import VerifyLab from '../components/legacy/VerifyLab.astro';
+import MonteCarlo from '../components/legacy/MonteCarlo.astro';
+import ModelPicker from '../components/legacy/ModelPicker.astro';
+import Thinking from '../components/legacy/Thinking.astro';
+import Orchestra from '../components/legacy/Orchestra.astro';
+import DiffReview from '../components/legacy/DiffReview.astro';
+import Ladder from '../components/legacy/Ladder.astro';
+import SkillEditor from '../components/legacy/SkillEditor.astro';
+import Proxy from '../components/legacy/Proxy.astro';
+import Triangle from '../components/legacy/Triangle.astro';
+import OneHour from '../components/legacy/OneHour.astro';
 import { url } from '../lib/nav';
 
 const chapters = [
@@ -41,7 +41,7 @@ const chapters = [
 ];
 const n = (id: string) => String(chapters.findIndex((c) => c[0] === id) + 1).padStart(2, '0');
 ---
-<Base title="Agentic Coding Guide" description="How software gets built with AI agents now, for engineers and scientists catching up: context, parallel work, self-verification, models, costs and T3 Code. Interactive, with sources." current="essay" progress>
+<Base title="Agentic Coding Guide" description="How software gets built with AI agents now, for engineers and scientists catching up: context, parallel work, self-verification, models, costs and T3 Code. Interactive, with sources." section="guide" progress>
   <Hero />
 
   <nav class="contents" aria-label="Chapters">

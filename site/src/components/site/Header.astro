@@ -1,0 +1,36 @@
+---
+// STUB. Owner: design-system worker.
+import { sections, url, type SectionId } from '../../lib/nav';
+import LevelPicker from '../level/LevelPicker.astro';
+interface Props { section?: SectionId; progress?: boolean }
+const { section, progress = false } = Astro.props;
+---
+<header class="topbar">
+  <a class="brand" href={url('')}>Agentic Coding<span class="wide-only"> Guide</span></a>
+  <nav aria-label="Main">
+    {sections.filter((s) => s.ready).map((s) => <a href={url(s.path)} aria-current={s.id === section ? 'page' : undefined}>{s.label}</a>)}
+  </nav>
+  <LevelPicker />
+  <button class="theme-toggle" type="button" aria-label="Toggle dark mode" data-theme-toggle>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/></svg>
+  </button>
+  {progress && <div class="progress" data-progress aria-hidden="true"></div>}
+</header>
+<script>
+  const root = document.documentElement;
+  document.querySelector('[data-theme-toggle]')?.addEventListener('click', () => {
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    const next = dark ? 'light' : 'dark';
+    root.dataset.theme = next;
+    try { localStorage.setItem('theme', next); } catch (e) {}
+  });
+  const bar = document.querySelector<HTMLElement>('[data-progress]');
+  if (bar) {
+    const update = () => {
+      const max = document.documentElement.scrollHeight - innerHeight;
+      bar.style.width = `${max > 0 ? (scrollY / max) * 100 : 0}%`;
+    };
+    addEventListener('scroll', update, { passive: true });
+    update();
+  }
+</script>
