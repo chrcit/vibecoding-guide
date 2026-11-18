@@ -1,0 +1,44 @@
+---
+import Essay from '../../layouts/Essay.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import { url } from '../../lib/nav';
+import { anchor } from '../../lib/facts.ts';
+
+export const meta = {
+  title: 'Have it build you throwaway tools for thinking',
+  description: 'Ask the agent for a small page made for one problem, so you can see what it is doing and understand the problem yourself. Then throw the page away.',
+  order: 3,
+};
+
+const ids = ['t3code.htmlRenders'];
+const src = (id: string) => `sources/#${anchor(id)}`;
+const leansOn = [
+  { href: 'explain/verification/', title: 'Fig. 15, the summary and the diff (verification explainer)' },
+  { href: src('t3code.htmlRenders'), title: 'Fact: pages that render inside a T3 Code thread' },
+  { href: 't3-code/', title: 'T3 Code' },
+  { href: 'essays/your-job-is-to-disprove-it/', title: 'Essay: Your job is to disprove it' },
+];
+---
+<Essay meta={meta} leansOn={leansOn}>
+  <p>Do not only ask the agent for answers. Ask it for a small interactive page, built for you and for this one problem, that shows what it is doing and lets you understand the problem yourself. Use it while it helps. Then throw it away.</p>
+  <p>Some tools can now draw a page like that inside the conversation. In T3 Code, the tool I use, <Fact id="t3code.htmlRenders" show="claim" /> Before that existed I asked for a separate file that explained what the agent was doing, and told it to keep the file up to date. Both work. The page in the conversation suits throwaway use, because afterwards there is nothing to manage.</p>
+
+  <h2>It is easy to get lost</h2>
+  <p>With several things running it is very easy to lose track of what each agent is doing and why. I have done this all day for a long time and I still ask for help keeping up. If you are new to it you will need it more.</p>
+  <p>The remedy is a page you ask for: a dashboard, meaning one screen that sums up what is going on. It says what the agent is doing, explains it, and gives you ways to check it, and it stays up to date. You need no special vocabulary for this. Say those words to the agent and it will build it.</p>
+  <p>A friend of mine, a scientist, had a problem that needed many variations of one idea run against years of scattered lab data. Was she going to open each script and run it by hand? No. She wanted the agent to run them all, pull out the results and give her an overview made for her, possibly for this one use and never again.</p>
+
+  <h2>What to look at on the page</h2>
+  <p>When the agent’s explainer for her question arrived, the result on it was the least interesting part. On a hard problem I expect the first result to be wrong, and the harder the problem, the more wrong. That is my working assumption from my own use. I have no measured error rate to give you.</p>
+  <p>The interesting part was whether the agent had understood the problem, and whether she could change one input, watch what moved, and understand the problem better herself. It is a bit like a data notebook, taken as an idea rather than a product. Anything a browser can show is available, so any measure can be drawn any way you like.</p>
+  <p>So do not ask whether this particular page is correct. Look at how much tooling for thinking you can get without building any of it. If you are putting something off because it is too hard to get hold of at first, one line will do.</p>
+  <CopyPrompt title="A page to think with">I'm trying to understand the contact spreadsheet you are cleaning. Build me a small interactive page, just for this, that shows how many rows look like duplicates and why, which date formats appear and how often, and what the cleaned file would look like. Give me a control to loosen or tighten the duplicate rule and show what changes. Make it visual and fast. I'll throw it away afterwards.</CopyPrompt>
+  <p>I use the same trick on the agent’s own work. With a long task running, I ask it to show what it is doing, why, and what it is trying to reach, and to make that visual and quick to read.</p>
+
+  <h2>Where it goes wrong</h2>
+  <p>Agents can overdo it. Once I asked for a visual explanation in the conversation and got an entire website built there instead. That was just a silly mistake, and easy to undo.</p>
+  <p>The real limit is that a dashboard is a summary. It is the agent’s account of the work, and an account can be wrong in ways the work is not, or right in ways the work is not. <!-- FIG 15 -->The <a href={url('explain/verification/')}>verification explainer</a> sets a summary beside the diff, the line-by-line record of what actually changed, to show how far apart they can be. These pages are for understanding. Checking still happens against the work itself, and a tool that makes thinking easier can also make you lazy about it. That is the subject of <a href={url('essays/your-job-is-to-disprove-it/')}>your job is to disprove it</a>.</p>
+  <Verified ids={ids} />
+</Essay>

@@ -1,0 +1,53 @@
+---
+import Essay from '../../layouts/Essay.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import Loop from '../../components/fig/loop/Loop.astro';
+import { url } from '../../lib/nav';
+import { anchor } from '../../lib/facts.ts';
+
+export const meta = {
+  title: 'A ten-minute run is a short one',
+  description: 'Stop expecting an answer in seconds. An agent building something from scratch runs for a long time, and you should arrange your work and your machine around that.',
+  order: 7,
+};
+
+const ids = [
+  'observations.experience.runLength',
+  'benchmarks.metr.definition',
+  't3code.phoneIsRemote',
+  'harnesses.claudeCode.web',
+  'observations.experience.linuxFaster',
+];
+const src = (id: string) => `sources/#${anchor(id)}`;
+const leansOn = [
+  { href: '', title: 'Fig. 5 and Fig. 7, steer or queue and METR time horizons (home page)' },
+  { href: src('observations.experience.runLength'), title: 'Observation: how long runs take in the guide’s own use' },
+  { href: src('benchmarks.metr.definition'), title: 'Fact: what METR’s time horizon measures' },
+  { href: 't3-code/', title: 'T3 Code' },
+  { href: 'explain/orchestration/', title: 'Orchestration explainer' },
+];
+---
+<Essay meta={meta} leansOn={leansOn}>
+  <p>Stop expecting an answer in seconds. An agent building something from scratch rarely finishes in under ten minutes, and often runs for most of an hour. Arrange your work and your machine around that.</p>
+
+  <h2>Where your sense of time comes from</h2>
+  <p>I stopped a demonstration once to point at the clock. The thread had been running for over ten minutes. The friend I was showing it to was used to a chat assistant in the browser, which answers within a few minutes at most. An assistant in an editor’s sidebar, changing a few files, might take ten minutes, and that would feel long. Those are my impressions; I have not timed them.</p>
+  <p>Here ten minutes is the short end, once the agent is building something from scratch. In my own use, <Fact id="observations.experience.runLength" /> without any input from me is routine, and longer runs work when the agent has a way to check its own results. That is my experience, written down. Nobody has measured it.</p>
+  <p>The same session proved it. A hard statistics task was still running most of an hour after we started it. I checked on it several times, and each time it was still grinding.</p>
+
+  <h2>What it is doing all that time</h2>
+  <p>It is going round a loop. It reads, it acts, it checks the result, and it goes round again until the check passes or it gives up. A long run is many laps.</p>
+  <Loop />
+  <p>Long runs are not the same thing as the time horizons you may have seen charted. <Fact id="benchmarks.metr.definition" show="claim" /> <!-- FIG 7 -->The <a href={url('')}>chart on the home page</a> explains why a model can now handle longer tasks at all; how long your run takes depends on the task, the model and the tools.</p>
+
+  <h2>Do not sit and watch</h2>
+  <p>I do not watch a run. While we waited on her hard problems, I used the time to show other work and explain how thinking and pricing work, and I said so. Near the end of the session I gave the agent a large instruction and suggested we step outside for a break and come back to see what had happened.</p>
+  <p>Long runs are also what make it worth adding things while the agent works. <!-- FIG 5 -->The <a href={url('')}>steer-or-queue figure on the home page</a> shows how a message sent mid-run either waits its turn or changes the current work.</p>
+
+  <h2>Put the agent on a machine that stays on</h2>
+  <p>The practical consequence comes first in my setup. I run my agent threads on a separate machine that is always on, and connect to it from my laptop. If a thread lives on the laptop, closing the lid stops it.</p>
+  <p>Tools support this now. In T3 Code, <Fact id="t3code.phoneIsRemote" show="claim" /> <Fact id="harnesses.claudeCode.web" show="claim" /> Either way the work happens somewhere that does not go to sleep when you do.</p>
+  <p>My own machine runs Linux, and Linux has <Fact id="observations.experience.linuxFaster" /> to me for this work. I have no benchmark for that. The argument I would defend is simpler: a server stays on.</p>
+  <Verified ids={ids} />
+</Essay>

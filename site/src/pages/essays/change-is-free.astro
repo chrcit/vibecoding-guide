@@ -1,0 +1,49 @@
+---
+import Essay from '../../layouts/Essay.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import Loop from '../../components/fig/loop/Loop.astro';
+import { url } from '../../lib/nav';
+import { anchor } from '../../lib/facts.ts';
+
+export const meta = {
+  title: 'Change is free, so work by looking and reacting',
+  description: 'The effort of changing something has dropped to almost nothing. Get several versions, look at them, say what you think, and do not protect the first one.',
+  order: 8,
+};
+
+const ids = ['t3code.browser', 'plans.claude.limits.fiveHour', 'plans.claude.limits.whatUsageMeans'];
+const src = (id: string) => `sources/#${anchor(id)}`;
+const leansOn = [
+  { href: 'explain/plans-and-api/', title: 'Fig. 8, a meter and a tank (plans and API explainer)' },
+  { href: src('plans.claude.limits.fiveHour'), title: 'Fact: the five-hour limit on Claude plans' },
+  { href: src('t3code.browser'), title: 'Fact: the shared browser in T3 Code' },
+  { href: 'essays/the-triangle/', title: 'Essay: The triangle' },
+  { href: 'essays/ask-for-a-bigger-problem/', title: 'Essay: Ask for a bigger problem' },
+];
+---
+<Essay meta={meta} leansOn={leansOn}>
+  <p>The effort of changing something has dropped to almost nothing. So do not plan the result in detail in advance, and do not protect the first version. Get several versions, look at them, and say what you think.</p>
+
+  <h2>Look, then talk</h2>
+  <p>When I helped a friend build a personal website, I did not ask for one site. Three different designs came back at once. From there the whole process was this: we looked at things and we talked.</p>
+  <p>Where to start is not obvious. Do not start with the version you like. Start with what you dislike in the others. I asked her what she disliked about the first one. She disliked a background. We were scrolled to that section, in a browser the agent could see as well, so it knew which background she meant. In T3 Code, <Fact id="t3code.browser" show="claim" /></p>
+  <p>I added my own reactions as we went. The map was faked for no reason, when a real map or a globe was possible. A header looked squashed. One section looked terrible. Short, blunt and specific is enough. After a string of likes and dislikes I said that all of it was important information, and dictated the lot to the agent.</p>
+  <p>Missing content blocks nothing. If you do not have the text for a section yet, tell it to put placeholder text in and fill it in later.</p>
+
+  <h2>The limit of reacting</h2>
+  <p>Reacting has a limit, and I hit it. I am not a designer. My mind comments on what is in front of it and does not see what else could be there. The fix is to bring a reference. I opened a site I had made for someone else, said it was too much for her but the cleanness was right, and from that we got to an idea: a globe with a small plane moving between the places she has lived. Neither of us would have asked for that at the start.</p>
+  <p>If you do not like the one idea the agent offered, ask for ten.</p>
+
+  <h2>Correct and good are different verdicts</h2>
+  <p>Bluntness is normal here. I tell the agent a page looks terrible, or just: this is broken, fix it. It does not take offence, and the instruction is clear.</p>
+  <p>After the agent fixed one page, I said it now looked correct, but to me it did not look good. Those are two separate verdicts. The agent can get a page to correct by checking its own work. Whether it is good is still my call, which is part of why I keep looking.</p>
+
+  <h2>Two loops</h2>
+  <p>The agent works in a loop: read, act, check, go round again. Working this way puts you in a second loop outside it: look at what came back, react, send it round again.</p>
+  <Loop />
+
+  <h2>What free means here</h2>
+  <p>“Free” needs a qualification. The effort of a change is close to zero: you see it, you say remove it, and it is gone. Each round still uses tokens, the units of text a model reads and writes. On a flat subscription that feels free until you reach the limit. <Fact id="plans.claude.limits.fiveHour" show="claim" /> And <Fact id="plans.claude.limits.whatUsageMeans" show="claim" /> <!-- FIG 8 -->The <a href={url('explain/plans-and-api/')}>plans and API explainer</a> shows a plan as a tank that drains and refills, next to the API’s meter that only climbs.</p>
+  <Verified ids={ids} />
+</Essay>

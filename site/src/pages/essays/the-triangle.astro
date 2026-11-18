@@ -1,0 +1,37 @@
+---
+import Essay from '../../layouts/Essay.astro';
+import { url } from '../../lib/nav';
+
+export const meta = {
+  title: 'The triangle: enough engineering to follow it, enough expertise to check it',
+  description: 'The people who gain most from agents know enough software to follow what the agent does and know a hard field well enough to judge the result.',
+  order: 5,
+};
+
+const leansOn = [
+  { href: '', title: 'Fig. 6, you are the bottleneck (home page)' },
+  { href: 'explain/verification/', title: 'Fig. 13 and 14, one bug, three judges, and noise and bias (verification explainer)' },
+  { href: 'essays/your-job-is-to-disprove-it/', title: 'Essay: Your job is to disprove it' },
+];
+---
+<Essay meta={meta} leansOn={leansOn}>
+  <p>The people who gain most from coding agents have two things. They know enough software engineering to follow what the agent is doing, and they know a hard field of their own deeply. The agent supplies the speed. They supply the checking.</p>
+  <p>I should say up front that this rests on my experience alone. I know of no study comparing experts and beginners who both use these tools. If one exists I have not seen it. What follows is what I watched happen.</p>
+
+  <h2>Three corners</h2>
+  <p>I was showing all this to a friend who is a scientist and who has also worked in proper software teams. When I learned that, I told her she had the perfect background, and drew the triangle for her.</p>
+  <p>One corner is enough software engineering to know what is happening: what a file is doing, why a test fails, when the agent has wandered off. Another is a very hard technical subject that you are an expert in. The third is the agent, which speeds up the engineering enormously while you still know enough to check it. And in your own field you can judge the results yourself, which nobody else in the room can do for you.</p>
+  <p>I am outside that triangle. I only have the software corner. Anything else I have to learn, or find someone who knows it.</p>
+
+  <h2>Watching the gap</h2>
+  <p>The session showed the gap clearly. On her science problem I said more than once that I had no idea what I was looking at. I asked her whether the relationships on screen held up. She looked for a few seconds and said the logic was there. I could not have judged it at all. At the end I told her I assumed I would never understand what she does with it, and I meant it.</p>
+  <p>She reckoned the agent’s draft covered work she had expected to take months. That is her estimate, made before she had checked the draft, and she was clear that checking it was now her job, because she knows what should be in it. That is the triangle working as it should: the agent wrote, the expert judges.</p>
+
+  <h2>Taste is a corner too</h2>
+  <p>The same holds for design. I am deeply not a designer. I have only ever done design on the side because I had to, so my mind does not look for open possibilities. It looks at what is in front of it and comments. That gets you from broken to acceptable. It does not get you to something special.</p>
+  <p>In my view the models cannot judge design beyond “okay” either. When I want something that is right and matches a picture in my head, the agent’s review of its own work stops helping. That is my experience; I have no measurement for it. A designer with a little engineering sense would sit in the triangle for this kind of work, where I sit on one edge of it.</p>
+
+  <h2>Why the checking corner matters most</h2>
+  <p>Speed without a judge produces confident nonsense faster. <!-- FIG 13 --><!-- FIG 14 -->The <a href={url('explain/verification/')}>verification explainer</a> shows why a judge who knows the subject catches what a general reviewer misses, and why asking a model to check itself twice only removes some of the errors. <!-- FIG 6 -->The <a href={url('')}>bottleneck figure on the home page</a> shows the rest: when the agent does the work in minutes, the slow step is the person who can say whether it is right.</p>
+  <p>So if you have spent years getting good at something hard, you are better placed than you think. You need enough engineering to follow along, and you already have the part nobody can hand you. Nobody is smarter than you at what you want to do.</p>
+</Essay>

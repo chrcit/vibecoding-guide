@@ -1,0 +1,48 @@
+---
+import Essay from '../../layouts/Essay.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import { url } from '../../lib/nav';
+import { anchor } from '../../lib/facts.ts';
+import { links } from '../../data/links.ts';
+
+export const meta = {
+  title: 'Ask for a bigger problem',
+  description: 'Once your ordinary problems fall easily, the skill that matters is asking for more than you think the agent can do.',
+  order: 1,
+};
+
+const ids = ['benchmarks.metr.doublingDays', 'benchmarks.metr.definition', 'skillFacts.beAmbitiousOrigin', 'skills.be-ambitious.what', 'skills.grill-me.what'];
+const src = (id: string) => `sources/#${anchor(id)}`;
+const leansOn = [
+  { href: '', title: 'Fig. 7, METR time horizons (home page)' },
+  { href: src('benchmarks.metr.doublingDays'), title: 'Fact: how fast the METR time horizon doubles' },
+  { href: 'explain/skills/', title: 'Skills explainer' },
+  { href: links.felixAmbitious.url, title: links.felixAmbitious.label },
+  { href: links.beAmbitiousSkill.url, title: links.beAmbitiousSkill.label },
+  { href: 'essays/your-job-is-to-disprove-it/', title: 'Essay: Your job is to disprove it' },
+];
+---
+<Essay meta={meta} leansOn={leansOn}>
+  <p>Most people ask an agent for far less than it can do. They size the request to what they could have done themselves, take the first result that works, and stop there. I think this is the most common way to waste these tools.</p>
+
+  <h2>The person asking is the ceiling</h2>
+  <p>I was recently showing all this to a friend, a scientist who has also worked in software teams. She did not need coaching. She needed to see what the models can do now and then try them on her own problems. I told her she would be surprised how easily those problems fall. That is the first step. The second step is the one that counts: once your problems start falling, think of bigger problems, and bigger ways of solving them.</p>
+  <p>So when we wrote the first prompt together, I asked her for two problems she wanted solved this month that were hard or annoying. Then I told the agent to do more work than she had asked for, and I gave the reason in the prompt itself: she does not know how much it is capable of. If the request is the limit, the agent stops at the request. Telling it to go past the ask costs one sentence.</p>
+  <p>There is a measurement behind the idea that a bigger ask is now reasonable. METR, a research group, tracks how long a task a model can finish, where length means how long the same task takes a human expert. Since 2023 that length has doubled about every <Fact id="benchmarks.metr.doublingDays" />. <!-- FIG 7 -->The <a href={url('')}>time-horizon chart on the home page</a> draws the curve. Whatever you think of as a big task was probably sized on an older point of it.</p>
+
+  <h2>The first acceptable result is a trap</h2>
+  <p>The agent came back with three versions of a personal website for her. They were good. By my guess they would have taken her many hours by hand, if she could have designed them at all. And they were the wrong place to continue from. They looked like someone applying for a job. She is a serious researcher who now has something that can design and build for her, and the site used none of that.</p>
+  <p>Continuing from the first draft that passes is the second common mistake. The first draft shows you the floor. Before you polish it, ask what the goal behind the goal is.</p>
+
+  <h2>Tools that push you up a level</h2>
+  <p>I use a skill for this. A skill is a text file of instructions the agent loads when it needs them. This one makes the agent think a problem through one level above the literal request. There is a public version, <a href={links.beAmbitiousSkill.url}>be-ambitious by robonuggets</a>, built on Felix Rieseberg’s article <a href={links.felixAmbitious.url}>How to be more ambitious</a>, published <Fact id="skillFacts.beAmbitiousOrigin" />. I pair it with a skill that keeps asking me questions until it understands what I want. Matt Pocock’s <a href={links.mattPocockSkills.url}>grill-me</a> works that way.</p>
+  <p>You do not need either to start. One sentence in your own words does most of it.</p>
+  <CopyPrompt title="Ask past your own ceiling">I want to fix the bakery website: it shows the wrong opening hours on public holidays. That is the problem as I see it. I don't know how much you are capable of, so do more than I asked. Tell me what the real goal behind this request probably is, propose a more ambitious version of the fix, and list ten related problems on the site I haven't thought of, each marked as worth doing, maybe, or not worth it.</CopyPrompt>
+
+  <h2>A wide ask is cheap to sort</h2>
+  <p>A wide ask produces some nonsense. That is fine, because sorting is fast. When the agent proposed a further problem and my friend said it made no sense, I told her: good, tell it that, and ask for thirty instead. If you dislike one idea, ask for ten. If you like one, go deep on it. The long list came back as a set of yes, no and maybe choices and she went through it in no time. Some ideas were good. Some were obvious. Some were daydreams. One rested on an official reference value that, as far as she knew, does not exist.</p>
+  <p>That last one is the price of asking wide. You get more to check, and only someone who knows the field can sort it. The agent makes the asking cheap and leaves the checking to you, which is why this essay comes with a companion: <a href={url('essays/your-job-is-to-disprove-it/')}>your job is to disprove it</a>.</p>
+  <Verified ids={ids} />
+</Essay>

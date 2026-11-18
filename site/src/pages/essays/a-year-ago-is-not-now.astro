@@ -1,0 +1,62 @@
+---
+import Essay from '../../layouts/Essay.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import { url } from '../../lib/nav';
+import { anchor, formatDate } from '../../lib/facts.ts';
+import { benchmarks } from '../../data/benchmarks.ts';
+import { links } from '../../data/links.ts';
+
+export const meta = {
+  title: 'What you tried a year ago is not what exists now',
+  description: 'The big change came from the models, once they could stay on track for hours. If you tried these tools earlier and were disappointed, that tells you little about today.',
+  order: 6,
+};
+
+const p50 = benchmarks.metr.p50;
+const early = p50['gpt-4'];
+const late = p50['claude-opus-4-6'];
+const month = (d: string) => formatDate(d, true).replace(/^\d+ /, '');
+
+const ids = [
+  'benchmarks.metr.definition',
+  'benchmarks.metr.p50.gpt-4.minutes',
+  'benchmarks.metr.p50.claude-opus-4-6.minutes',
+  'benchmarks.metr.unreliableAbove',
+  'claims.trends.a16z',
+  'claims.trends.epoch',
+  'plans.claude.pro.price',
+  'plans.chatgpt.limits.codexOnEveryPlan',
+];
+const src = (id: string) => `sources/#${anchor(id)}`;
+const leansOn = [
+  { href: '', title: 'Fig. 7, METR time horizons (home page)' },
+  { href: 'models/', title: 'Fig. 10, score against cost (models page)' },
+  { href: 'explain/plans-and-api/', title: 'Fig. 8, a meter and a tank (plans and API explainer)' },
+  { href: src('benchmarks.metr.definition'), title: 'Fact: what METR’s time horizon measures' },
+  { href: src('claims.trends.epoch'), title: 'Fact: how fast the price of a fixed capability falls' },
+  { href: links.epoch.url, title: links.epoch.label },
+  { href: links.a16z.url, title: links.a16z.label },
+];
+---
+<Essay meta={meta} leansOn={leansOn}>
+  <p>The big change in the last year came from the models. They became able to stay coherent for hours, and that did more than any clever process built around them. If you tried these tools a while ago and came away disappointed, that tells you very little about what they can do today.</p>
+
+  <h2>What my own usage shows</h2>
+  <p>I keep a chart of my own usage. For a long stretch it is a flat line with a little activity. Then, around June this year, it jumps to a very large amount. When a friend asked me why, the answer was short: the models got better.</p>
+  <p>It was not for lack of effort around them. For a couple of years people worked hard on the process: systems, written instructions, pipelines where one agent does the architecture, one writes the code, one tests and one verifies. Those ideas are still logical. My view is that they achieved little that mattered, because the model at the centre could not stay on track over a long run. That is my opinion; I cannot measure it.</p>
+  <p>The guide you are reading is my own example. The first version was written before the summer, before everything in this essay.</p>
+
+  <h2>What the measurements show</h2>
+  <p>The measured part of the story comes from METR, a research group that tests how long a task a model can complete. Their unit needs care. <Fact id="benchmarks.metr.definition" show="claim" /> By that measure, GPT-4, released in {month(early.released)}, succeeded half the time on tasks that take an expert about <Fact id="benchmarks.metr.p50.gpt-4.minutes" />. For Claude Opus 4.6, released in {month(late.released)}, the same measure is about <Fact id="benchmarks.metr.p50.claude-opus-4-6.minutes" />. Newer models go past what METR can measure reliably; it treats results above <Fact id="benchmarks.metr.unreliableAbove" /> as unreliable with its current tasks. <!-- FIG 7 -->The <a href={url('')}>time-horizon chart on the home page</a> draws the whole curve.</p>
+  <p>That curve is why my usage jumped. A model that can carry a task for hours of human work is a different tool from one that loses the thread after a few minutes.</p>
+
+  <h2>The price fell too</h2>
+  <p>The same friend had paid for a chat subscription a year earlier, tried it on her work, been disappointed and cancelled. As far as I can tell the price of a plan has barely moved; Claude Pro is <Fact id="plans.claude.pro.price" /> a month today. What has moved is the price of intelligence. In the session I guessed it had fallen something like a hundred times. I had no source in front of me. The sources I have since found agree on the direction. a16z estimates the price of a fixed level of capability falls about <Fact id="claims.trends.a16z" /> a year. Epoch AI finds <Fact id="claims.trends.epoch" />, depending on the level. <!-- FIG 10 -->The <a href={url('models/')}>score-against-cost chart on the models page</a> shows where today’s models sit.</p>
+  <p>You can try this without paying. <Fact id="plans.chatgpt.limits.codexOnEveryPlan" show="claim" /> On a paid plan the meter you are used to from the API mostly disappears from view, which changes how freely you work. <!-- FIG 8 -->The <a href={url('explain/plans-and-api/')}>plans and API explainer</a> shows the difference between a meter and a flat plan.</p>
+
+  <h2>You skipped the messy part</h2>
+  <p>There is an upside to arriving late. Queueing a message while the agent works, editing it while it waits, running several projects at once, running them on more than one machine: all of that is very new, and the first versions were rough. If you start now you get the tools after most of that was smoothed out.</p>
+  <p>So whatever you concluded a year ago, put it aside and try again on a real problem of yours. The conclusion has a date on it, and the date matters more here than in most fields.</p>
+  <Verified ids={ids} />
+</Essay>
