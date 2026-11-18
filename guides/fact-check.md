@@ -163,17 +163,13 @@ Subscription prices, what each includes, how limits work and what the API credit
 |---|---|---|---|
 | Claude Free costs nothing. | $0 | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Claude Code is not included on the free Claude plan. | no | verified | [claude.com/pricing](https://claude.com/pricing) |
-| Claude Free includes Sonnet and Haiku but not Opus. | Sonnet and Haiku | verified | [claude.com/pricing](https://claude.com/pricing) |
+| Claude Free includes Sonnet and Haiku in the Claude apps, but not Opus or Fable, and not Claude Code. | Sonnet, Haiku | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Claude Pro costs $20 a month billed monthly ($17 a month billed yearly). | $20 | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Claude Code is included from Pro up. | yes | verified | [claude.com/pricing](https://claude.com/pricing) |
 | On Pro, Fable runs on pay-as-you-go usage credits from the start; it is outside the plan limits. | usage credits | verified | [support.claude.com/en/articles/15424964](https://support.claude.com/en/articles/15424964) |
 | Pro adds Opus to the models Free includes. | yes | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Pro includes Claude on the web, desktop and mobile, Claude in Chrome and Claude Code. Max and Ultra include everything in Pro. | Claude on web, desktop and mobile, Claude Code, Claude in Chrome | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Pro includes no monthly API credit; Max and Ultra do. | no | verified | [claude.com/pricing](https://claude.com/pricing) |
-| Claude Free includes Sonnet and Haiku in the Claude apps, but not Opus or Fable, and not Claude Code. | Sonnet, Haiku | verified | [claude.com/pricing](https://claude.com/pricing) |
-| Claude Pro costs $20 a month billed monthly ($17 a month billed yearly). | $20 | verified | [claude.com/pricing](https://claude.com/pricing) |
-| Claude Code is included from Pro up. | yes | verified | [claude.com/pricing](https://claude.com/pricing) |
-| On Pro, Fable runs on pay-as-you-go usage credits from the start; it is outside the plan limits. | usage credits | verified | [support.claude.com/en/articles/15424964](https://support.claude.com/en/articles/15424964) |
 | Claude Pro includes Opus, Sonnet and Haiku within the plan limits. | Opus, Sonnet, Haiku | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Claude Max costs $100 a month. | $100 | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Max gives 5× Pro usage every five hours and every week. | 5× | verified | [claude.com/pricing](https://claude.com/pricing) |

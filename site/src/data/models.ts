@@ -319,6 +319,7 @@ export const lineup = {
     'tools, system, messages',
     'A Claude prompt cache hit needs the prompt identical up to the cache point, in the order tools, system prompt, messages; any change earlier in that order misses the cache.',
     'https://platform.claude.com/docs/en/build-with-claude/prompt-caching',
+  ),
   claudeModalities: fact(
     'text and image in, text out',
     'All current Claude models support text and image input, text output, multilingual capabilities, vision and tool use.',
