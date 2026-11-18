@@ -17,7 +17,7 @@ T3 Code is the tool this guide is written around. It is an **agentic development
 
 T3 Code does not replace Claude Code or Codex. It drives the agent CLIs installed on your machine, signed in with your own accounts. API keys are optional. What it adds is the view: threads, projects, diffs, previews, and the ability to mix providers in one place.
 
-Why that matters: Claude Code officially supports Claude models only. Codex is built for OpenAI models, though it can be pointed at other providers such as a local Ollama. The Codex CLI is open source (Apache-2.0); Claude Code is not; the models behind both are proprietary. An ADE that drives all of them lets you pick the best model for each job without switching tools.
+Why that matters: Claude Code officially supports Claude models only. Codex is built for OpenAI models, though it can be pointed at other providers such as a local Ollama. The Codex CLI is open source (Apache-2.0); Claude Code is not; the models behind both are proprietary. An ADE that drives all of them lets you use models from several providers without switching tools.
 
 ## What It Can Do
 
@@ -55,7 +55,7 @@ Run T3 Code on one machine and use it from another. Pair over your local network
 
 ### Scheduled tasks and voice
 
-Tasks can run on a schedule. Voice dictation works in the composer.
+Tasks can run on a schedule. Voice dictation works in the composer, with a model downloaded to your machine or a cloud transcription service on your own key; one recording can last up to five minutes.
 
 ### Skills and provider updates
 

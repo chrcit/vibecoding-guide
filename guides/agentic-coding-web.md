@@ -281,24 +281,27 @@ Ask: "Create an artifact with a preview" to see your component live.
 |--------|-------|--------------|
 | **GitHub Integration** | Direct (connects to repos) | Manual in chat and Projects (copy/paste or upload) |
 | **Output** | Pull requests | Code in chat |
-| **Best For** | Large changes, PRs | Understanding, planning |
 | **Automation** | Yes (Actions, webhooks) | No |
 | **Persistent Context** | AGENTS.md | Projects |
 
 ### When to Use Which
 
-**Use Codex when:**
+What decides it is the interface: one is an agent that works on your repository and opens pull requests, the other is a chat.
+
+**Use a cloud agent that opens pull requests when:**
 - Making changes to existing repos
 - You want PRs for review
 - Working on GitHub Issues
 - Automating workflows
 
-**Use Claude when:**
+**Use a chat when:**
 - You need explanations
 - Planning before implementing
 - You're not sure what approach to take
 - Learning new concepts
 - Quick questions about code
+
+Both labs offer both kinds of tool: [Claude Code on the web](https://code.claude.com/docs/en/claude-code-on-the-web) also works on your GitHub repositories.
 
 ### Using Both Together
 

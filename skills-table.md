@@ -40,8 +40,8 @@ Read a skill before you install it. It is instructions your agent will follow, a
 | Skill | What it does | Source |
 |-------|--------------|--------|
 | **Humanizer** | Rewrites AI-sounding text so it reads like a person wrote it, based on Wikipedia's "Signs of AI writing". | [blader/humanizer](https://github.com/blader/humanizer) (MIT): `npx skills add blader/humanizer` |
-| **Grill Me** | The agent questions you until it understands what you want. Ask for the questions as a clickable multiple-choice page to answer quickly. | Part of [mattpocock/skills](https://github.com/mattpocock/skills) (MIT): `npx skills add mattpocock/skills` |
-| **Be Ambitious** | Reframes a task at a higher level: the goal beyond the goal (altitude), what a top expert would do (depth), what other fields would bring (range). | Felix Rieseberg's [article](https://felixrieseberg.com/how-to-be-more-ambitious-a-tutorial-for-humans-with-models/). He published no skill; community versions exist, or have your agent write one from the article. |
+| **Grill Me** | The agent questions you until it understands what you want. Ask for the questions as a clickable multiple-choice page to answer quickly. Its sibling `grilling` is the same interview routine, which the agent can reach for on its own. | Both in Matt Pocock's [mattpocock/skills](https://github.com/mattpocock/skills) (MIT): `npx skills add mattpocock/skills` |
+| **Be Ambitious** | Reframes a task at a higher level: the goal beyond the goal (altitude), what a top expert would do (depth), what other fields would bring (range). | The original is Felix Rieseberg's [article](https://felixrieseberg.com/how-to-be-more-ambitious-a-tutorial-for-humans-with-models/), which gives a prompt to use. [robonuggets/be-ambitious](https://github.com/robonuggets/be-ambitious) (MIT) turns it into a skill. |
 
 Combine the last two: Be Ambitious widens the problem, Grill Me narrows it to what you actually want.
 

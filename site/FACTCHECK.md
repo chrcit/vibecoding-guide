@@ -1,7 +1,10 @@
 # Fact-check
 
-The fact-check table for the essay and the guides lives in [`guides/fact-check.md`](../guides/fact-check.md), so it renders in the site's reference section at `/guide/guides/fact-check/`.
+Every dated fact the site states lives in `src/data/*.ts` with its source, the date it was verified and a status. Pages read them through `<Fact id="…" />` and `<Verified>` in `src/components/data/`.
 
-Each row is: claim, status (verified, corrected, or observation), source URL. Last checked 18 November 2026.
+Two views are generated from the same files:
 
-When an essay figure or a guide states a number or a tool capability, add or update its row there in the same change.
+- `/sources/` on the site (`src/pages/sources/index.astro`), with an anchor per fact.
+- [`guides/fact-check.md`](../guides/fact-check.md), so GitHub readers get the table too. Regenerate it with `node scripts/check-facts.mjs --write`; the build fails when it is stale.
+
+How to update a fact, add a model or refresh benchmark numbers: [`UPDATE.md`](../UPDATE.md).
