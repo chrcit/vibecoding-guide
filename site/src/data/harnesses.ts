@@ -180,6 +180,13 @@ export const harnesses = {
       'In Claude Code, set effort with /effort (a slider, or a level name), the --effort flag for one session, CLAUDE_CODE_EFFORT_LEVEL, or effortLevel in settings; max is not accepted as a saved level in settings.',
       CC('model-config'),
     ),
+    voiceMaxRecording: fact(2, 'In tap mode, a Claude Code voice recording stops after 15 seconds of silence or two minutes in total.', CC('voice-dictation'), { unit: 'minutes' }),
+    voiceHints: fact(
+      'project and branch names',
+      'Claude Code dictation is tuned for coding vocabulary, and adds the current project name and git branch name as recognition hints. The docs describe no dictionary of your own.',
+      CC('voice-dictation'),
+    ),
+    voiceLanguages: fact(20, 'Claude Code dictation supports 20 languages, set with the language setting; it defaults to English.', CC('voice-dictation')),
   },
   codex: {
     openSource: fact('Apache-2.0', 'The Codex CLI is open source under Apache-2.0. The models behind it are proprietary.', 'https://github.com/openai/codex'),

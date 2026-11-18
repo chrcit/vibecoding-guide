@@ -52,6 +52,17 @@ export const t3code = {
       doc('voice-input'),
     ),
     maxRecording: fact(5, 'A single voice recording in T3 Code is limited to five minutes.', doc('voice-input'), { unit: 'minutes' }),
+    shortcut: fact('mod+shift+d', 'Start dictation in T3 Code with mod+shift+d (Command on macOS, Ctrl elsewhere) or the microphone button.', doc('voice-input')),
+    dictionary: fact(
+      100,
+      'T3 Code keeps a dictionary of names and terms on your device and another per project; each recording carries up to 100 entries from the two combined.',
+      doc('voice-input'),
+    ),
+    cloudProviders: fact(
+      ['OpenAI', 'Grok Voice Transcribe', 'OpenRouter'],
+      'For cloud transcription T3 Code can use OpenAI, Grok Voice Transcribe or OpenRouter, each billed to your own account with that provider.',
+      doc('voice-input'),
+    ),
   },
   mcp: fact(
     '<environment>/mcp',
