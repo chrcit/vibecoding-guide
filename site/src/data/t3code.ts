@@ -142,4 +142,15 @@ export const t3code = {
   ),
   providerMissing: fact('Binary path', "A provider that does not show up is almost always not installed or not on the PATH of the machine running the server; set its Binary path in provider settings.", doc('faq')),
   sideChat: fact('/side', 'Start a message with /side or /btw to ask about a thread in a side chat without adding to it.', doc('thread-sidebar')),
+  handoffCap: fact(
+    16_000,
+    'A T3 Code handoff starts with a history allowance of 16,000 tokens by default; T3CODE_CONTEXT_HANDOFF_TOKEN_CAP changes it within 1,024 to 64,000.',
+    doc('portable-handoffs'),
+    { unit: 'tokens' },
+  ),
+  handoffLeavesOut: fact(
+    ['reasoning', 'tool-call state', 'attachments'],
+    "A T3 Code handoff keeps the selected messages in full, in order and with their roles, but leaves out the previous provider's reasoning, tool-call state and attachments. Omitted history can be fetched with T3 Code's thread-reading tool.",
+    doc('portable-handoffs'),
+  ),
 } as const;
