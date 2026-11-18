@@ -7,12 +7,12 @@ export const url = (p: string) => {
 // header only once its landing page exists, so flip `ready` when it ships.
 export const sections = [
   { id: 'guide', label: 'Guide', path: '', ready: true },
-  { id: 'start', label: 'Start', path: 'start/', ready: false },
-  { id: 'explain', label: 'Explainers', path: 'explain/', ready: false },
-  { id: 'models', label: 'Models', path: 'models/', ready: false },
-  { id: 't3-code', label: 'T3 Code', path: 't3-code/', ready: false },
+  { id: 'start', label: 'Start', path: 'start/', ready: true },
+  { id: 'explain', label: 'Explainers', path: 'explain/', ready: true },
+  { id: 'models', label: 'Models', path: 'models/', ready: true },
+  { id: 't3-code', label: 'T3 Code', path: 't3-code/', ready: true },
   { id: 'wiki', label: 'Wiki', path: 'wiki/', ready: false },
-  { id: 'essays', label: 'Essays', path: 'essays/', ready: false },
+  { id: 'essays', label: 'Essays', path: 'essays/', ready: true },
   { id: 'showcase', label: 'Showcase', path: 'showcase/', ready: false },
   { id: 'reference', label: 'Reference', path: 'guide/', ready: true },
 ] as const;

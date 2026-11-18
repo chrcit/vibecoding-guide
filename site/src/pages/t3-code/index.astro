@@ -1,4 +1,272 @@
 ---
-import Stub from '../../components/site/Stub.astro';
+// The T3 Code page (plan item C4). Every capability is read from
+// src/data/t3code.ts, checked against the README and user docs on the day in
+// the Verified line.
+import Article from '../../layouts/Article.astro';
+import Deeper from '../../components/level/Deeper.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import Note from '../../components/site/Note.astro';
+import Term from '../../components/site/Term.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import Embed from '../../components/site/Embed.astro';
+import CardGrid from '../../components/site/CardGrid.astro';
+import Card from '../../components/site/Card.astro';
+import { links } from '../../data/links';
+import { url } from '../../lib/nav';
+
+const headings = [
+  { depth: 2, slug: 'what-it-is', text: 'What it is' },
+  { depth: 2, slug: 'why-the-guide-uses-it', text: 'Why the guide uses it' },
+  { depth: 2, slug: 'what-you-need', text: 'What you need' },
+  { depth: 2, slug: 'what-it-is-not', text: 'What it is not' },
+  { depth: 2, slug: 'tour', text: 'A tour of the working surface' },
+  { depth: 2, slug: 'permissions', text: 'Who decides what the agent may do' },
+  { depth: 2, slug: 'walls', text: 'Where it hits walls' },
+  { depth: 2, slug: 'who-makes-it', text: 'Who makes it' },
+  { depth: 2, slug: 'related', text: 'Related pages' },
+];
+
+const factIds = [
+  't3code.stable', 't3code.version', 't3code.price', 't3code.licence', 't3code.providers', 't3code.install',
+  't3code.ownLogins', 't3code.worktrees', 't3code.handoff', 't3code.queueSteer', 't3code.voice.maxRecording',
+  't3code.permissionModes', 't3code.defaultMode', 't3code.connectMachines', 't3code.phoneIsRemote',
+  't3code.contributing', 't3code.maker', 't3code.welcome', 't3code.codexWithChatGPT', 't3code.newProject',
+  't3code.manyModels', 't3code.branchPrefix', 't3code.handoffCap', 't3code.handoffLeavesOut', 't3code.delegate',
+  't3code.usagePage', 't3code.noLocalModels', 't3code.codeNotToT3', 'plans.claude.pro.price', 'plans.chatgpt.plus.price',
+];
+
+const firstThread = `I am new to this. Before we build anything, tell me in plain words:
+
+1. What you can see and change on this computer from here.
+2. What you will ask me before you do it, and what you will just do.
+3. How I can undo something you did.
+
+Keep it short. Do not change any files yet.`;
 ---
-<Stub title="T3 Code" section="t3-code" />
+<Article
+  title="T3 Code"
+  description="T3 Code is a free desktop app that runs coding agents from several providers side by side. What it is, what you need, a tour of the screen, where it stops, and who makes it."
+  section="t3-code"
+  updated="2026-11-18"
+  headings={headings}
+>
+  <Fragment slot="lede">
+    <p>A free app where you give coding agents tasks, watch them work and check what they did, with agents from several providers in one window. The guide is written around it.</p>
+  </Fragment>
+
+  <h2 id="what-it-is">What it is</h2>
+  <p>
+    T3 Code is a desktop app for working with coding agents. A coding agent is a program that takes a task in plain words, reads and edits the files of your project, runs commands, and reports back. In T3 Code each task is a <em>thread</em>: a conversation with one agent about one piece of work. You choose which provider's agent runs each thread, and it works inside your project on your computer.
+  </p>
+  <p>
+    Around the conversation sits everything you need to keep an eye on the work: a list of your projects and threads, the changes each answer made, a browser where you and the agent see the same page, a terminal, and buttons to save the work with Git. It is <Fact id="t3code.price" />, open source under the <Fact id="t3code.licence" /> licence, and runs on macOS, Windows and Linux, with phone apps that act as a remote control (<Fact id="t3code.install" show="claim" />).
+  </p>
+
+  <Deeper level="technical" title="Harness, model and the layer above">
+    <p>
+      Three layers are easy to mix up. The <em>model</em> is the neural network: text in, text out. The <em>harness</em> is the program that gives the model tools and runs it in a loop, such as Claude Code or Codex. T3 Code sits above the harnesses: <Fact id="harnesses.t3code.role" show="claim" />
+    </p>
+    <p>
+      The project's own FAQ puts it as a kitchen analogy: the model is the chef, the harness is the kitchen, and T3 Code is the restaurant that lets you bring whichever kitchen you want. Theo, who makes T3 Code, wrote the long version in <a href={links.theoHarnessPost.url}>{links.theoHarnessPost.label}</a>. The guide's own explainer on <a href={url('explain/')}>how agents work</a> uses the same split.
+    </p>
+  </Deeper>
+
+  <h2 id="why-the-guide-uses-it">Why the guide uses it</h2>
+  <p>
+    Three habits run through this guide: give the agent context, never sit and wait for it, and check its work yourself. T3 Code makes the second and third easy to keep.
+  </p>
+  <p>
+    You can run several threads at once, each on its own task, and move between them while they work. Each thread can work on its own copy of the code, so two agents never edit the same file under each other. You can use agents from more than one provider in the same window, which matters when one provider's usage limit runs out halfway through an afternoon, or when you want a second opinion from a different model. And each answer shows exactly which files changed, which is where checking starts.
+  </p>
+
+  <h2 id="what-you-need">What you need</h2>
+  <p>
+    Two things. The app, from <a href={links.t3codeDownload.url}>t3.codes</a>. And a subscription or API key for at least one provider whose agent T3 Code can drive. T3 Code brings no AI of its own: it drives the agent programs installed on your computer, signed in with your own accounts (<Fact id="t3code.ownLogins" show="claim" />).
+  </p>
+  <p>
+    For most readers that means a monthly plan. A <Fact id="plans.claude.pro.price" /> a month Claude Pro plan includes Claude Code, and a <Fact id="plans.chatgpt.plus.price" /> a month ChatGPT Plus plan includes Codex. What each plan gets you, and when an API key makes more sense, is in <a href={url('explain/plans-and-api/')}>Plans and the API</a>.
+  </p>
+  <p>
+    When you first open the app it shows a Welcome page with the agents it found on your computer and a button to set up the ones it did not. With a ChatGPT account you can connect Codex from inside the app without touching a terminal. For Claude Code, the app opens a terminal window with the install or sign-in command already typed, and you press Enter.
+  </p>
+
+  <Deeper level="technical" title="Setup, step by step">
+    <ol>
+      <li>Install the desktop app from <a href={links.t3codeDownload.url}>{links.t3codeDownload.label}</a>, or with a package manager (<code>brew install --cask t3-code</code> on macOS, <code>winget install T3Tools.T3Code</code> on Windows). To try it once without installing, <code>npx t3@latest</code> runs the server and opens the web app.</li>
+      <li>Install at least one agent and sign in on the same machine. Claude Code: <code><Fact id="harnesses.claudeCode.login" /></code>. Codex: <code><Fact id="harnesses.codex.login" /></code>, or connect with ChatGPT from the Welcome page and let T3 Code install Codex for you.</li>
+      <li>Open <strong>Settings → Providers</strong> and check that the provider shows as ready. If it does not, the agent's command is usually not on the <code>PATH</code> of the machine running T3 Code; set its binary path in the provider's settings.</li>
+      <li>Add a project: drag a folder onto the sidebar, use <strong>Add project</strong> to clone a repository, or choose <strong>New project</strong> in the command palette (<kbd><Fact id="t3code.shortcuts.palette" /></kbd>) to start an empty Git repository.</li>
+      <li>Choose a permission mode for the first threads (see <a href="#permissions">below</a>), then send a first message.</li>
+    </ol>
+    <p>
+      The command-line install is <code><Fact id="t3code.cliInstall" /></code>; then <code>t3</code> starts the server and opens the web app. With the desktop app running, <code><Fact id="t3code.openFromTerminal" /></code> in any folder opens a new thread there. <Fact id="t3code.intelMac" show="claim" />
+    </p>
+    <p>
+      Providers today: <Fact id="t3code.providers" />. A second account for the same provider, or an API key, goes in as another provider instance with its own environment variables, so your subscription setup stays as it is.
+    </p>
+  </Deeper>
+
+  <h2 id="what-it-is-not">What it is not</h2>
+  <p>
+    T3 Code is not a model, and it does not sell you one. Underneath, it drives Claude Code, Codex and the other agents listed above. Whatever those agents can and cannot do, they can and cannot do in T3 Code too. Your usage limits are the limits of your plans with those providers.
+  </p>
+  <p>
+    It is also not a safety box. What an agent may touch on your computer is decided by the permission mode you pick and by the agent underneath, covered in <a href="#permissions">who decides what the agent may do</a>.
+  </p>
+
+  <h2 id="tour">A tour of the working surface</h2>
+  <p>
+    What follows is the screen as you will meet it, in the order you will need it. T3 Code changes weekly; this tour was checked against version <Fact id="t3code.stable" /> and the newest nightly, <Fact id="t3code.version" />.
+  </p>
+
+  <h3 id="projects">Projects</h3>
+  <p>
+    A project is a folder you work in, usually one Git repository. Projects sit in the sidebar with their threads underneath. A thread can also start without a project, in a scratch folder of its own, which is a good place to try an idea; when the idea turns into something worth keeping, <strong>Turn into project</strong> makes that folder a project where it is (<Fact id="t3code.scratchThreads" show="claim" />).
+  </p>
+
+  <h3 id="threads">Threads</h3>
+  <p>
+    One thread, one task. Start a new one for each separate piece of work rather than piling everything into one long conversation: a fresh thread starts with a clean head, and the sidebar becomes a list of what is in progress. In a new thread, <kbd><Fact id="t3code.shortcuts.background" /></kbd> sends the prompt, leaves the thread running in the background and opens another empty one, so you can hand out three tasks in a minute.
+  </p>
+
+  <h3 id="model-and-effort">Choosing the model and the effort</h3>
+  <p>
+    Under the message box you pick the provider and model for the thread (<kbd><Fact id="t3code.shortcuts.model" /></kbd>) and the effort, which is how long the model may think before it answers (<kbd><Fact id="t3code.shortcuts.effort" /></kbd>). Higher effort uses more of your plan for each answer. You can change the model in the middle of a thread. T3 Code remembers your last choice for new threads.
+  </p>
+
+  <h3 id="steer-or-queue">Sending a message while the agent works</h3>
+  <p>
+    You do not have to wait for an answer before typing the next thing. A message sent while the agent works either <em>queues</em>, waiting until the current turn ends, or <em>steers</em>, landing in the running turn straight away. You choose the default in <strong>Settings → Chat</strong>, and <kbd><Fact id="t3code.shortcuts.opposite" /></kbd> does the opposite for one message. Queued messages show at the end of the thread and can be edited or removed before they go. <Fact id="t3code.queueSteer" show="claim" />
+  </p>
+
+  <h3 id="diff">The diff and review</h3>
+  <p>
+    Each answer that changed files shows a <em>diff</em>: the lines removed and added, file by file. It shows the actual work, whatever the agent's summary says, and reading it is the quickest way to check what happened. You can comment on a line of the diff and send the comment back to the agent. <strong>Edit from here</strong> under an earlier message rewinds the conversation to that point if a thread went the wrong way.
+  </p>
+
+  <h3 id="worktrees">Worktrees</h3>
+  <p>
+    When you start a thread you can choose <strong>New worktree</strong>. A <Term def="A second working folder for the same Git repository, on its own branch. Changes in one worktree do not touch the others until you merge them.">worktree</Term> gives that thread its own copy of the project on its own branch, so parallel threads cannot trip over each other. When the work is good, the Git buttons commit it, push it and open a pull request (<Fact id="t3code.worktrees" show="claim" />). To try the same task on several models, shift-click them in a new thread's model picker: each gets its own thread and worktree.
+  </p>
+
+  <h3 id="handoff">Handing a thread to another provider</h3>
+  <p>
+    You can switch a thread to a different provider's model halfway through, for example when Claude's limit runs out and Codex has room. T3 Code picks the most useful part of the conversation so far and passes it over as it was written (<Fact id="t3code.handoff" show="claim" />). If something matters, say it again in your next message.
+  </p>
+
+  <h3 id="voice">Voice input</h3>
+  <p>
+    The microphone in the message box, or <kbd><Fact id="t3code.shortcuts.dictate" /></kbd>, turns speech into text in your draft. Nothing goes to the agent until you send it, so you can read it over first. On desktop you choose where the transcription runs before the first use. One recording can last up to <Fact id="t3code.voice.maxRecording" />. The <a href={url('explain/voice/')}>voice explainer</a> covers why talking through what you want works so well with agents.
+  </p>
+
+  <h3 id="previews">Previews and the browser</h3>
+  <p>
+    When an agent starts the app it is building, the thread lists that local server; select it and the page opens in T3 Code's built-in browser. The agent can use the same browser, so it can click through the page and see what you see (<Fact id="t3code.browser" show="claim" />). Agents can also answer with a small self-contained web page that shows inside the thread, useful for an explanation, a chart or a checklist (<Fact id="t3code.htmlRenders" show="claim" />).
+  </p>
+
+  <CopyPrompt title="A first message in a new thread">{firstThread}</CopyPrompt>
+
+  <Deeper level="technical" title="Keyboard shortcuts">
+    <p>In T3 Code, <kbd>mod</kbd> means <kbd>Cmd</kbd> on macOS and <kbd>Ctrl</kbd> on Windows and Linux. All of these can be changed in <strong>Settings → Keybindings</strong>, which also lists every command.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Shortcut</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><kbd><Fact id="t3code.shortcuts.palette" /></kbd></td><td>Command palette: projects, threads and actions</td></tr>
+          <tr><td><kbd><Fact id="t3code.shortcuts.model" /></kbd></td><td>Choose the model</td></tr>
+          <tr><td><kbd><Fact id="t3code.shortcuts.effort" /></kbd></td><td>Choose the effort</td></tr>
+          <tr><td><kbd><Fact id="t3code.shortcuts.permissions" /></kbd></td><td>Choose the permission mode</td></tr>
+          <tr><td><kbd><Fact id="t3code.shortcuts.workspace" /></kbd></td><td>Workspace: current checkout, new worktree, or the previous worktree</td></tr>
+          <tr><td><kbd><Fact id="t3code.shortcuts.background" /></kbd></td><td>In a new thread: send, keep it running and open another</td></tr>
+          <tr><td><kbd><Fact id="t3code.shortcuts.opposite" /></kbd></td><td>While the agent works: queue instead of steer, or the reverse</td></tr>
+          <tr><td><kbd><Fact id="t3code.shortcuts.dictate" /></kbd></td><td>Start and finish dictation</td></tr>
+          <tr><td><kbd><Fact id="t3code.shortcuts.usage" /></kbd></td><td>Open the Usage page</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      In the message box, <code>/</code> opens commands and <code><Fact id="t3code.skillsInComposer" /></code> adds a skill. After you add a skill or an MCP server, run <strong>Restart agent session</strong> from the command palette so the agent picks it up. <Fact id="t3code.sideChat" show="claim" />
+    </p>
+  </Deeper>
+
+  <Deeper level="engineer" title="Threads, worktrees, handoffs and remote machines">
+    <h4>How threads map to worktrees and branches</h4>
+    <p>
+      A thread runs either in the project's own checkout or in a worktree. With <strong>New worktree</strong>, T3 Code creates a Git worktree on a new branch, in the <Fact id="t3code.worktreeFolder" /> (configurable per machine). <Fact id="t3code.branchPrefix" show="claim" /> Several threads can share one worktree: <strong>New thread in this worktree</strong> on the branch toolbar starts another conversation on the same branch, which is how you put a reviewer next to an implementer. <Fact id="t3code.manyModels" show="claim" />
+    </p>
+    <p>
+      Each turn's diff shows only that turn's own changes; files Git brought in by a pull, merge or rebase are left out. Use the branch comparison for everything against the base branch. <Fact id="t3code.editFromHere" show="claim" /> It also refuses the file restore when another thread or agent session uses the same directory, since that would erase their changes. Worktrees cost disk; <strong>Settings → Worktrees → Cleanup</strong> removes old ones.
+    </p>
+
+    <h4>What a handoff carries</h4>
+    <p>
+      Short conversations transfer whole. Longer ones are cut to a budget: recent requests and answers, the original request, and relevant activity such as command results, each kept verbatim with its role and order. <Fact id="t3code.handoffCap" show="claim" /> Your new message is never shortened to make history fit. <Fact id="t3code.handoffLeavesOut" show="claim" /> Codex receives the selected history as native messages where its installed version supports it; other providers get it as attributed context. If the target model has no room, T3 Code starts a fresh provider conversation with a smaller selection and sends your request without you compacting by hand.
+    </p>
+
+    <h4>Delegating to other providers' models</h4>
+    <p>
+      <Fact id="t3code.crossProvider" show="claim" /> <Fact id="t3code.delegate" show="claim" /> Delegated work shows under <strong>Agents</strong>; stopping a parent thread stops what it delegated, and a subagent's approval requests surface in the parent. This is what makes the orchestration pattern in <a href={url('explain/orchestration/')}>Orchestration</a> practical across providers: a strong model plans and reviews, cheaper ones do the volume.
+    </p>
+
+    <h4>Remote environments</h4>
+    <p>
+      The agents run where the T3 Code server runs; the app, the web client and the phone are views onto it. Ways in: <Fact id="t3code.remote" />. A desktop-managed SSH environment starts or reuses a server on the remote host and forwards the port for you; projects, provider logins and agent work stay on that host. <Fact id="t3code.connectMachines" show="claim" /> <Fact id="t3code.phoneIsRemote" show="claim" /> Agents that T3 Code did not start can drive an environment through its MCP server at <code><Fact id="t3code.mcp" /></code>.
+    </p>
+
+    <h4>How it differs from running the command-line tools directly</h4>
+    <p>
+      The agent loop is the same: T3 Code drives Claude Code through Anthropic's Agent SDK and Codex through its app server, with your logins, settings, skills and instruction files. What changes is everything around the loop. Threads persist on the server rather than in a terminal tab. Worktrees, diffs per turn, commit and pull request actions, queue and steer, handoffs between providers and the shared browser are T3 Code's. Provider-specific features still depend on the provider: steering, automatic permission review and rewind all need support underneath. A provider's own slash commands work only at the start of a message. If you need a flag or a feature the integration does not expose yet, the plain command line is still there.
+    </p>
+  </Deeper>
+
+  <h2 id="permissions">Who decides what the agent may do</h2>
+  <p>
+    Each thread has a permission mode: <Fact id="t3code.permissionModes" />. Supervised asks you before every command and file change. Full access lets the agent do both without asking. The starting default for new threads is <Fact id="t3code.defaultMode" />, which is convenient and worth changing on purpose. For your first hour, or for any project you do not know well, pick Supervised (<kbd><Fact id="t3code.shortcuts.permissions" /></kbd>) and watch what the agent asks for.
+  </p>
+
+  <Deeper level="technical" title="How the modes are enforced">
+    <p>
+      T3 Code passes the mode to the agent underneath, and each agent enforces it its own way. Some read-only actions go ahead in Supervised. Auto uses the provider's automatic review where one exists and falls back to asking where it does not. Some providers offer only Supervised and Full access. <Fact id="t3code.claudePermissionsStillApply" show="claim" /> Claude Code's own allow and deny rules in <code><Fact id="harnesses.claudeCode.permissionRules" /></code> therefore still apply. T3 Code itself is not a sandbox; for untrusted code, run the agent on a machine where the worst case is acceptable.
+    </p>
+  </Deeper>
+
+  <h2 id="walls">Where it hits walls</h2>
+  <ul>
+    <li>It is young and moves fast. Versions are still 0.x, features land every week and screens change. When something breaks, an agent in a scratch thread is usually the quickest way to fix the setup.</li>
+    <li>It comes with no AI. You need your own plans and each agent installed and signed in, and your limits come from those plans. Running more threads uses more of them.</li>
+    <li>It cannot add abilities the agent lacks. If Claude Code cannot do something, T3 Code will not make it possible. <Fact id="t3code.noLocalModels" show="claim" /></li>
+    <li>The computer does the work. If the agents run on a laptop that goes to sleep, the work stops. The phone app is a remote control, not a second computer.</li>
+    <li>Previews are local. The built-in browser sees the app running on your machine; someone on another device does not, until you deploy it or share it over a private network.</li>
+    <li>Full access is the default for new threads, as above.</li>
+    <li>It is not looking for outside features. <Fact id="t3code.contributing" show="claim" /> Ideas go to the project's discussions.</li>
+  </ul>
+  <Note title="Where your code goes">
+    <p><Fact id="t3code.codeNotToT3" show="claim" /></p>
+  </Note>
+
+  <h2 id="who-makes-it">Who makes it</h2>
+  <p>
+    T3 Code is made by <a href={links.theo.url}>Theo</a> and his company, T3 Tools Inc. (<Fact id="t3code.maker" show="claim" />). Theo publishes long videos about AI tools and agentic coding on <a href={links.theo.url}>his YouTube channel</a>, writes at <a href={links.theoSite.url}>{links.theoSite.label}</a>, and posts on <a href={links.theoX.url}>X</a>. The project's site is <a href={links.t3code.url}>t3.codes</a>, the source is on <a href={links.t3codeRepo.url}>GitHub</a> under the MIT licence, and the <a href={links.t3codeDocs.url}>user docs</a> live next to the code. There is also a <a href={links.t3codeWeb.url}>web client</a>.
+  </p>
+  <p>
+    His overview video from 29 October 2026 walks through what T3 Code does:
+  </p>
+  <Embed id="uLGxb4F3SyI" title="T3 Code broke me, by Theo" />
+
+  <h2 id="related">Related pages</h2>
+  <CardGrid>
+    <Card href="start/" title="The first hour">Install it and get a first result, at your level.</Card>
+    <Card href="explain/plans-and-api/" title="Plans and the API">What a $20 plan runs, and when a key is better.</Card>
+    <Card href="explain/orchestration/" title="Orchestration">Several agents, one plan, and who checks whom.</Card>
+    <Card href="explain/verification/" title="Checking the work" />
+  </CardGrid>
+
+  <Verified ids={factIds} />
+</Article>
+
+<style>
+  .scroll { overflow-x: auto; margin: var(--space-4) 0; }
+  .scroll table { min-width: 28rem; }
+  h4 { margin-top: var(--space-6); }
+</style>

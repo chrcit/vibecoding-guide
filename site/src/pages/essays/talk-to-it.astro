@@ -1,0 +1,54 @@
+---
+import Essay from '../../layouts/Essay.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import { url } from '../../lib/nav';
+import { anchor } from '../../lib/facts.ts';
+import { links } from '../../data/links.ts';
+
+export const meta = {
+  title: 'Talk to it, and keep talking while it works',
+  description: 'Speak your prompts, because you say more out loud than you type, and add to them while the agent runs instead of waiting for it to finish.',
+  order: 2,
+};
+
+const ids = [
+  'claims.research.speechFaster',
+  'harnesses.claudeCode.voice',
+  't3code.voice.exists',
+  'models.claude-opus-5-5.context',
+  't3code.queueSteer',
+  'harnesses.claudeCode.queue',
+];
+const src = (id: string) => `sources/#${anchor(id)}`;
+const leansOn = [
+  { href: 'explain/context/', title: 'Fig. 3 and Fig. 4, on the context explainer' },
+  { href: '', title: 'Fig. 5, steer or queue (home page)' },
+  { href: 'explain/voice/', title: 'Voice explainer' },
+  { href: src('claims.research.speechFaster'), title: 'Fact: speech against typing on a phone' },
+  { href: src('t3code.queueSteer'), title: 'Fact: queued and steering messages in T3 Code' },
+  { href: src('harnesses.claudeCode.voice'), title: 'Fact: dictation in Claude Code' },
+];
+---
+<Essay meta={meta} leansOn={leansOn}>
+  <p>I dictate almost everything I send an agent. When you talk you say more than when you write. It comes out less tidy, and that does not matter, because the model copes with a ramble. What it cannot cope with is the thing you never said.</p>
+  <p>The first half of that has a number behind it. In a <a href={links.speechStudy.url}>Stanford study</a>, speaking was about <Fact id="claims.research.speechFaster" /> faster than typing on a phone keyboard. That was phones, so take it as a direction and not a ratio for your desk. The second half, that saying more makes the agent more able, is my own experience. I have no measurement for it.</p>
+  <p>The tools have caught up. Claude Code has a <Fact id="harnesses.claudeCode.voice" /> command for dictation, and T3 Code has dictation in the box where you type.</p>
+
+  <h2>Context is what makes it able</h2>
+  <p>The more context you give it, the more it can do. Context means everything the model can see when it answers: your message, the files it has read, the conversation so far. I treat it as the thing that makes the agent capable, which is why I give it so much.</p>
+  <p>When I set up a session with a friend who is a scientist, one spoken prompt covered a lot. It said who was in the room and what the afternoon was for. It said what I understood and what I did not: I know websites, I had no idea what her science question meant, so explain it to me while you solve it for her. It said what shape the answer should take, something interactive with pictures that she could walk me through in a few minutes. And it said the answer had to actually solve the problem she asked about.</p>
+  <p>None of that is technique. It is what you would tell a colleague who just walked in. <!-- FIG 4 -->The <a href={url('explain/context/')}>context explainer</a> shows the same prompt answered with that kind of detail and without it.</p>
+  <p>Screenshots count as context. The agent could not open a profile page that sat behind a login, so I took a screenshot and pasted it in. Other people’s words count too. When a colleague sends me a long voice note, I transcribe it and paste the whole thing.</p>
+  <p>I also change my mind halfway through a sentence. Start this on one model, actually no, use the stronger one. I leave the correction in and the model follows the last thing I said. Sometimes I just talk too much, and it copes with that as well.</p>
+
+  <h2>The counterweight</h2>
+  <p>Context has a cost. The window the model reads from has a limit, <Fact id="models.claude-opus-5-5.context" /> on Opus 5.5, and a long session fills it. <!-- FIG 3 -->The <a href={url('explain/context/')}>context explainer</a> shows it filling up and what happens when it does.</p>
+  <p>There is a second cost. Pasting everything in includes pasting things you have not read. I once handed over a colleague’s spoken feedback without listening to it, and later I could not tell whether the agent had dealt with it. So say everything you know. Be careful with things you only forwarded.</p>
+
+  <h2>Never wait for it</h2>
+  <p>The second rule: do not wait for the agent to finish before adding the next thing. You can always add more while it works. <Fact id="t3code.queueSteer" show="claim" /> <Fact id="harnesses.claudeCode.queue" show="claim" /></p>
+  <p>In that session a hard task was still running when my friend thought of another question. I typed it in. It queued. I could have edited it while it waited, but there was no need, so I kept sending things one at a time. In my experience the agent folds a new request into what it is already doing and does not throw away the earlier work unless you tell it to. How well that works depends on the tool and the model, and I have only my own use to go on. <!-- FIG 5 -->The <a href={url('')}>steer-or-queue figure on the home page</a> shows the two ways a follow-up can land.</p>
+  <p>People get two things wrong here. They tidy the prompt before sending it, and they treat a running agent as busy. Send the untidy version, and keep talking.</p>
+  <Verified ids={ids} />
+</Essay>

@@ -50,6 +50,143 @@ export const harnesses = {
       CC('best-practices'),
     ),
     enterpriseCost: fact(13, 'Across enterprise deployments Claude Code averages about $13 per developer per active day and $150 to $250 per month.', CC('costs'), { unit: 'usd' }),
+    init: fact('/init', 'In Claude Code, /init generates a starting CLAUDE.md from the codebase: build commands, test instructions and conventions it finds. It suggests improvements when one exists.', CC('memory')),
+    permissionRules: fact(
+      '.claude/settings.json',
+      'Claude Code permission rules live in settings files such as .claude/settings.json, as permissions.allow and permissions.deny lists like "Bash(npm run *)". They are enforced by Claude Code, not by the model; /permissions shows and edits them.',
+      CC('permissions'),
+    ),
+    usageCommand: fact('/usage', 'In Claude Code, /usage shows plan usage bars and a breakdown of what counted against the limits for subscribers; the session dollar figure is for API users.', CC('costs')),
+    mcpAdd: fact('claude mcp add --transport http <name> <url>', 'Add a remote MCP server to Claude Code with claude mcp add --transport http <name> <url>.', CC('mcp')),
+    subagentFiles: fact(
+      ['.claude/agents/', '~/.claude/agents/'],
+      'Claude Code subagents are Markdown files with YAML frontmatter (name and description required) in .claude/agents/ for one project or ~/.claude/agents/ for all of them.',
+      CC('sub-agents'),
+    ),
+    subagentModel: fact(
+      ['sonnet', 'opus', 'haiku', 'fable', 'a full model ID', 'inherit'],
+      "A Claude Code subagent's model field takes sonnet, opus, haiku, fable, a full model ID or inherit; by default a subagent runs on the same model as the conversation that starts it.",
+      CC('sub-agents'),
+    ),
+    subagentFreshContext: fact(
+      'fresh context, summary back',
+      "Each Claude Code subagent starts with a fresh context window that does not see the conversation history, the skills already invoked or the files already read, and returns only a summary. A fork is the exception: it inherits the parent conversation.",
+      CC('sub-agents'),
+    ),
+    subagentBackground: fact(
+      'background by default',
+      'With nothing configured, a subagent that Claude Code spawns from the main conversation runs in the background, and its result arrives as a notification in a later turn. Foreground subagents block the main conversation until they finish.',
+      CC('sub-agents'),
+    ),
+    subagentWorktree: fact(
+      'isolation: worktree',
+      'Setting isolation: worktree runs a Claude Code subagent in a temporary Git worktree, an isolated copy of the repository, which is removed if the subagent changes nothing.',
+      CC('sub-agents'),
+    ),
+    subagentAttribution: fact(
+      '/usage',
+      'On a Claude plan, /usage in Claude Code shows what share of recent usage went to skills, subagents, plugins and each MCP server.',
+      CC('costs'),
+    ),
+    smallSubagentModel: fact(
+      'model: haiku',
+      "Anthropic's cost advice for Claude Code: for simple subagent tasks, set model: haiku in the subagent's configuration.",
+      CC('costs'),
+    ),
+    agentTeamSize: fact(
+      'proportional to team size',
+      'Each agent-team teammate runs its own context window, so token use is roughly proportional to team size, and a teammate keeps using tokens until it exits.',
+      CC('costs'),
+    ),
+    checkToRun: fact(
+      'Give Claude something it can run that comes back pass or fail.',
+      'Anthropic\'s best practices: "Give Claude something it can run that comes back pass or fail. Once it has that, it can keep going on its own and you don\'t have to watch." A test file, a build\'s exit code, a linter, a script that diffs output against a fixture or a browser screenshot all count.',
+      CC('best-practices'),
+    ),
+    askForEvidence: fact(
+      'ask for evidence',
+      'Anthropic\'s best practices: ask Claude for evidence, the command it ran and its output or the screenshot. "All tests pass" on its own tells you very little.',
+      CC('best-practices'),
+    ),
+    codeReview: fact(
+      '/code-review',
+      'In a terminal session, /code-review reviews the changes on your branch in a background subagent with its own context window, which never saw the conversation that produced the code.',
+      CC('code-review-local'),
+    ),
+    reviewerAlwaysFinds: fact(
+      'skip style',
+      'Anthropic\'s best practices warn that a reviewer asked to find problems will always find something, and suggest telling it to report gaps that affect correctness and skip style.',
+      CC('best-practices'),
+    ),
+    sameModelReviewer: fact(
+      'a fresh pair of eyes',
+      'By default a Claude Code subagent is the same model (or a smaller one) on the same task: you get a fresh pair of eyes out of it, not a smarter answer. A fresh reviewer helps because it has not seen your reasoning.',
+      CC('best-practices'),
+    ),
+    permissionModes: fact(
+      ['default (Manual)', 'acceptEdits', 'plan', 'auto', 'dontAsk', 'bypassPermissions'],
+      'Claude Code has six permission modes: Manual (default), acceptEdits, plan, auto, dontAsk and bypassPermissions. In Manual it asks before most edits, shell commands and network access; bypassPermissions is meant for isolated containers and VMs only.',
+      CC('permission-modes'),
+    ),
+    autoModeDefault: fact(
+      'auto mode',
+      'New interactive terminal and VS Code sessions of Claude Code start in auto mode, where a separate classifier model checks actions before they run. Deny rules apply in every mode.',      CC('best-practices'),
+    ),
+    startupContext: fact(
+      ['CLAUDE.md', 'auto memory', 'MCP tool names', 'skill descriptions'],
+      'Before you type anything, Claude Code loads CLAUDE.md (or AGENTS.md), auto memory, MCP tool names and skill descriptions into the context window.',
+      CC('context-window'),
+    ),
+    autoCompactAt: fact(
+      967_000,
+      'Claude Code compacts a session on a model with a native 1M-token window at about 967K tokens by default; /autocompact sets an earlier point.',
+      CC('model-config'),
+      { unit: 'tokens' },
+    ),
+    compactionKeeps: fact(
+      'a summary, plus instructions and recent files reloaded',
+      'Compaction replaces the conversation with a summary. The project-root CLAUDE.md and auto memory are re-injected from disk, and Claude Code re-reads up to five of the files it read or edited, most recently modified first.',
+      CC('context-window'),
+    ),
+    compactionReread: fact(5, 'After compaction Claude Code re-reads up to five of the files Claude read or edited in the session.', CC('context-window')),
+    claudeMdLines: fact(200, 'Anthropic recommends keeping each CLAUDE.md under 200 lines: longer files consume more context and reduce adherence.', CC('memory')),
+    claudeMdNesting: fact(
+      'above at launch, below on demand',
+      'CLAUDE.md files in the directories above the working directory load at launch; those in subdirectories load once Claude works with a file there.',
+      CC('memory'),
+    ),
+    autoMemoryLoad: fact(
+      '200 lines or 25KB',
+      'Claude Code loads the first 200 lines or 25KB of its auto memory file, MEMORY.md, whichever comes first, at the start of every conversation.',
+      CC('memory'),
+    ),
+    promptCacheTtl: fact(
+      'about an hour on a plan, five minutes on an API key',
+      'In Claude Code the prompt cache lasts about an hour on a subscription and five minutes on an API key, a cloud provider or usage credits. Subagents get five minutes unless you change it.',
+      CC('best-practices'),
+    ),
+    clearAfterTwo: fact(
+      'after two failed corrections, /clear',
+      'Anthropic: after two failed corrections, run /clear and write a better prompt instead of a third; a third correction mostly adds to a conversation that already holds two failed attempts.',
+      CC('best-practices'),
+    ),
+    focusedContext: fact(
+      'focused context gives better answers',
+      'Running out of context is rare on 1M-token windows, but Anthropic still advises /clear between tasks, because a focused context gets better answers and costs less.',
+      CC('best-practices'),
+    ),
+    effort: fact(
+      '/effort',
+      'In Claude Code, set effort with /effort (a slider, or a level name), the --effort flag for one session, CLAUDE_CODE_EFFORT_LEVEL, or effortLevel in settings; max is not accepted as a saved level in settings.',
+      CC('model-config'),
+    ),
+    voiceMaxRecording: fact(2, 'In tap mode, a Claude Code voice recording stops after 15 seconds of silence or two minutes in total.', CC('voice-dictation'), { unit: 'minutes' }),
+    voiceHints: fact(
+      'project and branch names',
+      'Claude Code dictation is tuned for coding vocabulary, and adds the current project name and git branch name as recognition hints. The docs describe no dictionary of your own.',
+      CC('voice-dictation'),
+    ),
+    voiceLanguages: fact(20, 'Claude Code dictation supports 20 languages, set with the language setting; it defaults to English.', CC('voice-dictation')),
   },
   codex: {
     openSource: fact('Apache-2.0', 'The Codex CLI is open source under Apache-2.0. The models behind it are proprietary.', 'https://github.com/openai/codex'),
@@ -91,6 +228,36 @@ export const harnesses = {
       'learn.chatgpt.com/docs',
       'The Codex docs moved: developers.openai.com/codex/* now redirects (308) to learn.chatgpt.com/docs/*.',
       CX('pricing'),
+    ),
+    subagentFiles: fact(
+      ['~/.codex/agents/', '.codex/agents/'],
+      'Codex custom agents are TOML files in ~/.codex/agents/ (personal) or .codex/agents/ (project), each defining name, description and developer_instructions.',
+      CX('agent-configuration/subagents'),
+    ),
+    subagentModel: fact(
+      'agents.default_subagent_model',
+      "Codex sets the default model for spawned agents with agents.default_subagent_model; a custom agent file's own model field takes precedence.",
+      CX('agent-configuration/subagents'),
+    ),
+    maxThreads: fact(
+      'agents.max_concurrent_threads_per_session',
+      'Codex caps concurrently open spawned-agent threads with agents.max_concurrent_threads_per_session (legacy alias agents.max_threads); left unset, Codex chooses the default.',
+      CX('agent-configuration/subagents'),
+    ),
+    subagentResults: fact(
+      'consolidated response',
+      'When several Codex subagents run, Codex waits until all requested results are in and returns a consolidated response in the main thread.',
+      CX('agent-configuration/subagents'),
+    ),
+    approvals: fact(
+      ['on-request', 'never'],
+      'Codex approval policies are on-request (works inside the sandbox and asks before going beyond it) and never (does not stop for approval). workspace-write is the default low-friction sandbox mode for local work.',
+      CX('sandboxing'),
+    ),
+    effort: fact(
+      '/model',
+      'In the Codex CLI, pick model and reasoning effort with /model (More reasoning… shows max and ultra); in the desktop app, use the model and reasoning control under the composer.',
+      CX('models'),
     ),
   },
   t3code: {

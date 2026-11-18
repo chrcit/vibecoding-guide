@@ -1,0 +1,46 @@
+---
+import Essay from '../../layouts/Essay.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import { url } from '../../lib/nav';
+import { anchor } from '../../lib/facts.ts';
+import { links } from '../../data/links.ts';
+
+export const meta = {
+  title: 'Your job is to disprove it',
+  description: 'Once the agent does the work, what is left for you is checking it. Assume it is wrong until you have looked, and never check against a brief you have not read.',
+  order: 4,
+};
+
+const ids = ['harnesses.claudeCode.bestPractice'];
+const src = (id: string) => `sources/#${anchor(id)}`;
+const leansOn = [
+  { href: 'explain/verification/', title: 'Fig. 13, 14 and 15, on the verification explainer' },
+  { href: '', title: 'Fig. 6, you are the bottleneck (home page)' },
+  { href: src('harnesses.claudeCode.bestPractice'), title: 'Fact: Anthropic’s advice before an unattended run' },
+  { href: 'essays/throwaway-tools-for-thinking/', title: 'Essay: Have it build you throwaway tools for thinking' },
+  { href: 'essays/ask-for-a-bigger-problem/', title: 'Essay: Ask for a bigger problem' },
+];
+---
+<Essay meta={meta} leansOn={leansOn}>
+  <p>Once the agent does the work, your only job is to verify what it did or disprove it. That job cannot be skipped. The more you hand over without looking, the worse the results get.</p>
+  <p>Start from the assumption that the output is wrong. On a hard problem I expect the first result to be wrong, and often badly. I cannot point you to a published error rate for that. It is my working assumption, and it has not let me down yet.</p>
+  <p>Even this job can be equipped. Ask the agent for the best tool for you to check whether it is right: a test you can run, a page that shows the data, a list of what changed and where. Anthropic’s own <a href={links.claudeCodeBestPractices.url}>advice for Claude Code</a> comes at it from the agent’s side: “<Fact id="harnesses.claudeCode.bestPractice" />” An agent that can check itself sends you fewer mistakes, and you still check what it sends.</p>
+
+  <h2>Looking is the safeguard</h2>
+  <p>In one session the agent mixed material from one task into another. The friend I was working with, a scientist, said mixing things up like that was a bad idea. My answer was that it does not matter much, as long as you look. You see it, you say “what are you doing, remove it”, and it is gone. The person in trouble is the one who never looks at what was generated and publishes it as it is.</p>
+  <p>The danger I worry about most is quieter. The same tools that speed up your thinking can make you lazy, because each time you skip a look you hand over a bit more control. The more you do that, the worse it gets.</p>
+
+  <h2>A story against myself</h2>
+  <p>A designer I work with sent me long spoken feedback on a piece of work. I transcribed it, pasted it into the agent and told it to make the changes. I did not listen to the feedback myself. Later I opened the result and could not tell what had changed. It looked about the same as before.</p>
+  <p>That was the moment I should have listened to the feedback before trying to review anything. You cannot check work against a brief you never read. The agent may have done everything that was asked. I had no way to know.</p>
+
+  <h2>What checking looks like</h2>
+  <p>My friend asked the agent for a long list of research problems it could take on. One of them rested on an official reference value that, as far as she knew, does not exist. It read as perfectly plausible. Only someone who knows the field would catch it. I have no sourced figure for how often models invent facts like this on specialist questions, which is one more reason to check every time.</p>
+  <p>Her plan for the agent’s draft was the right one, and I would follow it in any field. Read it in detail. Check it against what you know should be there. Test the code. Run it on real data. Make the edits yourself. I would not stop at double-checking; triple-check. She said she would only ever use the draft as a starting point, and that is the right way to treat it.</p>
+  <p>Sometimes the check confirms the work. The made-up test data the agent generated for her had the right columns and realistic sizes for her field, by her judgement, and it passed. You only find out which way a check goes by doing it.</p>
+
+  <h2>Why one look is not enough</h2>
+  <p><!-- FIG 15 -->The <a href={url('explain/verification/')}>verification explainer</a> puts the agent’s summary next to the diff, the record of every line it changed, and the two can tell different stories. <!-- FIG 13 --><!-- FIG 14 -->The same page shows why a single judge, human or model, misses things, and why asking the same judge twice removes some kinds of error and not others. <!-- FIG 6 -->The <a href={url('')}>bottleneck figure on the home page</a> shows where all of this lands: on you, because verification is the step that does not get faster when the agent does.</p>
+  <Verified ids={ids} />
+</Essay>

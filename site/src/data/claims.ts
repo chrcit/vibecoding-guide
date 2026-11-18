@@ -60,12 +60,71 @@ export const claims = {
       'https://arxiv.org/abs/1608.07323',
       { unit: 'multiplier' },
     ),
+    judgeBiases: fact(
+      'position, verbosity, self-enhancement',
+      'Zheng et al. (2023) found that models used as judges show position bias, verbosity bias and self-enhancement bias, while a strong judge still agreed with human preferences over 80% of the time.',
+      'https://arxiv.org/abs/2306.05685',
+    ),
+    selfPreference: fact(
+      'self-preference',
+      'Panickssery et al. (2024) found that a model used as an evaluator scores its own outputs higher than others\' that human annotators judge equal, and the better it recognises its own text the stronger the bias.',
+      'https://arxiv.org/abs/2404.13076',
+    ),
+    sycophancy: fact(
+      'sycophancy',
+      'Sharma et al. (2023) found sycophancy in five leading AI assistants across four kinds of task, and that people and preference models sometimes prefer a convincing sycophantic answer over a correct one.',
+      'https://arxiv.org/abs/2310.13548',
+    ),
+    selfCorrection: fact(
+      'needs external feedback',
+      'Huang et al. (2023) found that models struggle to correct their own reasoning without external feedback, and sometimes do worse after trying.',
+      'https://arxiv.org/abs/2310.01798',
+    ),
+    selfConsistency: fact(
+      'sample several, take the most consistent',
+      'Wang et al. (2022) showed that sampling several reasoning paths and taking the answer most of them agree on (self-consistency) improves accuracy over a single greedy answer.',
+      'https://arxiv.org/abs/2203.11171',
+    ),
+    contextRot: fact(
+      'context rot',
+      'Anthropic (29 September 2025): as the number of tokens in the context window grows, a model\'s ability to recall information from it declines, which they call context rot. Context is a finite resource with diminishing returns.',
+      'https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents',
+    ),
   },
   hardware: {
     unifiedMemory: fact(
       'shared memory',
       'Apple-silicon Macs share one pool of memory between CPU and GPU, which lets them run larger local models.',
       'https://www.apple.com/newsroom/2025/10/apple-unleashes-m5-the-next-big-leap-in-ai-performance-for-apple-silicon/',
+    ),
+  },
+  // Dictation apps that work in any text box, for the voice page (/explain/voice/).
+  voiceApps: {
+    wisprFlow: fact(
+      15,
+      'Wispr Flow has a free plan with a weekly word limit and a Pro plan at $15 a month billed monthly. It runs on Mac, Windows, iPhone and Android and keeps a personal dictionary of names and jargon.',
+      'https://wisprflow.ai/pricing',
+      { unit: 'usd' },
+    ),
+    superwhisper: fact(
+      'free tier, works offline',
+      'Superwhisper has a free tier and can work offline with local models, which run best on Apple-silicon Macs. It keeps a custom vocabulary of names and terms.',
+      'https://superwhisper.com/',
+    ),
+    handy: fact(
+      'free, MIT, offline',
+      'Handy is free and open source (MIT) and transcribes entirely on your computer, with Whisper or Parakeet models, on Windows, macOS and Linux.',
+      'https://github.com/cjpais/Handy',
+    ),
+    macDictation: fact(
+      'built in',
+      'macOS has Dictation built in (Edit > Start Dictation, or the dictation key). It has no time limit and stops after 30 seconds without speech.',
+      'https://support.apple.com/guide/mac-help/use-dictation-mh40584/mac',
+    ),
+    wisprCloud: fact(
+      'always in the cloud',
+      'Wispr Flow transcribes in the cloud in every mode ("Transcription always occurs on the cloud"); a data setting decides whether your dictation is used for model training.',
+      'https://wisprflow.ai/data-controls',
     ),
   },
 } as const;

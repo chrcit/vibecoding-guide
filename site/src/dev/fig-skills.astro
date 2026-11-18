@@ -1,0 +1,19 @@
+---
+// Review page for the skills explainer's figure. Routed at /dev/fig-skills/ in `pnpm dev`, or in a
+// build with ACG_DEV_PAGES=1. Fig. 16 takes no data: its skills and request are fictional.
+import Base from '../layouts/Base.astro';
+import SkillLoads from '../components/fig/skill-loads/SkillLoads.astro';
+---
+<Base title="Figures: skills" description="Development-only review page for Fig. 16." noindex>
+  <div class="fig-review">
+    <h1>Figures: skills</h1>
+    <p>Fig. 16 for the skills explainer. The four skills and the request are fictional, from the contact tidy example.</p>
+    <SkillLoads />
+  </div>
+</Base>
+
+<style>
+  .fig-review { max-width: 46rem; margin: 2rem auto 4rem; padding: 0 var(--gutter); }
+  h1 { margin: 0 0 0.5rem; }
+  p { color: var(--muted); margin: 0; }
+</style>

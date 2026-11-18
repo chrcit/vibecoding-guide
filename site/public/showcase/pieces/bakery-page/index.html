@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="color-scheme" content="light dark">
+  <title>Fennick's Bakehouse, Ferrisby</title>
+  <meta name="description" content="A fictional neighbourhood bakery: what we bake, where we are and when we are open.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='18' rx='14' ry='10' fill='%23c26a32'/%3E%3Cpath d='M9 15l3 5M15 13l3 6M21 13l3 5' stroke='%23f6e2c6' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+</head>
+<body>
+  <a class="skip" href="#hours">Skip to opening hours</a>
+  <div class="awning" aria-hidden="true"></div>
+
+  <header class="top">
+    <p class="brand"><span class="brand-name">Fennick's</span> <span class="brand-sub">Bakehouse</span></p>
+    <nav aria-label="On this page">
+      <a href="#hours">Hours</a>
+      <a href="#bake">What we bake</a>
+      <a href="#find">Find us</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="status-h" data-state="loading">
+      <div class="status">
+        <p class="viewing" id="viewing" hidden></p>
+        <h1 id="status-h" class="status-word" aria-live="polite"><span id="status-word">Opening hours</span></h1>
+        <p class="status-line" id="status-line">Bread, buns and a night hatch on Tanner Steps, Ferrisby.</p>
+        <p class="status-sub" id="status-sub"></p>
+        <p class="status-note" id="status-note" hidden></p>
+        <p class="tz-note" id="tz-note">All times are Ferrisby time (UK).</p>
+      </div>
+      <figure class="shop" aria-hidden="true">
+        <svg viewBox="0 0 340 300" role="presentation">
+          <defs>
+            <clipPath id="win"><rect x="44" y="132" width="150" height="104" rx="6"/></clipPath>
+            <pattern id="stripes" x="14" width="26" height="60" patternUnits="userSpaceOnUse">
+              <rect width="13" height="60" class="s-cobalt"/><rect x="13" width="13" height="60" class="s-white"/>
+            </pattern>
+          </defs>
+          <rect x="20" y="52" width="300" height="236" rx="4" class="s-wall"/>
+          <rect x="20" y="52" width="300" height="34" class="s-fascia"/>
+          <text x="170" y="75" text-anchor="middle" class="s-sign">FENNICK'S</text>
+          <path d="M14 86h312v34q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0q-6.5 14-13 0z" fill="url(#stripes)" class="s-awning"/>
+          <rect x="44" y="132" width="150" height="104" rx="6" class="s-window"/>
+          <g clip-path="url(#win)">
+            <rect x="44" y="132" width="150" height="104" class="s-glow"/>
+            <rect x="44" y="200" width="150" height="6" class="s-shelf"/>
+            <ellipse cx="78" cy="190" rx="24" ry="13" class="s-loaf"/>
+            <path d="M64 186l6 6M74 182l7 8M85 182l6 7" class="s-score"/>
+            <ellipse cx="128" cy="192" rx="18" ry="11" class="s-loaf2"/>
+            <path d="M119 188l5 6M129 186l5 6" class="s-score"/>
+            <rect x="152" y="176" width="32" height="24" rx="9" class="s-loaf"/>
+            <path d="M158 182h20" class="s-score"/>
+            <circle cx="70" cy="224" r="8" class="s-bun"/><circle cx="90" cy="226" r="8" class="s-bun"/><circle cx="110" cy="224" r="8" class="s-bun"/>
+            <circle cx="130" cy="226" r="8" class="s-bun"/><circle cx="150" cy="224" r="8" class="s-bun"/><circle cx="170" cy="226" r="8" class="s-bun"/>
+          </g>
+          <rect x="44" y="132" width="150" height="104" rx="6" class="s-frame"/>
+          <g class="s-hatch">
+            <rect x="44" y="246" width="70" height="30" rx="3" class="s-hatchbox"/>
+            <text x="79" y="266" text-anchor="middle" class="s-hatchtext">HATCH</text>
+          </g>
+          <rect x="222" y="132" width="74" height="156" rx="4" class="s-door"/>
+          <rect x="236" y="146" width="46" height="66" rx="3" class="s-doorglass"/>
+          <rect x="231" y="165" width="56" height="22" rx="3" class="s-plaque"/>
+          <text x="259" y="181" text-anchor="middle" class="s-plaquetext" id="plaque">OPEN</text>
+          <circle cx="284" cy="226" r="4" class="s-knob"/>
+          <rect x="6" y="284" width="328" height="10" rx="2" class="s-step"/>
+        </svg>
+      </figure>
+    </section>
+
+    <section class="hours" id="hours" aria-labelledby="hours-h">
+      <div class="hours-head">
+        <h2 id="hours-h">The next seven days</h2>
+        <p class="hours-lead" id="hours-lead">Including holidays and any change to the usual week.</p>
+      </div>
+      <ol class="week" id="week"></ol>
+
+      <div class="lower">
+        <form class="check" id="check" novalidate aria-labelledby="check-h">
+          <h3 id="check-h">Check a date</h3>
+          <p class="check-help" id="check-help">See what this page will say at any moment, in Ferrisby time.</p>
+          <div class="fields">
+            <div class="field">
+              <label for="check-date">Date</label>
+              <input type="date" id="check-date" name="date" min="1900-01-01" max="2199-12-31" aria-describedby="check-help check-error" required>
+            </div>
+            <div class="field">
+              <label for="check-time">Time</label>
+              <input type="time" id="check-time" name="time" aria-describedby="check-help check-error">
+            </div>
+          </div>
+          <p class="error" id="check-error" role="alert"></p>
+          <div class="buttons">
+            <button type="submit" class="btn primary">Show that day</button>
+            <button type="button" class="btn" id="check-now" disabled>Back to now</button>
+          </div>
+        </form>
+
+        <div class="special">
+          <h3>Holidays and changes</h3>
+          <ul class="special-list" id="special"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="bake" id="bake" aria-labelledby="bake-h">
+      <h2 id="bake-h">What we bake</h2>
+      <div class="bake-grid">
+        <article class="item item-big">
+          <svg class="loaf" viewBox="0 0 240 120" aria-hidden="true">
+            <ellipse cx="120" cy="104" rx="104" ry="10" class="l-shadow"/>
+            <path d="M18 86c0-44 46-72 102-72s102 28 102 72c0 12-10 18-24 18H42c-14 0-24-6-24-18z" class="l-crust"/>
+            <path d="M30 80c4-34 42-56 90-56s86 22 90 56" class="l-sheen"/>
+            <path d="M64 34l-14 28M98 24l-14 36M134 22l-14 38M168 30l-14 32M196 46l-10 20" class="l-score"/>
+          </svg>
+          <h3>The Tanner loaf</h3>
+          <p>A slow white sourdough, baked dark. Out of the oven by 07:00 every day we open, gone most Saturdays by eleven.</p>
+        </article>
+        <article class="item">
+          <h3>Rye and caraway tin</h3>
+          <p>Dense, sour, keeps for a week. Sliced on request.</p>
+        </article>
+        <article class="item">
+          <h3>Morning buns</h3>
+          <p>Cardamom knots on weekdays, cinnamon on Sundays.</p>
+        </article>
+        <article class="item item-night">
+          <h3>The night hatch</h3>
+          <p>Friday and Saturday from 22:00 to 01:00: hot sausage rolls, cheese twists and whatever the night bake has spare, through the hatch by the window.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="find" id="find" aria-labelledby="find-h">
+      <div class="find-text">
+        <h2 id="find-h">Find us</h2>
+        <address>11 Tanner Steps<br>Ferrisby<br>FY4 2QT</address>
+        <p>At the bottom of the steps, opposite the old ropeworks. Step-free entry from Cooper Lane. Card and cash.</p>
+      </div>
+      <figure class="map" aria-label="Street map: Tanner Steps runs down from the market square to Cooper Lane; the bakery is at the bottom, opposite the ropeworks.">
+        <svg viewBox="0 0 320 220" role="img" aria-hidden="true">
+          <rect width="320" height="220" class="m-ground"/>
+          <path d="M-10 170 C 80 150, 160 196, 330 160" class="m-river"/>
+          <path d="M40 -10 L 120 210" class="m-road"/>
+          <path d="M-10 60 L 330 40" class="m-road"/>
+          <path d="M150 50 L 210 140 L 330 128" class="m-steps"/>
+          <rect x="18" y="60" width="44" height="34" rx="3" class="m-block"/>
+          <rect x="170" y="56" width="70" height="40" rx="3" class="m-block"/>
+          <rect x="230" y="150" width="60" height="26" rx="3" class="m-block"/>
+          <text x="244" y="168" class="m-label">ropeworks</text>
+          <text x="80" y="34" class="m-label">Market Square</text>
+          <text x="140" y="150" class="m-label">Tanner Steps</text>
+          <text x="66" y="200" class="m-label">Cooper Lane</text>
+          <circle cx="210" cy="140" r="11" class="m-pin"/>
+          <circle cx="210" cy="140" r="4" class="m-pindot"/>
+        </svg>
+      </figure>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Fennick's Bakehouse and Ferrisby are made up. This page was built by an agent for the Agentic Coding Guide showcase.</p>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

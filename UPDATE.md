@@ -20,8 +20,18 @@ A fact's id is its path: `plans.claude.pro.price`. Pages read it with `<Fact id=
 ## Add a model
 
 1. Add an entry to `models` in `site/src/data/models.ts`, keyed by the API id (`claude-opus-5-5`). Fill in name, lab, links (docs, announcement, system card) and the facts you can source: release date, context window, max output, prices (with `longPrompt` if it is priced by prompt length), effort levels and default.
-2. Add its benchmark score to `benchmarks.ts` once Artificial Analysis has one.
-3. Retire nothing: an older model stays until no page mentions it.
+2. For the model pages, also set:
+   - `current: true` if it is in the lab's current line-up (older models stay in the data for price comparisons and get a card, but not a row in the index table);
+   - `purpose`: the lab's own one-line description, quoted from its models page;
+   - `harness`: `'claudeCode'` or `'codex'`, and `pick`: how to select it there;
+   - `plans`: the ids of the facts in `plans.ts` that say which plans include it (add those facts first if they are missing);
+   - `knowledgeCutoff` and `retirement` where the lab publishes them;
+   - `changed: { date, note }` when something a reader should know about has changed (a price cut, a new default).
+3. Add its benchmark score to `benchmarks.aa.index` in `benchmarks.ts` once Artificial Analysis has one, keyed by the same id. Write the claim as "… at <level> effort." so the pages can show the effort it was measured at.
+4. Build. The card at `/models/<id>/`, its row in the `/models/` table and its point in Fig. 10 appear with no page edit. A field you could not source shows as "not published"; an `unverified(...)` fact shows as "not confirmed". The place in the family is worked out from the output prices of the lab's current models.
+5. Retire nothing: an older model stays until no page mentions it. When a model leaves the line-up, set `current` to false (or remove it) instead of deleting its facts.
+
+Fig. 11, the effort dial, reads `benchmarks.aa.opusByEffort` and `benchmarks.aa.fableByEffort`. When a newer pair of models gets per-effort numbers, add them in the same shape and change the two model ids in `effortInputs()` in `site/src/components/models/view.ts`.
 
 ## Refresh the benchmark numbers
 
