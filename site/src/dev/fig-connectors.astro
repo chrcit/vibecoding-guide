@@ -1,0 +1,25 @@
+---
+// Review page for Fig. 17, "What you can wire in". Routed at /dev/fig-connectors/ in `pnpm dev`,
+// or in a build with ACG_DEV_PAGES=1. Shown twice: with the harness's real setting from the data
+// layer, and with deferral off, so both readout wordings can be checked.
+import Base from '../layouts/Base.astro';
+import WireIn from '../components/fig/wire-in/WireIn.astro';
+import { connectors } from '../data/connectors';
+
+const deferred = connectors.claudeCode.toolSearch.value === 'deferred';
+---
+<Base title="Fig. 17 review" description="Development-only review page for the connectors figure." noindex>
+  <div class="fig-review">
+    <h1>Fig. 17, what you can wire in</h1>
+    <p>As on the page, with deferral read from <code>connectors.claudeCode.toolSearch</code> (currently {deferred ? 'deferred' : 'not deferred'}).</p>
+    <WireIn deferred={deferred} />
+    <p>The same figure with deferral off, to check the other readout wording.</p>
+    <WireIn n="17b" deferred={false} />
+  </div>
+</Base>
+
+<style>
+  .fig-review { max-width: 46rem; margin: 2rem auto 4rem; padding: 0 var(--gutter); }
+  h1 { margin: 0 0 0.5rem; }
+  p { color: var(--muted); margin: 0; }
+</style>

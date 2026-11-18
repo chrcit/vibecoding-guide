@@ -68,4 +68,33 @@ export const claims = {
       'https://www.apple.com/newsroom/2025/10/apple-unleashes-m5-the-next-big-leap-in-ai-performance-for-apple-silicon/',
     ),
   },
+  // Dictation apps that work in any text box, for the voice page (/explain/voice/).
+  voiceApps: {
+    wisprFlow: fact(
+      15,
+      'Wispr Flow has a free plan with a weekly word limit and a Pro plan at $15 a month billed monthly. It runs on Mac, Windows, iPhone and Android and keeps a personal dictionary of names and jargon.',
+      'https://wisprflow.ai/pricing',
+      { unit: 'usd' },
+    ),
+    superwhisper: fact(
+      'free tier, works offline',
+      'Superwhisper has a free tier and can work offline with local models, which run best on Apple-silicon Macs. It keeps a custom vocabulary of names and terms.',
+      'https://superwhisper.com/',
+    ),
+    handy: fact(
+      'free, MIT, offline',
+      'Handy is free and open source (MIT) and transcribes entirely on your computer, with Whisper or Parakeet models, on Windows, macOS and Linux.',
+      'https://github.com/cjpais/Handy',
+    ),
+    macDictation: fact(
+      'built in',
+      'macOS has Dictation built in (Edit > Start Dictation, or the dictation key). It has no time limit and stops after 30 seconds without speech.',
+      'https://support.apple.com/guide/mac-help/use-dictation-mh40584/mac',
+    ),
+    wisprCloud: fact(
+      'always in the cloud',
+      'Wispr Flow transcribes in the cloud in every mode ("Transcription always occurs on the cloud"); a data setting decides whether your dictation is used for model training.',
+      'https://wisprflow.ai/data-controls',
+    ),
+  },
 } as const;
