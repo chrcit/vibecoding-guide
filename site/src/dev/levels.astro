@@ -1,0 +1,147 @@
+---
+// Review page for reader levels. Routed at /dev/levels/ in `pnpm dev` only.
+// Try ?level=technical, #deeper-why-counts-differ-between-models, find-in-page on
+// "tokenizer", printing, and switching levels halfway down the page.
+import { Code } from 'astro:components';
+import Base from '../layouts/Base.astro';
+import Deeper from '../components/level/Deeper.astro';
+import ForLevel from '../components/level/ForLevel.astro';
+import { Content as Example } from './levels-example.md';
+
+const test = `import { describe, expect, it } from 'vitest';
+import { openingHours } from './hours';
+
+describe('opening hours on public holidays', () => {
+  it('shows the holiday hours on Easter Monday', () => {
+    const day = new Date('2027-03-29T09:00:00');
+    expect(openingHours(day)).toEqual({ open: '09:00', close: '13:00' });
+  });
+
+  it('keeps the normal hours the day after', () => {
+    const day = new Date('2027-03-30T09:00:00');
+    expect(openingHours(day)).toEqual({ open: '07:00', close: '18:00' });
+  });
+});`;
+---
+<Base title="Reader levels" description="Review page for the reader-level blocks, picker and offer." noindex>
+  <article class="lv">
+    <h1>Reader levels</h1>
+    <p class="lv-status" aria-live="off">
+      Showing the <b data-lv-now>plain</b> level. Last <code>acg:level</code> event: <b data-lv-event>none yet</b>.
+    </p>
+
+    <h2 id="what-the-agent-reads">What the agent reads</h2>
+    <p>
+      When you ask an agent to change the club list, it does not see your screen. It reads your request, the files it opens,
+      and the replies from the commands it runs. All of that has to fit in its working memory, called the context window, and
+      anything outside it does not exist for the agent.
+    </p>
+    <p>
+      So the most useful thing you can do is tell it where to look: name the page, the file, or the thing that looks wrong.
+      See also <a href="#deeper-why-counts-differ-between-models">why token counts differ</a>, which sits two layers down.
+    </p>
+
+    <Deeper level="technical" title="What a token is">
+      <p>
+        Models read text in tokens, pieces of words a few characters long. A short English word is usually one token; a long
+        or rare word is several. Code tends to cost more tokens than prose of the same length, because of symbols and
+        indentation.
+      </p>
+      <p>
+        The context window is measured in tokens, and so is what you pay on an API key. When an agent reads a large file it
+        spends tokens, whether or not the file turns out to matter.
+      </p>
+      <Deeper level="engineer" title="Why counts differ between models">
+        <p>
+          Each maker trains its own tokenizer, the table that splits text into tokens. The same file can come out at noticeably
+          different counts under two models, so a context size or a per-token price only compares cleanly within one maker.
+          When you compare costs across makers, compare the cost of finishing the same task.
+        </p>
+      </Deeper>
+    </Deeper>
+
+    <h2 id="checking-the-fix">Checking the fix</h2>
+    <p>
+      The bakery's site shows the normal opening hours on public holidays. The agent says it has fixed it. Its summary is its
+      own account of what it did; whether the page is right is something you check.
+    </p>
+    <ForLevel is="plain">
+      <p class="lv-path">
+        Your path: ask the agent to show you the page as it would look on the next public holiday, with a screenshot, and
+        check the hours against the sign in the shop window.
+      </p>
+    </ForLevel>
+    <ForLevel is={['technical', 'engineer']}>
+      <p class="lv-path">
+        Your path: ask for a test that pins the date, run it yourself, and read the diff before you merge.
+      </p>
+    </ForLevel>
+
+    <Deeper level="technical" title="A test that pins the date">
+      <p>
+        A test for this bug has to fix the date, or it only passes on the days you happen to run it. Ask the agent for two
+        cases, the holiday and the day after, so a fix that breaks normal days is caught too.
+      </p>
+      <Code code={test} lang="ts" themes={{ light: 'github-light', dark: 'github-dark' }} />
+      <div class="lv-scroll">
+        <table>
+          <thead><tr><th>Date</th><th>Day</th><th>Expected</th><th>Shown before the fix</th></tr></thead>
+          <tbody>
+            <tr><td>29 March 2027</td><td>Easter Monday</td><td>09:00 to 13:00</td><td>07:00 to 18:00</td></tr>
+            <tr><td>30 March 2027</td><td>Tuesday</td><td>07:00 to 18:00</td><td>07:00 to 18:00</td></tr>
+            <tr><td>25 December 2027</td><td>Christmas Day</td><td>Closed</td><td>07:00 to 18:00</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </Deeper>
+
+    <Deeper level="engineer" title="Where the holiday list should live" id="holiday-list">
+      <p>
+        The tempting fix is a hard-coded list of dates in the hours function. It passes the test and goes stale the following
+        year. Ask where holidays come from instead: a maintained calendar package, a feed, or a small data file someone owns
+        and updates once a year.
+      </p>
+      <p>
+        Whichever it is, keep the lookup at the edge. The hours function should take the holiday calendar as an argument, so
+        the test can hand it a fixed calendar and production can hand it the real one. That also makes the summary easier to
+        check: the diff touching the calendar source is a different kind of change from the diff touching the hours logic,
+        and a reviewer should see them separately.
+      </p>
+      <p>
+        Watch for time zones. A server in another zone renders the page for a date that is already tomorrow, or still
+        yesterday, for the shop. Build the date from the shop's own zone before you look it up.
+      </p>
+      <p>
+        Finally, ask the agent what it did not check. A good answer names the cases it skipped, such as holidays that move each
+        year or a holiday falling on a Sunday. A summary that claims everything is covered is the one to read most carefully.
+      </p>
+    </Deeper>
+
+    <section class="lv-md">
+      <Example />
+    </section>
+  </article>
+</Base>
+
+<script>
+  import { getLevel, onLevel } from '../lib/levels';
+  const now = document.querySelector('[data-lv-now]');
+  const last = document.querySelector('[data-lv-event]');
+  if (now) now.textContent = getLevel();
+  onLevel((level) => {
+    if (now) now.textContent = level;
+    if (last) last.textContent = level;
+  });
+</script>
+
+<style>
+  .lv { max-width: var(--measure); margin: 2.5rem auto 0; padding: 0 var(--gutter); }
+  .lv h1 { font-size: 2.2rem; line-height: 1.15; margin: 0 0 0.75rem; }
+  .lv :global(h2) { font-size: 1.5rem; line-height: 1.25; margin: 2.75rem 0 0.75rem; }
+  .lv-status { color: var(--muted); font-family: var(--mono); font-size: 0.875rem; }
+  .lv-path { padding-left: 1rem; border-left: 2px solid var(--accent); }
+  .lv-scroll { overflow-x: auto; margin: 1rem 0; }
+  .lv table { border-collapse: collapse; font-size: 0.9375rem; min-width: 30rem; }
+  .lv th, .lv td { text-align: left; padding: 0.4rem 0.75rem 0.4rem 0; border-bottom: 1px solid var(--rule); }
+  .lv :global(blockquote) { margin: 1.5rem 0; padding-left: 1rem; border-left: 2px solid var(--rule); color: var(--ink-2); font-style: italic; }
+</style>

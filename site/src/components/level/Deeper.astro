@@ -1,0 +1,34 @@
+---
+// A deeper layer of a section, tagged with the lowest level it is written for.
+//
+//   <Deeper level="technical" title="What a token is">…</Deeper>
+//   <Deeper level="engineer" title="Cache reads and why they dominate" id="cache-reads">…</Deeper>
+//
+// Readers at or above `level` see it open. Readers below see the first two lines
+// and a button. All text stays in the HTML. remark-levels.mjs emits the same
+// markup for `> [!technical] Title` blockquotes, so keep the two in step.
+import { extractText, levelInfo, slugify, type DeeperLevel } from '../../lib/levels';
+import LevelGlyph from './LevelGlyph.astro';
+import Chevron from './Chevron.astro';
+
+interface Props {
+  level: DeeperLevel;
+  /** What the block is about. Shown on the button ("Technical: What a token is"). */
+  title?: string;
+  /** Anchor id for links. Defaults to `deeper-` plus the title as a slug. */
+  id?: string;
+}
+const { level, title, id } = Astro.props;
+if (level !== 'technical' && level !== 'engineer') throw new Error(`Deeper: level must be "technical" or "engineer" (got ${JSON.stringify(level)})`);
+const info = levelInfo[level];
+const html = await Astro.slots.render('default');
+const extract = extractText(html);
+const name = title ?? info.defaultTitle;
+const blockId = id ?? `deeper-${slugify(title ?? extract.slice(0, 48)) || level}`;
+---
+<div class="deeper" data-deeper={level} id={blockId}>
+  <p class="deeper-mark"><LevelGlyph level={level} /><span class="deeper-name">{info.label}: <span class="deeper-title">{name}</span></span></p>
+  <button class="deeper-toggle" type="button" aria-expanded="false" aria-controls={`${blockId}-body`}><LevelGlyph level={level} /><span class="deeper-name">{info.label}: <span class="deeper-title">{name}</span></span><Chevron /></button>
+  <div class="deeper-extract" aria-hidden="true">{extract}</div>
+  <div class="deeper-body" id={`${blockId}-body`}><Fragment set:html={html} /></div>
+</div>

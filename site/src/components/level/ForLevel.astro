@@ -1,0 +1,16 @@
+---
+// Content for some reader levels only, for the rare place where the path itself differs.
+//
+//   <ForLevel is="plain">…</ForLevel>
+//   <ForLevel is={['technical', 'engineer']}>…</ForLevel>
+//   <ForLevel is="engineer" inline>…</ForLevel>   (a <span>, for use inside a sentence)
+//
+// Hidden with CSS only, so the text stays in the HTML and shows without JavaScript and in print.
+import { isLevel, type Level } from '../../lib/levels';
+interface Props { is: Level | Level[]; inline?: boolean }
+const { is, inline = false } = Astro.props;
+const levels = (Array.isArray(is) ? is : String(is).split(/[\s,]+/)).filter(isLevel);
+if (!levels.length) throw new Error(`ForLevel: "is" needs one or more of plain, technical, engineer (got ${JSON.stringify(is)})`);
+const Tag = inline ? 'span' : 'div';
+---
+<Tag class="for-level" data-for-level={levels.join(' ')}><slot /></Tag>
