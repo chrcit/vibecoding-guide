@@ -1,0 +1,32 @@
+---
+/*
+  The whole graph as a small picture with no labels: edges and cluster marks.
+  Decorative (aria-hidden); wrap it in a link that names where it goes.
+  Props: graph (Wiki['graph']), class?.
+*/
+import { clusterOf, shapePath, type Graph } from '../../lib/wiki';
+interface Props { graph: Graph; class?: string }
+const { graph, class: cls } = Astro.props;
+const { nodes, edges, viewBox: vb } = graph;
+const k = 1.5; // marks drawn larger than in the full graph, so they read at this size
+---
+<svg class:list={['gthumb', cls]} viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
+  <g class="e">
+    {edges.map(([a, b]) => <line x1={nodes[a].x} y1={nodes[a].y} x2={nodes[b].x} y2={nodes[b].y} />)}
+  </g>
+  <g>
+    {nodes.map((n) => (
+      <path class={`tone-${clusterOf(n.cluster).tone}`} transform={`translate(${n.x} ${n.y})`} d={shapePath(clusterOf(n.cluster).shape, n.r * k)} fill-rule="evenodd" />
+    ))}
+  </g>
+</svg>
+
+<style>
+  .gthumb { display: block; width: 100%; height: 100%; }
+  .e line { stroke: var(--rule-strong); stroke-width: 2.2; }
+  path { fill: var(--tone); }
+  .tone-ink { --tone: var(--ink); }
+  .tone-accent { --tone: var(--accent); }
+  .tone-green { --tone: var(--green); }
+  .tone-blue { --tone: var(--blue); }
+</style>

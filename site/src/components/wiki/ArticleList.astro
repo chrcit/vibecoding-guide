@@ -1,0 +1,72 @@
+---
+/*
+  Every article, grouped by cluster in the order of CLUSTERS. Titles only;
+  each item also carries its summary, hidden, which the index filter shows
+  for the articles that match a search.
+  Props: articles (from getWiki()), headingLevel? (2 or 3, default 2),
+  idPrefix? (for the cluster anchors, default "c-").
+*/
+import { CLUSTERS, type Article } from '../../lib/wiki';
+import { url } from '../../lib/nav';
+import ClusterMark from './ClusterMark.astro';
+
+interface Props { articles: Article[]; headingLevel?: 2 | 3; idPrefix?: string }
+const { articles, headingLevel = 2, idPrefix = 'c-' } = Astro.props;
+const H = headingLevel === 3 ? 'h3' : 'h2';
+const groups = CLUSTERS.map((c) => ({ c, items: articles.filter((a) => a.cluster === c.id) })).filter((g) => g.items.length);
+---
+<div class="wl">
+  {groups.map(({ c, items }) => (
+    <section class="wl-group" id={`${idPrefix}${c.id}`} data-wl-group>
+      <H class="wl-head"><ClusterMark cluster={c.id} size={15} />{c.label}</H>
+      <ul>
+        {items.map((a) => (
+          <li data-wl-item data-q={[a.title, ...a.aliases, a.summary].join(' ').toLowerCase()}>
+            <a href={url(`wiki/${a.slug}/`)}>{a.title}</a>
+            <p class="wl-sum" hidden>{a.summary}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</div>
+
+<style>
+  .wl {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+    gap: var(--space-7) var(--space-6);
+    align-items: start;
+  }
+  .wl-group { min-width: 0; scroll-margin-top: calc(var(--header-h) + var(--space-5)); }
+  .wl-head {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin: 0 0 var(--space-3);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--rule-strong);
+    font-size: var(--text-m);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { margin: 0; }
+  li a {
+    display: block;
+    padding: 0.42rem 0;
+    min-height: 2.5rem;
+    box-sizing: border-box;
+    color: var(--ink-2);
+    text-decoration: none;
+    font-size: var(--text-m);
+    line-height: 1.35;
+  }
+  li a:hover { color: var(--accent); }
+  .wl-sum {
+    margin: -0.2rem 0 0.6rem;
+    color: var(--muted);
+    font-size: var(--text-s);
+    line-height: 1.45;
+  }
+  .wl-sum[hidden] { display: none; }
+</style>

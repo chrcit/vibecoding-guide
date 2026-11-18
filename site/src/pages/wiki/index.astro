@@ -1,0 +1,131 @@
+---
+import Base from '../../layouts/Base.astro';
+import ArticleList from '../../components/wiki/ArticleList.astro';
+import GraphThumb from '../../components/wiki/GraphThumb.astro';
+import { getWiki } from '../../lib/wiki';
+import { url } from '../../lib/nav';
+
+const wiki = await getWiki();
+---
+<Base title="Wiki · Agentic Coding Guide" description="Short reference articles on working with coding agents, one idea each, linked to each other." section="wiki">
+  <div class="wi frame">
+    <header class="wi-top">
+      <h1>Wiki</h1>
+      <div class="wi-find" role="search">
+        <svg class="wi-icon" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5" /><path d="m13 13 4.5 4.5" /></svg>
+        <input id="wi-q" type="search" aria-label="Filter the articles" autocomplete="off" spellcheck="false" />
+      </div>
+      <a class="wi-graph" href={url('wiki/graph/')}>
+        <GraphThumb graph={wiki.graph} />
+        <span class="wi-graph-name">Graph</span>
+      </a>
+    </header>
+
+    <p class="wi-none" id="wi-none" role="status" hidden></p>
+    <ArticleList articles={wiki.articles} />
+  </div>
+</Base>
+
+<script>
+  const input = document.getElementById('wi-q') as HTMLInputElement | null;
+  const none = document.getElementById('wi-none');
+  const items = [...document.querySelectorAll<HTMLElement>('[data-wl-item]')];
+  const groups = [...document.querySelectorAll<HTMLElement>('[data-wl-group]')];
+
+  function apply() {
+    if (!input || !none) return;
+    const terms = input.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    for (const li of items) {
+      const hit = terms.every((t) => li.dataset.q!.includes(t));
+      li.hidden = !hit;
+      const sum = li.querySelector<HTMLElement>('.wl-sum');
+      if (sum) sum.hidden = !(hit && terms.length);
+      if (hit) shown++;
+    }
+    for (const g of groups) g.hidden = !g.querySelector('[data-wl-item]:not([hidden])');
+    none.hidden = shown > 0;
+    none.textContent = shown ? '' : `Nothing matches “${input.value.trim()}”.`;
+  }
+
+  if (input) {
+    const q = new URLSearchParams(location.search).get('q');
+    if (q) input.value = q;
+    input.addEventListener('input', apply);
+    input.addEventListener('keydown', (e) => {
+      const first = document.querySelector<HTMLAnchorElement>('[data-wl-item]:not([hidden]) a');
+      if (e.key === 'Enter' && input.value.trim() && first) { e.preventDefault(); location.href = first.href; }
+      else if (e.key === 'ArrowDown' && first) { e.preventDefault(); first.focus(); }
+      else if (e.key === 'Escape') { input.value = ''; apply(); }
+    });
+    apply();
+  }
+</script>
+
+<style>
+  .wi { padding-top: clamp(2rem, 6vw, 4.5rem); }
+  .wi-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'title graph' 'find graph';
+    align-items: end;
+    gap: var(--space-5) var(--space-7);
+    margin-bottom: var(--space-8);
+  }
+  h1 {
+    grid-area: title;
+    margin: 0;
+    font-size: var(--text-3xl);
+    font-weight: 480;
+    line-height: 1.04;
+    letter-spacing: -0.024em;
+  }
+  .wi-find { grid-area: find; position: relative; max-width: 30rem; }
+  .wi-icon { position: absolute; left: 0.9rem; top: 50%; translate: 0 -50%; color: var(--muted); pointer-events: none; }
+  input {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.55rem 1rem 0.55rem 2.6rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius-pill);
+    background: var(--card);
+    color: var(--ink);
+    font: inherit;
+    font-size: var(--text-m);
+  }
+  input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-color: transparent; }
+  input::-webkit-search-cancel-button { cursor: pointer; }
+
+  .wi-graph {
+    grid-area: graph;
+    position: relative;
+    display: block;
+    width: clamp(15rem, 28vw, 26rem);
+    aspect-ratio: 16 / 10;
+    padding: var(--space-3);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-l);
+    background: var(--card);
+    color: var(--ink);
+    text-decoration: none;
+    box-shadow: var(--shadow);
+    transition: border-color var(--dur-fast) ease, box-shadow var(--dur) var(--ease-out);
+  }
+  .wi-graph:hover { border-color: var(--rule-strong); box-shadow: var(--shadow-pop); color: var(--ink); }
+  .wi-graph-name {
+    position: absolute; left: var(--space-3); bottom: var(--space-3);
+    padding: 0.2rem 0.7rem;
+    border-radius: var(--radius-pill);
+    background: var(--ink); color: var(--paper);
+    font-family: var(--mono); font-size: var(--text-s);
+  }
+  .wi-graph:hover .wi-graph-name { background: var(--accent); color: var(--accent-ink); }
+  .wi-none { margin: 0 0 var(--space-6); color: var(--muted); font-size: var(--text-m); }
+  .wi-none[hidden] { display: none; }
+
+  @media (max-width: 47.99rem) {
+    .wi-top { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'title' 'graph' 'find'; gap: var(--space-5); margin-bottom: var(--space-7); }
+    .wi-graph { width: 100%; }
+    .wi-find { max-width: none; }
+  }
+</style>

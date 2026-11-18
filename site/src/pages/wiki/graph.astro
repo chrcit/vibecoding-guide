@@ -1,0 +1,39 @@
+---
+import Base from '../../layouts/Base.astro';
+import GraphView from '../../components/wiki/GraphView.astro';
+import ArticleList from '../../components/wiki/ArticleList.astro';
+import { getWiki } from '../../lib/wiki';
+import { url } from '../../lib/nav';
+
+const wiki = await getWiki();
+---
+<Base title="Wiki graph · Agentic Coding Guide" description="Every article in the wiki and the links between them, as a map you can pan, zoom and search." section="wiki">
+  <div class="gp">
+    <h1><a href={url('wiki/')}>Wiki</a> graph</h1>
+    <GraphView graph={wiki.graph} />
+    <section class="gp-list" id="gv-list" aria-labelledby="gp-all">
+      <h2 id="gp-all">All articles</h2>
+      <ArticleList articles={wiki.articles} headingLevel={3} idPrefix="all-" />
+    </section>
+  </div>
+</Base>
+
+<style>
+  .gp {
+    width: 100%;
+    max-width: 120rem;
+    margin-inline: auto;
+    padding: clamp(1.25rem, 3vw, 2.25rem) var(--gutter) 0;
+  }
+  h1 {
+    margin: 0 0 var(--space-4);
+    font-size: var(--text-2xl);
+    font-weight: 480;
+    line-height: 1.1;
+    letter-spacing: -0.016em;
+  }
+  h1 a { text-decoration: none; color: inherit; }
+  h1 a:hover { color: var(--accent); }
+  .gp-list { max-width: var(--full); margin: var(--space-8) auto 0; }
+  .gp-list h2 { margin: 0 0 var(--space-6); font-size: var(--text-2xl); font-weight: 480; letter-spacing: -0.016em; }
+</style>

@@ -1,0 +1,139 @@
+---
+/*
+  The local graph of one article: the articles that link to it on the left,
+  the ones it links to (and that do not link back) on the right, and the
+  article itself in the middle. The edges are drawn in a stretched SVG
+  between the two lists, so the figure reflows at any width and every label
+  stays real text.
+  Props: article (Article), wiki (Wiki).
+*/
+import type { Article, Wiki } from '../../lib/wiki';
+import { url } from '../../lib/nav';
+import ClusterMark from './ClusterMark.astro';
+
+interface Props { article: Article; wiki: Wiki }
+const { article, wiki } = Astro.props;
+const from = article.in.map((s) => wiki.bySlug.get(s)!);
+const to = article.out.filter((s) => !article.in.includes(s)).map((s) => wiki.bySlug.get(s)!);
+const leftTitle = 'Linked from';
+const rightTitle = from.length ? 'Also links to' : 'Links to';
+const f = (v: number) => Math.round(v * 100) / 100;
+const y = (i: number, n: number) => ((i + 0.5) / n) * 100;
+const curve = (side: 'l' | 'r', i: number, n: number) => {
+  const yy = f(y(i, n));
+  return side === 'l' ? `M0 ${yy}C32 ${yy} 22 50 50 50` : `M100 ${yy}C68 ${yy} 78 50 50 50`;
+};
+const empty = !from.length && !to.length;
+const id = `cx-${article.slug}`;
+---
+{!empty && (
+  <section class:list={['cx', { 'no-l': !from.length, 'no-r': !to.length }]} aria-labelledby={from.length ? `${id}-l` : `${id}-r`} data-cx>
+    {from.length > 0 && <h2 class="cx-h cx-hl" id={`${id}-l`}>{leftTitle}</h2>}
+    {to.length > 0 && <h2 class="cx-h cx-hr" id={`${id}-r`}>{rightTitle}</h2>}
+    {from.length > 0 && (
+      <ul class="cx-list cx-l" style={`--n:${from.length}`}>
+        {from.map((a, i) => (
+          <li><a href={url(`wiki/${a.slug}/`)} data-e={`l${i}`}><span>{a.title}</span><ClusterMark cluster={a.cluster} size={13} /></a></li>
+        ))}
+      </ul>
+    )}
+    <div class="cx-mid">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        {from.map((_, i) => <path data-e={`l${i}`} d={curve('l', i, from.length)} />)}
+        {to.map((_, i) => <path data-e={`r${i}`} d={curve('r', i, to.length)} />)}
+      </svg>
+      <a class="cx-me" href={`${url('wiki/graph/')}#n-${article.slug}`} aria-label={`${article.title} in the graph`}>
+        <ClusterMark cluster={article.cluster} size={22} />
+      </a>
+    </div>
+    {to.length > 0 && (
+      <ul class="cx-list cx-r" style={`--n:${to.length}`}>
+        {to.map((a, i) => (
+          <li><a href={url(`wiki/${a.slug}/`)} data-e={`r${i}`}><ClusterMark cluster={a.cluster} size={13} /><span>{a.title}</span></a></li>
+        ))}
+      </ul>
+    )}
+  </section>
+)}
+
+<script>
+  for (const fig of document.querySelectorAll<HTMLElement>('[data-cx]')) {
+    const set = (key: string | null) => {
+      for (const p of fig.querySelectorAll<SVGPathElement>('.cx-mid path')) p.classList.toggle('on', p.dataset.e === key);
+    };
+    for (const a of fig.querySelectorAll<HTMLAnchorElement>('.cx-list a')) {
+      a.addEventListener('pointerenter', () => set(a.dataset.e!));
+      a.addEventListener('pointerleave', () => set(null));
+      a.addEventListener('focus', () => set(a.dataset.e!));
+      a.addEventListener('blur', () => set(null));
+    }
+  }
+</script>
+
+<style>
+  .cx {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(3.5rem, 14vw, 8.5rem) minmax(0, 1fr);
+    grid-template-areas: 'hl . hr' 'l m r';
+    column-gap: 0;
+    margin: var(--space-8) 0 0;
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--rule);
+    font-size: var(--text-s);
+    line-height: 1.3;
+  }
+  .cx.no-l { grid-template-columns: clamp(3rem, 9vw, 5rem) minmax(0, 1fr); grid-template-areas: '. hr' 'm r'; }
+  .cx.no-r { grid-template-columns: minmax(0, 1fr) clamp(3rem, 9vw, 5rem); grid-template-areas: 'hl .' 'l m'; }
+  .cx-h {
+    margin: 0 0 var(--space-3);
+    font-size: var(--text-s);
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--ink);
+  }
+  .cx-hl { grid-area: hl; text-align: right; }
+  .cx-hr { grid-area: hr; }
+  .cx-list {
+    list-style: none; margin: 0; padding: 0;
+    display: grid;
+    grid-template-rows: repeat(var(--n), 1fr);
+  }
+  .cx-l { grid-area: l; }
+  .cx-r { grid-area: r; }
+  .cx-list li { display: flex; align-items: center; min-width: 0; }
+  .cx-l li { justify-content: flex-end; }
+  .cx-list a {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    min-height: 2.5rem;
+    padding: 0.2rem 0;
+    color: var(--ink-2);
+    text-decoration: none;
+    min-width: 0;
+  }
+  .cx-l a { text-align: right; padding-right: 0.15rem; }
+  .cx-r a { padding-left: 0.15rem; }
+  .cx-list a:hover { color: var(--accent); }
+  .cx-list a span { min-width: 0; overflow-wrap: anywhere; }
+
+  .cx-mid { grid-area: m; position: relative; min-height: 3rem; }
+  .cx-mid svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .cx-mid path {
+    fill: none;
+    stroke: var(--rule-strong);
+    stroke-width: 1.2;
+    vector-effect: non-scaling-stroke;
+    transition: stroke var(--dur-fast) ease;
+  }
+  .cx-mid path.on { stroke: var(--accent); stroke-width: 2; }
+  .cx-me {
+    position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+    display: grid; place-items: center;
+    width: 2.75rem; height: 2.75rem;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 1px solid var(--rule-strong);
+    transition: border-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out);
+  }
+  .cx-me:hover { border-color: var(--accent); transform: scale(1.06); }
+  .cx-me:focus-visible { border-radius: 50%; }
+</style>

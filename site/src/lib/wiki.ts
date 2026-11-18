@@ -12,19 +12,19 @@ import { getCollection, type CollectionEntry } from 'astro:content';
 
 export type Shape = 'circle' | 'diamond' | 'triangle' | 'cross' | 'hexagon' | 'triangle-down' | 'ring' | 'square';
 export type Tone = 'ink' | 'accent' | 'green' | 'blue';
-export type Cluster = { id: string; label: string; blurb: string; shape: Shape; tone: Tone };
+export type Cluster = { id: string; label: string; shape: Shape; tone: Tone };
 
 // The order here is the order of the index, the legend and the keyboard path
 // through the graph. Neighbouring clusters differ in shape and colour.
 export const CLUSTERS: Cluster[] = [
-  { id: 'basics', label: 'Basics', blurb: 'The words everything else is built on.', shape: 'circle', tone: 'ink' },
-  { id: 'context', label: 'Context', blurb: 'What the agent knows, how it gets there, and what falls out.', shape: 'diamond', tone: 'accent' },
-  { id: 'working', label: 'Working with an agent', blurb: 'Day-to-day habits and controls.', shape: 'triangle', tone: 'green' },
-  { id: 'models', label: 'Models and cost', blurb: 'Effort, plans, usage, caching and benchmarks.', shape: 'square', tone: 'blue' },
-  { id: 'checking', label: 'Checking the work', blurb: 'How the agent and you find out whether the work is right.', shape: 'hexagon', tone: 'accent' },
-  { id: 'teams', label: 'Many agents', blurb: 'Parallel threads, helpers, worktrees and orchestration.', shape: 'cross', tone: 'blue' },
-  { id: 'web', label: 'The web', blurb: 'How a web app is put together, and where the security lines run.', shape: 'ring', tone: 'green' },
-  { id: 'shipping', label: 'Shipping', blurb: 'Version control, deployment and going live.', shape: 'triangle-down', tone: 'ink' },
+  { id: 'basics', label: 'Basics', shape: 'circle', tone: 'ink' },
+  { id: 'context', label: 'Context', shape: 'diamond', tone: 'accent' },
+  { id: 'working', label: 'Working with an agent', shape: 'triangle', tone: 'green' },
+  { id: 'models', label: 'Models and cost', shape: 'square', tone: 'blue' },
+  { id: 'checking', label: 'Checking the work', shape: 'hexagon', tone: 'accent' },
+  { id: 'teams', label: 'Many agents', shape: 'cross', tone: 'blue' },
+  { id: 'web', label: 'The web', shape: 'ring', tone: 'green' },
+  { id: 'shipping', label: 'Shipping', shape: 'triangle-down', tone: 'ink' },
 ];
 export const clusterOf = (id: string) => CLUSTERS.find((c) => c.id === id)!;
 
@@ -247,6 +247,9 @@ function placeClusterLabels(nodes: GraphNode[]) {
 
 // ---------------------------------------------------------------- loading
 
+// Routes under /wiki/ that are not articles.
+const RESERVED = new Set(['graph', 'graph.json', 'index']);
+
 let cached: Promise<Wiki> | undefined;
 export function getWiki(): Promise<Wiki> {
   cached ??= load();
@@ -268,6 +271,7 @@ async function load(): Promise<Wiki> {
     if (body.h1 !== d.title) problems.push(`${file}: the body should start with "# ${d.title}" (found ${body.h1 ? `"# ${body.h1}"` : 'no title'}).`);
     if (body.first !== norm(d.summary)) problems.push(`${file}: the first paragraph must be the summary, word for word.\n    summary: ${d.summary}\n    first paragraph: ${body.first || '(none)'}`);
     for (const l of body.links) if (!slugs.has(l)) problems.push(`${file}: links to ./${l}.md, which does not exist.`);
+    if (RESERVED.has(e.id)) problems.push(`${file}: "${e.id}" is taken by a page of the wiki itself; rename the file.`);
     return {
       slug: e.id,
       title: d.title,
