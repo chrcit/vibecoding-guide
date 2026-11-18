@@ -50,6 +50,11 @@ export const harnesses = {
       CC('best-practices'),
     ),
     enterpriseCost: fact(13, 'Across enterprise deployments Claude Code averages about $13 per developer per active day and $150 to $250 per month.', CC('costs'), { unit: 'usd' }),
+    effort: fact(
+      '/effort',
+      'In Claude Code, set effort with /effort (a slider, or a level name), the --effort flag for one session, CLAUDE_CODE_EFFORT_LEVEL, or effortLevel in settings; max is not accepted as a saved level in settings.',
+      CC('model-config'),
+    ),
   },
   codex: {
     openSource: fact('Apache-2.0', 'The Codex CLI is open source under Apache-2.0. The models behind it are proprietary.', 'https://github.com/openai/codex'),
@@ -91,6 +96,11 @@ export const harnesses = {
       'learn.chatgpt.com/docs',
       'The Codex docs moved: developers.openai.com/codex/* now redirects (308) to learn.chatgpt.com/docs/*.',
       CX('pricing'),
+    ),
+    effort: fact(
+      '/model',
+      'In the Codex CLI, pick model and reasoning effort with /model (More reasoning… shows max and ultra); in the desktop app, use the model and reasoning control under the composer.',
+      CX('models'),
     ),
   },
   t3code: {

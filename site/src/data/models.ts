@@ -8,6 +8,7 @@ const CLAUDE_OVERVIEW = 'https://platform.claude.com/docs/en/models/overview';
 const CLAUDE_EFFORT = 'https://platform.claude.com/docs/en/build-with-claude/effort';
 const OPENAI_PRICING = 'https://developers.openai.com/api/docs/pricing';
 const OPENAI_MODELS = 'https://learn.chatgpt.com/docs/models';
+const CLAUDE_CODE_MODELS = 'https://code.claude.com/docs/en/model-config';
 
 export interface ModelLinks {
   docs?: string;
@@ -39,6 +40,20 @@ export interface Model {
     apiDefault?: Fact<string>;
   };
   thinking?: Fact<string>;
+  /** In the current line-up, as opposed to an older model kept for a price comparison. */
+  current?: boolean;
+  /** What the lab says the model is for, in its own words. */
+  purpose?: Fact<string>;
+  /** Which harness runs it: a key of `harnesses` in harnesses.ts. */
+  harness?: 'claudeCode' | 'codex';
+  /** How to pick it in that harness. */
+  pick?: Fact<string>;
+  /** Fact ids (from any data file) that say which subscription plans include it. */
+  plans?: string[];
+  knowledgeCutoff?: Fact<string>;
+  retirement?: Fact<string>;
+  /** A short dated note when the data for this model last changed in a way readers should know. */
+  changed?: { date: string; note: string };
 }
 
 const claudeLevels = (name: string) =>
@@ -65,6 +80,13 @@ export const models = {
       apiDefault: fact('high', 'The API default effort for Claude Fable 5.2 is high.', CLAUDE_OVERVIEW),
     },
     thinking: fact('adaptive, always on', 'On Claude Fable 5.2 thinking is adaptive and always on: the model decides how much to think and effort steers it.', CLAUDE_OVERVIEW),
+    current: true,
+    purpose: fact('For demanding reasoning and long-horizon agentic work', 'Anthropic describes Claude Fable 5.2 as: "For demanding reasoning and long-horizon agentic work".', CLAUDE_OVERVIEW),
+    harness: 'claudeCode',
+    pick: fact('/model fable', 'In Claude Code the fable alias picks the Fable model. No plan uses Fable by default, so select it with /model fable.', CLAUDE_CODE_MODELS),
+    plans: ['plans.claude.pro.fable', 'plans.claude.max.fable', 'plans.claude.ultra.fable'],
+    knowledgeCutoff: fact('Jun 2026', 'The reliable knowledge cutoff of Claude Fable 5.2 is June 2026.', CLAUDE_OVERVIEW),
+    retirement: fact('9 November 2027', 'Anthropic will not retire Claude Fable 5.2 sooner than 9 November 2027.', CLAUDE_OVERVIEW),
   },
   'claude-opus-5-5': {
     name: 'Claude Opus 5.5',
@@ -92,6 +114,13 @@ export const models = {
       apiDefault: fact('medium', 'The API default effort for Claude Opus 5.5 is medium.', CLAUDE_OVERVIEW),
     },
     thinking: fact('adaptive, always on', 'On Claude Opus 5.5 thinking is adaptive and always on: the model decides how much to think and effort steers it.', CLAUDE_OVERVIEW),
+    current: true,
+    purpose: fact('For long-running agentic coding and knowledge work', 'Anthropic describes Claude Opus 5.5 as: "For long-running agentic coding and knowledge work".', CLAUDE_OVERVIEW),
+    harness: 'claudeCode',
+    pick: fact('the default, or /model opus', 'Claude Code uses Opus 5.5 by default on Pro, Max, Ultra, Team, Enterprise and the Anthropic API; the opus alias picks it too.', CLAUDE_CODE_MODELS),
+    plans: ['plans.claude.pro.models', 'plans.claude.max.models', 'plans.claude.ultra.models'],
+    knowledgeCutoff: fact('Jun 2026', 'The reliable knowledge cutoff of Claude Opus 5.5 is June 2026.', CLAUDE_OVERVIEW),
+    retirement: fact('22 September 2027', 'Anthropic will not retire Claude Opus 5.5 sooner than 22 September 2027.', CLAUDE_OVERVIEW),
   },
   'claude-sonnet-5-5': {
     name: 'Claude Sonnet 5.5',
@@ -111,6 +140,13 @@ export const models = {
       apiDefault: fact('high', 'The API default effort for Claude Sonnet 5.5 is high.', CLAUDE_OVERVIEW),
     },
     thinking: fact('adaptive', 'Claude Sonnet 5.5 uses adaptive thinking.', CLAUDE_OVERVIEW),
+    current: true,
+    purpose: fact('The best combination of speed and intelligence', 'Anthropic describes Claude Sonnet 5.5 as: "The best combination of speed and intelligence".', CLAUDE_OVERVIEW),
+    harness: 'claudeCode',
+    pick: fact('/model sonnet', 'In Claude Code the sonnet alias picks the latest Sonnet; with an Anthropic account it resolves to Sonnet 5.5.', CLAUDE_CODE_MODELS),
+    plans: ['plans.claude.free.models', 'plans.claude.pro.models', 'plans.claude.max.models', 'plans.claude.ultra.models'],
+    knowledgeCutoff: fact('Jun 2026', 'The reliable knowledge cutoff of Claude Sonnet 5.5 is June 2026.', CLAUDE_OVERVIEW),
+    retirement: fact('28 September 2027', 'Anthropic will not retire Claude Sonnet 5.5 sooner than 28 September 2027.', CLAUDE_OVERVIEW),
   },
   'claude-haiku-5-5': {
     name: 'Claude Haiku 5.5',
@@ -135,6 +171,13 @@ export const models = {
       apiDefault: fact('medium', 'The API default effort for Claude Haiku 5.5 is medium.', CLAUDE_OVERVIEW),
     },
     thinking: fact('adaptive', 'Claude Haiku 5.5 uses adaptive thinking.', CLAUDE_OVERVIEW),
+    current: true,
+    purpose: fact('For high-volume, latency-sensitive tasks such as classification, extraction, and routing', 'Anthropic describes Claude Haiku 5.5 as: "For high-volume, latency-sensitive tasks such as classification, extraction, and routing".', CLAUDE_OVERVIEW),
+    harness: 'claudeCode',
+    pick: fact('/model haiku', 'In Claude Code the haiku alias picks the Haiku model; with an Anthropic account it resolves to Haiku 5.5 (Claude Code v2.1.293 or later).', CLAUDE_CODE_MODELS),
+    plans: ['plans.claude.free.models', 'plans.claude.pro.models', 'plans.claude.max.models', 'plans.claude.ultra.models'],
+    knowledgeCutoff: fact('Jun 2026', 'The reliable knowledge cutoff of Claude Haiku 5.5 is June 2026.', CLAUDE_OVERVIEW),
+    retirement: fact('7 October 2027', 'Anthropic will not retire Claude Haiku 5.5 sooner than 7 October 2027.', CLAUDE_OVERVIEW),
   },
   'gpt-6-2-astra': {
     name: 'GPT-6.2 Astra',
@@ -146,6 +189,11 @@ export const models = {
       input: fact(8, 'GPT-6.2 Astra costs $8 per million input tokens (standard tier, up to 272K input tokens).', OPENAI_PRICING, { unit: 'usd' }),
       output: fact(40, 'GPT-6.2 Astra costs $40 per million output tokens (standard tier, up to 272K input tokens).', OPENAI_PRICING, { unit: 'usd' }),
     },
+    current: true,
+    purpose: fact('Choose GPT-6.2 Astra for demanding projects.', 'OpenAI on GPT-6.2 Astra: "Choose GPT-6.2 Astra for demanding projects."', OPENAI_MODELS),
+    harness: 'codex',
+    pick: fact('codex -m gpt-6.2-astra', 'Start Codex on GPT-6.2 Astra with codex -m gpt-6.2-astra, or switch with /model in a session.', OPENAI_MODELS),
+    plans: ['plans.chatgpt.plus.messages.astra'],
   },
   'gpt-6-2-sol': {
     name: 'GPT-6.2 Sol',
@@ -157,6 +205,11 @@ export const models = {
       input: fact(2, 'GPT-6.2 Sol costs $2 per million input tokens.', OPENAI_PRICING, { unit: 'usd' }),
       output: fact(10, 'GPT-6.2 Sol costs $10 per million output tokens.', OPENAI_PRICING, { unit: 'usd' }),
     },
+    current: true,
+    purpose: fact('Use GPT-6.2 Sol for everyday tasks like editing code, drafting a report, or turning project notes into a plan.', 'OpenAI on GPT-6.2 Sol: "Use GPT-6.2 Sol for everyday tasks like editing code, drafting a report, or turning project notes into a plan."', OPENAI_MODELS),
+    harness: 'codex',
+    pick: fact('codex -m gpt-6.2-sol', 'Start Codex on GPT-6.2 Sol with codex -m gpt-6.2-sol, or switch with /model in a session.', OPENAI_MODELS),
+    plans: ['plans.chatgpt.plus.messages.sol'],
   },
   'gpt-6-1-terra': {
     name: 'GPT-6.1 Terra',
@@ -167,6 +220,11 @@ export const models = {
       input: fact(1, 'GPT-6.1 Terra costs $1 per million input tokens.', OPENAI_PRICING, { unit: 'usd' }),
       output: fact(5, 'GPT-6.1 Terra costs $5 per million output tokens.', OPENAI_PRICING, { unit: 'usd' }),
     },
+    current: true,
+    purpose: fact('A fast, efficient model for clear writing, visual understanding, and computer use.', 'OpenAI on GPT-6.1 Terra: "A fast, efficient model for clear writing, visual understanding, and computer use."', OPENAI_MODELS),
+    harness: 'codex',
+    pick: fact('codex -m gpt-6.1-terra', 'Start Codex on GPT-6.1 Terra with codex -m gpt-6.1-terra, or switch with /model in a session.', OPENAI_MODELS),
+    plans: ['plans.chatgpt.plus.messages.terra'],
   },
   'gpt-6-luna': {
     name: 'GPT-6 Luna',
@@ -180,6 +238,11 @@ export const models = {
     effort: {
       levels: fact(['low', 'medium', 'high', 'extra high', 'max'], 'GPT-6 Luna supports reasoning effort up to max, but not ultra.', OPENAI_MODELS),
     },
+    current: true,
+    purpose: fact('Our most efficient model for focused, high-volume tasks, including summarization, extraction, and focused coding.', 'OpenAI on GPT-6 Luna: "Our most efficient model for focused, high-volume tasks, including summarization, extraction, and focused coding."', OPENAI_MODELS),
+    harness: 'codex',
+    pick: fact('codex -m gpt-6-luna', 'Start Codex on GPT-6 Luna with codex -m gpt-6-luna, or switch with /model in a session.', OPENAI_MODELS),
+    plans: ['plans.chatgpt.free.luna', 'plans.chatgpt.plus.messages.luna'],
   },
   'gpt-5-5': {
     name: 'GPT-5.5',
@@ -225,5 +288,46 @@ export const lineup = {
     ['low', 'medium', 'high', 'extra high', 'max', 'ultra'],
     'Codex offers reasoning effort low (called light in the app), medium, high, extra high, and on some models max and ultra. Ultra uses subagents.',
     OPENAI_MODELS,
+  ),
+  claudeModalities: fact(
+    'text and image in, text out',
+    'All current Claude models support text and image input, text output, multilingual capabilities, vision and tool use.',
+    CLAUDE_OVERVIEW,
+  ),
+  effortSignal: fact(
+    'a signal, not a budget',
+    'Anthropic: "Effort is a behavioral signal, not a strict token budget. At lower effort levels, Claude still thinks on sufficiently difficult problems, but thinks less than it would at higher effort levels for the same problem."',
+    CLAUDE_EFFORT,
+  ),
+  effortAllTokens: fact(
+    'all output tokens',
+    'Effort affects every output token: the reply, tool calls and their arguments, and thinking. Lower effort also means fewer and terser tool calls.',
+    CLAUDE_EFFORT,
+  ),
+  effortCache: fact(
+    'can invalidate the cache',
+    'Changing the top-level effort between requests can invalidate all or part of the prompt cache; a per-message effort change, where a model supports it, keeps the cache.',
+    CLAUDE_EFFORT,
+  ),
+  fableEffortGain: fact(
+    'most of the gain at high',
+    'For Claude Fable 5.2 Anthropic says most of the gain in capability is already present at high; at max it runs slower and costs more than at xhigh, often for only a small gain.',
+    CLAUDE_EFFORT,
+  ),
+  cacheReadShare: fact(
+    [10, 5, 2.5],
+    'Prompt cache reads cost 10% of the base input price on Claude models, 5% on Claude Opus 5.5 and Claude Sonnet 5.5, and 2.5% on Claude Fable 5.2.',
+    CLAUDE_OVERVIEW,
+    { unit: 'percent' },
+  ),
+  claudeCodeEffortDefault: fact(
+    'medium',
+    'In Claude Code, Fable 5.2, Opus 5.5, Sonnet 5.5 and Haiku 5.5 default to medium effort.',
+    'https://code.claude.com/docs/en/model-config',
+  ),
+  claudeCodeEffortLevels: fact(
+    ['low', 'medium', 'high', 'xhigh', 'max'],
+    'In Claude Code, Fable, Opus 5.5, Sonnet 5.5 and Haiku 5.5 offer the effort levels low, medium, high, xhigh and max.',
+    'https://code.claude.com/docs/en/model-config',
   ),
 } as const;

@@ -1,0 +1,46 @@
+---
+// The current models of one lab, as a table. Every cell is a sourced fact or an honest gap.
+// Columns appear only for what the data holds; rows come from models.ts, so a new model shows up here
+// with no page edit.
+import Val from './Val.astro';
+import { fid, getModel, indexScore, type ModelId } from './view';
+import { url } from '../../lib/nav';
+
+interface Props { ids: ModelId[] }
+const { ids } = Astro.props;
+---
+<table class="model-table">
+  <thead>
+    <tr>
+      <th scope="col">Model</th>
+      <th scope="col">Released</th>
+      <th scope="col">Input, per million tokens</th>
+      <th scope="col">Output, per million tokens</th>
+      <th scope="col">Context window</th>
+      <th scope="col">Index score</th>
+    </tr>
+  </thead>
+  <tbody>
+    {ids.map((id) => {
+      const m = getModel(id);
+      const s = indexScore(id);
+      return (
+        <tr>
+          <th scope="row"><a href={url(`models/${id}/`)}>{m.name}</a></th>
+          <td><Val id={fid(id, 'released')} /></td>
+          <td><Val id={fid(id, 'price.input')} />{m.price?.longPrompt && <span class="tier"> up to <Val id={fid(id, 'price.longPrompt.threshold')} /></span>}</td>
+          <td><Val id={fid(id, 'price.output')} /></td>
+          <td><Val id={fid(id, 'context')} /></td>
+          <td>{s ? <><Val id={s.factId} />{s.effort && <span class="tier"> at {s.effort}</span>}</> : <span class="gap">not measured</span>}</td>
+        </tr>
+      );
+    })}
+  </tbody>
+</table>
+
+<style>
+  .model-table th[scope='row'] { font-weight: 560; white-space: nowrap; }
+  .model-table td, .model-table th { min-width: 6.5rem; }
+  .tier, .gap { color: var(--muted); }
+  .gap { font-style: italic; }
+</style>

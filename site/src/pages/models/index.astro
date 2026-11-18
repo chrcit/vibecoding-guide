@@ -1,4 +1,239 @@
 ---
-import Stub from '../../components/site/Stub.astro';
+// The models index: what a model is, the current line-up from src/data/models.ts, Fig. 10 (score
+// against cost), Fig. 11 (the effort dial), how to choose a size and an effort, and how to run your
+// own comparison. Every number is a <Fact> or a figure prop from the data layer.
+import Article from '../../layouts/Article.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import Deeper from '../../components/level/Deeper.astro';
+import Opinion from '../../components/site/Opinion.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import Embed from '../../components/site/Embed.astro';
+import Note from '../../components/site/Note.astro';
+import Term from '../../components/site/Term.astro';
+import ScoreAndCost from '../../components/fig/score-and-cost/ScoreAndCost.astro';
+import EffortDial from '../../components/fig/effort-dial/EffortDial.astro';
+import ModelTable from '../../components/models/ModelTable.astro';
+import { currentByLab, olderIds, getModel, scorePoints, scorePointIds, effortInputs, effortData, fid, shown } from '../../components/models/view';
+import { opinions } from '../../data/observations.ts';
+import { links } from '../../data/links.ts';
+import { formatDate } from '../../lib/facts.ts';
+import { url } from '../../lib/nav';
+
+const groups = currentByLab();
+const older = olderIds();
+const points = scorePoints((id) => url(`models/${id}/`));
+const read = formatDate('2026-11-18', true);
+const aaSource = { label: `Artificial Analysis, Intelligence Index v5, read ${read}`, href: links.aaLeaderboard.url };
+const effortSource = { label: `Artificial Analysis, Claude Opus 5.5 and Claude Fable 5.2 model pages, read ${read}`, href: links.aaOpus.url };
+
+const pageFacts = [
+  ...scorePointIds(),
+  ...effortData().ids,
+  ...groups.flatMap((g) => g.ids.flatMap((id) => [fid(id, 'released'), fid(id, 'context')])),
+  'benchmarks.aa.method', 'benchmarks.aa.caveat', 'benchmarks.aa.attribution', 'benchmarks.aa.opusByEffort.max.costPerTask',
+  'lineup.anthropicAdvice', 'lineup.effortSignal', 'lineup.effortAllTokens', 'lineup.effortCache', 'lineup.fableEffortGain',
+  'lineup.thinkingBilledAsOutput', 'lineup.cacheReadShare', 'lineup.claudeCodeEffortDefault', 'lineup.claudeCodeEffortLevels', 'lineup.codexEffortLevels',
+  'plans.claude.pro.price', 'plans.claude.pro.models', 'plans.claude.pro.fable', 'plans.chatgpt.plus.price', 'plans.chatgpt.limits.estimates',
+  'harnesses.claudeCode.effort', 'harnesses.codex.effort', 'harnesses.claudeCode.defaultModel',
+];
+const verifiedIds = [...new Set(pageFacts)].filter(shown);
+
+const headings = [
+  { depth: 2, slug: 'engine', text: 'The engine inside the harness' },
+  { depth: 2, slug: 'families', text: 'Labs sell families in sizes' },
+  { depth: 2, slug: 'current', text: 'The current models' },
+  { depth: 2, slug: 'score-against-cost', text: 'Score against cost' },
+  { depth: 2, slug: 'effort', text: 'The effort dial' },
+  { depth: 2, slug: 'choosing', text: 'Choosing a size and an effort' },
+  { depth: 2, slug: 'compare', text: 'Run your own comparison' },
+];
 ---
-<Stub title="Models" section="models" />
+<Article
+  title="Models"
+  description="The models behind Claude Code and Codex: what they cost, what they score, what effort does, and how to pick a size for a task. Generated from dated, sourced data."
+  section="models"
+  headings={headings}
+  lede="The model is the engine inside an agent. This page lists the current ones with their prices and scores, shows what the effort setting costs, and suggests how to pick a size for a task."
+>
+  <h2 id="engine">The engine inside the harness</h2>
+  <p>
+    A <Term def="A program trained on a very large amount of text that reads text and writes text. It does nothing on its own.">model</Term> reads text and writes text. On its own it cannot open a file or run anything.
+    An agent such as Claude Code or Codex is a <Term def="The program that runs a model in a loop and gives it tools: read and edit files, run commands, use a browser.">harness</Term> wrapped round a model: it sends the model your request and what it has seen so far, turns the text that comes back into actions, and feeds the results in again until the job is done.
+  </p>
+  <p>
+    So the model sets how well the agent thinks, and the harness sets what it can do and see. The same model can behave differently in two harnesses, because each one gives it different instructions, tools and defaults. The <a href={url('explain/')}>explainers</a> cover the harness side; this page is about the engine.
+  </p>
+
+  <h2 id="families">Labs sell families in sizes</h2>
+  <p>
+    Each lab sells a family of models at the same time: a large, careful one that is slow and dear, a middle one for most work, and small, fast ones for volume.
+    Anthropic's current family is Fable, Opus, Sonnet and Haiku. OpenAI's is Astra, Sol, Terra and Luna.
+    The labs say what each is for. Anthropic describes Opus 5.5 as “<Fact id="models.claude-opus-5-5.purpose" />” and Haiku 5.5 as “<Fact id="models.claude-haiku-5-5.purpose" />”; OpenAI says of Luna: “<Fact id="models.gpt-6-luna.purpose" />”
+  </p>
+  <p>
+    That makes the useful question “which size, at which effort, for this task?” and not “which is the best model?”.
+    The answer changes as the line-ups change. Names, prices and scores move every few months, so everything in this section is generated from data files with a source and a date on each value, and each model has a card that is rebuilt when its data changes.
+  </p>
+
+  <Deeper level="technical" title="Tokens, prices and the context window">
+    <p>
+      Models read and write <Term def="A piece of a word, a few characters long. Prices, limits and the context window are all counted in tokens.">tokens</Term>. API prices are quoted per million tokens, separately for input (what the model reads) and output (what it writes). On every current Claude model <Fact id="lineup.claudeOutputRatio" show="claim" />
+    </p>
+    <p>
+      The context window is the most the model can hold in one request: system instructions, your messages, files, tool results and its own replies. A harness may use less than the model allows: <Fact id="models.gpt-6-2-astra.context" show="claim" />
+    </p>
+  </Deeper>
+
+  <h2 id="current">The current models</h2>
+  <p>
+    Every value below links to its source. A gap says “not published” when the lab does not state it, and “not confirmed” when we found a figure we could not check. Prices are the standard API list prices; the card for each model has the rest.
+  </p>
+  {groups.map((g) => (
+    <>
+      <h3 id={`lab-${g.lab.toLowerCase()}`}>{g.lab}</h3>
+      <ModelTable ids={g.ids} />
+    </>
+  ))}
+  {older.length > 0 && (
+    <p>
+      Older models kept in the data for price comparisons: {older.map((id, i) => <>{i > 0 && ', '}<a href={url(`models/${id}/`)}>{getModel(id).name}</a></>)}.
+    </p>
+  )}
+  <Note title="On a $20 plan">
+    <p>
+      Most readers pay a flat monthly fee, not per token. Claude Pro costs <Fact id="plans.claude.pro.price" /> a month; <Fact id="plans.claude.pro.models" show="claim" /> <Fact id="plans.claude.pro.fable" show="claim" />
+      ChatGPT Plus costs <Fact id="plans.chatgpt.plus.price" /> and runs all four OpenAI models in Codex, with published message estimates per model. The <a href={url('explain/plans-and-api/')}>plans explainer</a> says what a plan's limit means.
+    </p>
+  </Note>
+
+  <h2 id="score-against-cost">Score against cost</h2>
+  <p>
+    A benchmark is a fixed set of test tasks with known answers. Run a model on it and you get a score: the share it got right.
+    The <a href={links.artificialAnalysis.url}>Artificial Analysis</a> Intelligence Index is a widely used one. <Fact id="benchmarks.aa.method" show="claim" /> Artificial Analysis itself says its index <Fact id="benchmarks.aa.caveat" />.
+  </p>
+  <p>
+    The chart puts each model's index score against its price per million output tokens. The price axis is a log scale, so each gridline step is a multiple of price. Two things show up. Within each family, score rises with price. And price rises much faster than score: the jump from the cheapest model to the dearest is a large multiple in price for a smaller gain in points.
+  </p>
+
+  <ScoreAndCost points={points} start="claude-opus-5-5" source={aaSource} />
+
+  <p>
+    A score tells you how a model does on that test set, at the effort level it was run at, in the harness Artificial Analysis uses. It does not tell you how it will do on your code, with your instructions, at the effort level you will actually use. Most scores here were taken at the highest effort, while Claude Code and the API start lower. Treat the chart as a map of each lab's range and check the result on your own task.
+  </p>
+
+  <Deeper level="engineer" title="Benchmark caveats">
+    <p>
+      Saturation. When the best models score near the top of a test, the remaining gap is noise and the test stops separating them. Index makers rotate evaluations for this reason, so a score from one index version does not compare with another.
+    </p>
+    <p>
+      Contamination. Public test sets leak into training data. A model can score well on a question it has effectively seen, which flatters older, public benchmarks more than fresh or private ones.
+    </p>
+    <p>
+      Variance. A single run of an agentic task is one sample from a noisy process; small differences in points are within run-to-run variation unless the publisher reports intervals.
+    </p>
+    <p>
+      Cost per task against cost per token. The price per token says nothing about how many tokens a model spends on a task. A cheaper model that writes three times as much, or fails and retries, can cost more per finished task. Artificial Analysis reports cost per task where it can: <Fact id="benchmarks.aa.opusByEffort.max.costPerTask" show="claim" /> That figure is the one to compare, not the list price.
+    </p>
+    <p>
+      Effort. Scores are taken at a stated effort level. The same model at a lower level is a different point on Fig. 11, so compare models at the effort you will run them at.
+    </p>
+  </Deeper>
+
+  <h2 id="effort">The effort dial</h2>
+  <p>
+    Most current models let you set an effort level: how hard the model may think before it answers and how thoroughly it works. Higher effort means more thinking, more tool calls and more checking. All of that is written output, so it takes longer and uses more of what you pay for, in API dollars or in plan usage.
+  </p>
+  <p>
+    Effort works as a ceiling more than a target. Anthropic puts it this way: <Fact id="lineup.effortSignal" show="claim" /> A simple edit at high effort may cost little more than at low, because the model has nothing hard to think about. The dial matters on hard tasks, where a higher level lets the model keep going.
+    Opus 5.5 starts at <Fact id="models.claude-opus-5-5.effort.apiDefault" /> effort on the API, and Claude Code starts the current Claude models at <Fact id="lineup.claudeCodeEffortDefault" />.
+  </p>
+
+  <EffortDial {...effortInputs()} source={effortSource} />
+
+  <p>
+    The chart shows one test set. On it, each step up wrote more tokens, and the top two levels wrote far more than the middle ones for a few extra points. Neither lab publishes per-effort figures for your plan's usage, so the share of a five-hour window a level takes is not something we can show.
+  </p>
+
+  <Embed id="ejjBbaq9RmY" title="Getting the most out of Opus 5.5, by Theo" start={671} />
+  <p class="credit">Theo explains effort levels as a cap in <a href={links.theo.url}>his video</a> of 25 September 2026 (from 11:11). His picks are his own and have changed since.</p>
+
+  <Deeper level="technical" title="What effort is called in each harness">
+    <p>
+      Claude Code: <Fact id="harnesses.claudeCode.effort" show="claim" /> <Fact id="lineup.claudeCodeEffortLevels" show="claim" />
+    </p>
+    <p>
+      Codex: <Fact id="harnesses.codex.effort" show="claim" /> <Fact id="lineup.codexEffortLevels" show="claim" />
+    </p>
+    <p>On the API the parameter is <code>output_config.effort</code> on a Claude request. The names line up loosely across labs; the same word does not mean the same amount of thinking on two models.</p>
+  </Deeper>
+
+  <Deeper level="engineer" title="What effort changes, exactly">
+    <p>
+      <Fact id="lineup.effortAllTokens" show="claim" /> <Fact id="lineup.thinkingBilledAsOutput" show="claim" />
+    </p>
+    <p>
+      <Fact id="lineup.fableEffortGain" show="claim" /> At high levels, set a large output limit: it caps thinking plus reply together, and a run that hits it stops mid-thought.
+    </p>
+    <p>
+      Changing effort has a cache cost. <Fact id="lineup.effortCache" show="claim" /> In a long agent session, pick a level at the start or use the per-message setting.
+    </p>
+  </Deeper>
+
+  <h2 id="choosing">Choosing a size and an effort</h2>
+  <p>
+    Start with the model the lab suggests for most work, at its default effort. For Anthropic that is Opus: <Fact id="lineup.anthropicAdvice" show="claim" /> It is also what <Fact id="harnesses.claudeCode.defaultModel" show="claim" />
+    For OpenAI, the lab points everyday coding at Sol.
+  </p>
+  <p>
+    Go up a size or an effort level when the task is mostly judgement: planning the club list before any code exists, choosing how its data should be stored, or a bug like the bakery's holiday hours that has survived two attempts. A wrong plan costs more than the tokens to get it right.
+  </p>
+  <p>
+    Go down for routine edits and volume: renaming things across the club list, or running the contact tidy over a few thousand rows where each row is a small, checkable job. A smaller model at a lower effort is faster and uses far less, and you can check its output with a script.
+  </p>
+  <p>
+    This is guidance about sizes, not about labs. The guide does not rank one lab's models above another's. The owner has two opinions of his own, kept separate from the sourced facts:
+  </p>
+  <Opinion date={opinions.design.verified}>
+    <p>{opinions.design.value} {opinions.decisions.value}</p>
+  </Opinion>
+
+  <Deeper level="engineer" title="Cache pricing and why behaviour differs by harness">
+    <p>
+      In a long agent session much of the input is the same conversation read again, which the prompt cache serves at a lower price. <Fact id="lineup.cacheReadShare" show="claim" /> A model with a cheap cache read can cost less per session than its list price suggests, and a cache miss (after a change of effort, model or system prompt) bills the whole conversation at the input price.
+    </p>
+    <p>
+      The same model differs by harness because the harness writes the system prompt, decides which tools exist and how their results are shown, manages and compacts the context, and sets defaults. One example from the data: the API default effort for Sonnet 5.5 is <Fact id="models.claude-sonnet-5-5.effort.apiDefault" />, while Claude Code starts it at <Fact id="lineup.claudeCodeEffortDefault" />. Before you blame a model for a result, check which harness ran it and with which settings.
+    </p>
+    <p>
+      How to read a system card: it is the lab's report on testing a model before release. Look for the evaluation settings (effort, tools, number of attempts), which numbers are the lab's own, the safety findings that change how you should sandbox the model, and the known failure modes. Compare like with like: a lab's headline number often uses settings you will not run.
+    </p>
+  </Deeper>
+
+  <h2 id="compare">Run your own comparison</h2>
+  <p>
+    The best test of a model is your own task. Give two models the same job, in the same project, and read what comes back. Run them side by side in two threads, or one after the other in a fresh session each, so neither sees the other's work. Then look at the result, not the summary: did the fix work, was the change small, did it run the tests?
+  </p>
+  <CopyPrompt title="The same task for two models">{`The bakery website shows the normal opening hours on public holidays. It should show the holiday hours.
+
+Read AGENTS.md first. Find where the opening hours are worked out, write a failing test for 25 December, then fix it so the test passes. Run the whole test suite.
+
+When you are done, tell me which files you changed, paste the test output, and list anything you were unsure about. Do not push.`}</CopyPrompt>
+  <p>
+    Run it once with the middle model at default effort and once with a smaller or larger model, and note the time each took and how much of your plan's usage it used. After a few tasks you will know where each size earns its keep in your own work.
+  </p>
+
+  <h2 id="related">Related</h2>
+  <ul>
+    {groups.flatMap((g) => g.ids).map((id) => <li><a href={url(`models/${id}/`)}>{getModel(id).name}</a></li>)}
+    <li><a href={url('explain/plans-and-api/')}>Plans and the API</a></li>
+    <li><a href={url('explain/orchestration/')}>Running several agents</a></li>
+    <li><a href={url('sources/#file-benchmarks')}>Benchmark sources</a></li>
+  </ul>
+
+  <Verified ids={verifiedIds} />
+</Article>
+
+<style>
+  .credit { font-size: var(--text-m); color: var(--muted); }
+</style>

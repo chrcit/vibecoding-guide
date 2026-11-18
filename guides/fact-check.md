@@ -58,6 +58,10 @@ Release dates, context windows, API list prices and effort levels. From `site/sr
 | Claude Fable 5.2 accepts the effort levels low, medium, high, xhigh and max. | low, medium, high, xhigh, max | verified | [platform.claude.com/docs/en/build-with-claude/effort](https://platform.claude.com/docs/en/build-with-claude/effort) |
 | The API default effort for Claude Fable 5.2 is high. | high | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
 | On Claude Fable 5.2 thinking is adaptive and always on: the model decides how much to think and effort steers it. | adaptive, always on | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
+| Anthropic describes Claude Fable 5.2 as: "For demanding reasoning and long-horizon agentic work". | For demanding reasoning and long-horizon agentic work | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
+| In Claude Code the fable alias picks the Fable model. No plan uses Fable by default, so select it with /model fable. | /model fable | verified | [code.claude.com/docs/en/model-config](https://code.claude.com/docs/en/model-config) |
+| The reliable knowledge cutoff of Claude Fable 5.2 is June 2026. | Jun 2026 | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
+| Anthropic will not retire Claude Fable 5.2 sooner than 9 November 2027. | 9 November 2027 | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
 | Claude Opus 5.5 was released on 22 September 2026. | 22 Sep 2026 | verified | [platform.claude.com/docs/en/models/opus-5-5/overview](https://platform.claude.com/docs/en/models/opus-5-5/overview) |
 | Claude Opus 5.5 has a 1M-token context window. | 1M tokens | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
 | Claude Opus 5.5 writes at most 128K tokens per response. | 128K tokens | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
@@ -69,6 +73,10 @@ Release dates, context windows, API list prices and effort levels. From `site/sr
 | Claude Opus 5.5 accepts the effort levels low, medium, high, xhigh and max. | low, medium, high, xhigh, max | verified | [platform.claude.com/docs/en/build-with-claude/effort](https://platform.claude.com/docs/en/build-with-claude/effort) |
 | The API default effort for Claude Opus 5.5 is medium. | medium | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
 | On Claude Opus 5.5 thinking is adaptive and always on: the model decides how much to think and effort steers it. | adaptive, always on | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
+| Anthropic describes Claude Opus 5.5 as: "For long-running agentic coding and knowledge work". | For long-running agentic coding and knowledge work | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
+| Claude Code uses Opus 5.5 by default on Pro, Max, Ultra, Team, Enterprise and the Anthropic API; the opus alias picks it too. | the default, or /model opus | verified | [code.claude.com/docs/en/model-config](https://code.claude.com/docs/en/model-config) |
+| The reliable knowledge cutoff of Claude Opus 5.5 is June 2026. | Jun 2026 | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
+| Anthropic will not retire Claude Opus 5.5 sooner than 22 September 2027. | 22 September 2027 | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
 | Claude Sonnet 5.5 was released on 28 September 2026. | 28 Sep 2026 | verified | [platform.claude.com/docs/en/models/sonnet-5-5/overview](https://platform.claude.com/docs/en/models/sonnet-5-5/overview) |
 | Claude Sonnet 5.5 has a 1M-token context window. | 1M tokens | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
 | Claude Sonnet 5.5 writes at most 128K tokens per response. | 128K tokens | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
@@ -78,6 +86,10 @@ Release dates, context windows, API list prices and effort levels. From `site/sr
 | Claude Sonnet 5.5 accepts the effort levels low, medium, high, xhigh and max. | low, medium, high, xhigh, max | verified | [platform.claude.com/docs/en/build-with-claude/effort](https://platform.claude.com/docs/en/build-with-claude/effort) |
 | The API default effort for Claude Sonnet 5.5 is high. | high | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
 | Claude Sonnet 5.5 uses adaptive thinking. | adaptive | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
+| Anthropic describes Claude Sonnet 5.5 as: "The best combination of speed and intelligence". | The best combination of speed and intelligence | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
+| In Claude Code the sonnet alias picks the latest Sonnet; with an Anthropic account it resolves to Sonnet 5.5. | /model sonnet | verified | [code.claude.com/docs/en/model-config](https://code.claude.com/docs/en/model-config) |
+| The reliable knowledge cutoff of Claude Sonnet 5.5 is June 2026. | Jun 2026 | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
+| Anthropic will not retire Claude Sonnet 5.5 sooner than 28 September 2027. | 28 September 2027 | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
 | Claude Haiku 5.5 was released on 7 October 2026. | 7 Oct 2026 | verified | [platform.claude.com/docs/en/models/haiku-5-5/overview](https://platform.claude.com/docs/en/models/haiku-5-5/overview) |
 | Claude Haiku 5.5 has a 1M-token context window. | 1M tokens | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
 | Claude Haiku 5.5 writes at most 128K tokens per response. | 128K tokens | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
@@ -90,17 +102,29 @@ Release dates, context windows, API list prices and effort levels. From `site/sr
 | Claude Haiku 5.5 accepts the effort levels low, medium, high, xhigh and max. | low, medium, high, xhigh, max | verified | [platform.claude.com/docs/en/build-with-claude/effort](https://platform.claude.com/docs/en/build-with-claude/effort) |
 | The API default effort for Claude Haiku 5.5 is medium. | medium | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
 | Claude Haiku 5.5 uses adaptive thinking. | adaptive | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
+| Anthropic describes Claude Haiku 5.5 as: "For high-volume, latency-sensitive tasks such as classification, extraction, and routing". | For high-volume, latency-sensitive tasks such as classification, extraction, and routing | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
+| In Claude Code the haiku alias picks the Haiku model; with an Anthropic account it resolves to Haiku 5.5 (Claude Code v2.1.293 or later). | /model haiku | verified | [code.claude.com/docs/en/model-config](https://code.claude.com/docs/en/model-config) |
+| The reliable knowledge cutoff of Claude Haiku 5.5 is June 2026. | Jun 2026 | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
+| Anthropic will not retire Claude Haiku 5.5 sooner than 7 October 2027. | 7 October 2027 | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
 | GPT-6.2 Astra supports a context window of up to 1M tokens; Codex uses 272,000 by default. | 1M tokens | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
 | GPT-6.2 Astra costs $8 per million input tokens (standard tier, up to 272K input tokens). | $8 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
 | GPT-6.2 Astra costs $40 per million output tokens (standard tier, up to 272K input tokens). | $40 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
+| OpenAI on GPT-6.2 Astra: "Choose GPT-6.2 Astra for demanding projects." | Choose GPT-6.2 Astra for demanding projects. | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
+| Start Codex on GPT-6.2 Astra with codex -m gpt-6.2-astra, or switch with /model in a session. | codex -m gpt-6.2-astra | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
 | GPT-6.2 Sol supports a context window of up to 1M tokens; Codex uses 500,000 by default. | 1M tokens | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
 | GPT-6.2 Sol costs $2 per million input tokens. | $2 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
 | GPT-6.2 Sol costs $10 per million output tokens. | $10 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
+| OpenAI on GPT-6.2 Sol: "Use GPT-6.2 Sol for everyday tasks like editing code, drafting a report, or turning project notes into a plan." | Use GPT-6.2 Sol for everyday tasks like editing code, drafting a report, or turning project notes into a plan. | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
+| Start Codex on GPT-6.2 Sol with codex -m gpt-6.2-sol, or switch with /model in a session. | codex -m gpt-6.2-sol | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
 | GPT-6.1 Terra costs $1 per million input tokens. | $1 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
 | GPT-6.1 Terra costs $5 per million output tokens. | $5 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
+| OpenAI on GPT-6.1 Terra: "A fast, efficient model for clear writing, visual understanding, and computer use." | A fast, efficient model for clear writing, visual understanding, and computer use. | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
+| Start Codex on GPT-6.1 Terra with codex -m gpt-6.1-terra, or switch with /model in a session. | codex -m gpt-6.1-terra | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
 | GPT-6 Luna costs $0.10 per million input tokens. | $0.10 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
 | GPT-6 Luna costs $0.50 per million output tokens. | $0.50 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
 | GPT-6 Luna supports reasoning effort up to max, but not ultra. | low, medium, high, extra high, max | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
+| OpenAI on GPT-6 Luna: "Our most efficient model for focused, high-volume tasks, including summarization, extraction, and focused coding." | Our most efficient model for focused, high-volume tasks, including summarization, extraction, and focused coding. | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
+| Start Codex on GPT-6 Luna with codex -m gpt-6-luna, or switch with /model in a session. | codex -m gpt-6-luna | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
 | GPT-5.5 (April 2026) costs $5 per million input tokens. | $5 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
 | GPT-5.5 (April 2026) costs $30 per million output tokens. | $30 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
 | GPT-5.1, the OpenAI flagship of November 2025, costs $1.25 per million input tokens. | $1.25 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
@@ -111,6 +135,14 @@ Release dates, context windows, API list prices and effort levels. From `site/sr
 | Anthropic's worked example (an Opus 5.5 session with 50,000 input and 15,000 output tokens) comes to 60% output by cost. | 60% | verified: 50k × $4 = $0.20 input, 15k × $20 = $0.30 output. | [platform.claude.com/docs/en/about-claude/pricing](https://platform.claude.com/docs/en/about-claude/pricing) |
 | Batch API requests are 50% off on Claude models. | 50% | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
 | Codex offers reasoning effort low (called light in the app), medium, high, extra high, and on some models max and ultra. Ultra uses subagents. | low, medium, high, extra high, max, ultra | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
+| All current Claude models support text and image input, text output, multilingual capabilities, vision and tool use. | text and image in, text out | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
+| Anthropic: "Effort is a behavioral signal, not a strict token budget. At lower effort levels, Claude still thinks on sufficiently difficult problems, but thinks less than it would at higher effort levels for the same problem." | a signal, not a budget | verified | [platform.claude.com/docs/en/build-with-claude/effort](https://platform.claude.com/docs/en/build-with-claude/effort) |
+| Effort affects every output token: the reply, tool calls and their arguments, and thinking. Lower effort also means fewer and terser tool calls. | all output tokens | verified | [platform.claude.com/docs/en/build-with-claude/effort](https://platform.claude.com/docs/en/build-with-claude/effort) |
+| Changing the top-level effort between requests can invalidate all or part of the prompt cache; a per-message effort change, where a model supports it, keeps the cache. | can invalidate the cache | verified | [platform.claude.com/docs/en/build-with-claude/effort](https://platform.claude.com/docs/en/build-with-claude/effort) |
+| For Claude Fable 5.2 Anthropic says most of the gain in capability is already present at high; at max it runs slower and costs more than at xhigh, often for only a small gain. | most of the gain at high | verified | [platform.claude.com/docs/en/build-with-claude/effort](https://platform.claude.com/docs/en/build-with-claude/effort) |
+| Prompt cache reads cost 10% of the base input price on Claude models, 5% on Claude Opus 5.5 and Claude Sonnet 5.5, and 2.5% on Claude Fable 5.2. | 10%, 5%, 2.5% | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
+| In Claude Code, Fable 5.2, Opus 5.5, Sonnet 5.5 and Haiku 5.5 default to medium effort. | medium | verified | [code.claude.com/docs/en/model-config](https://code.claude.com/docs/en/model-config) |
+| In Claude Code, Fable, Opus 5.5, Sonnet 5.5 and Haiku 5.5 offer the effort levels low, medium, high, xhigh and max. | low, medium, high, xhigh, max | verified | [code.claude.com/docs/en/model-config](https://code.claude.com/docs/en/model-config) |
 
 ## Plans and limits
 
@@ -120,19 +152,23 @@ Subscription prices, what each includes, how limits work and what the API credit
 |---|---|---|---|
 | Claude Free costs nothing. | $0 | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Claude Code is not included on the free Claude plan. | no | verified | [claude.com/pricing](https://claude.com/pricing) |
+| Claude Free includes Sonnet and Haiku in the Claude apps, but not Opus or Fable, and not Claude Code. | Sonnet, Haiku | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Claude Pro costs $20 a month billed monthly ($17 a month billed yearly). | $20 | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Claude Code is included from Pro up. | yes | verified | [claude.com/pricing](https://claude.com/pricing) |
 | On Pro, Fable runs on pay-as-you-go usage credits from the start; it is outside the plan limits. | usage credits | verified | [support.claude.com/en/articles/15424964](https://support.claude.com/en/articles/15424964) |
+| Claude Pro includes Opus, Sonnet and Haiku within the plan limits. | Opus, Sonnet, Haiku | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Claude Max costs $100 a month. | $100 | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Max gives 5× Pro usage every five hours and every week. | 5× | verified | [claude.com/pricing](https://claude.com/pricing) |
 | On Max, up to 50% of the weekly limit can be spent on Fable at no extra cost; after that Fable continues on usage credits. | 50% | verified | [support.claude.com/en/articles/15424964](https://support.claude.com/en/articles/15424964) |
 | Max includes $100 a month of Claude API credit. It cannot be spent in interactive Claude Code, the Claude apps or on extra usage, and does not change plan limits. | $100 | verified | [support.claude.com/en/articles/17154008](https://support.claude.com/en/articles/17154008) |
+| Claude Max includes Opus, Sonnet and Haiku within the plan limits. | Opus, Sonnet, Haiku | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Claude Ultra costs $200 a month (web subscriptions; mobile prices may differ). | $200 | verified | [support.claude.com/en/articles/17728952](https://support.claude.com/en/articles/17728952) |
 | Ultra gives 10× Pro usage every week. | 10× | verified | [support.claude.com/en/articles/17728952](https://support.claude.com/en/articles/17728952) |
 | The plan formerly called Max 20x is now Ultra, at the same price. | Max 20x | verified | [support.claude.com/en/articles/17728952](https://support.claude.com/en/articles/17728952) |
 | Verified Ultra accounts don't have a five-hour limit. Unverified accounts have a temporary one until verification. | yes | verified | [support.claude.com/en/articles/17728952](https://support.claude.com/en/articles/17728952) |
 | On Ultra, as on Max, up to 50% of the weekly limit can be spent on Fable at no extra cost. | 50% | verified | [support.claude.com/en/articles/15424964](https://support.claude.com/en/articles/15424964) |
 | Ultra includes $200 a month of Claude API credit, with the same restrictions as on Max. | $200 | verified | [support.claude.com/en/articles/17154008](https://support.claude.com/en/articles/17154008) |
+| Claude Ultra includes Opus, Sonnet and Haiku within the plan limits. | Opus, Sonnet, Haiku | verified | [claude.com/pricing](https://claude.com/pricing) |
 | Claude plans have a five-hour limit: the period starts with your first message and the limit resets in full five hours later. Verified Ultra accounts have none. | five hours | verified | [support.claude.com/en/articles/11647753](https://support.claude.com/en/articles/11647753) |
 | Weekly limits apply across all models, and some plans also have a separate weekly limit for Fable. They reset at a fixed weekly time assigned to the account. | weekly | verified | [support.claude.com/en/articles/11647753](https://support.claude.com/en/articles/11647753) |
 | Session and weekly limits are shared across all models, so switching model with /model does not restore access. | yes | verified | [code.claude.com/docs/en/costs](https://code.claude.com/docs/en/costs) |
@@ -142,6 +178,7 @@ Subscription prices, what each includes, how limits work and what the API credit
 | A Team plan programme exists for verified principal investigators. | Team plan | verified | [claude.com/programs/team-plan-for-scientists](https://claude.com/programs/team-plan-for-scientists) |
 | The Claude startup programme closed to new applications on 13 October 2026. | 13 Oct 2026 | verified | [claude.com/programs/team-plan-for-scientists](https://claude.com/programs/team-plan-for-scientists) |
 | ChatGPT Free costs nothing and includes Codex. | $0 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
+| On ChatGPT Free and Go, GPT-6 Luna is available in the Codex desktop app. | desktop app | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
 | ChatGPT Go costs $8 a month and includes Codex. | $8 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 | ChatGPT Plus costs $20 a month and includes Codex. | $20 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 | Estimated local Codex messages per five hours on Plus with GPT-6.2 Astra: 6 to 50. | 6–50 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
@@ -268,6 +305,7 @@ Subagents, nesting, agent teams, MCP config, voice, skills and sandboxing in eac
 | Sign in to Claude Code with claude auth login. | claude auth login | verified | [code.claude.com/docs/en/quickstart](https://code.claude.com/docs/en/quickstart) |
 | Anthropic: "Before a run goes unattended, make sure it knows what done looks like, can check its own work, and can only touch what it should." | Before a run goes unattended, make sure it knows what done looks like, can check its own work, and can only touch what it should. | verified | [code.claude.com/docs/en/best-practices](https://code.claude.com/docs/en/best-practices) |
 | Across enterprise deployments Claude Code averages about $13 per developer per active day and $150 to $250 per month. | $13 | verified | [code.claude.com/docs/en/costs](https://code.claude.com/docs/en/costs) |
+| In Claude Code, set effort with /effort (a slider, or a level name), the --effort flag for one session, CLAUDE_CODE_EFFORT_LEVEL, or effortLevel in settings; max is not accepted as a saved level in settings. | /effort | verified | [code.claude.com/docs/en/model-config](https://code.claude.com/docs/en/model-config) |
 | The Codex CLI is open source under Apache-2.0. The models behind it are proprietary. | Apache-2.0 | verified | [github.com/openai/codex](https://github.com/openai/codex) |
 | Codex is built for OpenAI models but can be pointed at other providers such as Ollama, LM Studio, Amazon Bedrock or any Responses-compatible endpoint. | OpenAI first, others possible | verified | [learn.chatgpt.com/docs/config-file/config-advanced](https://learn.chatgpt.com/docs/config-file/config-advanced) |
 | Current Codex releases enable subagent workflows by default; they consume more tokens than comparable single-agent runs. | yes | verified | [learn.chatgpt.com/docs/agent-configuration/subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents) |
@@ -279,6 +317,7 @@ Subagents, nesting, agent teams, MCP config, voice, skills and sandboxing in eac
 | Codex queues a message you send while it is working. | yes | verified | [learn.chatgpt.com/docs/codex/cli](https://learn.chatgpt.com/docs/codex/cli) |
 | Sign in to Codex with codex login. | codex login | verified | [learn.chatgpt.com/docs/auth](https://learn.chatgpt.com/docs/auth) |
 | The Codex docs moved: developers.openai.com/codex/* now redirects (308) to learn.chatgpt.com/docs/*. | learn.chatgpt.com/docs | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
+| In the Codex CLI, pick model and reasoning effort with /model (More reasoning… shows max and ultra); in the desktop app, use the model and reasoning control under the composer. | /model | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
 | T3 Code is an agentic development environment: it drives the harnesses above and adds threads, diffs, previews and mixing providers. What an agent can do still comes from the harness underneath. | ADE | verified | [github.com/pingdotgg/t3code](https://github.com/pingdotgg/t3code) |
 
 ## Skills
