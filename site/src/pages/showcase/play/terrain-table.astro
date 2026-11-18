@@ -1,0 +1,751 @@
+---
+// The terrain table: a showcase piece. A bare page, not on the site's Base layout.
+// `three` is imported dynamically by the client script, only when the scene is about to show.
+---
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="color-scheme" content="light dark">
+  <title>Terrain table</title>
+  <meta name="description" content="A small low-poly landscape on a table. Turn it, reshape it, change the time of day.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 20l13-7 13 7-13 7z' fill='%238a5a36'/%3E%3Cpath d='M3 17l5-4 4 2 5-6 4 4 3-1 5 5-13 7z' fill='%236f9a4a'/%3E%3C/svg%3E">
+</head>
+<body>
+  <main class="app" id="app">
+    <div class="stage" id="stage">
+      <canvas id="scene" tabindex="0" aria-label="The terrain table. Use the arrow keys to turn and tilt it, and plus and minus to zoom." aria-describedby="keys-help"></canvas>
+      <div class="poster" id="poster" aria-hidden="true">
+        <svg viewBox="0 0 400 260" class="poster-art">
+          <path d="M40 150 200 70 360 150 200 230Z" class="pa-table"/>
+          <path d="M40 150v14l160 80v-14Z" class="pa-edge"/>
+          <path d="M360 150v14l-160 80v-14Z" class="pa-edge2"/>
+          <path d="M70 140 200 76 330 140 200 204Z" class="pa-water"/>
+          <path d="M70 140l30-30 22 6 26-34 28 18 24-20 34 30 20-4 26 34-62 30-54-4-46 18Z" class="pa-land"/>
+        </svg>
+        <p class="poster-text" id="poster-text">Laying out the table</p>
+      </div>
+      <div class="fallback" id="fallback" hidden>
+        <svg viewBox="0 0 400 260" class="fallback-art" aria-hidden="true">
+          <path d="M40 150 200 70 360 150 200 230Z" class="pa-table"/>
+          <path d="M40 150v14l160 80v-14Z" class="pa-edge"/>
+          <path d="M360 150v14l-160 80v-14Z" class="pa-edge2"/>
+          <path d="M70 140 200 76 330 140 200 204Z" class="pa-water"/>
+          <path d="M70 140l30-30 22 6 26-34 28 18 24-20 34 30 20-4 26 34-62 30-54-4-46 18Z" class="pa-land"/>
+        </svg>
+        <h1>This table needs 3D graphics</h1>
+        <p>The landscape is drawn with WebGL, the part of a browser that uses the graphics chip. In this browser it is switched off or not available, so there is nothing to show.</p>
+        <p>It works in current Chrome, Edge, Firefox and Safari with hardware acceleration turned on. If you have turned that off on purpose, the drawing above is roughly what you are missing.</p>
+      </div>
+    </div>
+
+    <header class="label">
+      <h1 class="title">Terrain table</h1>
+      <p class="seed">Landscape <span id="seed-out">0</span></p>
+    </header>
+
+    <section class="panel" id="panel" aria-label="Controls">
+      <details id="controls" open>
+        <summary>Shape and light</summary>
+        <form class="controls" id="form" onsubmit="return false">
+          <div class="row">
+            <label for="sea">Sea level</label>
+            <output id="sea-out" for="sea">40%</output>
+            <input type="range" id="sea" name="sea" min="0" max="100" step="1" value="40">
+          </div>
+          <div class="row">
+            <label for="rough">Roughness</label>
+            <output id="rough-out" for="rough">50%</output>
+            <input type="range" id="rough" name="rough" min="0" max="100" step="1" value="50">
+          </div>
+          <div class="row">
+            <label for="time">Time of day</label>
+            <output id="time-out" for="time">16:30</output>
+            <input type="range" id="time" name="time" min="0" max="24" step="0.25" value="16.5">
+          </div>
+          <div class="check">
+            <input type="checkbox" id="spin" name="spin" checked>
+            <label for="spin">Turn slowly by itself</label>
+          </div>
+        </form>
+      </details>
+      <div class="actions">
+        <button type="button" class="btn primary" id="new">New landscape</button>
+        <button type="button" class="btn" id="copy">Copy link</button>
+      </div>
+      <p class="status" id="status" role="status"></p>
+      <p class="keys" id="keys-help">Drag to turn, scroll or pinch to zoom. From the keyboard, focus the table: arrow keys turn and tilt, + and − zoom.</p>
+    </section>
+  </main>
+
+  <style is:global>
+    :root {
+      --ui: rgb(255 255 255 / .9);
+      --ui-solid: #ffffff;
+      --ink: #1d2320;
+      --ink-2: #4a524d;
+      --rule: rgb(29 35 32 / .14);
+      --accent: #c4502a;
+      --accent-ink: #ffffff;
+      --track: rgb(29 35 32 / .16);
+      --focus: #c4502a;
+      --sky-top: #9cc3e6;
+      --sky-low: #e9d9c3;
+      --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ui: rgb(18 22 28 / .88);
+        --ui-solid: #12161c;
+        --ink: #eef1ee;
+        --ink-2: #b5beb8;
+        --rule: rgb(238 241 238 / .14);
+        --accent: #ff8a5c;
+        --accent-ink: #1a0f0a;
+        --track: rgb(238 241 238 / .2);
+        --focus: #ffb08f;
+        color-scheme: dark;
+      }
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font: 15px/1.45 var(--font); color: var(--ink); overflow: hidden;
+      background: linear-gradient(180deg, var(--sky-top), var(--sky-low));
+    }
+    .app { position: relative; height: 100%; min-height: 100dvh; }
+    .stage { position: absolute; inset: 0; }
+    canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; outline: none; }
+    canvas:active { cursor: grabbing; }
+    canvas:focus-visible { box-shadow: inset 0 0 0 3px var(--focus); }
+    :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    .poster, .fallback { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; padding: 24px; text-align: center; }
+    .poster { pointer-events: none; transition: opacity .5s ease; }
+    .poster.gone { opacity: 0; }
+    .poster-art, .fallback-art { width: min(70vw, 360px); height: auto; }
+    .poster-art { opacity: .55; }
+    .poster-text { margin: 0; font-weight: 600; color: #26302b; }
+    .pa-table { fill: #9a6a44; }
+    .pa-edge { fill: #7a4f30; }
+    .pa-edge2 { fill: #64401f; }
+    .pa-water { fill: #4aa3b8; }
+    .pa-land { fill: #7fa255; }
+    .fallback { background: linear-gradient(180deg, var(--sky-top), var(--sky-low)); }
+    .fallback h1 { margin: 6px 0 0; font-size: clamp(22px, 4vw, 30px); letter-spacing: -0.01em; color: #1d2320; }
+    .fallback p { margin: 0; max-width: 46ch; color: #2d3631; }
+
+    .label { position: absolute; top: 16px; left: 16px; pointer-events: none; color: #1d2320; text-shadow: 0 1px 0 rgb(255 255 255 / .35); transition: color .4s ease; }
+    .label.night { color: #eef1f8; text-shadow: 0 1px 2px rgb(0 0 0 / .4); }
+    .title { margin: 0; font-size: 22px; font-weight: 750; letter-spacing: -0.02em; line-height: 1.1; }
+    .seed { margin: 2px 0 0; font-size: 14px; font-variant-numeric: tabular-nums; opacity: .85; }
+
+    .panel {
+      position: absolute; right: 16px; bottom: 16px; width: 300px; max-width: calc(100% - 32px);
+      background: var(--ui); color: var(--ink); border-radius: 16px; padding: 14px 16px 12px;
+      box-shadow: 0 1px 2px rgb(0 0 0 / .08), 0 12px 32px rgb(0 0 0 / .16);
+      -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
+      border: 1px solid var(--rule);
+    }
+    @media (prefers-reduced-transparency: reduce) { .panel { background: var(--ui-solid); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+    summary { cursor: pointer; font-weight: 700; min-height: 32px; display: flex; align-items: center; gap: 8px; list-style: none; border-radius: 6px; }
+    summary::-webkit-details-marker { display: none; }
+    summary::before { content: ""; width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .2s ease; margin: 0 2px 0 2px; }
+    details[open] summary::before { transform: rotate(45deg); }
+    .controls { display: grid; gap: 10px; margin: 8px 0 4px; }
+    .row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0 8px; }
+    .row label { font-weight: 600; font-size: 14px; }
+    output { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 14px; }
+    input[type="range"] { grid-column: 1 / -1; width: 100%; margin: 0; height: 32px; accent-color: var(--accent); background: transparent; cursor: pointer; }
+    .check { display: flex; align-items: center; gap: 10px; min-height: 40px; }
+    .check input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
+    .check label { font-size: 14px; font-weight: 600; }
+    .actions { display: flex; gap: 8px; margin-top: 8px; }
+    .btn {
+      font: inherit; font-weight: 700; min-height: 44px; padding: 0 14px; border-radius: 10px; cursor: pointer; flex: 1 1 auto;
+      background: transparent; color: var(--ink); border: 1.5px solid var(--rule);
+      transition: transform .12s ease, background-color .2s ease;
+    }
+    .btn:hover { background: var(--track); }
+    .btn:active { transform: translateY(1px); }
+    .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+    .status { margin: 6px 0 0; font-size: 13px; color: var(--ink-2); min-height: 0; }
+    .status:empty { display: none; }
+    .keys { margin: 8px 0 0; font-size: 13px; color: var(--ink-2); }
+    @media (max-width: 560px) {
+      .panel { left: 12px; right: 12px; bottom: 12px; width: auto; max-width: none; padding: 10px 12px; }
+      .keys { display: none; }
+      .label { top: 12px; left: 12px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .poster, .label, summary::before, .btn { transition: none; }
+    }
+  </style>
+
+  <script>
+    // ---------------------------------------------------------------------
+    // State, kept in the URL so a landscape can be shared.
+    const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+    const params = new URLSearchParams(location.search);
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const clampNum = (v: string | null, lo: number, hi: number, d: number) => {
+      const n = v == null || v === '' ? NaN : Number(v);
+      return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d;
+    };
+    const randomSeed = () => 1 + Math.floor(Math.random() * 999998);
+    const state = {
+      seed: Math.round(clampNum(params.get('seed'), 1, 999999, 0)) || randomSeed(),
+      sea: clampNum(params.get('sea'), 0, 100, 40),
+      rough: clampNum(params.get('rough'), 0, 100, 50),
+      time: clampNum(params.get('time'), 0, 24, 16.5),
+      spin: params.has('spin') ? params.get('spin') !== '0' : !reduceMotion,
+    };
+
+    const form = { sea: $<HTMLInputElement>('sea'), rough: $<HTMLInputElement>('rough'), time: $<HTMLInputElement>('time'), spin: $<HTMLInputElement>('spin') };
+    const fmtTime = (t: number) => {
+      const m = Math.round(t * 60) % 1440;
+      return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+    };
+    function syncForm() {
+      form.sea.value = String(state.sea);
+      form.rough.value = String(state.rough);
+      form.time.value = String(state.time);
+      form.spin.checked = state.spin;
+      $('sea-out').textContent = `${Math.round(state.sea)}%`;
+      $('rough-out').textContent = `${Math.round(state.rough)}%`;
+      $('time-out').textContent = fmtTime(state.time);
+      form.time.setAttribute('aria-valuetext', fmtTime(state.time));
+      $('seed-out').textContent = String(state.seed);
+    }
+    let urlTimer = 0;
+    function writeUrl() {
+      clearTimeout(urlTimer);
+      urlTimer = window.setTimeout(() => {
+        const q = new URLSearchParams();
+        q.set('seed', String(state.seed));
+        if (state.sea !== 40) q.set('sea', String(state.sea));
+        if (state.rough !== 50) q.set('rough', String(state.rough));
+        if (state.time !== 16.5) q.set('time', String(state.time));
+        try { history.replaceState(null, '', `${location.pathname}?${q}`); } catch { /* ignore */ }
+      }, 150);
+    }
+    syncForm();
+    writeUrl();
+    if (matchMedia('(max-width: 560px)').matches) ($('controls') as HTMLDetailsElement).open = false;
+
+    const say = (msg: string) => { $('status').textContent = msg; };
+
+    // ---------------------------------------------------------------------
+    // Seeded noise, written by hand: a 32-bit PRNG and 2D gradient noise.
+    function mulberry32(a: number) {
+      return () => {
+        a |= 0; a = (a + 0x6d2b79f5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+    function makeNoise(seed: number) {
+      const rnd = mulberry32(seed);
+      const perm = Array.from({ length: 256 }, (_, i) => i);
+      for (let i = 255; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [perm[i], perm[j]] = [perm[j], perm[i]]; }
+      const p = new Uint8Array(512);
+      for (let i = 0; i < 512; i++) p[i] = perm[i & 255];
+      const fade = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
+      const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+      const grad = (h: number, x: number, y: number) => {
+        switch (h & 7) {
+          case 0: return x + y; case 1: return -x + y; case 2: return x - y; case 3: return -x - y;
+          case 4: return x; case 5: return -x; case 6: return y; default: return -y;
+        }
+      };
+      return (x: number, y: number) => {
+        const fx = Math.floor(x), fy = Math.floor(y);
+        const X = fx & 255, Y = fy & 255;
+        x -= fx; y -= fy;
+        const u = fade(x), v = fade(y);
+        const a = p[X] + Y, b = p[X + 1] + Y;
+        return lerp(lerp(grad(p[a], x, y), grad(p[b], x - 1, y), u), lerp(grad(p[a + 1], x, y - 1), grad(p[b + 1], x - 1, y - 1), u), v) * 0.75;
+      };
+    }
+
+    // ---------------------------------------------------------------------
+    // The landscape as numbers: heights on a grid, in world units.
+    const N = 84, SIZE = 10, HALF = SIZE / 2, BASE = -1.7;
+    const heights = new Float32Array((N + 1) * (N + 1));
+    const forestMask = new Float32Array((N + 1) * (N + 1));
+    function generate() {
+      const noise = makeNoise(state.seed);
+      const detail = makeNoise(state.seed ^ 0x5bd1e995);
+      const rnd = mulberry32(state.seed * 7 + 3);
+      const ox = rnd() * 100, oz = rnd() * 100;
+      const r = state.rough / 100;
+      const gain = 0.34 + r * 0.26;
+      const f0 = 0.85 + r * 0.55;
+      for (let iz = 0; iz <= N; iz++) {
+        for (let ix = 0; ix <= N; ix++) {
+          const nx = (ix / N) * 2 - 1, nz = (iz / N) * 2 - 1;
+          let amp = 1, freq = f0, sum = 0, norm = 0;
+          for (let o = 0; o < 6; o++) {
+            sum += amp * noise(nx * freq + ox, nz * freq + oz);
+            norm += amp; amp *= gain; freq *= 2.03;
+          }
+          const n = sum / norm;
+          const rr = nx * nx + nz * nz;
+          const e = n * 1.9 + 0.2 - 0.42 * rr;
+          let h = e > 0 ? Math.pow(e, 1.3) * (2.4 + r * 0.8) : e * 1.3;
+          h = Math.max(BASE + 0.35, h);
+          heights[iz * (N + 1) + ix] = h;
+          forestMask[iz * (N + 1) + ix] = detail(nx * 2.4 + 9, nz * 2.4 + 9);
+        }
+      }
+    }
+    // Sea level in world units, from the 0 to 100 slider.
+    const seaY = () => -0.9 + (state.sea / 100) * 2.2;
+
+    // ---------------------------------------------------------------------
+    // WebGL check and lazy start.
+    function hasWebGL() {
+      if (params.get('webgl') === 'off') return false;
+      try {
+        const c = document.createElement('canvas');
+        return !!(c.getContext('webgl2') || c.getContext('webgl'));
+      } catch { return false; }
+    }
+    function showFallback() {
+      $('fallback').hidden = false;
+      $('poster').hidden = true;
+      $('panel').hidden = true;
+      document.querySelector('.label')?.setAttribute('hidden', '');
+      $('scene').setAttribute('hidden', '');
+    }
+
+    let started = false;
+    function start() {
+      if (started) return;
+      started = true;
+      if (!hasWebGL()) { showFallback(); return; }
+      import('three').then(run).catch((err) => { console.error(err); showFallback(); });
+    }
+    const io0 = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) { io0.disconnect(); start(); } }, { rootMargin: '200px' });
+    io0.observe($('stage'));
+
+    // ---------------------------------------------------------------------
+    type Three = typeof import('three');
+    function run(THREE: Three) {
+      const canvas = $<HTMLCanvasElement>('scene');
+      let renderer: import('three').WebGLRenderer;
+      try {
+        renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+      } catch (err) { console.error(err); showFallback(); return; }
+      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+      renderer.setClearColor(0x000000, 0);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFShadowMap;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.05;
+
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.Fog(0xe9d9c3, 18, 46);
+      const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 200);
+
+      // Lights: a sky fill and one sun (or moon) that casts shadows.
+      const hemi = new THREE.HemisphereLight(0xbfd8f2, 0x5a4632, 0.8);
+      scene.add(hemi);
+      const sun = new THREE.DirectionalLight(0xfff1dc, 2.4);
+      sun.castShadow = true;
+      sun.shadow.mapSize.set(2048, 2048);
+      sun.shadow.camera.left = -9; sun.shadow.camera.right = 9;
+      sun.shadow.camera.top = 9; sun.shadow.camera.bottom = -9;
+      sun.shadow.camera.near = 1; sun.shadow.camera.far = 60;
+      sun.shadow.bias = -0.0006;
+      sun.shadow.normalBias = 0.02;
+      scene.add(sun, sun.target);
+
+      // The terrain surface: a flat-shaded grid with one colour per face.
+      const plane = new THREE.PlaneGeometry(SIZE, SIZE, N, N);
+      plane.rotateX(-Math.PI / 2);
+      const terrainGeo = plane.toNonIndexed();
+      plane.dispose();
+      const tPos = terrainGeo.attributes.position as import('three').BufferAttribute;
+      const vIdx = new Uint32Array(tPos.count);
+      for (let i = 0; i < tPos.count; i++) {
+        const ix = Math.round(((tPos.getX(i) + HALF) / SIZE) * N);
+        const iz = Math.round(((tPos.getZ(i) + HALF) / SIZE) * N);
+        vIdx[i] = iz * (N + 1) + ix;
+      }
+      const tCol = new THREE.BufferAttribute(new Float32Array(tPos.count * 3), 3);
+      terrainGeo.setAttribute('color', tCol);
+      const terrain = new THREE.Mesh(terrainGeo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.92, metalness: 0 }));
+      terrain.castShadow = true; terrain.receiveShadow = true;
+      scene.add(terrain);
+
+      // The cut sides of the block, in layers of soil and rock.
+      const sideMat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1, side: THREE.DoubleSide });
+      const sides = new THREE.Mesh(new THREE.BufferGeometry(), sideMat);
+      sides.receiveShadow = true; sides.castShadow = true;
+      scene.add(sides);
+
+      // Water: a box filled to sea level, slightly inset so the soil sides show in front.
+      const water = new THREE.Mesh(
+        new THREE.BoxGeometry(SIZE - 0.03, 1, SIZE - 0.03),
+        new THREE.MeshStandardMaterial({ color: 0x4fb0c4, transparent: true, opacity: 0.66, roughness: 0.2, metalness: 0.05 }),
+      );
+      water.receiveShadow = true;
+      scene.add(water);
+
+      // The table under the block, and a floor that only catches the shadow.
+      const wood = new THREE.MeshStandardMaterial({ color: 0x8a5a36, roughness: 0.7 });
+      const table = new THREE.Mesh(new THREE.BoxGeometry(SIZE + 1.6, 0.42, SIZE + 1.6), wood);
+      table.position.y = BASE - 0.21;
+      table.receiveShadow = true; table.castShadow = true;
+      scene.add(table);
+      const lip = new THREE.Mesh(new THREE.BoxGeometry(SIZE + 1.7, 0.08, SIZE + 1.7), new THREE.MeshStandardMaterial({ color: 0x6e4529, roughness: 0.8 }));
+      lip.position.y = BASE - 0.46;
+      scene.add(lip);
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.ShadowMaterial({ opacity: 0.18 }));
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = BASE - 0.5;
+      floor.receiveShadow = true;
+      scene.add(floor);
+
+      // Trees: small cones, placed on low, gentle, forested ground.
+      const MAX_TREES = 420;
+      const treeGeo = new THREE.ConeGeometry(0.1, 0.36, 6);
+      treeGeo.translate(0, 0.18, 0);
+      const trees = new THREE.InstancedMesh(treeGeo, new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.9 }), MAX_TREES);
+      trees.castShadow = true; trees.receiveShadow = true;
+      scene.add(trees);
+
+      const C = (hex: number) => new THREE.Color(hex);
+      const pal = {
+        seabed: C(0x6b8f86), sand: C(0xe2cf98), grass: C(0x93b35c), meadow: C(0x7ea551), forest: C(0x557d3d),
+        rock: C(0x8b8375), highrock: C(0xa59d90), snow: C(0xf3f5f7),
+        soil: [C(0x7a5a3e), C(0x987452), C(0xb08c62), C(0x857565)],
+        tree: C(0x4f8443),
+      };
+      const tmp = new THREE.Color();
+      const hash = (i: number) => { const x = Math.sin(i * 12.9898 + state.seed * 0.001) * 43758.5453; return x - Math.floor(x); };
+
+      function updateTerrain() {
+        for (let i = 0; i < tPos.count; i++) tPos.setY(i, heights[vIdx[i]]);
+        tPos.needsUpdate = true;
+        terrainGeo.computeVertexNormals();
+        terrainGeo.computeBoundingSphere();
+        recolour();
+        buildSides();
+        placeTrees();
+      }
+
+      function recolour() {
+        const sea = seaY();
+        const nrmA = terrainGeo.attributes.normal as import('three').BufferAttribute;
+        for (let f = 0; f < tPos.count; f += 3) {
+          const h = (tPos.getY(f) + tPos.getY(f + 1) + tPos.getY(f + 2)) / 3;
+          const ny = nrmA.getY(f);
+          const above = h - sea;
+          const fm = forestMask[vIdx[f]];
+          let c;
+          if (above < -0.04) c = pal.seabed;
+          else if (above < 0.14) c = pal.sand;
+          else if (ny < 0.72 && above > 0.3) c = pal.rock;
+          else if (h > 2.15) c = pal.snow;
+          else if (h > 1.55) c = pal.highrock;
+          else if (fm > 0.12 && above < 1.2) c = pal.forest;
+          else if (above < 0.55) c = pal.grass;
+          else c = pal.meadow;
+          const j = 0.94 + hash(f) * 0.1;
+          tmp.copy(c).multiplyScalar(j);
+          for (let k = 0; k < 3; k++) tCol.setXYZ(f + k, tmp.r, tmp.g, tmp.b);
+        }
+        tCol.needsUpdate = true;
+      }
+
+      function buildSides() {
+        const levels = [BASE, -1.25, -0.75, -0.3];
+        const pos: number[] = [], col: number[] = [];
+        const edge = (getH: (i: number) => number, getXZ: (i: number) => [number, number]) => {
+          for (let i = 0; i < N; i++) {
+            const [x0, z0] = getXZ(i), [x1, z1] = getXZ(i + 1);
+            const h0 = getH(i), h1 = getH(i + 1);
+            for (let b = 0; b < levels.length; b++) {
+              const lo = levels[b];
+              const hi = b + 1 < levels.length ? levels[b + 1] : Infinity;
+              const t0 = Math.min(hi, h0), t1 = Math.min(hi, h1);
+              if (t0 <= lo && t1 <= lo) break;
+              const a0 = Math.max(lo, t0), a1 = Math.max(lo, t1);
+              pos.push(x0, lo, z0, x1, lo, z1, x1, a1, z1, x0, lo, z0, x1, a1, z1, x0, a0, z0);
+              const c = pal.soil[levels.length - 1 - b] ?? pal.soil[0];
+              tmp.copy(c).multiplyScalar(0.96 + hash(i * 7 + b) * 0.08);
+              for (let k = 0; k < 6; k++) col.push(tmp.r, tmp.g, tmp.b);
+            }
+          }
+        };
+        const H = (ix: number, iz: number) => heights[iz * (N + 1) + ix];
+        const X = (i: number) => (i / N) * SIZE - HALF;
+        edge((i) => H(i, N), (i) => [X(i), HALF]);
+        edge((i) => H(N, N - i), (i) => [HALF, X(N - i)]);
+        edge((i) => H(N - i, 0), (i) => [X(N - i), -HALF]);
+        edge((i) => H(0, i), (i) => [-HALF, X(i)]);
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+        g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+        g.computeVertexNormals();
+        sides.geometry.dispose();
+        sides.geometry = g;
+      }
+
+      const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p3 = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+      function placeTrees() {
+        const sea = seaY();
+        const rnd = mulberry32(state.seed * 31 + 11);
+        let n = 0;
+        for (let tries = 0; tries < 6000 && n < MAX_TREES; tries++) {
+          const fx = rnd() * N, fz = rnd() * N;
+          const ix = Math.min(N - 1, Math.floor(fx)), iz = Math.min(N - 1, Math.floor(fz));
+          const k = iz * (N + 1) + ix;
+          const h = heights[k];
+          const above = h - sea;
+          if (above < 0.2 || above > 1.25 || h > 1.5 || forestMask[k] < 0.08) continue;
+          const slope = Math.abs(heights[k + 1] - h) + Math.abs(heights[k + N + 1] - h);
+          if (slope > 0.22) continue;
+          // Height under the tree, interpolated across the cell.
+          const tx = fx - ix, tz = fz - iz;
+          const hh = (1 - tx) * (1 - tz) * h + tx * (1 - tz) * heights[k + 1] + (1 - tx) * tz * heights[k + N + 1] + tx * tz * heights[k + N + 2];
+          p3.set((fx / N) * SIZE - HALF, hh - 0.02, (fz / N) * SIZE - HALF);
+          q.setFromAxisAngle(up, rnd() * Math.PI);
+          const s = 0.7 + rnd() * 0.6;
+          sc.set(s, s * (0.85 + rnd() * 0.4), s);
+          m4.compose(p3, q, sc);
+          trees.setMatrixAt(n, m4);
+          tmp.copy(pal.tree).multiplyScalar(0.85 + rnd() * 0.3);
+          trees.setColorAt(n, tmp);
+          n++;
+        }
+        trees.count = n;
+        trees.instanceMatrix.needsUpdate = true;
+        if (trees.instanceColor) trees.instanceColor.needsUpdate = true;
+      }
+
+      function updateWater() {
+        const sea = seaY();
+        const h = sea - BASE;
+        water.scale.y = Math.max(0.001, h);
+        water.position.y = BASE + h / 2;
+      }
+
+      // Time of day: sky colours, sun path and light colour all come from one hour value.
+      const sky: [number, number, number][] = [
+        // hour, top colour, horizon colour
+        [0, 0x0a1130, 0x1b2448], [4.75, 0x111a3e, 0x2c3158], [5.75, 0x4c5a8c, 0xe8977a], [7, 0x8eb4dc, 0xf3cfa6],
+        [9, 0x8fbde6, 0xd9e6ef], [13, 0x86b8e6, 0xdbe9f2], [16.5, 0x9cc3e6, 0xeedac0], [18.25, 0x7c8fc4, 0xf2a873],
+        [19.25, 0x4b4f86, 0xd4776e], [20.5, 0x1c2350, 0x4a3f6c], [21.75, 0x0d1434, 0x1e2548], [24, 0x0a1130, 0x1b2448],
+      ];
+      const ca = new THREE.Color(), cb = new THREE.Color(), top = new THREE.Color(), low = new THREE.Color();
+      function skyAt(t: number) {
+        let i = 0;
+        while (i < sky.length - 2 && t > sky[i + 1][0]) i++;
+        const [t0, a0, b0] = sky[i], [t1, a1, b1] = sky[i + 1];
+        const k = Math.min(1, Math.max(0, (t - t0) / (t1 - t0)));
+        top.copy(ca.setHex(a0)).lerp(cb.setHex(a1), k);
+        low.copy(ca.setHex(b0)).lerp(cb.setHex(b1), k);
+      }
+      const smooth = (a: number, b: number, x: number) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+      const sunWarm = new THREE.Color(0xff9a5a), sunDay = new THREE.Color(0xfff3e2), moon = new THREE.Color(0x9fb3ff);
+      const label = document.querySelector('.label')!;
+      function updateLight() {
+        const t = state.time;
+        skyAt(t);
+        const css = (c: import('three').Color) => `#${c.getHexString()}`;
+        document.body.style.setProperty('--sky-top', css(top));
+        document.body.style.setProperty('--sky-low', css(low));
+        (scene.fog as import('three').Fog).color.copy(low);
+        const a = ((t - 6) / 12) * Math.PI; // 0 at 06:00, pi at 18:00
+        const sy = Math.sin(a);
+        const dir = new THREE.Vector3(Math.cos(a), Math.max(sy, 0) * 0.9 + 0.08, 0.55).normalize();
+        const day = smooth(-0.08, 0.22, sy);
+        if (sy > -0.05) {
+          sun.position.copy(dir).multiplyScalar(24);
+          sun.color.copy(sunWarm).lerp(sunDay, smooth(0.05, 0.6, sy));
+          sun.intensity = 0.15 + day * 2.6;
+        } else {
+          // The moon: opposite side, cool and dim.
+          const md = new THREE.Vector3(-Math.cos(a), Math.max(-sy, 0) * 0.8 + 0.25, -0.4).normalize();
+          sun.position.copy(md).multiplyScalar(24);
+          sun.color.copy(moon);
+          sun.intensity = 0.55 * smooth(-0.05, -0.3, sy) + 0.12;
+        }
+        hemi.color.copy(top).lerp(sunDay, 0.25);
+        hemi.groundColor.setHex(0x4a3a2a).lerp(low, 0.25);
+        hemi.intensity = 0.32 + day * 0.7;
+        renderer.toneMappingExposure = 0.95 + day * 0.15;
+        label.classList.toggle('night', day < 0.35);
+      }
+
+      // -------------------------------------------------------------------
+      // Camera: orbit around the table with a little easing.
+      const HOME = { theta: 0.75, phi: 0.98, radius: 23 };
+      const cam = { ...HOME };
+      const goal = { ...cam };
+      const LIMITS = { phiMin: 0.28, phiMax: 1.42, rMin: 9, rMax: 34 };
+      const target = new THREE.Vector3(0, -0.4, 0);
+      const clampGoal = () => {
+        goal.phi = Math.min(LIMITS.phiMax, Math.max(LIMITS.phiMin, goal.phi));
+        goal.radius = Math.min(LIMITS.rMax, Math.max(LIMITS.rMin, goal.radius));
+      };
+      function placeCamera() {
+        const s = Math.sin(cam.phi);
+        camera.position.set(target.x + cam.radius * s * Math.sin(cam.theta), target.y + cam.radius * Math.cos(cam.phi), target.z + cam.radius * s * Math.cos(cam.theta));
+        camera.lookAt(target);
+        (scene.fog as import('three').Fog).near = cam.radius * 0.95;
+        (scene.fog as import('three').Fog).far = cam.radius * 2.6;
+      }
+
+      // -------------------------------------------------------------------
+      // Rendering only when something changes.
+      let raf = 0, visible = !document.hidden, inView = true, lastT = 0;
+      const settled = () => Math.abs(goal.theta - cam.theta) < 1e-4 && Math.abs(goal.phi - cam.phi) < 1e-4 && Math.abs(goal.radius - cam.radius) < 1e-3;
+      const spinning = () => state.spin && visible && inView;
+      function frame(now: number) {
+        raf = 0;
+        const dt = lastT ? Math.min(0.05, (now - lastT) / 1000) : 0.016;
+        lastT = now;
+        if (spinning()) goal.theta += dt * 0.12;
+        const k = reduceMotion ? 1 : 1 - Math.pow(0.0008, dt);
+        cam.theta += (goal.theta - cam.theta) * k;
+        cam.phi += (goal.phi - cam.phi) * k;
+        cam.radius += (goal.radius - cam.radius) * k;
+        placeCamera();
+        renderer.render(scene, camera);
+        frames++;
+        if (spinning() || !settled()) raf = requestAnimationFrame(frame);
+        else lastT = 0;
+      }
+      let frames = 0;
+      const invalidate = () => { if (!raf && visible) raf = requestAnimationFrame(frame); };
+      (window as any).__terrain = { get frames() { return frames; }, get running() { return raf !== 0; } };
+
+      document.addEventListener('visibilitychange', () => {
+        visible = !document.hidden;
+        if (!visible && raf) { cancelAnimationFrame(raf); raf = 0; lastT = 0; }
+        else invalidate();
+      });
+      new IntersectionObserver((es) => { inView = es.some((e) => e.isIntersecting); if (inView) invalidate(); }).observe(canvas);
+
+      function resize() {
+        const w = canvas.clientWidth, h = canvas.clientHeight;
+        if (!w || !h) return;
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        // Narrow screens: pull back so the whole table fits.
+        camera.fov = w / h < 0.8 ? 48 : 36;
+        // On wide screens the controls sit on the right, so centre the table in the space left of them.
+        if (w > 760) camera.setViewOffset(w, h, Math.min(170, w * 0.12), 0, w, h);
+        else if (h > 420) camera.setViewOffset(w, h, 0, Math.min(90, h * 0.12), w, h);
+        else camera.clearViewOffset();
+        camera.updateProjectionMatrix();
+        invalidate();
+      }
+      new ResizeObserver(resize).observe(canvas);
+
+      // Pointer: one finger or mouse turns, two fingers pinch to zoom.
+      const pointers = new Map<number, { x: number; y: number }>();
+      let pinch = 0;
+      canvas.addEventListener('pointerdown', (e) => {
+        canvas.setPointerCapture(e.pointerId);
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); }
+      });
+      canvas.addEventListener('pointermove', (e) => {
+        const p = pointers.get(e.pointerId);
+        if (!p) return;
+        const dx = e.clientX - p.x, dy = e.clientY - p.y;
+        p.x = e.clientX; p.y = e.clientY;
+        if (pointers.size === 1) {
+          goal.theta -= dx * 0.0065;
+          goal.phi -= dy * 0.0055;
+        } else if (pointers.size === 2) {
+          const [a, b] = [...pointers.values()];
+          const d = Math.hypot(a.x - b.x, a.y - b.y);
+          if (pinch > 0 && d > 0) goal.radius *= pinch / d;
+          pinch = d;
+        }
+        clampGoal();
+        invalidate();
+      });
+      const lift = (e: PointerEvent) => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch = 0; };
+      canvas.addEventListener('pointerup', lift);
+      canvas.addEventListener('pointercancel', lift);
+      canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const d = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+        goal.radius *= Math.exp(d * 0.0012);
+        clampGoal();
+        invalidate();
+      }, { passive: false });
+      canvas.addEventListener('keydown', (e) => {
+        const step = e.shiftKey ? 0.35 : 0.12;
+        let used = true;
+        switch (e.key) {
+          case 'ArrowLeft': goal.theta -= step; break;
+          case 'ArrowRight': goal.theta += step; break;
+          case 'ArrowUp': goal.phi -= step * 0.6; break;
+          case 'ArrowDown': goal.phi += step * 0.6; break;
+          case '+': case '=': case 'PageUp': goal.radius *= 0.9; break;
+          case '-': case '_': case 'PageDown': goal.radius /= 0.9; break;
+          case 'Home': Object.assign(goal, HOME); break;
+          default: used = false;
+        }
+        if (used) { e.preventDefault(); clampGoal(); invalidate(); }
+      });
+
+      // Controls.
+      form.sea.addEventListener('input', () => { state.sea = Number(form.sea.value); syncForm(); updateWater(); recolour(); placeTrees(); writeUrl(); invalidate(); });
+      form.rough.addEventListener('input', () => { state.rough = Number(form.rough.value); syncForm(); generate(); updateTerrain(); writeUrl(); invalidate(); });
+      form.time.addEventListener('input', () => { state.time = Number(form.time.value); syncForm(); updateLight(); writeUrl(); invalidate(); });
+      form.spin.addEventListener('change', () => { state.spin = form.spin.checked; invalidate(); });
+      $('new').addEventListener('click', () => {
+        let s = randomSeed();
+        if (s === state.seed) s = (s % 999999) + 1;
+        state.seed = s;
+        syncForm(); generate(); updateTerrain(); writeUrl(); invalidate();
+        say(`New landscape: ${s}.`);
+      });
+
+      // First frame.
+      generate();
+      updateTerrain();
+      updateWater();
+      updateLight();
+      resize();
+      placeCamera();
+      renderer.render(scene, camera);
+      frames++;
+      $('poster').classList.add('gone');
+      setTimeout(() => $('poster').setAttribute('hidden', ''), 600);
+      invalidate();
+    }
+
+    // Copy link works with or without the scene.
+    $('copy').addEventListener('click', async () => {
+      clearTimeout(urlTimer);
+      const q = new URLSearchParams({ seed: String(state.seed) });
+      if (state.sea !== 40) q.set('sea', String(state.sea));
+      if (state.rough !== 50) q.set('rough', String(state.rough));
+      if (state.time !== 16.5) q.set('time', String(state.time));
+      const link = `${location.origin}${location.pathname}?${q}`;
+      try {
+        await navigator.clipboard.writeText(link);
+        say('Link copied. It opens this same landscape.');
+      } catch {
+        say(`Copying is blocked here. The link is: ${link}`);
+      }
+    });
+  </script>
+</body>
+</html>
