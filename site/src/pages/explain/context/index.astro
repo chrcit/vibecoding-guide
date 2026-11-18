@@ -7,6 +7,7 @@ import Tile from '../../../components/board/Tile.astro';
 import Explain from '../../../components/board/Explain.astro';
 import Verified from '../../../components/data/Verified.astro';
 import ContextLab from '../../../components/fig/context-lab/ContextLab.astro';
+import SameRequest from '../../../components/fig/same-request/SameRequest.astro';
 import { DEFAULT_COMPACT_SHARE, type Facts, type ModelInfo } from '../../../components/fig/context-lab/model';
 import { fact } from '../../../lib/facts';
 import { url } from '../../../lib/nav';
@@ -72,6 +73,10 @@ const factIds = [
   <Tile title="Everything the agent knows sits in one window" span={12} side={READ}>
     <ContextLab facts={facts} side={labSide} />
     <Fragment slot="foot"><Explain to={READ + '#how-the-model-works'}>Token sizes are modelled</Explain></Fragment>
+  </Tile>
+
+  <Tile title="What it is not told, it guesses" span={8} side={READ + '#context-is-capability'}>
+    <SameRequest window={facts.models[0]!.window} />
   </Tile>
 
   <Verified slot="foot" ids={factIds} />
