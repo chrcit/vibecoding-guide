@@ -130,7 +130,7 @@ export const harnesses = {
     ),
     autoModeDefault: fact(
       'auto mode',
-      'New interactive terminal and VS Code sessions of Claude Code start in auto mode, where a separate classifier model checks actions before they run. Deny rules apply in every mode.',
+      'New interactive terminal and VS Code sessions of Claude Code start in auto mode, where a separate classifier model checks actions before they run. Deny rules apply in every mode.',      CC('best-practices'),
     ),
     startupContext: fact(
       ['CLAUDE.md', 'auto memory', 'MCP tool names', 'skill descriptions'],
