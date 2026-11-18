@@ -16,7 +16,6 @@ export const plans = {
     free: {
       price: fact(0, 'Claude Free costs nothing.', CLAUDE_PRICING, { unit: 'usd' }),
       claudeCode: fact(false, 'Claude Code is not included on the free Claude plan.', CLAUDE_PRICING),
-      models: fact('Sonnet and Haiku', 'Claude Free includes Sonnet and Haiku but not Opus.', CLAUDE_PRICING),
       models: fact(['Sonnet', 'Haiku'], 'Claude Free includes Sonnet and Haiku in the Claude apps, but not Opus or Fable, and not Claude Code.', CLAUDE_PRICING),
     },
     pro: {
