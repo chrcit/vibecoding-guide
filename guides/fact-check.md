@@ -172,7 +172,7 @@ Subscription prices, what each includes, how limits work and what the API credit
 | Estimated local Codex messages per five hours on Plus with GPT-6.2 Sol: 17 to 180. | 17–180 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 | Estimated local Codex messages per five hours on Plus with GPT-6.1 Terra: 35 to 285. | 35–285 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 | Estimated local Codex messages per five hours on Plus with GPT-6 Luna: 350 to 3,000. | 350–3,000 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
-| ChatGPT Pro comes at $100, $200 or $500 a month. | 100, 200, 500 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
+| ChatGPT Pro comes at $100, $200 or $500 a month. | $100, $200, $500 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 | ChatGPT Pro plans currently have no five-hour limit. | yes | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 | ChatGPT Business costs $20 per user a month billed yearly ($25 monthly), for two or more users. | $20 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 | OpenAI publishes estimated message ranges per five hours for Plus and Business; they are estimates, not fixed limits, and weekly limits may also apply. | estimates | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |

@@ -96,7 +96,7 @@ export const plans = {
       },
     },
     pro: {
-      price: fact([100, 200, 500], 'ChatGPT Pro comes at $100, $200 or $500 a month.', CODEX_PRICING),
+      price: fact([100, 200, 500], 'ChatGPT Pro comes at $100, $200 or $500 a month.', CODEX_PRICING, { unit: 'usd' }),
       noFiveHourLimit: fact(true, 'ChatGPT Pro plans currently have no five-hour limit.', CODEX_PRICING),
     },
     business: {
