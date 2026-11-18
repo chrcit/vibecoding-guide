@@ -12,15 +12,17 @@
  */
 import Figure from '../Figure.astro';
 import { drawWireIn } from './draw';
-import { CONNECTORS, START, describe, type WireInInputs } from './model';
+import { CONNECTORS, START, describe, type ConnectorId, type WireInInputs } from './model';
 
 interface Props extends WireInInputs {
   n?: number | string;
+  /** Review pages only: connectors to plug in, in order, once the script runs. */
+  initial?: ConnectorId[];
 }
-const { n = 17, ...inputs } = Astro.props;
+const { n = 17, initial = [], ...inputs } = Astro.props;
 const { svg, labels, motion } = drawWireIn(`fig${n}`);
 ---
-<div class="fig-wire-in" data-fig-wire-in data-inputs={JSON.stringify(inputs)} data-motion={JSON.stringify(motion)}>
+<div class="fig-wire-in" data-fig-wire-in data-inputs={JSON.stringify(inputs)} data-motion={JSON.stringify(motion)} data-initial={initial.join(' ')}>
   <Figure
     n={n}
     title="What you can wire in"
@@ -43,7 +45,9 @@ const { svg, labels, motion } = drawWireIn(`fig${n}`);
   .fig-wire-in .k-line[data-cable] { stroke-dasharray: 3 4; transition: stroke 300ms ease; }
   .fig-wire-in .k-line[data-cable][data-tone='edge'],
   .fig-wire-in .k-line[data-cable][data-tone='lit'] { stroke-dasharray: none; }
+  .fig-wire-in .seg { border-radius: 22px; }
   .fig-wire-in .seg button { min-width: 40px; }
+  .fig-wire-in .k-line[data-cable][data-tone='faint'] { stroke: var(--fig-line); }
   @media (prefers-reduced-motion: reduce) {
     .fig-wire-in .k-line[data-cable] { transition: none; }
   }
@@ -85,6 +89,7 @@ const { svg, labels, motion } = drawWireIn(`fig${n}`);
       readout.textContent = describe(state, x);
     }
 
+    for (const id of (root.dataset.initial ?? '').split(' ').filter(Boolean)) state = toggle(state, id as ConnectorId);
     for (const b of buttons) {
       b.addEventListener('click', () => {
         state = toggle(state, b.dataset.connector as ConnectorId);

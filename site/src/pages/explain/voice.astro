@@ -7,9 +7,8 @@ import Fact from '../../components/data/Fact.astro';
 import Verified from '../../components/data/Verified.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
 import Embed from '../../components/site/Embed.astro';
-import CardGrid from '../../components/site/CardGrid.astro';
-import Card from '../../components/site/Card.astro';
 import { links } from '../../data/links';
+import { url } from '../../lib/nav';
 import { claims } from '../../data/claims';
 
 const headings = [
@@ -73,10 +72,10 @@ const factIds = [
     The agent tools have dictation built in, and separate apps put dictation into any text box on your computer. None of these is a recommendation over the others.
   </p>
   <ul>
-    <li>Claude Code: type <code>/voice</code>, then hold the space bar while you talk. Audio goes to Anthropic for transcription, it needs you to be signed in with a claude.ai account, and it does not use your plan's limits.</li>
+    <li>Claude Code: type <code>/voice</code>, then hold the space bar while you talk. <Fact id="harnesses.claudeCode.voice" show="claim" /></li>
     <li>T3 Code: the microphone button in the composer, or <Fact id="t3code.voice.shortcut" />. <Fact id="t3code.voice.where" show="claim" /></li>
     <li>Codex: <Fact id="harnesses.codex.voice" show="claim" /></li>
-    <li><a href={claims.voiceApps.wisprFlow.source}>Wispr Flow</a>, a separate app: free plan with a weekly word limit, Pro at <Fact id="claims.voiceApps.wisprFlow" /> a month. It transcribes in the cloud.</li>
+    <li><a href={claims.voiceApps.wisprFlow.source}>Wispr Flow</a>, a separate app: free plan with a weekly word limit, Pro at <Fact id="claims.voiceApps.wisprFlow" /> a month. Transcription runs <Fact id="claims.voiceApps.wisprCloud" />.</li>
     <li><a href={claims.voiceApps.superwhisper.source}>Superwhisper</a>: <Fact id="claims.voiceApps.superwhisper" show="claim" /></li>
     <li><a href={claims.voiceApps.handy.source}>Handy</a>: <Fact id="claims.voiceApps.handy" show="claim" /></li>
     <li>Your computer's own dictation. <Fact id="claims.voiceApps.macDictation" show="claim" /></li>
@@ -90,7 +89,7 @@ const factIds = [
       There are two places the audio can go. Cloud transcription sends your recording to a company's servers and gets text back; it is usually quick and accurate, and it means a third party hears what you say. Local transcription runs a speech model on your own machine; nothing leaves it, and quality and speed depend on your hardware.
     </p>
     <p>
-      <Fact id="harnesses.claudeCode.voice" show="claim" /> <Fact id="claims.voiceApps.wisprCloud" show="claim" /> Handy is local only. T3 Code lets you choose per environment, and <Fact id="t3code.voice.cloudProviders" show="claim" /> If what you dictate is covered by a confidentiality agreement or your employer's rules, a local model is the simple answer; check the cloud provider's terms before you send anything sensitive.
+      Claude Code and Wispr Flow are cloud only: <Fact id="claims.voiceApps.wisprCloud" show="claim" /> Handy is local only. T3 Code lets you choose per environment. <Fact id="t3code.voice.cloudProviders" show="claim" /> If what you dictate is covered by a confidentiality agreement or your employer's rules, a local model is the simple answer; check the cloud provider's terms before you send anything sensitive.
     </p>
     <Deeper level="engineer" title="Vocabulary, limits and settings">
       <p>
@@ -120,12 +119,12 @@ const factIds = [
 Before you change anything, write this back to me as a short plan: what you think is wrong, where you will look, and how you will check it is fixed. Then wait for me to say go.`}</CopyPrompt>
 
   <h2 id="related">Related pages</h2>
-  <CardGrid>
-    <Card href="start/" title="Start here" />
-    <Card href="explain/context/" title="Context">Why the extra detail matters.</Card>
-    <Card href="explain/verification/" title="Verification">What "done" should look like.</Card>
-    <Card href="t3-code/" title="T3 Code" />
-  </CardGrid>
+  <ul>
+    <li><a href={url('start/')}>Start here</a>. The first evening with an agent.</li>
+    <li><a href={url('explain/context/')}>Context</a>. Why the extra detail matters.</li>
+    <li><a href={url('explain/verification/')}>Verification</a>. What "done" should look like.</li>
+    <li><a href={url('t3-code/')}>T3 Code</a>. The workspace the guide is written around.</li>
+  </ul>
 
   <Verified ids={factIds} />
 </Article>

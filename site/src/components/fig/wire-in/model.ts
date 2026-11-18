@@ -9,7 +9,7 @@ export interface Connector {
   name: string;
   /** What the agent can now do, in a running example. */
   reach: string;
-  /** What it could go wrong with. */
+  /** What could go wrong, as the end of a sentence starting "The risk: ". */
   risk: string;
 }
 
@@ -18,25 +18,25 @@ export const CONNECTORS: Connector[] = [
     id: 'browser',
     name: 'Browser',
     reach: 'The agent can open the club list in a real browser, fill in the form and read what the page shows, so it can look at what it just built.',
-    risk: 'Every page it opens is text someone else wrote, and a page can hide instructions aimed at the agent.',
+    risk: 'every page it opens is text someone else wrote, and a page can hide instructions aimed at the agent.',
   },
   {
     id: 'tracker',
     name: 'Issue tracker',
     reach: 'The agent can read the bakery’s bug report about holiday hours, with the steps to reproduce it, and add a comment once the fix is in.',
-    risk: 'Anyone who can file an issue can now write to your agent, and a write tool can close or edit tickets.',
+    risk: 'anyone who can file an issue can now write to your agent, and a write tool can close or edit tickets.',
   },
   {
     id: 'database',
     name: 'Database',
     reach: 'The agent can check the live data: which club members are really marked as paid this season.',
-    risk: 'With write access, one wrong query changes or deletes real members. Connect it read-only, or to a copy.',
+    risk: 'with write access, one wrong query changes or deletes real members, so connect it read-only or to a copy.',
   },
   {
     id: 'mail',
     name: 'Mail',
     reach: 'The agent can find the latest contact export in your inbox and start the contact tidy without you downloading anything.',
-    risk: 'An agent that reads your mail can be told what to do by an email, and if it can also send, it can send your data out.',
+    risk: 'an agent that reads your mail can be told what to do by an email, and if it can also send, it can send your data out.',
   },
 ];
 
@@ -77,5 +77,5 @@ export function describe(s: WireInState, x: WireInInputs): string {
   if (!s.last) return 'Nothing is plugged in. The agent can read and edit the files in your project and run commands there, and that is all it can reach.';
   const c = CONNECTORS.find((k) => k.id === s.last)!;
   if (!s.on.includes(c.id)) return `${c.name} pulled out. The agent can no longer reach it. ${count(s, x)}`;
-  return `${c.name} plugged in. ${c.reach} What could go wrong: ${c.risk} ${count(s, x)}`;
+  return `${c.name} plugged in. ${c.reach} The risk: ${c.risk} ${count(s, x)}`;
 }

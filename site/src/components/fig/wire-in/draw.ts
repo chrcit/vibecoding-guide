@@ -1,25 +1,28 @@
 // Fig. 17 geometry, built once at build time. 24 parts: the bench, the agent's block and its glass
 // window, four sockets, four plugs, four cables, and the four things outside the project: a browser
-// (base, neck, screen), an issue tracker (two cards), a database (three discs) and a mail envelope.
+// (foot, neck, screen), an issue tracker (two cards), a database (three discs) and a mail envelope.
 // What moves: a plug slides from where it lies on its cable into its socket; the window's level rises
 // a band per connector plugged in; the thing at the cable's far end lights while it is selected.
 import * as k from '../kit/iso';
 import { CONNECTORS, START, levelOf, type ConnectorId } from './model';
 
 export const W = 640;
-export const H = 420;
+export const H = 380;
 
-const PLATE: k.Plan = { x: -112, y: -112, w: 224, d: 224, r: 14 };
-const HUB = 46, HUB_H = 14;
+const PLATE: k.Plan = { x: -104, y: -104, w: 208, d: 208, r: 14 };
+const HUB = 44, HUB_H = 14;
 const GLASS: k.Plan = { x: -15, y: -15, w: 30, d: 30, r: 0 };
-const GLASS_H = 50;
+const GLASS_H = 54;
 const SOCKET = 13, SOCKET_H = 6;
 const PLUG = 8, PLUG_H = 10;
-const D_SOCKET = 40, D_REST = 57, D_CABLE = 64, D_OBJECT = 84;
+const D_SOCKET = 33, D_REST = 48, D_CABLE = 56, D_OBJECT = 74;
 
-/** Diagonal direction of each connector on the bench. Back is (-1, -1), the viewer sits at (+1, +1). */
-const DIR: Record<ConnectorId, k.Plane> = { browser: [-1, -1], database: [1, -1], tracker: [-1, 1], mail: [1, 1] };
-const at = (id: ConnectorId, d: number): k.Plane => [DIR[id][0] * d * Math.SQRT1_2, DIR[id][1] * d * Math.SQRT1_2];
+/**
+ * Direction of each connector on the bench, along the world axes so that nothing stands behind the
+ * agent's tall window: -x is back left on screen, -y back right, +y front left, +x front right.
+ */
+const DIR: Record<ConnectorId, k.Plane> = { browser: [-1, 0], database: [0, -1], tracker: [0, 1], mail: [1, 0] };
+const at = (id: ConnectorId, d: number): k.Plane => [DIR[id][0] * d, DIR[id][1] * d];
 const centre = ([x, y]: k.Plane, w: number, d = w, r = 2): k.Plan => ({ x: x - w / 2, y: y - d / 2, w, d, r });
 
 const P = k.fit(
@@ -59,15 +62,17 @@ const plug = (id: ConnectorId) =>
 
 function browser() {
   const [x, y] = at('browser', D_OBJECT);
-  const screen: k.Plan = { x: x - 22, y: y - 2, w: 44, d: 4, r: 1 };
-  const z0 = 14, h = 30;
-  // Lines of a page on the screen's front face (the face towards the viewer, y = y + 2).
-  const face = y + 2.05;
-  const rows = [0.78, 0.6, 0.45, 0.3].map((f, i) => k.pathOf([pt([x - 16, face, z0 + h * f]), pt([x + (i === 0 ? 4 : i === 3 ? 6 : 15), face, z0 + h * f])]));
+  // A screen standing on a foot, turned to face the agent (its face is the plane x = x + 2).
+  const screen: k.Plan = { x: x - 2, y: y - 26, w: 4, d: 52, r: 1 };
+  const z0 = 14, h = 36;
+  const face = x + 2.05;
+  const rows = [0.8, 0.62, 0.47, 0.32, 0.17].map((f, i) =>
+    k.pathOf([pt([face, y - 19, z0 + h * f]), pt([face, y + (i === 0 ? -2 : i === 4 ? 4 : 17), z0 + h * f])]),
+  );
   return k.group(
     [
-      k.solid(k.box(centre([x, y], 24, 16, 3), 0, 3, P)),
-      k.solid(k.box(centre([x, y - 1], 5, 4, 1), 3, z0 - 3, P)),
+      k.solid(k.box(centre([x, y], 18, 28, 3), 0, 3, P)),
+      k.solid(k.box(centre([x - 1, y], 4, 5, 1), 3, z0 - 3, P)),
       k.solid(k.box(screen, z0, h, P)),
       k.line(rows.join('')),
     ],
@@ -78,18 +83,18 @@ function browser() {
 function database() {
   const [x, y] = at('database', D_OBJECT);
   return k.group(
-    [0, 1, 2].map((i) => k.solid(k.cylinder(x, y, 17, i * 10, 9, P))).concat(k.line(k.ringLine(x, y, 11, 29, P), 'faint')),
+    [0, 1, 2].map((i) => k.solid(k.cylinder(x, y, 20, i * 11, 10, P))).concat(k.line(k.ringLine(x, y, 13, 32, P), 'faint')),
     { 'data-object': 'database' },
   );
 }
 
 function tracker() {
   const [x, y] = at('tracker', D_OBJECT);
-  const top = { x: x - 15 + 4, y: y - 11 - 4, w: 30, d: 22, r: 1.5 };
-  const lines = [0, 1, 2].map((i) => k.onPlane([[top.x + 5, top.y + 6 + i * 5], [top.x + (i === 2 ? 15 : 24), top.y + 6 + i * 5]], 6, P));
+  const top = { x: x - 19 + 4, y: y - 14 - 4, w: 38, d: 28, r: 1.5 };
+  const lines = [0, 1, 2].map((i) => k.onPlane([[top.x + 6, top.y + 7 + i * 6], [top.x + (i === 2 ? 18 : 31), top.y + 7 + i * 6]], 6, P));
   return k.group(
     [
-      k.solid(k.box({ x: x - 15, y: y - 11, w: 30, d: 22, r: 1.5 }, 0, 3, P)),
+      k.solid(k.box({ x: x - 19, y: y - 14, w: 38, d: 28, r: 1.5 }, 0, 3, P)),
       k.solid(k.box(top, 3, 3, P)),
       k.line(lines.join('')),
     ],
@@ -99,9 +104,10 @@ function tracker() {
 
 function mail() {
   const [x, y] = at('mail', D_OBJECT);
-  const env: k.Plan = { x: x - 18, y: y - 12, w: 36, d: 24, r: 1 };
-  const flap = k.onPlane([[env.x + 1, env.y + 1], [x, y + 2], [env.x + env.w - 1, env.y + 1]], 4, P);
-  return k.group([k.solid(k.box(env, 0, 4, P)), k.line(flap)], { 'data-object': 'mail' });
+  // An envelope lying with its flap edge towards the agent (the -x side).
+  const env: k.Plan = { x: x - 15, y: y - 22, w: 30, d: 44, r: 1 };
+  const flap = k.onPlane([[env.x + 1, env.y + 1], [x + 2, y], [env.x + 1, env.y + env.d - 1]], 5, P);
+  return k.group([k.solid(k.box(env, 0, 5, P)), k.line(flap)], { 'data-object': 'mail' });
 }
 
 /** The agent: a block with its context window, a glass vessel, on top. The water is the window's level. */
@@ -126,13 +132,13 @@ export function drawWireIn(uid: string) {
     ...ids.map(cable),
     // back to front: the browser is furthest back, the mail nearest the viewer
     browser(),
-    ...socket('browser'), plug('browser'),
     database(),
-    tracker(),
+    ...socket('browser'), plug('browser'),
     ...socket('database'), plug('database'),
-    ...socket('tracker'), plug('tracker'),
     ...agent(uid),
+    ...socket('tracker'), plug('tracker'),
     ...socket('mail'), plug('mail'),
+    tracker(),
     mail(),
   ];
   const label = (p: k.Point3) => k.anchor(p, P, W, H);
@@ -145,10 +151,10 @@ export function drawWireIn(uid: string) {
     svg: k.svg(W, H, body),
     labels: [
       { name: 'Agent', id: 'agent', at: label([0, 0, HUB_H + GLASS_H + 16]) },
-      { name: names.browser!, id: 'browser', at: label([...at('browser', D_OBJECT), 58] as k.Point3) },
-      { name: names.database!, id: 'database', at: label([...at('database', D_OBJECT), 46] as k.Point3) },
-      { name: names.tracker!, id: 'tracker', at: label([...at('tracker', D_OBJECT + 4), 22] as k.Point3) },
-      { name: names.mail!, id: 'mail', at: label([...at('mail', D_OBJECT + 6), 20] as k.Point3) },
+      { name: names.browser!, id: 'browser', at: label([...at('browser', D_OBJECT), 66] as k.Point3) },
+      { name: names.database!, id: 'database', at: label([...at('database', D_OBJECT), 52] as k.Point3) },
+      { name: names.tracker!, id: 'tracker', at: label([...at('tracker', D_OBJECT + 36), 0] as k.Point3) },
+      { name: names.mail!, id: 'mail', at: label([...at('mail', D_OBJECT + 34), 0] as k.Point3) },
     ],
     motion: {
       plug: Object.fromEntries(ids.map((id) => [id, into(id)])) as Record<ConnectorId, k.Flat>,

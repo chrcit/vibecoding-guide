@@ -13,8 +13,10 @@ const deferred = connectors.claudeCode.toolSearch.value === 'deferred';
     <h1>Fig. 17, what you can wire in</h1>
     <p>As on the page, with deferral read from <code>connectors.claudeCode.toolSearch</code> (currently {deferred ? 'deferred' : 'not deferred'}).</p>
     <WireIn deferred={deferred} />
-    <p>The same figure with deferral off, to check the other readout wording.</p>
-    <WireIn n="17b" deferred={false} />
+    <p>With the browser and then the database plugged in, deferral off, to check the plugged state and the other readout wording.</p>
+    <WireIn n="17b" deferred={false} initial={['browser', 'database']} />
+    <p>Everything plugged in, mail last.</p>
+    <WireIn n="17c" deferred={deferred} initial={['browser', 'tracker', 'database', 'mail']} />
   </div>
 </Base>
 

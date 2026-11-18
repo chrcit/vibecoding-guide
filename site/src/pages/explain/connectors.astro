@@ -9,8 +9,6 @@ import CopyPrompt from '../../components/site/CopyPrompt.astro';
 import Embed from '../../components/site/Embed.astro';
 import Note from '../../components/site/Note.astro';
 import Term from '../../components/site/Term.astro';
-import CardGrid from '../../components/site/CardGrid.astro';
-import Card from '../../components/site/Card.astro';
 import WireIn from '../../components/fig/wire-in/WireIn.astro';
 import { connectors } from '../../data/connectors';
 import { links } from '../../data/links';
@@ -159,7 +157,7 @@ const factIds = [
 
   <Deeper level="technical" title="Local and remote servers">
     <p>
-      An MCP server is a small program. It runs in one of two ways: <Fact id="connectors.mcp.transports" show="claim" /> A local (stdio) server is started by your agent on your machine, talks to it over standard input and output, and stops when the session ends; Playwright's browser server works this way. A remote server sits at a web address run by the service itself, such as Linear's or GitHub's, and the agent connects to it over HTTPS.
+      An MCP server is a small program, and it runs in one of two ways. <Fact id="connectors.mcp.transports" show="claim" /> A local (stdio) server is started by your agent on your machine, talks to it over standard input and output, and stops when the session ends; Playwright's browser server works this way. A remote server sits at a web address run by the service itself, such as Linear's or GitHub's, and the agent connects to it over HTTPS.
     </p>
     <p>
       Remote servers usually sign you in with OAuth: you add the server, the agent opens a browser page, you approve it, and a token is stored and refreshed for you. Local servers more often take an API key from an environment variable. <Fact id="connectors.claudeCodeMcp.sseDeprecated" show="claim" /> Old instructions that mention SSE servers still work in many places, but new ones use HTTP.
@@ -250,12 +248,12 @@ Do not add it for all my projects. When it is connected, open the local site, si
     A small set, each from the maker's own page, in no order. Each is an MCP server, so it works with any agent that speaks MCP.
   </p>
   <ul>
-    <li>Browser: <a href={connectors.servers.playwright.source}>Playwright MCP</a>. <Fact id="connectors.servers.playwright" show="claim" /></li>
-    <li>Browser, with developer tools: <a href={connectors.servers.chromeDevtools.source}>Chrome DevTools MCP</a>. <Fact id="connectors.servers.chromeDevtools" show="claim" /></li>
-    <li>Code and issues: <a href={connectors.servers.github.source}>GitHub MCP server</a>. <Fact id="connectors.servers.github" show="claim" /></li>
-    <li>Issue tracker: <a href={connectors.servers.linear.source}>Linear</a>. <Fact id="connectors.servers.linear" show="claim" /></li>
-    <li>Database: <a href={connectors.servers.supabase.source}>Supabase</a>. <Fact id="connectors.servers.supabase" show="claim" /></li>
-    <li>Design files: <a href={connectors.servers.figma.source}>Figma</a>. <Fact id="connectors.servers.figma" show="claim" /></li>
+    <li>Browser. <Fact id="connectors.servers.playwright" show="claim" /> <a href={connectors.servers.playwright.source}>Playwright MCP docs</a></li>
+    <li>Browser, with developer tools. <Fact id="connectors.servers.chromeDevtools" show="claim" /> <a href={connectors.servers.chromeDevtools.source}>Chrome DevTools MCP docs</a></li>
+    <li>Code and issues. <Fact id="connectors.servers.github" show="claim" /> <a href={connectors.servers.github.source}>GitHub MCP server docs</a></li>
+    <li>Issue tracker. <Fact id="connectors.servers.linear" show="claim" /> <a href={connectors.servers.linear.source}>Linear docs</a></li>
+    <li>Database. <Fact id="connectors.servers.supabase" show="claim" /> <a href={connectors.servers.supabase.source}>Supabase docs</a></li>
+    <li>Design files. <Fact id="connectors.servers.figma" show="claim" /> <a href={connectors.servers.figma.source}>Figma docs</a></li>
   </ul>
   <p>
     To find others, start from the service you already use and look for "MCP" in its documentation. <Fact id="connectors.protocol.registry" show="claim" /> <Fact id="connectors.claudeCodeMcp.directory" show="claim" />
@@ -295,7 +293,7 @@ Do not add it for all my projects. When it is connected, open the local site, si
     <li>Be most careful with connectors that read content other people wrote (web pages, mail, public issues), especially in a session that also has a way to send data out.</li>
   </ul>
   <p>
-    Claude Code's own documentation says it plainly: <Fact id="connectors.claudeCodeMcp.trust" show="claim" />
+    The harness makers give the same advice. <Fact id="connectors.claudeCodeMcp.trust" show="claim" />
   </p>
 
   <Deeper level="technical" title="Limiting what a connector can do">
@@ -326,13 +324,13 @@ Do not add it for all my projects. When it is connected, open the local site, si
   </Deeper>
 
   <h2 id="related">Related pages</h2>
-  <CardGrid>
-    <Card href="explain/skills/" title="Skills">Know-how the agent loads when a task needs it.</Card>
-    <Card href="explain/context/" title="Context">What fills the window, and why it matters.</Card>
-    <Card href="explain/orchestration/" title="Orchestration">Subagents and helpers.</Card>
-    <Card href="explain/verification/" title="Verification">Letting the agent check its own work.</Card>
-    <Card href="t3-code/" title="T3 Code" />
-  </CardGrid>
+  <ul>
+    <li><a href={url('explain/skills/')}>Skills</a>. Know-how the agent loads when a task needs it.</li>
+    <li><a href={url('explain/context/')}>Context</a>. What fills the window, and why it matters.</li>
+    <li><a href={url('explain/orchestration/')}>Orchestration</a>. Subagents and helpers.</li>
+    <li><a href={url('explain/verification/')}>Verification</a>. Letting the agent check its own work.</li>
+    <li><a href={url('t3-code/')}>T3 Code</a>. The workspace the guide is written around.</li>
+  </ul>
 
   <Verified ids={factIds} />
 </Article>
