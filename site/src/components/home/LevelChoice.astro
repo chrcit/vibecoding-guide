@@ -1,0 +1,65 @@
+---
+/*
+  The reader-level choice on the home page, in the owner's words. A real control: it sets the
+  level through the levels API, so every deeper block on the site follows it, and it follows a
+  change made in the header picker. Hidden until the script runs; without JavaScript every
+  layer is open anyway, and a sentence says so.
+*/
+import { LEVELS, levelInfo } from '../../lib/levels';
+import LevelGlyph from '../level/LevelGlyph.astro';
+---
+<div class="level-choice" data-level-choice>
+  <fieldset hidden data-level-choice-set>
+    <legend class="visually-hidden">How much detail do you want?</legend>
+    {LEVELS.map((id) => (
+      <label class="choice">
+        <input type="radio" name="home-level" value={id} />
+        <span class="choice-head"><LevelGlyph level={id} /><span class="choice-name">{levelInfo[id].label}</span></span>
+        <span class="choice-says">“{levelInfo[id].description}”</span>
+      </label>
+    ))}
+  </fieldset>
+  <p class="choice-nojs" data-level-choice-nojs>Every deeper note on this page is open, because levels need JavaScript to switch.</p>
+</div>
+
+<style>
+  .level-choice { margin: var(--space-5) 0 0; }
+  fieldset { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); margin: 0; padding: 0; border: 0; min-width: 0; }
+  fieldset[hidden] { display: none; }
+  @media (max-width: 44rem) { fieldset { grid-template-columns: minmax(0, 1fr); } }
+  .choice {
+    position: relative; display: grid; gap: var(--space-2); align-content: start;
+    padding: var(--space-4) var(--space-4) var(--space-4);
+    border: 1px solid var(--rule); border-radius: var(--radius-l);
+    background: var(--card); cursor: pointer;
+    transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+  }
+  .choice:hover { border-color: var(--rule-strong); }
+  .choice:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .choice:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 3px; }
+  input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .choice-head { display: flex; align-items: center; gap: var(--space-2); font-family: var(--mono); font-size: var(--text-s); color: var(--ink); }
+  .choice:has(input:checked) .choice-head { color: var(--accent); }
+  .choice-head :global(.level-glyph) { width: 16px; height: 16px; }
+  .choice-says { font-size: var(--text-m); line-height: 1.45; color: var(--ink-2); }
+  .choice-nojs { margin: 0; color: var(--muted); font-size: var(--text-m); }
+</style>
+
+<script>
+  import { getLevel, isLevel, onLevel, setLevel, type Level } from '../../lib/levels';
+
+  document.querySelectorAll<HTMLElement>('[data-level-choice]').forEach((root) => {
+    const set = root.querySelector<HTMLFieldSetElement>('[data-level-choice-set]')!;
+    const radios = [...set.querySelectorAll<HTMLInputElement>('input[type="radio"]')];
+    const check = (level: Level) => radios.forEach((r) => (r.checked = r.value === level));
+    root.querySelector<HTMLElement>('[data-level-choice-nojs]')!.hidden = true;
+    set.hidden = false;
+    check(getLevel());
+    set.addEventListener('change', (event) => {
+      const value = (event.target as HTMLInputElement).value;
+      // Keep the control itself in view: the blocks below open or close as the level changes.
+      if (isLevel(value)) setLevel(value, { anchor: false });
+    });
+    onLevel(check);
+  });
+</script>

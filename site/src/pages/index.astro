@@ -1,258 +1,271 @@
 ---
+// The home page: one path through the six layers of working with coding agents, plain first,
+// with deeper notes for technical readers and engineers, and a way on to the explainers.
+// Built on Base, not Article: the hero and the figures run wider than a column of prose.
 import Base from '../layouts/Base.astro';
-import Hero from '../components/legacy/Hero.astro';
-import Note from '../components/legacy/Note.astro';
-import Term from '../components/legacy/Term.astro';
-import Horizon from '../components/legacy/Horizon.astro';
-import Stack from '../components/legacy/Stack.astro';
-import ContextMeter from '../components/legacy/ContextMeter.astro';
-import ThreadSim from '../components/legacy/ThreadSim.astro';
-import Attention from '../components/legacy/Attention.astro';
-import VerifyLab from '../components/legacy/VerifyLab.astro';
-import MonteCarlo from '../components/legacy/MonteCarlo.astro';
-import ModelPicker from '../components/legacy/ModelPicker.astro';
-import Thinking from '../components/legacy/Thinking.astro';
-import Orchestra from '../components/legacy/Orchestra.astro';
-import DiffReview from '../components/legacy/DiffReview.astro';
-import Ladder from '../components/legacy/Ladder.astro';
-import SkillEditor from '../components/legacy/SkillEditor.astro';
-import Proxy from '../components/legacy/Proxy.astro';
-import Triangle from '../components/legacy/Triangle.astro';
-import OneHour from '../components/legacy/OneHour.astro';
+import Deeper from '../components/level/Deeper.astro';
+import Fact from '../components/data/Fact.astro';
+import Verified from '../components/data/Verified.astro';
+import CopyPrompt from '../components/site/CopyPrompt.astro';
+import CardGrid from '../components/site/CardGrid.astro';
+import Card from '../components/site/Card.astro';
+import ThreeAgents from '../components/fig/three-agents/ThreeAgents.astro';
+import Loop from '../components/fig/loop/Loop.astro';
+import SteerOrQueue from '../components/fig/steer-or-queue/SteerOrQueue.astro';
+import Bottleneck from '../components/fig/bottleneck/Bottleneck.astro';
+import Horizon from '../components/fig/horizon/Horizon.astro';
+import LevelChoice from '../components/home/LevelChoice.astro';
+import Layer from '../components/home/Layer.astro';
+import LayerGlyph from '../components/home/LayerGlyph.astro';
+import { horizonInputs, horizonSource, horizonFactIds } from '../components/home/horizon-data';
+import { explainers } from '../lib/explainers';
+import { links } from '../data/links';
 import { url } from '../lib/nav';
 
-const chapters = [
-  ['shift', 'The unit of work grew'],
-  ['stack', 'What you’re actually using'],
-  ['context', 'Context is the lever'],
-  ['wait', 'Never wait'],
-  ['verify', 'Give it a judge'],
-  ['science', 'Run it five times'],
-  ['models', 'Benchmarks and practice'],
-  ['thinking', 'Thinking is the bill'],
-  ['team', 'Run a team'],
-  ['review', 'Read the diff'],
-  ['ambition', 'Aim higher'],
-  ['skills', 'Feedback, then skills'],
-  ['project', 'From a session to a project'],
-  ['proxy', 'Stop being the relay'],
-  ['sharp', 'Stay sharp'],
-  ['hour', 'One hour'],
+const layers = [
+  { id: 'interface', name: 'Interface', says: 'Where you and the agent meet.' },
+  { id: 'context', name: 'Context', says: 'What the agent knows right now.' },
+  { id: 'harness', name: 'Harness', says: 'The program that turns the model’s words into actions.' },
+  { id: 'model', name: 'Model', says: 'The part that writes, and what it costs you.' },
+  { id: 'governance', name: 'Governance', says: 'Who checks the work.' },
+  { id: 'emergence', name: 'Emergence', says: 'What happens when several agents run at once.' },
 ];
-const n = (id: string) => String(chapters.findIndex((c) => c[0] === id) + 1).padStart(2, '0');
+
+const factIds = [
+  'plans.claude.pro.price', 'plans.claude.limits.fiveHour', 'harnesses.t3code.role', 't3code.price', 't3code.ownLogins', 't3code.queueSteer',
+  'harnesses.claudeCode.queue', 'harnesses.codex.queue', 'claims.research.speechFaster', 'harnesses.claudeCode.contextFile',
+  'harnesses.codex.contextFile', 'harnesses.claudeCode.subagents', 'connectors.mcp.definition', 'harnesses.claudeCode.nestingDepth',
+  'harnesses.claudeCode.subagentUsage', 'plans.claude.limits.whatUsageMeans', 'plans.claude.limits.sharedAcrossModels',
+  'models.claude-opus-5-5.effort.levels', 'harnesses.claudeCode.defaultModel', 'harnesses.claudeCode.bestPractice',
+  't3code.permissionModes', 't3code.defaultMode', 'harnesses.codex.sandbox', 't3code.worktrees',
+  'harnesses.claudeCode.agentTeams', 'harnesses.claudeCode.agentTeamTokens', ...horizonFactIds,
+];
 ---
-<Base title="Agentic Coding Guide" description="How software gets built with AI agents now, for engineers and scientists catching up: context, parallel work, self-verification, models, costs and T3 Code. Interactive, with sources." section="guide" progress>
-  <Hero />
+<Base
+  title="Agentic Coding Guide"
+  description="A free guide to building software with AI coding agents, from the first prompt to running several agents at once. Plain first, deeper on request, every number sourced."
+  section="guide"
+>
+  <div class="home">
+    <header class="hero">
+      <div class="hero-text">
+        <h1>Building software with AI agents</h1>
+        <p class="lede">
+          An AI coding agent is a program that reads your project, writes the code, runs it and tells you what it did. This guide is about working with one well: what to tell it, what to check, and what it costs. It is written for people who have never opened a terminal and for engineers who have not kept up, and it assumes the <Fact id="plans.claude.pro.price" /> a month plan most people start on. Every number on the site links to its source.
+        </p>
+      </div>
+      <div class="hero-figure"><ThreeAgents /></div>
+    </header>
 
-  <nav class="contents" aria-label="Chapters">
-    <ol>
-      {chapters.map(([id, t], i) => <li><a href={`#${id}`}><span>{String(i + 1).padStart(2, '0')}</span>{t}</a></li>)}
-    </ol>
-  </nav>
-
-  <main class="essay">
-    <section id="shift">
-      <h2><span class="num">{n('shift')}</span> The unit of work grew</h2>
-      <p>In 2023 an AI coding tool changed a few functions when you pointed it at the right files. You held the design in your head and stitched the pieces together. People tried to get more out of it with pipelines: one agent for architecture, one for code, one for tests, one for review. It mostly failed, and for one reason. The models lost the thread after a few minutes of work.</p>
-      <p>That limit has been moving at a steady rate. The research group METR measures it as a <Term def="The length of task, in the time it would take a skilled person, that a model completes with a given probability. Usually quoted at 50%.">time horizon</Term>: how long a task can be, in human working time, before the model fails it half the time. Since 2023 that length has doubled about every four months.</p>
-      <Horizon />
-      <Note href="guide/guides/fact-check/">Half the time is a low bar. At 80% reliability the same models manage tasks five to ten times shorter. That gap is why half of this essay is about checking.</Note>
-      <p>On a linear axis it looks as if something sudden happened in 2025. On a log axis it is a straight line that crossed a threshold. Once a model can hold a task for an hour or two, you can leave the room, and work you walk away from behaves differently from work you supervise keystroke by keystroke. Most habits from the autocomplete era stop applying.</p>
-      <p>Writing code got cheap. Deciding what to build, and knowing whether what came back is right, did not. The rest of this is about those two.</p>
+    <section class="block levels" aria-labelledby="levels-title">
+      <h2 id="levels-title">Choose how deep to go</h2>
+      <p>Everything starts with the simple version. Pick the description that sounds like you, and the deeper notes written for that level open by themselves. Notes above your level stay folded to two lines, and you can open any one of them without changing the rest. The switch also sits at the top of every page.</p>
+      <LevelChoice />
+      <Deeper level="technical" title="What a note at this level looks like">
+        <p>Notes for technical readers name the files, commands and settings behind the plain version: which file an agent reads its instructions from, what a worktree is for, where a permission mode lives.</p>
+      </Deeper>
+      <Deeper level="engineer" title="And at this one">
+        <p>Notes for engineers carry the mechanism and the limits: how the loop feeds tool output back into the context, what a measurement does and does not cover, where a documented behaviour stops. On the home page they are short and point to the explainer that has the full weight.</p>
+      </Deeper>
     </section>
 
-    <section id="stack">
-      <h2><span class="num">{n('stack')}</span> What you’re actually using</h2>
-      <p>Three words get blurred. A <Term def="The neural network. Text in, text out. Claude Opus 5.5, Claude Fable 5.2, GPT-6.2.">model</Term> produces text. A <Term def="The program that runs the model in a loop with tools: read and edit files, run commands, use a browser. Claude Code, Codex, Cursor, OpenCode.">harness</Term> turns that text into actions on a computer. An <Term def="Agentic development environment: one place to run, watch and steer many agents across providers. T3 Code is one.">ADE</Term> sits above the harnesses so you can run several agents and see what each is doing.</p>
-      <Stack />
-      <Note href="guide/guides/t3-code/">T3 Code is MIT-licensed and free, with no paid tier. It supports ten agent CLIs plus anything that speaks ACP.</Note>
-      <p>This guide is built around <a href="https://t3.codes">T3 Code</a>, an open-source ADE from the developer and YouTuber Theo. It contains no AI and resells no tokens. It drives the agent CLIs on your machine with your own subscriptions, chiefly Claude Code and Codex. What it adds is the layer you’d otherwise build from terminal tabs and discipline: threads that can each run in their own Git worktree, a model switch in the middle of a thread, one provider’s agent handing a task to another’s, pages the agent renders inline in the conversation, a browser you both see, and remote access so the work runs on a machine that stays on while you steer from a laptop or a phone.</p>
-      <h3>Where it hits walls</h3>
-      <ul class="walls">
-        <li><strong>No AI included.</strong> Your limits come from your Claude or ChatGPT plan.</li>
-        <li><strong>A viewer over harnesses.</strong> Tools, permissions and skills belong to Claude Code or Codex underneath.</li>
-        <li><strong>Full access is the starting mode.</strong> Agents can run anything you can. T3 Code is not a sandbox. Choose the mode on purpose.</li>
-        <li><strong>The computer does the work.</strong> The phone app is a remote. If the machine sleeps, the run stops.</li>
-        <li><strong>Previews are local.</strong> Nobody else sees your app until you deploy it or share it privately.</li>
-        <li><strong>Version 0.1.</strong> It ships weekly and things break. Steering mid-run depends on the provider.</li>
-      </ul>
-      <h3>Where the agents run</h3>
-      <p>Long runs want a machine that doesn’t sleep. A small Linux box under a desk or a rented server is enough: pair it once, then start and steer threads from anywhere. In our experience agent work also feels faster on Linux, with all its process spawning and file churn, but we have no benchmark for that. The dependable argument is that it stays on. A Mac remains a fine front end, and its unified memory makes it a reasonable host for local models such as on-device transcription.</p>
-    </section>
-
-    <section id="context">
-      <h2><span class="num">{n('context')}</span> Context is the lever</h2>
-      <p>An agent can’t ask about what it doesn’t know exists, and in practice it rarely asks at all. It fills every gap with the most average assumption available and keeps going. So the quality of a long run is decided mostly in the first message: who is asking, what the result is for, what you already tried, what done looks like, how to check.</p>
-      <ContextMeter />
-      <Note href="guide/guides/agentic-coding/#context-files">Context that should outlive the conversation goes in an <code>AGENTS.md</code> at the project root. Codex reads it natively. Claude Code reads it when there is no <code>CLAUDE.md</code>.</Note>
-      <p>That is a lot to type, so don’t. Dictate. In one controlled study people entered text about three times faster by voice than on a phone keyboard, and the gap in what you bother to include is larger than the gap in speed. You’ll ramble and repeat yourself, and the model copes. Then attach the raw material: the data file, a photo of the whiteboard, the transcript of the meeting where the requirements were actually stated.</p>
-    </section>
-
-    <section id="wait">
-      <h2><span class="num">{n('wait')}</span> Never wait</h2>
-      <p>A ten-minute run is short now. Real tasks take thirty to sixty. The first habit to drop is watching. The second is holding back information because the agent is busy. You can talk to a running agent, and there are two ways it can take the message. A <strong>steer</strong> is folded in at the next tool call. A <strong>queued</strong> message waits until the current turn ends.</p>
-      <ThreadSim />
-      <Note href="guide/guides/ways-of-working/#never-wait">In T3 Code this is a setting (Queue or Steer), and queued messages can be edited before they send. Claude Code and Codex both queue what you type mid-run.</Note>
-      <p>Steer corrections, queue additions. A correction that arrives late costs the work built on the mistake. One that never arrives costs more, because the run still ends with a confident summary.</p>
-      <p>Then use the time. Start a second thread, and a third. What limits you is no longer how fast the agents work. It is how much of you each result needs.</p>
-      <Attention />
-      <p>The arithmetic is plain queueing: cycle time divided by your minutes per cycle is how many threads you can feed before finished work piles up behind you. Three to five is a normal day. To go beyond that, shrink the review, which the next section is about.</p>
-      <p>With five threads going you will lose track, so ask for the overview too: <q>Give me a dashboard of what you’re doing, why, and how I can verify it. Keep it updated.</q> In T3 Code the agent can answer with an HTML page rendered inside the thread. For a status board, an explainer or a clickable questionnaire that you’ll look at once, that beats managing files.</p>
-    </section>
-
-    <section id="verify">
-      <h2><span class="num">{n('verify')}</span> Give it a judge</h2>
-      <p class="big">The idea to keep from this essay: <em>an agent is as good as what it can check its work against.</em></p>
-      <p>A model has no privileged access to whether its output is right. It finds out the way you do, by running something and reading the result. Give it nothing to run and “done” means “I stopped”. Give it a test, a browser, a type checker or a known answer, and it will loop against that for an hour without you.</p>
-      <VerifyLab />
-      <Note href="guide/guides/ways-of-working/#self-verification-is-the-goal">Anthropic’s own guidance for unattended runs: make sure the agent “knows what done looks like, can check its own work, and can only touch what it should.”</Note>
-      <p>Which judge depends on the work. For code, tests, and the rule that the agent never edits a test to make it pass. For interfaces, its own browser: <q>open the page, try the interactions at phone width, fix what you see, repeat.</q> For numbers, a case with a known answer and a few repeated runs. For anything large, a second model reading the diff.</p>
-      <p>The loop has a ceiling. It gets a design to correct and decent, and stops, because nothing measures whether the page is any good. It can make every run agree and still be wrong about the physics. So your job moves from producing to judging, and the useful request becomes: <q>build me the best tool for checking this.</q> A table of all twenty variants instead of twenty scripts. A page that shows the failures first.</p>
-    </section>
-
-    <section id="science">
-      <h2><span class="num">{n('science')}</span> Run it five times</h2>
-      <p>For research work, the first answer to a hard question is probably wrong, and that’s fine. What you want back is an instrument: synthetic data in the shape of your real data, the analysis as code you can read, controls on every assumption. You learn quickly whether the model understood the problem at all, and you often understand it better yourself after ten minutes of dragging sliders.</p>
-      <p>Below is the kind of thing to ask for, working. It estimates g from pendulum timings using the textbook formula. Run it once, then several times, then five hundred.</p>
-      <MonteCarlo />
-      <Note href="guide/guides/ways-of-working/#notebooks-and-explorables-for-scientific-work">Ask for it by name: “Make synthetic data in the same shape as mine, with a known answer. Run the analysis five times and report the spread. Export a Jupyter notebook as well.”</Note>
-      <p>Repetition tells you about noise. It is silent about an error every run shares. Five hundred fits pile up neatly around 9.23 and the whole pile is 6% low, because 40° is not a small angle and the formula assumes one. Tick the correction and the bias disappears. No test in the agent’s loop would have found that. Someone who knew pendulums did.</p>
-      <p>This is the argument for domain expertise in one figure. The agent supplies the instrument in minutes. Knowing which assumption to distrust is still yours. Synthetic data has a second use as well: while you are exploring, your real data doesn’t have to leave your machine.</p>
-    </section>
-
-    <section id="models">
-      <h2><span class="num">{n('models')}</span> Benchmarks and practice</h2>
-      <p>The best public map is the <Term def="An aggregate of nine evaluations across knowledge work, coding, science and general reasoning, run by Artificial Analysis, an independent benchmarking company.">Intelligence Index</Term> from Artificial Analysis. It is worth knowing, and it will not make the choice for you. Its tasks are bounded. A model can lead on a thousand one-hour problems and still lose its way in hour six of yours.</p>
-      <ModelPicker />
-      <Note href="guide/guides/models-and-costs/#the-model-landscape">The cheap end moved fastest. GPT-6 Luna costs 12 to 20 times less per token than the flagship of a year ago. If you last tried these tools in 2025, your impression is out of date.</Note>
-      <p>Our working split, for what one practitioner’s experience is worth: the Anthropic models for judgement over long stretches, the OpenAI models for grinding at a checkable target, and the smallest models for volume. The sharper advice is to stop treating it as a matter of opinion. Running the same task on two models in parallel costs you a few minutes, and your own work is the only benchmark that covers your own work.</p>
-    </section>
-
-    <section id="thinking">
-      <h2><span class="num">{n('thinking')}</span> Thinking is the bill</h2>
-      <p>Before a model answers, it can write to itself: a scratchpad where it works the problem, tries an approach and checks it. That is all “thinking” means. On current Claude models it is always on and adaptive, you see at most a summary of it, and every token of it is billed as output, which costs five times what input does. The effort setting is a dial on how much of that text the model writes.</p>
-      <Thinking />
-      <Note href="guide/guides/models-and-costs/#thinking-levels">Fable 5.2 at medium effort scores 56.4, about where Opus 5.5 lands at xhigh. A better model on a lower setting is often the cheaper way to the same place.</Note>
-      <p>The curve has a knee. Medium is the default in Claude Code and the right one for most work. Raise it for hard problems and for orchestrators. Max is for when you have evidence that xhigh wasn’t enough.</p>
-    </section>
-
-    <section id="team">
-      <h2><span class="num">{n('team')}</span> Run a team</h2>
-      <p>The top model costs twice the next one. You rarely need it everywhere. Let it manage: split the work, hand the pieces to strong cheaper workers in parallel, read what comes back, and call in an independent reviewer for the decisions that matter. Rewire the team below and watch the bill.</p>
-      <Orchestra />
-      <Note href="guide/guides/models-and-costs/#what-it-costs">On a subscription you pay a flat fee against limits that reset every five hours and every week. Neither lab publishes what those limits are worth. One public data point: a developer’s $200 plan absorbed roughly $2,500 of list-price usage per week.</Note>
-      <p>You get this by describing it: <q>Start a fresh thread whose only job is to orchestrate. Use Fable for that, Opus subagents for the work, and a GPT thread to review each diff before you accept it.</q> It is worth the overhead when the work splits cleanly. For one tangled problem, a single good model with the whole context usually does better.</p>
-    </section>
-
-    <section id="review">
-      <h2><span class="num">{n('review')}</span> Read the diff</h2>
-      <p>An agent reports success and failure in the same tone. The summary is its opinion of the work. The diff is the work. Here is a summary and a diff.</p>
-      <DiffReview />
-      <Note href="guide/guides/ways-of-working/#reviewing-agent-work">Ask it directly: “What did you not verify?” The answer is usually honest and usually longer than the summary.</Note>
-      <p>The habits around this are the ones a careful team already has, applied more strictly because the author is fast and tireless:</p>
-      <ul class="plain">
-        <li><strong>Commit before every long run</strong> and at every green state. Checkpoints in the harness don’t cover what a shell command changed. Git does.</li>
-        <li><strong>One worktree per thread.</strong> Parallel agents in one checkout overwrite each other. T3 Code and Claude Code create worktrees for you.</li>
-        <li><strong>Tests are the judge, so protect them.</strong> A standing rule in <code>AGENTS.md</code>: never weaken or skip a test to make it pass.</li>
-        <li><strong>Decide what it may touch.</strong> Use a sandbox or a supervised mode for anything near credentials, production or data you can’t recreate. Full access belongs on a machine you could wipe.</li>
-        <li><strong>Get a second reader.</strong> A model from another lab reviewing the diff finds different mistakes than the one that wrote it.</li>
-      </ul>
-    </section>
-
-    <section id="ambition">
-      <h2><span class="num">{n('ambition')}</span> Aim higher</h2>
-      <p>Experienced people under-ask. You scope the request to what would have been reasonable to build by hand, and you get exactly that. The first result is a starting point. Say so in the prompt: <q>do more than I asked, I don’t know yet what you can do.</q></p>
-      <Ladder />
-      <Note href="guide/skills-table/#recommended-external-skills"><strong>Be Ambitious</strong> looks for the goal beyond the goal. <strong>Grill Me</strong> interviews you until the request is sharp, as a clickable questionnaire if you ask for one.</Note>
-      <p>Outside your own field you’ll notice what to fix and miss what’s possible. Show it work you admire and ask for something in that league. Or turn it around and ask for problems: <q>find ten questions in this data set worth answering,</q> then go through them yes, no, maybe. Expect a few to be invented. Rejecting those is quick and tells it what you care about.</p>
-    </section>
-
-    <section id="skills">
-      <h2><span class="num">{n('skills')}</span> Feedback, then skills</h2>
-      <p>When a result comes back, start with what you don’t like. “The header is cramped.” “Why is this map fake?” “Remove the summary cards.” Changing things costs almost nothing, so don’t negotiate with a draft.</p>
-      <p>Some corrections you’ll make every time, because agents have tics: a tiny uppercase label over every heading, a tagline under every title, a hint on every control. When you notice yourself repeating one, write it down once. A <Term def="A folder with a SKILL.md file: a name, a one-line description that decides when it loads, and instructions in plain prose. An open format most agents read.">skill</Term> is a text file the agent loads when its description matches the task. Edit this one.</p>
-      <SkillEditor />
-      <Note href="guide/skills-table/">Three worth installing: <strong>Humanizer</strong> strips AI tics from prose, plus the two from the previous chapter. <code>npx skills add owner/repo</code> installs one for most agents.</Note>
-      <p>Not everything needs to be a skill. A sentence you paste twice a week can live in your clipboard history. Promote it when you want the agent to reach for it unprompted.</p>
-    </section>
-
-    <section id="project">
-      <h2><span class="num">{n('project')}</span> From a session to a project</h2>
-      <p>Good work often starts as a thread with no project: a question, some files, an afternoon. When it turns out to be worth keeping, say so: <q>Turn this into a repository. Write an AGENTS.md with everything you’ve learned about me, the problem and how to check results, so the next agent can pick it up.</q> The agent that did the work is the one best placed to write that file. Tomorrow’s thread opens with <q>help me get started with this project</q> and knows where you left off.</p>
-      <Note href="guide/guides/ways-of-working/#from-a-session-to-a-project">Keep it short and current. Ask the agent to update it at the end of a session, and read what it wrote: this file steers every later run.</Note>
-      <h3>Showing it to someone</h3>
-      <p>The preview runs on your machine. To share it without publishing it you have three realistic options. Tailscale exposes a local port to your own devices and no one else. Cloudflare hosts static sites for free and can put an emailed one-time code in front of them for up to fifty people. GitHub Pages is the easy one and the trap: the site is public even when the repository is private.</p>
-      <h3>Before you paste work data</h3>
-      <p>A personal account is not permission. On consumer plans, whether your conversations train future models is a setting, and it changes how long they are kept: thirty days or five years on Claude. Zero data retention exists, as a contract for API and enterprise customers. If you haven’t been told you may, don’t. Describe the shape of the data, have the agent generate a synthetic set, build the whole analysis against that, and run it on the real thing yourself.</p>
-      <Note href="guide/guides/models-and-costs/#privacy">Some employers already provide an approved route. Ask before assuming there isn’t one.</Note>
-    </section>
-
-    <section id="proxy">
-      <h2><span class="num">{n('proxy')}</span> Stop being the relay</h2>
-      <p>A lot of agent work today has a person in the middle, carrying messages between someone with a need and a machine that could have heard it directly.</p>
-      <Proxy />
-    </section>
-
-    <section id="sharp">
-      <h2><span class="num">{n('sharp')}</span> Stay sharp</h2>
-      <p>The good version of this is speed of thought. An idea that used to cost a week now costs a prompt and twenty minutes, so you try the ones you would have talked yourself out of. Stuck on something you don’t understand? Ask for whatever would help you see it, and get an explorable back.</p>
-      <p>The bad version is also about thinking. Hand over the decisions along with the typing and you stop forming a view. Then you can’t tell a good result from a plausible one, and the results get worse without anyone noticing. Read what it made. Keep the questions that matter for yourself. Check twice anything that carries your name.</p>
-      <Triangle />
-    </section>
-
-    <section id="hour">
-      <h2><span class="num">{n('hour')}</span> One hour</h2>
-      <p>None of this lands until you’ve done it on a problem of your own. You know your field better than any guide does, and you already know what good work looks like. Block an hour this week and bring something real.</p>
-      <OneHour />
-      <p class="big">Models can write code, and code can do almost anything. <em>What’s left is deciding what to ask for and checking what comes back.</em></p>
-    </section>
-
-    <section id="rabbit-holes" class="holes">
-      <h2>Rabbit holes</h2>
-      <p>The full guides, the sources, and places to keep going.</p>
-      <div class="hole-grid">
-        <a href={url('guide/guides/ways-of-working/')}><b>Ways of Working</b><span>Everything in this essay, as a reference</span></a>
-        <a href={url('guide/guides/t3-code/')}><b>T3 Code</b><span>Capabilities, walls, setup</span></a>
-        <a href={url('guide/guides/models-and-costs/')}><b>Models and Costs</b><span>Prices, effort levels, plans, hardware</span></a>
-        <a href={url('guide/skills-table/')}><b>Skills</b><span>What they are, which to install</span></a>
-        <a href={url('guide/guides/fact-check/')}><b>Sources and Fact-Check</b><span>Every number, with a link</span></a>
-        <a href={url('guide/guides/agentic-coding/')}><b>Agentic Coding Basics</b><span>The loop, context files, prompts</span></a>
-        <a href="https://metr.org/time-horizons/"><b>METR</b><span>How long a task models can hold</span></a>
-        <a href="https://artificialanalysis.ai"><b>Artificial Analysis</b><span>Benchmarks, cost and token usage</span></a>
-        <a href={url('guide/')}><b>Everything else</b><span>Web foundations, auth, Git, shipping</span></a>
+    <section class="block" aria-labelledby="changed-title">
+      <h2 id="changed-title">What changed</h2>
+      <div class="prose">
+        <p>For as long as there has been software, a person typed every line of it. With an agent you describe the result you want, the agent writes the code, and you decide whether what came back is right. Control moves down a level. You stop typing the code and keep the decisions and the checking.</p>
+        <p>Writing code got cheap. Knowing whether the code does what you meant did not, and that is now most of the work. An agent goes round a loop: it reads what it needs, acts, checks what happened and goes round again. It stops when a check passes, or when it decides it is done, which is why what it can check its work against matters so much.</p>
       </div>
     </section>
-  </main>
+    <div class="wide"><Loop /></div>
+    <section class="block" aria-label="More on the loop">
+      <Deeper level="technical" title="Model, harness and workspace">
+        <p>Three words get blurred. The <strong>model</strong> writes text. The <strong>harness</strong>, such as Claude Code or Codex, runs the model in that loop and turns its text into actions on your computer. A <strong>workspace</strong> such as T3 Code sits above the harnesses so you can run several agents and see what each is doing.</p>
+      </Deeper>
+      <Deeper level="engineer" title="The loop is tool calls">
+        <p>Each round, the model answers with text or a structured tool call. The harness runs the call (read a file, run a command, open a page), appends the result to the conversation and sends the whole thing back. Everything the agent knows arrives through that conversation, which is why context and verification get their own layers below.</p>
+      </Deeper>
+    </section>
+
+    <section class="block six" aria-labelledby="six-title">
+      <h2 id="six-title">Six layers</h2>
+      <div class="prose">
+        <p>The designer Emily Campbell describes AI products as six layers in <a href={links.emilyCampbellLayers.url}>The Layers of AI Experience</a>. Four of them make up the product: the interface, the context, the harness and the model. The other two are the conditions it runs in: the rules around it, and the behaviour that shows up only in use. Her article is written for designers. Its six layers also fit the work of directing a coding agent, so this guide borrows them, with one section each.</p>
+      </div>
+      <ol class="six-list">
+        {layers.map((l, i) => (
+          <li>
+            <a href={`#${l.id}`}>
+              <LayerGlyph n={i + 1} size={22} />
+              <span class="six-name">{l.name}</span>
+              <span class="six-says">{l.says}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <Layer n={1} id="interface" name="Interface" title="Where you and the agent meet" links={[{ href: 't3-code/', title: 'T3 Code' }, { href: 'explain/voice/', title: 'Voice' }]}>
+      <p>The interface is where you give the agent its task and watch it work: a chat box in a browser, a terminal window, a desktop app such as T3 Code, or your own voice. It decides how much of the agent’s work you can see, and how easily you can step in while it runs.</p>
+      <p>A run can take minutes. You do not have to wait for it to end before you say more. Most tools hold a message you send mid-run until the agent’s turn is over; some can also slip it into the run at the agent’s next step, which is called steering.</p>
+      <Deeper level="technical" title="Workspaces and voice">
+        <p><Fact id="harnesses.t3code.role" show="claim" /> <Fact id="t3code.ownLogins" show="claim" /> <Fact id="t3code.price" show="claim" /> Speaking is quicker than typing: in one Stanford study speech input on a phone was <Fact id="claims.research.speechFaster" /> as fast as typing, and a spoken brief tends to carry more of what you know.</p>
+      </Deeper>
+      <Deeper level="engineer" title="What queue and steer do">
+        <p><Fact id="harnesses.claudeCode.queue" show="claim" /> <Fact id="harnesses.codex.queue" show="claim" /> T3 Code offers both: <Fact id="t3code.queueSteer" show="claim" /> A steer lands at the next tool boundary, so the step in flight still finishes on the old instructions.</p>
+      </Deeper>
+      <Fragment slot="figure"><SteerOrQueue /></Fragment>
+      <Fragment slot="right">
+        <p>Do not sit and watch. Send what you know the moment you know it, and steer when it corrects the work in progress, so the agent does not finish a turn on a wrong assumption.</p>
+      </Fragment>
+    </Layer>
+
+    <Layer n={2} id="context" name="Context" title="What the agent knows right now" links={[{ href: 'explain/context/', title: 'Context' }]}>
+      <p>Context is everything the agent can see at this moment: your messages, the files it has opened, the output of the commands it ran, and any instructions file in your project. It knows nothing else about your project or about you. If a fact is not in there, the agent guesses.</p>
+      <p>A conversation also gets tired. Every dead end, wrong guess and long log stays in view and keeps pulling on the answers. A fresh conversation, given the right material at the start, usually does better than a long one that has wandered.</p>
+      <CopyPrompt title="A first message for the holiday hours bug">{`The bakery website shows the normal opening hours on public holidays. It should say "Closed" on the dates in holidays.csv.
+
+Done means: on 25 December the hours page shows "Closed", on an ordinary Tuesday it still shows the usual hours, and there is a test for both.
+
+Read the hours page and holidays.csv first. Ask me before changing anything outside the hours page.`}</CopyPrompt>
+      <Deeper level="technical" title="Instructions files">
+        <p>A harness reads a standing instructions file at the start of every conversation. Claude Code reads <code><Fact id="harnesses.claudeCode.contextFile" /></code>; Codex reads <code><Fact id="harnesses.codex.contextFile" /></code>. Put what every task needs there: how to run the tests, what not to touch, how you like things named.</p>
+      </Deeper>
+      <Deeper level="engineer" title="Fresh windows on purpose">
+        <p>The context window is finite and everything loaded takes room, including tool definitions and skill descriptions. <Fact id="harnesses.claudeCode.subagents" show="claim" /> That is the main reason to use one: a search or a review runs in a clean window and returns a summary instead of its whole working.</p>
+      </Deeper>
+      <Fragment slot="right">
+        <p>Say what done looks like in your first message, and start a new conversation when the task changes.</p>
+      </Fragment>
+    </Layer>
+
+    <Layer n={3} id="harness" name="Harness" title="The program around the model" links={[{ href: 'explain/skills/', title: 'Skills' }, { href: 'explain/connectors/', title: 'Connectors and MCP' }, { href: 'explain/orchestration/', title: 'Orchestration' }]}>
+      <p>The model on its own only writes text. The harness is the program around it that turns that text into actions, such as reading a file, running a test or opening a web page, and feeds each result back. Claude Code and Codex are harnesses. The loop in Fig. 2 is the harness at work.</p>
+      <p>The harness is also where you add to what the agent can do. A skill is written know-how it loads when a task calls for it. A connector gives it a door into another system, such as your issue tracker. A helper agent takes a side task in a conversation of its own.</p>
+      <Deeper level="technical" title="Skills and connectors">
+        <p>A skill is a folder with a <code>SKILL.md</code> file; the agent sees its short description and reads the rest only when a task matches. Connectors mostly use the Model Context Protocol, which calls itself “<Fact id="connectors.mcp.definition" />”.</p>
+      </Deeper>
+      <Deeper level="engineer" title="Helpers share your limits">
+        <p><Fact id="harnesses.claudeCode.nestingDepth" show="claim" /> <Fact id="harnesses.claudeCode.subagentUsage" show="claim" /> More helpers means faster progress and a faster-emptying plan, in the same breath.</p>
+      </Deeper>
+      <Fragment slot="right">
+        <p>When you correct the same thing twice, write it down where the harness loads it every time: in the instructions file, or as a skill.</p>
+      </Fragment>
+    </Layer>
+
+    <Layer n={4} id="model" name="Model" title="Which model, at what effort, for what cost" links={[{ href: 'models/', title: 'Models' }, { href: 'explain/plans-and-api/', title: 'Plans against the API' }]}>
+      <p>The model is the part that writes. Which model you pick, and how long you let it think before it answers (the effort setting), change the quality of the work and how fast you use up your plan.</p>
+      <p>On a <Fact id="plans.claude.pro.price" /> plan you do not pay per answer. You pay with your allowance, which refills every <Fact id="plans.claude.limits.fiveHour" /> and again every week. A large model at high effort empties it sooner, and <Fact id="plans.claude.limits.whatUsageMeans" show="claim" /></p>
+      <p>Models also keep getting better at long tasks. The research group METR measures how long a task a model can finish, in the time it would take a skilled person. That length has doubled about every <Fact id="benchmarks.metr.doublingDays" /> since 2023.</p>
+      <Deeper level="technical" title="Effort and the default">
+        <p>Claude Opus 5.5 takes the effort levels <Fact id="models.claude-opus-5-5.effort.levels" />. <Fact id="harnesses.claudeCode.defaultModel" show="claim" /> <Fact id="plans.claude.limits.sharedAcrossModels" show="claim" /></p>
+      </Deeper>
+      <Deeper level="engineer" title="Reading the time horizon">
+        <p>The horizon is a fit at a given success rate, not a promise. At four tasks in five the same models manage far shorter tasks than at one in two. METR calls its estimates above <Fact id="benchmarks.metr.unreliableAbove" /> unreliable with its current tasks, and stopped updating the page on <Fact id="benchmarks.metr.lastUpdate" />.</p>
+      </Deeper>
+      <Fragment slot="figure"><Horizon {...horizonInputs} source={horizonSource} /></Fragment>
+      <Fragment slot="right">
+        <p>Try a model on your own task before you trust any ranking, this guide’s included. Running the same task on two models and comparing the results costs a few minutes.</p>
+      </Fragment>
+    </Layer>
+
+    <Layer n={5} id="governance" name="Governance" title="Who checks the work" links={[{ href: 'explain/verification/', title: 'Verification' }]}>
+      <p>Governance is what the agent may do, and who checks what it did. Permissions decide which files and commands it can touch without asking. Tests and a browser let it check its own work before you see it. Your review comes last, and it is the only check that knows what you meant.</p>
+      <p>An agent’s summary of its work is its own account of it. The changes themselves, and whether they pass a check, are the evidence.</p>
+      <Deeper level="technical" title="Permission modes">
+        <p>In T3 Code the modes are <Fact id="t3code.permissionModes" />, and a new thread starts in <Fact id="t3code.defaultMode" />. <Fact id="harnesses.codex.sandbox" show="claim" /> Choose the mode on purpose before a run goes unattended.</p>
+      </Deeper>
+      <Deeper level="engineer" title="What reruns can and cannot find">
+        <p>Running the same task again removes noise: mistakes that come and go between runs. It does not remove a mistake every run shares, such as a wrong assumption in the brief. For that you need a different judge: a test written from the requirement, or a second model reviewing the diff.</p>
+      </Deeper>
+      <Fragment slot="right">
+        <p>Anthropic’s own advice for Claude Code puts it in one line: “<Fact id="harnesses.claudeCode.bestPractice" />”</p>
+      </Fragment>
+    </Layer>
+
+    <Layer n={6} id="emergence" name="Emergence" title="When several agents run at once" links={[{ href: 'explain/orchestration/', title: 'Orchestration' }, { href: 'explain/verification/', title: 'Verification' }]}>
+      <p>Campbell’s last layer is the behaviour nobody designed, “revealed through use”. For you it shows up most when several agents run at the same time. Two of them edit the same file. Three finish within a minute of each other. A fourth waits half an hour for an answer you did not see it ask for.</p>
+      <p>Past a few agents the limit moves. It stops being how fast code gets written and becomes how fast you can decide and check. More agents beyond that point add to the pile of finished work in front of you, not to what you get through.</p>
+      <Deeper level="technical" title="Keep them apart">
+        <p>Give each agent its own copy of the project so they cannot overwrite each other. <Fact id="t3code.worktrees" show="claim" /></p>
+      </Deeper>
+      <Deeper level="engineer" title="Teams cost more than they look">
+        <p><Fact id="harnesses.claudeCode.agentTeams" show="claim" /> <Fact id="harnesses.claudeCode.agentTeamTokens" show="claim" /> Measure what a pattern costs on your plan before you make it a habit.</p>
+      </Deeper>
+      <Fragment slot="figure"><Bottleneck /></Fragment>
+      <Fragment slot="right">
+        <p>Add agents only as fast as you can review their work, and make each one check its own work before it reaches you.</p>
+      </Fragment>
+    </Layer>
+
+    <section class="block start" aria-labelledby="start-title">
+      <h2 id="start-title">Where to start</h2>
+      <a class="start-route" href={url('start/')}>
+        <span class="start-title">The first hour</span>
+        <span class="start-says">Install one tool, give an agent one small real task, and check what it did. A different first hour for each level.</span>
+        <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" /></svg>
+      </a>
+    </section>
+    <div class="cards">
+      <CardGrid title="The explainers">
+        {explainers.map((e) => <Card href={`explain/${e.slug}/`} title={e.title}>{e.blurb}</Card>)}
+        <Card href="t3-code/" title="T3 Code">The workspace this guide is written around, what it does and where it stops.</Card>
+        <Card href="models/" title="Models">Every current model with its score, price and what your plan includes.</Card>
+      </CardGrid>
+      <Verified ids={factIds} />
+    </div>
+  </div>
 </Base>
 
 <style>
-  .contents { max-width: 60rem; margin: 0 auto 2rem; padding: 0 var(--gutter); }
-  .contents ol { list-style: none; margin: 0; padding: 1rem 0; border-block: 1px solid var(--rule); columns: 3 14rem; column-gap: 2rem; font-family: var(--mono); font-size: 0.76rem; }
-  .contents li { break-inside: avoid; }
-  .contents a { display: flex; gap: 0.6rem; padding: 0.25rem 0; text-decoration: none; color: var(--ink-2); }
-  .contents span { color: var(--muted); }
+  .home { padding: clamp(2rem, 6vw, 4.5rem) var(--gutter) var(--space-8); }
 
-  .essay { max-width: calc(var(--measure) + 2 * var(--gutter)); margin: 0 auto; padding: 0 var(--gutter); }
-  @media (min-width: 70rem) { .essay { max-width: calc(var(--measure) + 18rem + 2 * var(--gutter)); padding-right: calc(18rem + var(--gutter)); } }
-  section { padding-top: 4rem; }
-  section :global(.widget), .walls { clear: both; }
-  h2 { font-size: clamp(1.9rem, 5vw, 2.6rem); font-weight: 500; letter-spacing: -0.02em; line-height: 1.1; margin: 0 0 1.25rem; text-wrap: balance; }
-  .num { font-family: var(--mono); font-size: 0.42em; font-weight: 400; color: var(--accent); letter-spacing: 0; margin-right: 0.9em; vertical-align: 0.5em; }
-  h3 { font-size: 1.25rem; font-weight: 600; margin: 2rem 0 0.75rem; }
-  p { margin: 0 0 1.1rem; color: var(--ink-2); text-wrap: pretty; }
-  strong { color: var(--ink); font-weight: 600; }
-  .big { font-size: 1.45rem; line-height: 1.4; color: var(--ink); }
-  .big em { color: var(--accent); }
-  q { font-style: italic; }
-  .walls { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); }
-  .walls li { border: 1px solid var(--rule); border-radius: 10px; padding: 0.7rem 0.8rem; font-size: 0.95rem; line-height: 1.45; color: var(--ink-2); background: var(--card); }
-  .walls strong { display: block; }
-  .plain { margin: 0 0 1.1rem; padding-left: 1.2rem; color: var(--ink-2); display: grid; gap: 0.5rem; }
-  .plain li::marker { color: var(--accent); }
-  .holes h2 { margin-bottom: 0.5rem; }
-  .hole-grid { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); margin-top: 1.25rem; }
-  .hole-grid a { display: flex; flex-direction: column; gap: 0.2rem; text-decoration: none; border: 1px solid var(--rule); border-radius: 12px; padding: 0.8rem 0.9rem; background: var(--card); transition: border-color 160ms ease; }
-  .hole-grid a:hover { border-color: var(--accent); color: inherit; }
-  .hole-grid b { font-weight: 600; }
-  .hole-grid span { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); }
+  .hero { max-width: 64rem; margin: 0 auto; }
+  .hero-text { max-width: 44rem; }
+  h1 {
+    margin: 0 0 var(--space-5); font-size: clamp(2.5rem, 1.6rem + 4.2vw, 4.75rem); font-weight: 470;
+    line-height: 1.02; letter-spacing: -0.03em; text-wrap: balance;
+  }
+  .lede { margin: 0; font-size: var(--text-l); line-height: 1.5; color: var(--ink-2); max-width: var(--measure); }
+  .hero-figure :global(.fig) { margin: var(--space-7) 0 0; }
+
+  .block { max-width: var(--measure); margin: var(--space-8) auto 0; }
+  .block > h2, .start h2 {
+    margin: 0 0 var(--space-4); font-size: var(--text-2xl); font-weight: 500;
+    line-height: var(--leading-tight); letter-spacing: -0.014em;
+  }
+  .block > p { margin: 0 0 1.05em; }
+  .levels :global(.deeper) { margin-top: var(--space-5); }
+  .wide { max-width: 60rem; margin: 0 auto; }
+  .wide :global(.fig) { margin: var(--space-6) 0 0; }
+  .block[aria-label] { margin-top: var(--space-4); }
+
+  .six-list { list-style: none; margin: var(--space-5) 0 0; padding: 0; border-top: 1px solid var(--rule); }
+  .six-list li { border-bottom: 1px solid var(--rule); }
+  .six-list a {
+    display: grid; grid-template-columns: auto minmax(7rem, auto) 1fr; align-items: baseline; gap: var(--space-3);
+    padding: var(--space-3) 0; min-height: 2.75rem; text-decoration: none; color: var(--ink);
+  }
+  .six-list a :global(.layer-glyph) { align-self: center; }
+  .six-name { font-weight: 560; }
+  .six-says { color: var(--ink-2); font-size: var(--text-m); }
+  .six-list a:hover .six-name { color: var(--accent); }
+  @media (max-width: 30rem) {
+    .six-list a { grid-template-columns: auto 1fr; }
+    .six-says { grid-column: 2; }
+  }
+
+  .start { margin-top: var(--space-9); }
+  .start-route {
+    display: grid; grid-template-columns: 1fr auto; gap: var(--space-2) var(--space-4); align-items: center;
+    padding: var(--space-5) var(--space-5); border-radius: var(--radius-l);
+    background: var(--ink); color: var(--paper); text-decoration: none;
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+  .start-route:hover { color: var(--paper); }
+  .start-route:active { transform: scale(0.99); }
+  .start-title { font-size: var(--text-xl); font-weight: 500; letter-spacing: -0.01em; }
+  .start-says { grid-column: 1; color: color-mix(in oklab, var(--paper) 80%, var(--ink)); font-size: var(--text-m); line-height: 1.45; }
+  .start-route svg { grid-row: 1 / span 2; grid-column: 2; transition: transform var(--dur) var(--ease-out); }
+  .start-route:hover svg { transform: translateX(4px); }
+  .cards { max-width: var(--wide); margin: var(--space-7) auto 0; }
 </style>
