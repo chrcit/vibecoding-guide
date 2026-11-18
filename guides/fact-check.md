@@ -8,7 +8,7 @@ Status means:
 
 - **verified**: checked against the primary source on the date given.
 - **observation**: someone's dated, attributed estimate or experience. The guide labels it that way and never presents it as a general fact.
-- **unverified**: could not be confirmed. The site does not publish it.
+- **unverified**: could not be confirmed. Listed under Could Not Verify at the end, never stated as a fact.
 
 ## Corrections
 
@@ -90,18 +90,14 @@ Release dates, context windows, API list prices and effort levels. From `site/sr
 | Claude Haiku 5.5 accepts the effort levels low, medium, high, xhigh and max. | low, medium, high, xhigh, max | verified | [platform.claude.com/docs/en/build-with-claude/effort](https://platform.claude.com/docs/en/build-with-claude/effort) |
 | The API default effort for Claude Haiku 5.5 is medium. | medium | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
 | Claude Haiku 5.5 uses adaptive thinking. | adaptive | verified | [platform.claude.com/docs/en/models/overview](https://platform.claude.com/docs/en/models/overview) |
-| GPT-6.2 Astra was released on 17 November 2026. | 17 Nov 2026 | unverified: The OpenAI models page no longer shows release dates. Artificial Analysis covered the release on this date. | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
 | GPT-6.2 Astra supports a context window of up to 1M tokens; Codex uses 272,000 by default. | 1M tokens | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
 | GPT-6.2 Astra costs $8 per million input tokens (standard tier, up to 272K input tokens). | $8 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
 | GPT-6.2 Astra costs $40 per million output tokens (standard tier, up to 272K input tokens). | $40 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
-| GPT-6.2 Sol was released on 17 November 2026. | 17 Nov 2026 | unverified: The OpenAI models page no longer shows release dates. | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
 | GPT-6.2 Sol supports a context window of up to 1M tokens; Codex uses 500,000 by default. | 1M tokens | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
 | GPT-6.2 Sol costs $2 per million input tokens. | $2 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
 | GPT-6.2 Sol costs $10 per million output tokens. | $10 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
-| GPT-6.1 Terra was released on 26 October 2026. | 26 Oct 2026 | unverified: The OpenAI models page no longer shows release dates. | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
 | GPT-6.1 Terra costs $1 per million input tokens. | $1 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
 | GPT-6.1 Terra costs $5 per million output tokens. | $5 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
-| GPT-6 Luna was released on 22 September 2026. | 22 Sep 2026 | unverified: The OpenAI models page no longer shows release dates. | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
 | GPT-6 Luna costs $0.10 per million input tokens. | $0.10 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
 | GPT-6 Luna costs $0.50 per million output tokens. | $0.50 | verified | [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing) |
 | GPT-6 Luna supports reasoning effort up to max, but not ultra. | low, medium, high, extra high, max | verified | [learn.chatgpt.com/docs/models](https://learn.chatgpt.com/docs/models) |
@@ -157,7 +153,6 @@ Subscription prices, what each includes, how limits work and what the API credit
 | ChatGPT Business costs $20 per user a month billed yearly ($25 monthly), for two or more users. | $20 | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 | OpenAI publishes estimated message ranges per five hours for Plus and Business; they are estimates, not fixed limits, and weekly limits may also apply. | estimates | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 | Codex is included on every ChatGPT plan, from Free up. | yes | verified | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
-| On Free and Go, Codex offers only the smallest model. | smallest model only | unverified: Not found on the pricing page when re-read on 2026-11-18. | [learn.chatgpt.com/docs/pricing](https://learn.chatgpt.com/docs/pricing) |
 
 ## Benchmarks
 
@@ -181,26 +176,15 @@ Artificial Analysis Intelligence Index and METR time horizons, each with the pag
 | GPT-6 Luna scores 27.9 on the Artificial Analysis Intelligence Index at max effort. | 27.9 | verified: The leaderboard shows whole numbers; the decimal is from the model page read the same day. | [artificialanalysis.ai/leaderboards/models](https://artificialanalysis.ai/leaderboards/models) |
 | Claude Opus 5.5 scores 34.8 on the Artificial Analysis Intelligence Index at low effort. | 34.8 | verified: The model page shows 35. | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
 | Claude Opus 5.5 at low effort wrote 21.1M output tokens over the whole index run. | 21.1M tokens | verified | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
-| Claude Opus 5.5 at low effort writes about 19.1k output tokens per index task. | 19.1K tokens | unverified: Could not be re-read on 2026-11-18; the page now gives a 21.1M total for low, which does not match. | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
-| Claude Opus 5.5 at low effort costs $0.98 per index task. | $0.98 | unverified: The page gives a per-task cost only for max. | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
 | Claude Opus 5.5 scores 48.2 on the Artificial Analysis Intelligence Index at medium effort. | 48.2 | verified: The model page shows 48. | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
 | Claude Opus 5.5 at medium effort wrote 42.5M output tokens over the whole index run. | 42.5M tokens | verified | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
-| Claude Opus 5.5 at medium effort writes about 43.8k output tokens per index task. | 43.8K tokens | unverified: Not shown per task on the page on 2026-11-18. | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
-| Claude Opus 5.5 at medium effort costs $2.45 per index task. | $2.45 | unverified: The page gives a per-task cost only for max. | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
 | Claude Opus 5.5 scores 51.8 on the Artificial Analysis Intelligence Index at high effort. | 51.8 | verified: The model page shows 52. | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
 | Claude Opus 5.5 at high effort wrote 56.1M output tokens over the whole index run. | 56.1M tokens | verified | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
-| Claude Opus 5.5 at high effort writes about 60.1k output tokens per index task. | 60.1K tokens | unverified: Not shown per task on the page on 2026-11-18. | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
-| Claude Opus 5.5 at high effort costs $3.46 per index task. | $3.46 | unverified: The page gives a per-task cost only for max. | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
 | Claude Opus 5.5 scores 57.4 on the Artificial Analysis Intelligence Index at xhigh effort. | 57.4 | verified: The model page shows 57. | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
 | Claude Opus 5.5 at xhigh effort wrote 101M output tokens over the whole index run. | 101M tokens | verified | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
-| Claude Opus 5.5 at xhigh effort writes about 103.4k output tokens per index task. | 103.4K tokens | unverified: Not shown per task on the page on 2026-11-18. | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
-| Claude Opus 5.5 at xhigh effort costs $6.05 per index task. | $6.05 | unverified: The page gives a per-task cost only for max. | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
-| Running the whole index on Claude Opus 5.5 at xhigh costs $4,766. | $4,766 | unverified: Not shown on the page on 2026-11-18. | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
 | Claude Opus 5.5 scores 59.1 on the Artificial Analysis Intelligence Index at max effort. | 59.1 | verified: The model page shows 59. | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
 | Claude Opus 5.5 at max effort wrote 218M output tokens over the whole index run. | 218M tokens | verified | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
-| Claude Opus 5.5 at max effort writes about 173.3k output tokens per index task. | 173.3K tokens | unverified: Not shown per task on the page on 2026-11-18. | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
 | Claude Opus 5.5 at max effort costs $10.04 per index task. | $10.04 | verified | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
-| Running the whole index on Claude Opus 5.5 at max costs $8,910. | $8,910 | unverified: Not shown on the page on 2026-11-18. | [artificialanalysis.ai/models/claude-opus-5-5](https://artificialanalysis.ai/models/claude-opus-5-5) |
 | Claude Fable 5.2 scores 56.4 on the Artificial Analysis Intelligence Index at medium effort. | 56.4 | verified: Read from the model page. | [artificialanalysis.ai/models/claude-fable-5-2](https://artificialanalysis.ai/models/claude-fable-5-2) |
 | Claude Fable 5.2 scores 61.8 on the Artificial Analysis Intelligence Index at high effort. | 61.8 | verified: Read from the model page. | [artificialanalysis.ai/models/claude-fable-5-2](https://artificialanalysis.ai/models/claude-fable-5-2) |
 | Claude Fable 5.2 scores 62.2 on the Artificial Analysis Intelligence Index at xhigh effort. | 62.2 | verified: Read from the model page. | [artificialanalysis.ai/models/claude-fable-5-2](https://artificialanalysis.ai/models/claude-fable-5-2) |
@@ -286,7 +270,6 @@ Subagents, nesting, agent teams, MCP config, voice, skills and sandboxing in eac
 | The Codex CLI is open source under Apache-2.0. The models behind it are proprietary. | Apache-2.0 | verified | [github.com/openai/codex](https://github.com/openai/codex) |
 | Codex is built for OpenAI models but can be pointed at other providers such as Ollama, LM Studio, Amazon Bedrock or any Responses-compatible endpoint. | OpenAI first, others possible | verified | [learn.chatgpt.com/docs/config-file/config-advanced](https://learn.chatgpt.com/docs/config-file/config-advanced) |
 | Current Codex releases enable subagent workflows by default; they consume more tokens than comparable single-agent runs. | yes | verified | [learn.chatgpt.com/docs/agent-configuration/subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents) |
-| Codex limits how deeply subagents can nest. | not published | unverified: The subagents page does not state a nesting depth; only a per-session cap on concurrent agent threads. | [learn.chatgpt.com/docs/agent-configuration/subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents) |
 | Codex stores MCP servers as [mcp_servers.<name>] tables in ~/.codex/config.toml, or .codex/config.toml in a trusted project. STDIO and streamable HTTP servers are supported. | ~/.codex/config.toml, .codex/config.toml | verified | [learn.chatgpt.com/docs/extend/mcp](https://learn.chatgpt.com/docs/extend/mcp) |
 | The ChatGPT desktop app has voice dictation for prompt text in Codex. The docs say nothing about voice in the Codex command line. | desktop app only | verified | [learn.chatgpt.com/docs/features/voice](https://learn.chatgpt.com/docs/features/voice) |
 | Codex skills live in .agents/skills/ in the project or any parent folder, and ~/.agents/skills/ for everything. Mention one with $name. | .agents/skills/, ~/.agents/skills/ | verified | [learn.chatgpt.com/docs/build-skills](https://learn.chatgpt.com/docs/build-skills) |
@@ -314,7 +297,6 @@ Recommended skills with author, source and licence. From `site/src/data/skills.t
 | A skill is a folder with a SKILL.md file: YAML frontmatter with a name and a description, then instructions. The format is an open standard. | SKILL.md | verified | [agentskills.io](https://agentskills.io/) |
 | npx skills add <owner/repo> installs a skill for most agents. | npx skills add <owner/repo> | verified | [github.com/vercel-labs/skills](https://github.com/vercel-labs/skills) |
 | Be Ambitious comes from Felix Rieseberg's article "How to be more ambitious: a tutorial for humans with models" (13 October 2026), which publishes example prompts and a prompt template, not a skill. | 13 Oct 2026 | verified | [felixrieseberg.com/how-to-be-more-ambitious-a-tutorial-for-…](https://felixrieseberg.com/how-to-be-more-ambitious-a-tutorial-for-humans-with-models/) |
-| DannyMac180 publishes an MIT-licensed Be Ambitious skill. | MIT skill | unverified: The robonuggets README credits DannyMac180 for an earlier prompt-only version. No DannyMac180 repository could be found to confirm a skill or its licence. | [github.com/robonuggets/be-ambitious](https://github.com/robonuggets/be-ambitious) |
 
 ## MCP and connectors
 
@@ -339,7 +321,6 @@ From `site/src/data/claims.ts`.
 | Claude Team, Enterprise and the API: no training unless the customer opts in. | no training | verified | [platform.claude.com/docs/en/manage-claude/api-and-data-rete…](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention) |
 | Zero data retention is a separate agreement for API and qualified Enterprise customers. It is not available on consumer plans, and not for Fable without Anthropic's approval. | separate agreement | verified | [platform.claude.com/docs/en/manage-claude/api-and-data-rete…](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention) |
 | OpenAI API data is not used for training unless you opt in; abuse-monitoring logs are kept up to 30 days; zero data retention needs approval. Business plans: no training by default. | no training by default | verified | [developers.openai.com/api/docs/guides/your-data](https://developers.openai.com/api/docs/guides/your-data) |
-| ChatGPT consumer plans train on your content by default, with an opt-out under Data Controls. | trains by default, opt-out in Data Controls | unverified: OpenAI's help pages blocked automated access. Check the setting yourself. | [privacy.openai.com](https://privacy.openai.com/) |
 
 ## Sharing and Hosting
 
@@ -353,8 +334,6 @@ From `site/src/data/claims.ts`.
 | Cloudflare Access is free for up to 50 users and can put an email one-time code in front of a site. | 50 | verified | [cloudflare.com/sase/products/access](https://www.cloudflare.com/sase/products/access/) |
 | Tailscale's Personal plan is free for up to 6 users. | 6 | verified | [tailscale.com/pricing](https://tailscale.com/pricing) |
 | tailscale serve shares a local port with your own devices only. | your devices only | verified | [tailscale.com/kb/1312/serve](https://tailscale.com/kb/1312/serve) |
-| Railway gives a $5 monthly credit. | $5 | unverified: Never sourced; not re-checked. | [railway.com/pricing](https://railway.com/pricing) |
-| A .com domain typically costs $10 to $15 a year. | $10–15 a year | unverified: Never sourced; not re-checked. | [cloudflare.com/products/registrar](https://www.cloudflare.com/products/registrar/) |
 
 ## Price Trends
 

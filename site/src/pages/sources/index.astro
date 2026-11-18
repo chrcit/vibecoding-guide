@@ -1,0 +1,126 @@
+---
+// Generated from src/data/: nothing on this page is written by hand except
+// the opening paragraph. Each fact row has an id, so <Fact> links land on it.
+import Base from '../../layouts/Base.astro';
+import { allFacts, anchor, dataFiles, formatDate, formatValue } from '../../lib/facts.ts';
+import { corrections } from '../../data/corrections.ts';
+import { credits, links } from '../../data/links.ts';
+import { url } from '../../lib/nav';
+
+const facts = allFacts();
+const shown = facts.filter((f) => f.status !== 'unverified');
+const open = facts.filter((f) => f.status === 'unverified');
+const newest = facts.map((f) => f.verified).sort().at(-1)!;
+const host = (u: string) => new URL(u).hostname.replace(/^www\./, '');
+const count = (s: string) => facts.filter((f) => f.status === s).length;
+const reference = Object.values(links).sort((a, b) => a.label.localeCompare(b.label));
+---
+<Base title="Sources · Agentic Coding Guide" description="Every price, limit, score and tool claim in the guide, with its source, the date it was checked and its status.">
+  <article class="sources">
+    <h1>Sources</h1>
+    <p>
+      Every price, limit, benchmark score and product claim on this site comes from a data file in the repository, and each entry names the page that says it and the day someone last read that page.
+      An entry is <strong>verified</strong> when the primary source said it on that day, an <strong>observation</strong> when it is one person's dated estimate or experience, and <strong>unverified</strong> when nobody could confirm it, in which case the site does not state it.
+      The build fails when an entry has no source or date, and this page and the <a href={url('guide/guides/fact-check/')}>fact-check table</a> are generated from the same files.
+      Last full check: <time datetime={newest}>{formatDate(newest, true)}</time>, {count('verified')} verified, {count('observation')} observations.
+    </p>
+
+    <nav aria-label="Data files">
+      <ul class="files">
+        {dataFiles.map((f) => <li><a href={`#file-${f.file}`}>{f.title}</a></li>)}
+        <li><a href="#corrections">Corrections</a></li>
+        <li><a href="#unverified">Could not verify</a></li>
+        <li><a href="#credits">Credits</a></li>
+        <li><a href="#reference">Reference list</a></li>
+      </ul>
+    </nav>
+
+    {dataFiles.map((file) => {
+      const rows = shown.filter((f) => f.file === file.file);
+      return (
+        <section id={`file-${file.file}`}>
+          <h2>{file.title}</h2>
+          <p>{file.about} From <code>src/data/{file.file}.ts</code>.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th scope="col">Claim</th><th scope="col">Value</th><th scope="col">Status</th><th scope="col">Source</th><th scope="col">Checked</th></tr></thead>
+              <tbody>
+                {rows.map((f) => (
+                  <tr id={anchor(f.id)}>
+                    <td>{f.claim}{f.note && <span class="note"> {f.note}</span>}<code class="id">{f.id}</code></td>
+                    <td class="value">{formatValue(f)}</td>
+                    <td><span class={`status ${f.status}`}>{f.status}</span></td>
+                    <td><a href={f.source}>{host(f.source)}</a></td>
+                    <td class="date"><time datetime={f.verified}>{formatDate(f.verified)}</time></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      );
+    })}
+
+    <section id="corrections">
+      <h2>Corrections</h2>
+      <p>What an earlier version of the guide said, and what the source says now.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th scope="col">Date</th><th scope="col">Earlier claim</th><th scope="col">What the source says</th><th scope="col">Source</th></tr></thead>
+          <tbody>
+            {corrections.map((c) => (
+              <tr>
+                <td class="date"><time datetime={c.date}>{formatDate(c.date)}</time></td>
+                <td>{c.was}</td>
+                <td>{c.now}</td>
+                <td><a href={c.source}>{host(c.source)}</a></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="unverified">
+      <h2>Could not verify</h2>
+      <p>Claims the guide used to make, or might want to, that no primary source confirmed on the last check. None of them is stated as fact anywhere on the site.</p>
+      <ul>
+        {open.map((f) => <li id={anchor(f.id)}>{f.claim} <span class="note">{f.note}</span></li>)}
+      </ul>
+    </section>
+
+    <section id="credits">
+      <h2>Credits</h2>
+      <p>People and projects whose work this guide uses. Artificial Analysis asks for a visible credit wherever its benchmark data appears; the pages that show it link back to <a href="https://artificialanalysis.ai">artificialanalysis.ai</a>.</p>
+      <ul>
+        {credits.map((c) => <li><a href={c.url}>{c.name}</a>: {c.for}</li>)}
+      </ul>
+    </section>
+
+    <section id="reference">
+      <h2>Reference list</h2>
+      <p>Every outside page the guide links more than once, and the day it last answered.</p>
+      <ul class="reference">
+        {reference.map((l) => <li><a href={l.url}>{l.label}</a> <span class="note">checked {formatDate(l.checked)}{l.note && `. ${l.note}`}</span></li>)}
+      </ul>
+    </section>
+  </article>
+</Base>
+<style>
+  .sources { max-width: 64rem; margin: 0 auto; padding: 2rem var(--gutter) 0; }
+  .sources > p, section > p { max-width: var(--measure); color: var(--ink-2); }
+  h2 { margin-top: 3rem; scroll-margin-top: 4.5rem; }
+  .files { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; padding: 0; list-style: none; }
+  .files a { display: inline-block; padding: 0.5rem 0; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; font-size: 0.875rem; min-width: 40rem; }
+  th, td { text-align: left; vertical-align: top; padding: 0.5rem 0.75rem 0.5rem 0; border-bottom: 1px solid var(--rule); }
+  th { color: var(--muted); font-weight: 600; }
+  tr:target { background: var(--accent-soft); }
+  .value { font-variant-numeric: tabular-nums; min-width: 6rem; }
+  .date { white-space: nowrap; }
+  .note { color: var(--muted); }
+  .id { display: block; margin-top: 0.25rem; color: var(--muted); font-size: 0.8125rem; }
+  .status.verified { color: var(--green); }
+  .status.observation { color: var(--blue); }
+</style>

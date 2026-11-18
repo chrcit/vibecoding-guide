@@ -6,7 +6,7 @@
 /**
  * verified: checked against a primary source on the `verified` date.
  * observation: someone's dated, attributed measurement or estimate.
- * unverified: could not be confirmed; never rendered on a page.
+ * unverified: could not be confirmed; listed as such, never rendered as a fact.
  */
 export type Status = 'verified' | 'observation' | 'unverified';
 
@@ -48,7 +48,7 @@ export function fact<T>(value: T, claim: string, source: string, extra: Extra<T>
   return { value, claim, source, verified: CHECKED, status: 'verified', ...extra };
 }
 
-/** A fact that could not be confirmed. Kept so it is visible, never rendered on a page. */
+/** A fact that could not be confirmed. Kept so it is visible; <Fact> refuses to render it. */
 export function unverified<T>(value: T, claim: string, source: string, note: string, extra: Extra<T> = {}): Fact<T> {
   return { value, claim, source, verified: CHECKED, status: 'unverified', note, ...extra };
 }

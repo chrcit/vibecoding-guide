@@ -139,7 +139,7 @@ function renderFactCheck() {
     'Status means:\n\n' +
       '- **verified**: checked against the primary source on the date given.\n' +
       "- **observation**: someone's dated, attributed estimate or experience. The guide labels it that way and never presents it as a general fact.\n" +
-      '- **unverified**: could not be confirmed. The site does not publish it.',
+      '- **unverified**: could not be confirmed. Listed under Could Not Verify at the end, never stated as a fact.',
   );
 
   parts.push('## Corrections\n\nWhat an earlier version said, and what the sources say now.');
@@ -148,7 +148,7 @@ function renderFactCheck() {
   parts.push(corr.join('\n'));
 
   for (const file of dataFiles) {
-    const rows = facts.filter((f) => f.file === file.file);
+    const rows = facts.filter((f) => f.file === file.file && f.status !== 'unverified');
     if (!rows.length) continue;
     if (file.file === 'claims') {
       const groups = { privacy: 'Privacy', hosting: 'Sharing and Hosting', trends: 'Price Trends', research: 'Research', hardware: 'Hardware' };
