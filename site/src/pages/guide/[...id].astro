@@ -1,0 +1,84 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { allItems, groups, url } from '../../lib/nav';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('reference');
+  return entries.map((entry) => ({ params: { id: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+const h1 = headings.find((h) => h.depth === 1)?.text ?? entry.id;
+const toc = headings.filter((h) => h.depth === 2);
+const idx = allItems.findIndex((i) => i.id === entry.id);
+const prev = idx > 0 ? allItems[idx - 1] : undefined;
+const next = idx >= 0 && idx < allItems.length - 1 ? allItems[idx + 1] : undefined;
+---
+<Base title={`${h1} · Agentic Coding Guide`} description={allItems[idx]?.blurb ?? h1} current="reference" progress>
+  <div class="doc">
+    <aside class="side" aria-label="Reference sections">
+      <details data-side>
+        <summary>All guides</summary>
+        {groups.map((g) => (
+          <div class="grp">
+            <p>{g.name}</p>
+            <ul>{g.items.map((i) => <li><a href={url(`guide/${i.id}/`)} aria-current={i.id === entry.id ? 'page' : undefined}>{i.title}</a></li>)}</ul>
+          </div>
+        ))}
+      </details>
+    </aside>
+    <article class="prose">
+      <Content />
+      <nav class="pager" aria-label="Next and previous">
+        {prev ? <a href={url(`guide/${prev.id}/`)}><span>Previous</span>{prev.title}</a> : <span />}
+        {next && <a class="next" href={url(`guide/${next.id}/`)}><span>Next</span>{next.title}</a>}
+      </nav>
+    </article>
+    {toc.length > 2 && (
+      <aside class="toc" aria-label="On this page">
+        <p>On this page</p>
+        <ul>{toc.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ul>
+      </aside>
+    )}
+  </div>
+</Base>
+<script>
+  // Guide list starts collapsed on phones so the article comes first; always open on desktop.
+  const side = document.querySelector<HTMLDetailsElement>('[data-side]');
+  if (side && matchMedia('(min-width: 62rem)').matches) side.open = true;
+</script>
+<style>
+  .doc { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; max-width: 76rem; margin: 0 auto; padding: 2rem var(--gutter) 0; }
+  @media (min-width: 62rem) { .doc { grid-template-columns: 13rem minmax(0, 1fr); } }
+  @media (min-width: 82rem) { .doc { grid-template-columns: 13rem minmax(0, 1fr) 12rem; } }
+  .side, .toc { font-family: var(--mono); font-size: 0.74rem; }
+  .side summary { cursor: pointer; color: var(--muted); margin-bottom: 0.5rem; }
+  @media (min-width: 62rem) { .side details > summary { display: none; } .side { position: sticky; top: 4.5rem; align-self: start; max-height: calc(100vh - 5rem); overflow: auto; } }
+  .grp p, .toc p { color: var(--muted); margin: 1rem 0 0.35rem; }
+  .side ul, .toc ul { list-style: none; padding: 0; margin: 0; }
+  .side a, .toc a { display: block; padding: 0.22rem 0; text-decoration: none; color: var(--ink-2); }
+  .side a[aria-current='page'] { color: var(--accent); }
+  .toc { display: none; }
+  @media (min-width: 82rem) { .toc { display: block; position: sticky; top: 4.5rem; align-self: start; } }
+  .pager { display: flex; justify-content: space-between; gap: 1rem; margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); }
+  .pager a { text-decoration: none; display: flex; flex-direction: column; font-weight: 500; }
+  .pager a span { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); font-weight: 400; }
+  .pager .next { text-align: right; margin-left: auto; }
+
+  .prose { max-width: 44rem; min-width: 0; }
+  .prose :global(h1) { font-size: clamp(2.1rem, 6vw, 3rem); font-weight: 500; letter-spacing: -0.02em; line-height: 1.1; margin: 0 0 1rem; }
+  .prose :global(h2) { font-size: 1.6rem; font-weight: 500; letter-spacing: -0.01em; margin: 3rem 0 0.75rem; line-height: 1.2; }
+  .prose :global(h3) { font-size: 1.2rem; font-weight: 600; margin: 2rem 0 0.5rem; }
+  .prose :global(h4) { font-size: 1.05rem; margin: 1.5rem 0 0.4rem; }
+  .prose :global(p), .prose :global(li) { color: var(--ink-2); }
+  .prose :global(strong) { color: var(--ink); font-weight: 600; }
+  .prose :global(hr) { border: 0; border-top: 1px solid var(--rule); margin: 3rem 0 1.5rem; }
+  .prose :global(blockquote) { margin: 1.5rem 0; padding: 0.2rem 0 0.2rem 1.1rem; border-left: 3px solid var(--accent); color: var(--ink-2); font-style: italic; }
+  .prose :global(table) { display: block; overflow-x: auto; border-collapse: collapse; font-size: 0.92rem; margin: 1.25rem 0; max-width: 100%; }
+  .prose :global(th), .prose :global(td) { text-align: left; padding: 0.5rem 0.8rem 0.5rem 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  .prose :global(th) { font-family: var(--mono); font-size: 0.72rem; font-weight: 600; color: var(--muted); }
+  .prose :global(ul), .prose :global(ol) { padding-left: 1.2rem; }
+  .prose :global(li) { margin: 0.25rem 0; }
+</style>

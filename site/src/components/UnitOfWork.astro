@@ -1,0 +1,36 @@
+---
+// 2023: you hand over a handful of functions. Now: you hand over the app.
+const cells = Array.from({ length: 96 }, (_, i) => i);
+const small = new Set([41, 42, 43, 53, 54]);
+---
+<figure class="widget uow" data-uow data-mode="2023">
+  <div class="seg" role="group" aria-label="Year">
+    <button type="button" data-set="2023" aria-pressed="true">2023</button>
+    <button type="button" data-set="now" aria-pressed="false">Late 2026</button>
+  </div>
+  <div class="grid" aria-hidden="true">
+    {cells.map((i) => <span class:list={['c', { small: small.has(i) }]} style={`--i:${i}`}></span>)}
+  </div>
+  <p class="say" data-say="2023">“Change these five functions in these three files.” You stitch the small pieces together and keep the whole thing coherent yourself.</p>
+  <p class="say" data-say="now" hidden>“Build this app.” A habit tracker with friends, streaks, photo check-ins and a phone install came out of about two prompts, on the side.</p>
+  <figcaption class="caption">Each square is a piece of an app. Highlighted: what one request to an agent can cover.</figcaption>
+</figure>
+<style>
+  .grid { display: grid; grid-template-columns: repeat(16, 1fr); gap: 4px; margin: 1rem 0; }
+  .c { aspect-ratio: 1; border-radius: 3px; background: color-mix(in oklab, var(--rule) 70%, transparent); transition: background-color 300ms ease calc(var(--i) * 6ms), transform 300ms ease calc(var(--i) * 6ms); }
+  [data-mode='2023'] .c.small, [data-mode='now'] .c { background: var(--accent); }
+  [data-mode='now'] .c { transform: scale(0.92); }
+  .say { font-family: var(--serif); font-size: 1.05rem; color: var(--ink-2); margin: 0; min-height: 3.4em; }
+</style>
+<script>
+  document.querySelectorAll<HTMLElement>('[data-uow]').forEach((root) => {
+    root.querySelectorAll<HTMLButtonElement>('[data-set]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const m = b.dataset.set!;
+        root.dataset.mode = m;
+        root.querySelectorAll('[data-set]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        root.querySelectorAll<HTMLElement>('[data-say]').forEach((p) => (p.hidden = p.dataset.say !== m));
+      }),
+    );
+  });
+</script>

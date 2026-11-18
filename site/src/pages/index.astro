@@ -1,0 +1,212 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import Note from '../components/Note.astro';
+import Term from '../components/Term.astro';
+import UnitOfWork from '../components/UnitOfWork.astro';
+import Stack from '../components/Stack.astro';
+import ContextMeter from '../components/ContextMeter.astro';
+import Attention from '../components/Attention.astro';
+import VerifyLoop from '../components/VerifyLoop.astro';
+import Thinking from '../components/Thinking.astro';
+import Orchestra from '../components/Orchestra.astro';
+import Ladder from '../components/Ladder.astro';
+import LayoutNoise from '../components/LayoutNoise.astro';
+import Proxy from '../components/Proxy.astro';
+import Triangle from '../components/Triangle.astro';
+import OneHour from '../components/OneHour.astro';
+import { url } from '../lib/nav';
+
+const chapters = [
+  ['shift', 'The unit of work grew'],
+  ['stack', 'What you’re actually using'],
+  ['talk', 'Talk, don’t type'],
+  ['wait', 'Never wait'],
+  ['verify', 'Self-verification'],
+  ['models', 'Models have personalities'],
+  ['thinking', 'Thinking is the bill'],
+  ['team', 'Run a team, not a model'],
+  ['ambition', 'Aim higher'],
+  ['feedback', 'Start with what you don’t like'],
+  ['proxy', 'Stop being the relay'],
+  ['sharp', 'Stay sharp'],
+  ['hour', 'One hour'],
+];
+const n = (id: string) => String(chapters.findIndex((c) => c[0] === id) + 1).padStart(2, '0');
+---
+<Base title="Agentic Coding Guide" description="A visual essay and reference guide on building software by directing AI agents: context, parallel work, self-verification, models, costs and T3 Code." current="essay" progress>
+  <Hero />
+
+  <nav class="contents" aria-label="Chapters">
+    <ol>
+      {chapters.map(([id, t], i) => <li><a href={`#${id}`}><span>{String(i + 1).padStart(2, '0')}</span>{t}</a></li>)}
+    </ol>
+  </nav>
+
+  <main class="essay">
+    <section id="shift">
+      <h2><span class="num">{n('shift')}</span>The unit of work grew</h2>
+      <p>For years people tried to make AI coding systematic: one agent for architecture, one for code, one for tests, one for review. It mostly didn’t work. The models lost the thread after a while.</p>
+      <Note href="guide/guides/ways-of-working/#what-changed">Personal token usage went from a flat line to a steep climb within weeks of that change.</Note>
+      <p>Around June 2026 that changed. The best models now stay coherent for <strong>hours</strong>. What you can hand over in one request went from a few functions to a whole app.</p>
+      <UnitOfWork />
+      <p>Building software got cheap. What’s still hard is knowing what to build, judging whether it’s right, and getting people to use it. The rest of this essay is about those three.</p>
+    </section>
+
+    <section id="stack">
+      <h2><span class="num">{n('stack')}</span>What you’re actually using</h2>
+      <p>Three words come up constantly, and they’re easy to blur. A <Term def="The AI itself. Text in, text out. Claude Opus, Claude Fable, GPT.">model</Term> thinks. A <Term def="The program that lets a model act on a computer: read and edit files, run commands, use a browser. Claude Code, Codex, Cursor.">harness</Term> gives it hands. An <Term def="Agentic development environment: one place to run, watch and steer many agents across providers. T3 Code is one.">ADE</Term> lets you run a whole team of them and see what they’re doing.</p>
+      <Stack />
+      <Note href="guide/guides/t3-code/">T3 Code is open source (MIT), made by Theo. It drives the agents you’re already signed in to. It doesn’t sell tokens.</Note>
+      <p>This guide is written around <a href="https://t3.codes">T3 Code</a>. Claude Code only runs Anthropic models and Codex only runs OpenAI models. T3 Code runs both side by side, switches models mid-thread, and lets one model hand work to another provider’s model. You get threads, parallel subagents, interactive pages inside the conversation, a browser the agent can use to look at its own work, and agents that keep going on a server after you close your laptop.</p>
+      <h3>Where it hits walls</h3>
+      <ul class="walls">
+        <li><strong>No AI included.</strong> Bring your own Claude or ChatGPT plan. Your limits come from there.</li>
+        <li><strong>A viewer, not a harness.</strong> If Claude Code can’t do it, T3 Code won’t either.</li>
+        <li><strong>Laptops sleep.</strong> Long runs belong on a machine that stays on.</li>
+        <li><strong>Previews stay local.</strong> Others can’t see your app until you deploy or share it privately.</li>
+        <li><strong>Agents misread you.</strong> Changing course is nearly free, so correct early.</li>
+        <li><strong>Wi-Fi is in the loop.</strong> Every step is a network call. Slow network, slow agent.</li>
+      </ul>
+    </section>
+
+    <section id="talk">
+      <h2><span class="num">{n('talk')}</span>Talk, don’t type</h2>
+      <p>The single biggest lever is context. <strong>The more the agent knows, the more capable it gets.</strong> Who you are, what it’s for, what good looks like, how to check. It can’t ask for what it doesn’t know exists.</p>
+      <p>So use voice-to-text. You say three times more than you’d type. You’ll ramble, and the model doesn’t mind. Throw in screenshots, voice notes, transcripts, data files. Try adding context below.</p>
+      <ContextMeter />
+      <Note href="guide/guides/agentic-coding/#context-files">Put the context that should outlive a conversation into an <code>AGENTS.md</code> or <code>CLAUDE.md</code> file in the project.</Note>
+    </section>
+
+    <section id="wait">
+      <h2><span class="num">{n('wait')}</span>Never wait</h2>
+      <p>A 10-minute run is short now. Real work takes 30 to 60. If you sit and watch each one, an agent that works for an hour costs you an hour.</p>
+      <p>Instead: start the next thing. Add information to a run while it’s going; good models fold it in without losing their place. Ask for an update when you want one. Here are five real-sized experiments, run both ways.</p>
+      <Attention />
+      <Note>Same work, same minutes of your attention. The difference is what you do while the agents work.</Note>
+      <p>Three to five experiments at once is a normal day. Each runs for 10 to 30 minutes and needs a few minutes of you at the end. An hour of attention stretches a long way.</p>
+    </section>
+
+    <section id="verify">
+      <h2><span class="num">{n('verify')}</span>Self-verification</h2>
+      <p class="big">If you remember one idea from this essay, make it this one: <em>give the agent a way to check its own work.</em></p>
+      <p>Without one, you’re the only check, and the agent stops at “looks done”. With one, it loops until it gets there. For design, that means: open your own browser, test the interactions, fix what you see, repeat. For science or data: run it five times and compare before you come back to me.</p>
+      <VerifyLoop />
+      <Note href="guide/guides/ways-of-working/#self-verification-is-the-goal">Models get design to “correct and decent”. “Special” or “exactly my vision” still needs your eye.</Note>
+      <p>Your job moves from producing to <strong>verifying</strong>. So ask for the best tool for that: a dashboard that shows what each agent is doing, a table of all 20 variations instead of 20 scripts, a notebook with sliders. The first answer to a hard problem is probably wrong. The value is in seeing whether it understood the problem at all, and in poking at it until <em>you</em> do.</p>
+    </section>
+
+    <section id="models">
+      <h2><span class="num">{n('models')}</span>Models have personalities</h2>
+      <p>Benchmarks give you a map, and the map is not the territory. In November 2026 OpenAI’s newest flagship scored above Claude Opus 5.5 on the <Term def="An aggregate of many benchmarks by Artificial Analysis, an independent benchmarking company. Useful as a map, not a verdict.">intelligence index</Term>, and people who use both every day still found Opus far better for long, complex work.</p>
+      <div class="duo">
+        <div><h3>Anthropic: judgement</h3><p>Opus 5.5 and Fable 5.2 stay coherent across hours and dozens of problems. They spot dead ends early and notice when a “problem” isn’t real. Reach for them when the work needs intuition.</p></div>
+        <div><h3>OpenAI: grind</h3><p>Very goal-driven and token-efficient. Hand them a checkable problem, like a proof or 10,000 test variations, and they’ll grind on it for hours.</p></div>
+      </div>
+      <Note href="guide/guides/models-and-costs/#the-model-landscape">Cheap models improved fast too: the current cheap ChatGPT model scores close to last year’s flagship at roughly 50–60× less cost.</Note>
+      <p>Try them on <em>your</em> work. That’s the only benchmark that counts.</p>
+    </section>
+
+    <section id="thinking">
+      <h2><span class="num">{n('thinking')}</span>Thinking is the bill</h2>
+      <p>Before a model answers, it can write to itself first: an internal dialogue where it works through the problem and checks its own ideas. That’s “thinking”, and the level you pick (low to max) is simply how much of that text it may write. Writing text is the expensive part, about 80% of the bill. Drag the slider.</p>
+      <Thinking />
+      <Note href="guide/guides/models-and-costs/#what-it-costs">On a $20/month plan you get roughly $30 of usage per 5-hour window; on $100, roughly $150. An afternoon with several parallel agents used about a fifth of the bigger one.</Note>
+    </section>
+
+    <section id="team">
+      <h2><span class="num">{n('team')}</span>Run a team, not a model</h2>
+      <p>The very best model costs about twice as much as the next best. You don’t need it everywhere. Let it be the manager: it splits the work, hands it to cheaper but strong workers running in parallel, and occasionally calls in a second copy of itself for a second opinion on a hard call.</p>
+      <Orchestra />
+      <p>You can get all of that by saying it: <q>Create a fresh thread whose whole job is to orchestrate. Use Fable as the orchestrator, Opus subthreads for the work, and a Fable thread for second opinions.</q></p>
+    </section>
+
+    <section id="ambition">
+      <h2><span class="num">{n('ambition')}</span>Aim higher</h2>
+      <p>The first result is a starting point, not a ceiling. People ask for what they think is possible, and what’s possible moved. Tell it to do more than you asked, because you don’t know yet what it can do.</p>
+      <Ladder />
+      <Note href="guide/skills-table/#recommended-external-skills"><strong>Be Ambitious</strong> finds the goal beyond the goal. <strong>Grill Me</strong> asks questions until it gets what you want, as a clickable questionnaire if you ask.</Note>
+      <p>Not a designer? You’ll look for what to fix rather than what’s possible. So show it work you admire and ask for something in that league. Or flip it around and ask for problems instead of solutions: “Find ten interesting problems in this area,” then swipe yes, no or maybe and dig into the good ones.</p>
+    </section>
+
+    <section id="feedback">
+      <h2><span class="num">{n('feedback')}</span>Start with what you don’t like</h2>
+      <p>It’s the fastest way to narrow things down. “I don’t like the background.” “The header looks squished.” “Why is this map fake?” Then say what to keep. Changing things costs almost nothing now, so say “remove it” and move on.</p>
+      <p>Some fixes are worth keeping as a one-liner. Agents have tics, and this one is everywhere:</p>
+      <LayoutNoise />
+      <Note href="guide/skills-table/">Once you use a prompt often, turn it into a <strong>skill</strong>: a markdown file your agent loads when it needs it.</Note>
+    </section>
+
+    <section id="proxy">
+      <h2><span class="num">{n('proxy')}</span>Stop being the relay</h2>
+      <p>A lot of agentic work today is a person in the middle, passing messages between someone with a need and an AI.</p>
+      <Proxy />
+    </section>
+
+    <section id="sharp">
+      <h2><span class="num">{n('sharp')}</span>Stay sharp</h2>
+      <p>These tools speed up thinking. Every idea can be explored in minutes, which makes you nimble: stuck on something hard to grasp? Throw a one-liner at it and ask for whatever would help you understand.</p>
+      <p>There’s a trap, though. Hand over all control and you get lazy, and the results get worse. Read what it made. Double-check, then triple-check what matters. Expertise didn’t stop mattering. It moved.</p>
+      <Triangle />
+    </section>
+
+    <section id="hour">
+      <h2><span class="num">{n('hour')}</span>One hour</h2>
+      <p>No article or video will teach you more than an hour of trying this on your own problems. Nobody knows more about what you want to do than you. Block an hour this week and do real work while you learn.</p>
+      <OneHour />
+      <p class="big">Models can write code, and code can do almost anything. <em>So you can do almost anything by telling the model to do it.</em></p>
+    </section>
+
+    <section id="rabbit-holes" class="holes">
+      <h2>Rabbit holes</h2>
+      <p>The full guides, plus places to keep going.</p>
+      <div class="hole-grid">
+        <a href={url('guide/guides/ways-of-working/')}><b>Ways of Working</b><span>Everything in this essay, as a reference</span></a>
+        <a href={url('guide/guides/t3-code/')}><b>T3 Code</b><span>Capabilities, walls, setup</span></a>
+        <a href={url('guide/guides/models-and-costs/')}><b>Models and Costs</b><span>Plans, thinking levels, Linux vs Mac</span></a>
+        <a href={url('guide/skills-table/')}><b>Skills</b><span>What they are, which to install</span></a>
+        <a href={url('guide/guides/agentic-coding/')}><b>Agentic Coding Basics</b><span>Context files, prompts, reviews</span></a>
+        <a href={url('guide/guides/cloud-infrastructure/')}><b>Shipping</b><span>Cloudflare, GitHub Pages, domains</span></a>
+        <a href="https://artificialanalysis.ai"><b>Artificial Analysis</b><span>Benchmarks, cost and token usage</span></a>
+        <a href="https://www.youtube.com/@theo"><b>Theo on YouTube</b><span>The broader context, from T3 Code’s creator</span></a>
+        <a href={url('guide/')}><b>Everything else</b><span>Web foundations, auth, Git, checklists</span></a>
+      </div>
+    </section>
+  </main>
+</Base>
+
+<style>
+  .contents { max-width: 60rem; margin: 0 auto 2rem; padding: 0 var(--gutter); }
+  .contents ol { list-style: none; margin: 0; padding: 1rem 0; border-block: 1px solid var(--rule); columns: 3 14rem; column-gap: 2rem; font-family: var(--mono); font-size: 0.76rem; }
+  .contents li { break-inside: avoid; }
+  .contents a { display: flex; gap: 0.6rem; padding: 0.25rem 0; text-decoration: none; color: var(--ink-2); }
+  .contents span { color: var(--muted); }
+
+  .essay { max-width: calc(var(--measure) + 2 * var(--gutter)); margin: 0 auto; padding: 0 var(--gutter); }
+  @media (min-width: 70rem) { .essay { max-width: calc(var(--measure) + 18rem + 2 * var(--gutter)); padding-right: calc(18rem + var(--gutter)); } }
+  section { padding-top: 4rem; }
+  section :global(.widget), section h3, .walls, .duo { clear: both; }
+  h2 { font-size: clamp(1.9rem, 5vw, 2.6rem); font-weight: 500; letter-spacing: -0.02em; line-height: 1.1; margin: 0 0 1.25rem; text-wrap: balance; }
+  .num { display: block; font-family: var(--mono); font-size: 0.8rem; font-weight: 400; color: var(--accent); letter-spacing: 0; margin-bottom: 0.6rem; }
+  h3 { font-size: 1.25rem; font-weight: 600; margin: 2rem 0 0.75rem; }
+  p { margin: 0 0 1.1rem; color: var(--ink-2); text-wrap: pretty; }
+  strong { color: var(--ink); font-weight: 600; }
+  .big { font-size: 1.45rem; line-height: 1.4; color: var(--ink); }
+  .big em { color: var(--accent); }
+  q { font-style: italic; }
+  .walls { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); }
+  .walls li { border: 1px solid var(--rule); border-radius: 10px; padding: 0.7rem 0.8rem; font-size: 0.95rem; line-height: 1.45; color: var(--ink-2); background: var(--card); }
+  .walls strong { display: block; }
+  .duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 0.75rem; margin: 1.5rem 0; }
+  .duo > div { border: 1px solid var(--rule); border-radius: 12px; padding: 1rem; background: var(--card); }
+  .duo h3 { margin: 0 0 0.4rem; font-size: 1.1rem; }
+  .duo p { margin: 0; font-size: 1rem; }
+  .duo > div:first-child { border-top: 3px solid var(--accent); }
+  .duo > div:last-child { border-top: 3px solid var(--blue); }
+  .holes h2 { margin-bottom: 0.5rem; }
+  .hole-grid { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); margin-top: 1.25rem; }
+  .hole-grid a { display: flex; flex-direction: column; gap: 0.2rem; text-decoration: none; border: 1px solid var(--rule); border-radius: 12px; padding: 0.8rem 0.9rem; background: var(--card); transition: border-color 160ms ease; }
+  .hole-grid a:hover { border-color: var(--accent); color: inherit; }
+  .hole-grid b { font-weight: 600; }
+  .hole-grid span { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); }
+</style>

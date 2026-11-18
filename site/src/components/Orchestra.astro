@@ -1,0 +1,60 @@
+---
+// Relative cost units: the top model costs 2, the strong-but-cheaper model 1.
+// Workers do most of the volume (3 units of work each), the manager 1.
+---
+<figure class="widget orc" data-orc data-mode="all">
+  <div class="seg" role="group" aria-label="Team setup">
+    <button type="button" data-set="all" aria-pressed="true">Top model everywhere</button>
+    <button type="button" data-set="mix" aria-pressed="false">Smart manager, cheaper workers</button>
+  </div>
+  <svg viewBox="0 0 600 220" class="chart" role="img" aria-label="An orchestrator thread handing work to five worker threads">
+    <g class="links">
+      {[60, 180, 300, 420, 540].map((x) => <path d={`M300 62 C300 110 ${x} 110 ${x} 150`} />)}
+      <path class="op" d="M352 40 C420 40 470 40 520 40" />
+    </g>
+    <g class="node mgr"><rect x="230" y="18" width="140" height="44" rx="10" /><text x="300" y="45">orchestrator</text></g>
+    <g class="node opinion"><rect x="500" y="18" width="92" height="44" rx="10" /><text x="546" y="45">2nd opinion</text></g>
+    {[60, 180, 300, 420, 540].map((x, i) => (
+      <g class="node worker"><rect x={x - 48} y="150" width="96" height="44" rx="10" /><text x={x} y="177">worker {i + 1}</text></g>
+    ))}
+  </svg>
+  <div class="legend"><span class="sw top"></span>Fable 5.2 (top, ~2× price) <span class="sw mid"></span>Opus 5.5 (strong, cheaper)</div>
+  <div class="cost"><span>Relative cost</span><div class="track"><i data-bar></i></div><b data-val>32</b></div>
+  <figcaption class="caption">Illustrative units. The manager keeps the judgement; the volume runs on the cheaper model. In T3 Code they can even come from different providers.</figcaption>
+</figure>
+<style>
+  .chart { width: 100%; height: auto; display: block; margin: 1rem 0 0.4rem; }
+  .links path { fill: none; stroke: var(--rule); stroke-width: 1.5; stroke-dasharray: 5 5; animation: flow 1.2s linear infinite; }
+  @keyframes flow { to { stroke-dashoffset: -10; } }
+  .node rect { transition: fill 300ms ease, stroke 300ms ease; stroke-width: 1.5; }
+  .node text { font-family: var(--mono); font-size: 12px; text-anchor: middle; transition: fill 300ms ease; }
+  .node rect { fill: var(--accent); stroke: var(--accent); } .node text { fill: var(--paper); }
+  [data-mode='mix'] .worker rect { fill: var(--blue-soft); stroke: var(--blue); } [data-mode='mix'] .worker text { fill: var(--blue); }
+  .opinion, .op { opacity: 0; transition: opacity 300ms ease; }
+  [data-mode='mix'] .opinion, [data-mode='mix'] .op { opacity: 1; }
+  .legend { color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.5rem; }
+  .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-left: 0.3rem; }
+  .sw.top { background: var(--accent); } .sw.mid { background: var(--blue-soft); border: 1px solid var(--blue); }
+  .cost { display: grid; grid-template-columns: auto 1fr auto; gap: 0.7rem; align-items: center; margin-top: 0.9rem; }
+  .cost span { color: var(--muted); } .cost b { font-variant-numeric: tabular-nums; min-width: 2ch; text-align: right; }
+  .track { height: 12px; border-radius: 99px; background: color-mix(in oklab, var(--rule) 60%, transparent); overflow: hidden; }
+  .track i { display: block; height: 100%; width: 100%; background: var(--accent); border-radius: inherit; transition: width 400ms cubic-bezier(.2,.8,.2,1), background-color 300ms; }
+  [data-mode='mix'] .track i { background: var(--blue); }
+  @media (prefers-reduced-motion: reduce) { .links path { animation: none; } }
+</style>
+<script>
+  document.querySelectorAll<HTMLElement>('[data-orc]').forEach((root) => {
+    const all = 2 * 1 + 5 * 3 * 2; // manager + 5 workers, all on the top model
+    const mix = 2 * 1 + 5 * 3 * 1 + 2 * 1; // top manager, cheaper workers, one top second opinion
+    root.querySelectorAll<HTMLButtonElement>('[data-set]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const m = b.dataset.set!;
+        root.dataset.mode = m;
+        root.querySelectorAll('[data-set]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        const v = m === 'all' ? all : mix;
+        (root.querySelector('[data-bar]') as HTMLElement).style.width = `${(v / all) * 100}%`;
+        root.querySelector('[data-val]')!.textContent = String(v);
+      }),
+    );
+  });
+</script>

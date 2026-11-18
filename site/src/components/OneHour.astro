@@ -1,0 +1,50 @@
+---
+import { url } from '../lib/nav';
+const steps = [
+  { t: 'Get one subscription', d: '$20/month Claude or ChatGPT is enough to start.', href: 'guide/guides/models-and-costs/#what-it-costs' },
+  { t: 'Install the agent’s CLI and sign in', d: 'claude auth login, or codex login.', href: 'guide/guides/t3-code/#getting-started-one-hour' },
+  { t: 'Install T3 Code', d: 'Desktop app from t3.codes, or npx t3@latest.', href: 'https://t3.codes' },
+  { t: 'Start a thread with no project and talk', d: 'Who you are, what you work on, one easy and one hard problem for this month.' },
+  { t: 'Ask it to make a project', d: 'A Git repo with an AGENTS.md holding what you just told it.' },
+  { t: 'Say: “Help me get started with this project.”', d: 'It reads its own notes and picks up where you left off.' },
+];
+---
+<figure class="widget hour" data-hour>
+  <ol>
+    {steps.map((s, i) => (
+      <li>
+        <label>
+          <input type="checkbox" data-i={i} />
+          <span class="t">{s.t}</span>
+        </label>
+        <p>{s.d} {s.href && <a href={s.href.startsWith('http') ? s.href : url(s.href)}>details →</a>}</p>
+      </li>
+    ))}
+  </ol>
+  <p class="done" data-done aria-live="polite"></p>
+  <figcaption class="caption">Ticks are saved in this browser only.</figcaption>
+</figure>
+<style>
+  ol { list-style: none; margin: 0; padding: 0; counter-reset: s; display: grid; gap: 0.2rem; }
+  li { padding: 0.6rem 0; border-bottom: 1px solid var(--rule); }
+  label { display: flex; gap: 0.7rem; align-items: center; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+  input { width: 1.15rem; height: 1.15rem; accent-color: var(--green); flex: none; }
+  input:checked + .t { text-decoration: line-through; text-decoration-color: var(--green); color: var(--muted); }
+  li p { margin: 0.2rem 0 0 1.85rem; color: var(--muted); }
+  li a { color: var(--accent); }
+  .done { margin: 0.8rem 0 0; font-weight: 600; color: var(--green); min-height: 1.5em; }
+</style>
+<script>
+  document.querySelectorAll<HTMLElement>('[data-hour]').forEach((root) => {
+    const boxes = [...root.querySelectorAll<HTMLInputElement>('input[type=checkbox]')];
+    let saved: boolean[] = [];
+    try { saved = JSON.parse(localStorage.getItem('one-hour') || '[]'); } catch (e) {}
+    const update = () => {
+      const n = boxes.filter((b) => b.checked).length;
+      root.querySelector('[data-done]')!.textContent = n === boxes.length ? 'Done. Now ask it for something more ambitious.' : n ? `${n} of ${boxes.length}` : '';
+      try { localStorage.setItem('one-hour', JSON.stringify(boxes.map((b) => b.checked))); } catch (e) {}
+    };
+    boxes.forEach((b, i) => { b.checked = !!saved[i]; b.addEventListener('change', update); });
+    update();
+  });
+</script>

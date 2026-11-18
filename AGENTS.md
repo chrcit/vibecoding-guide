@@ -21,6 +21,8 @@ Guides and skills for people learning to build software by directing AI agents. 
 │   ├── ui-builder.md
 │   ├── project-audit.md
 │   └── web-fundamentals.md
+├── site/                  # Astro site: visual essay (src/pages/index.astro + components) and
+│                          #   reference pages rendered straight from guides/ and skills/
 └── guides/
     ├── ways-of-working.md     # Core habits: context, never wait, self-verification, orchestration
     ├── t3-code.md             # T3 Code capabilities and limits
@@ -64,3 +66,5 @@ Guides and skills for people learning to build software by directing AI agents. 
 5. Date time-sensitive facts (model names, prices, limits) and keep them in `models-and-costs.md`
 6. Never include private details from source material (names, employers, clients, research data)
 7. Use TypeScript in code examples
+8. The site renders the markdown directly: keep relative `.md` links (they become site routes). When an essay figure states a fact, keep it in sync with the matching guide
+9. Before committing site changes: `cd site && pnpm build && pnpm check-links` must pass

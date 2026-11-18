@@ -1,0 +1,53 @@
+---
+const chips = [
+  { k: 'who', label: 'Who you are', text: 'I’m a researcher. I’ve worked with software teams but never used agents.' },
+  { k: 'why', label: 'Why it matters', text: 'It’s for a job change, so it should read like a serious researcher, not a CV template.' },
+  { k: 'raw', label: 'Raw material', text: '[screenshot of my LinkedIn] [list of places I’ve lived and worked]' },
+  { k: 'good', label: 'What good looks like', text: 'Light colours. Something with a bit of wow, like this portfolio: [link].' },
+  { k: 'check', label: 'How to check', text: 'Open it in your browser, test the interactions, fix what looks off, then show me.' },
+];
+---
+<figure class="widget ctx" data-ctx>
+  <p class="base">“Make me a personal website.”</p>
+  <div class="chips" role="group" aria-label="Add context">
+    {chips.map((c) => <button type="button" class="chip" data-k={c.k} aria-pressed="false">+ {c.label}</button>)}
+  </div>
+  <div class="prompt" aria-live="polite">
+    {chips.map((c) => <p data-line={c.k} hidden>{c.text}</p>)}
+  </div>
+  <div class="meter" aria-hidden="true"><span data-fill></span></div>
+  <p class="out" data-out>The agent has to guess everything. Expect a generic template.</p>
+  <figcaption class="caption">Illustration. Spoken out loud, all five lines take about 40 seconds.</figcaption>
+</figure>
+<style>
+  .base { font-family: var(--serif); font-size: 1.15rem; margin: 0 0 0.8rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .chip { border: 1px dashed var(--rule); background: transparent; border-radius: 999px; padding: 0.35rem 0.7rem; cursor: pointer; color: var(--muted); transition: all 160ms ease; }
+  .chip[aria-pressed='true'] { border-style: solid; border-color: var(--green); background: var(--green-soft); color: var(--green); }
+  .prompt p { margin: 0.6rem 0 0; padding-left: 0.8rem; border-left: 2px solid var(--green); color: var(--ink-2); animation: in 220ms ease both; }
+  @keyframes in { from { opacity: 0; translate: 0 4px; } }
+  .meter { height: 6px; border-radius: 99px; background: color-mix(in oklab, var(--rule) 60%, transparent); margin: 1rem 0 0.6rem; overflow: hidden; }
+  .meter span { display: block; height: 100%; width: 8%; background: var(--green); border-radius: inherit; transition: width 320ms cubic-bezier(.2,.8,.2,1); }
+  .out { margin: 0; color: var(--ink); }
+</style>
+<script>
+  const msgs = [
+    'The agent has to guess everything. Expect a generic template.',
+    'Better: it knows the reader. Still guessing at the purpose.',
+    'Now it knows what the site is for and can aim at that.',
+    'It works from your real details instead of inventing them.',
+    'It has a target to aim at, not just a brief.',
+    'It can check its own work before you see it. This is the one that changes the most.',
+  ];
+  document.querySelectorAll<HTMLElement>('[data-ctx]').forEach((root) => {
+    const update = () => {
+      const on = [...root.querySelectorAll('[data-k][aria-pressed="true"]')].map((b) => (b as HTMLElement).dataset.k);
+      root.querySelectorAll<HTMLElement>('[data-line]').forEach((p) => (p.hidden = !on.includes(p.dataset.line!)));
+      (root.querySelector('[data-fill]') as HTMLElement).style.width = `${8 + on.length * 18.4}%`;
+      root.querySelector('[data-out]')!.textContent = on.includes('check') && on.length === 5 ? msgs[5] : msgs[Math.min(on.length, 4)];
+    };
+    root.querySelectorAll<HTMLButtonElement>('[data-k]').forEach((b) =>
+      b.addEventListener('click', () => { b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); update(); }),
+    );
+  });
+</script>

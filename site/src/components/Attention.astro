@@ -1,0 +1,114 @@
+---
+// Five experiments: agent runtime (min) and the attention each needs from you
+// when it finishes. The schedule is computed, not drawn by hand.
+const jobs = [
+  { name: 'portfolio site', run: 22, look: 3 },
+  { name: 'data notebook', run: 30, look: 5 },
+  { name: 'bug fix', run: 10, look: 1 },
+  { name: 'research brief', run: 18, look: 4 },
+  { name: '3D venue model', run: 14, look: 2 },
+];
+---
+<figure class="widget att" data-att data-jobs={JSON.stringify(jobs)}>
+  <div class="seg" role="group" aria-label="How you work">
+    <button type="button" data-mode="wait" aria-pressed="true">Watch each run</button>
+    <button type="button" data-mode="parallel" aria-pressed="false">Never wait</button>
+  </div>
+  <svg class="chart" data-chart viewBox="0 0 640 200" role="img" aria-label="Timeline of five agent runs and your attention"></svg>
+  <dl class="stats">
+    <div><dt>Done after</dt><dd data-total>–</dd></div>
+    <div><dt>Your active minutes</dt><dd data-active>–</dd></div>
+    <div><dt>Spent watching</dt><dd data-idle>–</dd></div>
+  </dl>
+  <p class="legend"><span class="sw run"></span>agent working <span class="sw you"></span>you prompting or reviewing <span class="sw idle"></span>you waiting</p>
+  <figcaption class="caption">Each run takes 10–30 minutes and needs 1–5 minutes of you when it's done. Prompting each one takes 2.</figcaption>
+</figure>
+<style>
+  .chart { width: 100%; height: auto; display: block; margin: 0.8rem 0; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin: 0; }
+  .stats div { border: 1px solid var(--rule); border-radius: 10px; padding: 0.5rem 0.65rem; }
+  dt { color: var(--muted); font-size: 0.68rem; }
+  dd { margin: 0; font-size: 1.15rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .legend { color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.5rem; margin: 0.8rem 0 0; }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-left: 0.4rem; }
+  .sw.run { background: var(--green); } .sw.you { background: var(--accent); } .sw.idle { background: var(--rule); }
+</style>
+<script>
+  type Job = { name: string; run: number; look: number };
+  const PROMPT = 2;
+  const svgNS = 'http://www.w3.org/2000/svg';
+
+  function schedule(jobs: Job[], mode: string) {
+    const rows: { name: string; you: [number, number][]; run: [number, number]; idle?: [number, number] }[] = [];
+    let t = 0;
+    if (mode === 'wait') {
+      for (const j of jobs) {
+        const r = { name: j.name, you: [[t, t + PROMPT]] as [number, number][], run: [t + PROMPT, t + PROMPT + j.run] as [number, number], idle: [t + PROMPT, t + PROMPT + j.run] as [number, number] };
+        r.you.push([r.run[1], r.run[1] + j.look]);
+        t = r.run[1] + j.look;
+        rows.push(r);
+      }
+      return { rows, total: t, active: jobs.length * PROMPT + jobs.reduce((s, j) => s + j.look, 0), idle: jobs.reduce((s, j) => s + j.run, 0) };
+    }
+    // Never wait: prompt everything up front, then review in order of finishing.
+    const started = jobs.map((j, i) => ({ j, i, start: (i + 1) * PROMPT, you: [[i * PROMPT, (i + 1) * PROMPT]] as [number, number][] }));
+    const byFinish = [...started].sort((a, b) => a.start + a.j.run - (b.start + b.j.run));
+    let free = jobs.length * PROMPT;
+    for (const s of byFinish) {
+      const done = s.start + s.j.run;
+      const at = Math.max(free, done);
+      s.you.push([at, at + s.j.look]);
+      free = at + s.j.look;
+    }
+    for (const s of started) rows.push({ name: s.j.name, you: s.you, run: [s.start, s.start + s.j.run] });
+    const active = jobs.length * PROMPT + jobs.reduce((x, j) => x + j.look, 0);
+    return { rows, total: free, active, idle: 0 };
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-att]').forEach((root) => {
+    const jobs: Job[] = JSON.parse(root.dataset.jobs!);
+    const svg = root.querySelector('[data-chart]') as SVGSVGElement;
+    const max = schedule(jobs, 'wait').total;
+    const X0 = 120, W = 640 - X0 - 10, rowH = 34;
+    const x = (m: number) => X0 + (m / max) * W;
+    const rect = (x1: number, y: number, w: number, h: number, fill: string, rx = 4) => {
+      const r = document.createElementNS(svgNS, 'rect');
+      Object.entries({ x: x1, y, width: Math.max(w, 1.5), height: h, rx, fill }).forEach(([k, v]) => r.setAttribute(k, String(v)));
+      return r;
+    };
+    const draw = (mode: string) => {
+      const s = schedule(jobs, mode);
+      svg.replaceChildren();
+      s.rows.forEach((r, i) => {
+        const y = 8 + i * rowH;
+        const label = document.createElementNS(svgNS, 'text');
+        label.setAttribute('x', '0'); label.setAttribute('y', String(y + 17));
+        label.setAttribute('fill', 'var(--muted)'); label.setAttribute('font-size', '12');
+        label.textContent = r.name;
+        svg.append(label);
+        svg.append(rect(X0, y + 11, W, 2, 'var(--rule)', 1));
+        if (r.idle) svg.append(rect(x(r.idle[0]), y + 22, x(r.idle[1]) - x(r.idle[0]), 4, 'var(--rule)', 2));
+        const run = rect(x(r.run[0]), y + 4, x(r.run[1]) - x(r.run[0]), 14, 'var(--green)');
+        run.style.transformOrigin = `${x(r.run[0])}px 0`;
+        run.animate?.([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 1 : 500, delay: i * 60, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' });
+        svg.append(run);
+        r.you.forEach(([a, b]) => svg.append(rect(x(a), y + 4, x(b) - x(a), 14, 'var(--accent)')));
+      });
+      const axis = document.createElementNS(svgNS, 'text');
+      axis.setAttribute('x', String(x(s.total))); axis.setAttribute('y', String(8 + jobs.length * rowH + 14));
+      axis.setAttribute('fill', 'var(--ink)'); axis.setAttribute('font-size', '12'); axis.setAttribute('text-anchor', s.total / max > 0.85 ? 'end' : 'middle');
+      axis.textContent = `${s.total} min`;
+      svg.append(rect(x(s.total) - 0.75, 4, 1.5, jobs.length * rowH, 'var(--ink)', 0), axis);
+      root.querySelector('[data-total]')!.textContent = `${s.total} min`;
+      root.querySelector('[data-active]')!.textContent = `${s.active} min`;
+      root.querySelector('[data-idle]')!.textContent = `${s.idle} min`;
+    };
+    root.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach((b) =>
+      b.addEventListener('click', () => {
+        root.querySelectorAll('[data-mode]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        draw(b.dataset.mode!);
+      }),
+    );
+    draw('wait');
+  });
+</script>

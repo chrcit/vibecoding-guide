@@ -4,6 +4,8 @@
 
 **Agentic coding** = you describe the outcome, give context, and check the result. AI agents plan, write, run and verify the code, often for an hour at a time and several in parallel.
 
+**Read it as a visual essay** with interactive figures, plus the full reference: run the site in [`site/`](./site) (`pnpm install && pnpm dev`), or open the GitHub Pages deployment once it's enabled.
+
 This guide started in early 2026 as *Vibe Coding 101*, built around web builders like v0 and Lovable. A lot changed over the summer: the best models now stay on track for hours, agents work in parallel, and tools like [T3 Code](https://t3.codes) let you run models from different providers side by side. This version is rewritten around that way of working. The web-builder material is still here as an on-ramp.
 
 ---
@@ -92,6 +94,7 @@ This guide started in early 2026 as *Vibe Coding 101*, built around web builders
 ├── guides/                      ← Educational content
 ├── skills/                      ← Prompts you can use as skills
 ├── skills-table.md              ← Skills reference
+├── site/                        ← Visual essay + reference site (Astro); reads guides/ and skills/
 ├── CLAUDE.md                    ← Context for Claude-based tools
 └── AGENTS.md                    ← Context for Codex and other agents
 ```

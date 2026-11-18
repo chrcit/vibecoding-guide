@@ -1,0 +1,62 @@
+---
+// Token usage for Claude Opus on the Artificial Analysis suite (snapshot Nov 2026).
+const levels = [
+  { k: 'medium', tokens: 44 },
+  { k: 'high', tokens: 60 },
+  { k: 'xhigh', tokens: 103 },
+  { k: 'max', tokens: 173 },
+];
+---
+<figure class="widget th" data-th data-levels={JSON.stringify(levels)}>
+  <label class="row" for="th-range">
+    <span>Thinking level</span>
+    <strong data-name>medium</strong>
+  </label>
+  <input id="th-range" type="range" min="0" max={levels.length - 1} step="1" value="0" data-range aria-valuetext="medium" />
+  <div class="ticks" aria-hidden="true">{levels.map((l) => <span>{l.k}</span>)}</div>
+  <div class="bars">
+    <div class="bar"><span>Tokens it writes while thinking</span><div class="track"><i data-tok></i></div><b data-tokv></b></div>
+    <div class="bar"><span>Cost of the run, relative to medium</span><div class="track"><i data-cost class="cost"></i></div><b data-costv></b></div>
+  </div>
+  <p class="note" data-note></p>
+  <figcaption class="caption">Token counts: Claude Opus on the <a href="https://artificialanalysis.ai">Artificial Analysis</a> benchmark suite, Nov 2026. Cost assumes output is about 80% of the bill.</figcaption>
+</figure>
+<style>
+  .row { display: flex; justify-content: space-between; align-items: baseline; }
+  .row strong { font-size: 1.1rem; }
+  input[type='range'] { width: 100%; accent-color: var(--accent); margin: 0.7rem 0 0.2rem; }
+  .ticks { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.68rem; }
+  .bars { display: grid; gap: 0.8rem; margin-top: 1.1rem; }
+  .bar { display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'l v' 't t'; gap: 0.3rem; }
+  .bar span { grid-area: l; color: var(--muted); } .bar b { grid-area: v; font-variant-numeric: tabular-nums; }
+  .track { grid-area: t; height: 12px; border-radius: 99px; background: color-mix(in oklab, var(--rule) 60%, transparent); overflow: hidden; }
+  .track i { display: block; height: 100%; background: var(--blue); border-radius: inherit; transition: width 380ms cubic-bezier(.2,.8,.2,1); }
+  .track i.cost { background: var(--accent); }
+  .note { font-family: var(--serif); font-size: 1.05rem; color: var(--ink-2); margin: 1rem 0 0; min-height: 3.2em; }
+</style>
+<script>
+  const notes: Record<string, string> = {
+    medium: 'The sensible default. Most everyday work never needs more.',
+    high: 'A good step up for tricky problems.',
+    xhigh: 'For long autonomous runs and orchestrators.',
+    max: 'Only a couple of points above xhigh on the intelligence index, for nearly twice the tokens. Sometimes it overthinks.',
+  };
+  document.querySelectorAll<HTMLElement>('[data-th]').forEach((root) => {
+    const levels = JSON.parse(root.dataset.levels!) as { k: string; tokens: number }[];
+    const range = root.querySelector('[data-range]') as HTMLInputElement;
+    const top = levels[levels.length - 1].tokens;
+    const cost = (t: number) => 0.2 + 0.8 * (t / levels[0].tokens);
+    const update = () => {
+      const l = levels[Number(range.value)];
+      range.setAttribute('aria-valuetext', l.k);
+      root.querySelector('[data-name]')!.textContent = l.k;
+      (root.querySelector('[data-tok]') as HTMLElement).style.width = `${(l.tokens / top) * 100}%`;
+      root.querySelector('[data-tokv]')!.textContent = `~${l.tokens}k`;
+      (root.querySelector('[data-cost]') as HTMLElement).style.width = `${(cost(l.tokens) / cost(top)) * 100}%`;
+      root.querySelector('[data-costv]')!.textContent = `${cost(l.tokens).toFixed(1)}×`;
+      root.querySelector('[data-note]')!.textContent = notes[l.k];
+    };
+    range.addEventListener('input', update);
+    update();
+  });
+</script>
