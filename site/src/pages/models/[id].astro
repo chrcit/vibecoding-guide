@@ -40,7 +40,7 @@ const ids = [...modelFactIds(id), ...perEffort.flatMap((r) => [r.score, r.tokens
 const description = `${m.name}: what it costs, which plans include it, its context window, effort levels, benchmark scores and the lab's own pages, each with a source and a date.`;
 const headings = [
   { depth: 2, slug: 'price', text: 'What it costs through the API' },
-  { depth: 2, slug: 'plans', text: 'Plans that include it' },
+  { depth: 2, slug: 'plans', text: 'On the subscription plans' },
   { depth: 2, slug: 'specs', text: 'Context, effort and input' },
   { depth: 2, slug: 'runs', text: 'Where it runs' },
   { depth: 2, slug: 'benchmarks', text: 'Benchmark numbers' },
@@ -59,7 +59,8 @@ const headings = [
     <div><dt>Lab</dt><dd>{m.lab}</dd></div>
     <div><dt>Released</dt><dd><Val id={f('released')} /></dd></div>
     <div><dt>Place in the family</dt><dd>{pos
-      ? (pos.of === 1 ? `The only current ${pos.lab} model in our data` : `The ${ordinal(pos.rank)} most expensive of ${pos.lab}'s ${countWord(pos.of)} current models, by price per output token`)
+      ? (pos.of === 1 ? `The only current ${pos.lab} model in our data`
+        : `${pos.rank === 1 ? 'The most expensive' : pos.rank === pos.of ? 'The cheapest' : `The ${ordinal(pos.rank)} most expensive`} of ${pos.lab}'s ${countWord(pos.of)} current models, by price per output token`)
       : m.current ? <span class="gap">not published</span> : 'An older model, kept for price comparisons'}</dd></div>
     {m.apiId && <div><dt>API id</dt><dd><code>{m.apiId}</code></dd></div>}
   </dl>
@@ -87,11 +88,11 @@ const headings = [
   <Deeper level="technical" title="Reading the price">
     <p>
       An agent sends its whole conversation back to the model on every turn, so input tokens pile up quickly. The parts that have not changed can be served from the prompt cache at the cache-read price, which is why that row can matter more to a long session than the input price.
-      {m.lab === 'Anthropic' && <> On Anthropic's models, <Fact id="lineup.thinkingBilledAsOutput" show="claim" /></>}
+      {m.lab === 'Anthropic' && <> Anthropic's pricing page adds a rule worth knowing: <Fact id="lineup.thinkingBilledAsOutput" show="claim" /></>}
     </p>
   </Deeper>
 
-  <h2 id="plans">Plans that include it</h2>
+  <h2 id="plans">On the subscription plans</h2>
   {m.plans?.length ? (
     <ul>
       {m.plans.map((p) => <li><Val id={p} show="claim" /></li>)}

@@ -72,7 +72,7 @@ const headings = [
     The labs say what each is for. Anthropic describes Opus 5.5 as “<Fact id="models.claude-opus-5-5.purpose" />” and Haiku 5.5 as “<Fact id="models.claude-haiku-5-5.purpose" />”; OpenAI says of Luna: “<Fact id="models.gpt-6-luna.purpose" />”
   </p>
   <p>
-    That makes the useful question “which size, at which effort, for this task?” and not “which is the best model?”.
+    So the useful question is which size, at which effort, suits the task in front of you.
     The answer changes as the line-ups change. Names, prices and scores move every few months, so everything in this section is generated from data files with a source and a date on each value, and each model has a card that is rebuilt when its data changes.
   </p>
 
@@ -145,7 +145,7 @@ const headings = [
     Most current models let you set an effort level: how hard the model may think before it answers and how thoroughly it works. Higher effort means more thinking, more tool calls and more checking. All of that is written output, so it takes longer and uses more of what you pay for, in API dollars or in plan usage.
   </p>
   <p>
-    Effort works as a ceiling more than a target. Anthropic puts it this way: <Fact id="lineup.effortSignal" show="claim" /> A simple edit at high effort may cost little more than at low, because the model has nothing hard to think about. The dial matters on hard tasks, where a higher level lets the model keep going.
+    Effort works as a ceiling. Anthropic puts it this way: <Fact id="lineup.effortSignal" show="claim" /> A simple edit at high effort may cost little more than at low, because the model has nothing hard to think about. The dial matters on hard tasks, where a higher level lets the model keep going.
     Opus 5.5 starts at <Fact id="models.claude-opus-5-5.effort.apiDefault" /> effort on the API, and Claude Code starts the current Claude models at <Fact id="lineup.claudeCodeEffortDefault" />.
   </p>
 
@@ -192,7 +192,7 @@ const headings = [
     Go down for routine edits and volume: renaming things across the club list, or running the contact tidy over a few thousand rows where each row is a small, checkable job. A smaller model at a lower effort is faster and uses far less, and you can check its output with a script.
   </p>
   <p>
-    This is guidance about sizes, not about labs. The guide does not rank one lab's models above another's. The owner has two opinions of his own, kept separate from the sourced facts:
+    All of this is about sizes within a family. The guide does not rank one lab's models above another's. The owner has two opinions of his own, kept separate from the sourced facts:
   </p>
   <Opinion date={opinions.design.verified}>
     <p>{opinions.design.value} {opinions.decisions.value}</p>

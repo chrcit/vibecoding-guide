@@ -42,7 +42,7 @@ const alt = `A scatter chart of ${points.length} models from ${labs.join(' and '
     <Fragment slot="control">
       <button type="button" class="btn ghost" data-prev aria-label="Previous model">Previous</button>
       <button type="button" class="btn" data-next aria-label="Next model">Next model</button>
-      <a class="sc-card" data-card href={points[first]!.href}>Open the card for <span data-card-name>{points[first]!.name}</span></a>
+      <a class="sc-card" data-card href={points[first]!.href}>Open the card for{' '}<span data-card-name>{points[first]!.name}</span></a>
     </Fragment>
     <Fragment slot="readout">{describe(points[first]!, points)}</Fragment>
     <Fragment slot="caption">

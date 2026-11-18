@@ -1,7 +1,6 @@
 ---
 // The current models of one lab, as a table. Every cell is a sourced fact or an honest gap.
-// Columns appear only for what the data holds; rows come from models.ts, so a new model shows up here
-// with no page edit.
+// Rows come from models.ts, so a new model shows up here with no page edit.
 import Val from './Val.astro';
 import { fid, getModel, indexScore, type ModelId } from './view';
 import { url } from '../../lib/nav';
@@ -14,9 +13,8 @@ const { ids } = Astro.props;
     <tr>
       <th scope="col">Model</th>
       <th scope="col">Released</th>
-      <th scope="col">Input, per million tokens</th>
-      <th scope="col">Output, per million tokens</th>
-      <th scope="col">Context window</th>
+      <th scope="col">In / out, per million tokens</th>
+      <th scope="col">Context</th>
       <th scope="col">Index score</th>
     </tr>
   </thead>
@@ -27,11 +25,10 @@ const { ids } = Astro.props;
       return (
         <tr>
           <th scope="row"><a href={url(`models/${id}/`)}>{m.name}</a></th>
-          <td><Val id={fid(id, 'released')} /></td>
-          <td><Val id={fid(id, 'price.input')} />{m.price?.longPrompt && <span class="tier"> up to <Val id={fid(id, 'price.longPrompt.threshold')} /></span>}</td>
-          <td><Val id={fid(id, 'price.output')} /></td>
-          <td><Val id={fid(id, 'context')} /></td>
-          <td>{s ? <><Val id={s.factId} />{s.effort && <span class="tier"> at {s.effort}</span>}</> : <span class="gap">not measured</span>}</td>
+          <td class="nw"><Val id={fid(id, 'released')} /></td>
+          <td><span class="nw"><Val id={fid(id, 'price.input')} /> / <Val id={fid(id, 'price.output')} /></span>{m.price?.longPrompt && <span class="tier"> for prompts up to <Val id={fid(id, 'price.longPrompt.threshold')} /></span>}</td>
+          <td class="nw"><Val id={fid(id, 'context')} /></td>
+          <td class="nw">{s ? <><Val id={s.factId} />{s.effort && <span class="tier"> at {s.effort}</span>}</> : <span class="gap">not measured</span>}</td>
         </tr>
       );
     })}
@@ -39,8 +36,11 @@ const { ids } = Astro.props;
 </table>
 
 <style>
-  .model-table th[scope='row'] { font-weight: 560; white-space: nowrap; }
-  .model-table td, .model-table th { min-width: 6.5rem; }
+  .model-table th, .model-table td { min-width: 0; padding-right: 1.1em; }
+  .model-table th[scope='row'] { font-weight: 560; }
+  .model-table thead th { white-space: normal; vertical-align: bottom; }
+  .nw { white-space: nowrap; }
   .tier, .gap { color: var(--muted); }
+  .tier { font-size: var(--text-s); }
   .gap { font-style: italic; }
 </style>
