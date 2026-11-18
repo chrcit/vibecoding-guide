@@ -2,3 +2,6 @@
 # Review comments from the dev-only comment tool stay on this machine
 /comments/*
 !/comments/README.md
+
+# Agent worktrees
+/.claude/worktrees/
