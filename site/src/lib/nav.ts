@@ -12,7 +12,7 @@ export const sections = [
   { id: 'models', label: 'Models', path: 'models/', ready: false },
   { id: 't3-code', label: 'T3 Code', path: 't3-code/', ready: false },
   { id: 'wiki', label: 'Wiki', path: 'wiki/', ready: false },
-  { id: 'essays', label: 'Essays', path: 'essays/', ready: false },
+  { id: 'essays', label: 'Essays', path: 'essays/', ready: true },
   { id: 'showcase', label: 'Showcase', path: 'showcase/', ready: false },
   { id: 'reference', label: 'Reference', path: 'guide/', ready: true },
 ] as const;
