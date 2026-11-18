@@ -23,8 +23,10 @@ export interface Label {
 interface Props {
   n: number | string;
   title: string;
-  /** One line that says what to do. */
+  /** Ignored: figures carry no helper line. Kept so old calls still build. */
   hint?: string;
+  /** No frame and no heading of its own: for a figure inside a board tile, which supplies both. */
+  bare?: boolean;
   /** Text alternative for the drawing: what it shows in its first state. */
   alt: string;
   /** Shown when the figure shows data. */
@@ -36,18 +38,17 @@ interface Props {
   legend?: string[];
 }
 
-const { n, title, hint, alt, source, wide = false, labels = [] } = Astro.props;
+const { n, title, alt, source, wide = false, bare = false, labels = [] } = Astro.props;
 const legend = Astro.props.legend ?? labels.map((l) => l.name);
 const id = `fig-${n}`;
 const hasControl = Astro.slots.has('control');
 const hasCaption = Astro.slots.has('caption') || !!source;
 ---
-<figure class="fig" id={id} data-figure={String(n)} data-wide={wide ? '' : undefined} aria-labelledby={`${id}-title`}>
+<figure class="fig" id={id} data-figure={String(n)} data-wide={wide ? '' : undefined} data-bare={bare ? '' : undefined} aria-labelledby={`${id}-title`}>
   <p class="fig-head">
     <span class="fig-n"><a href={`#${id}`}>Fig. {n}</a></span>
     <span class="fig-title" id={`${id}-title`}>{title}</span>
   </p>
-  {hint && <p class="fig-hint">{hint}</p>}
   <div class="fig-drawing" role="img" aria-label={alt} data-fig-drawing>
     <slot />
     {labels.map((l, i) => (

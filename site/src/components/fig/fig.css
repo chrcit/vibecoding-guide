@@ -92,6 +92,10 @@
   scroll-margin-top: 5rem;
 }
 .fig[data-wide] { max-width: 60rem; }
+/* Inside a board tile: the tile is the frame and carries the title. */
+.fig[data-bare] { margin: 0; padding: 0; border: 0; border-radius: 0; background: none; max-width: none; font-family: inherit; }
+.fig[data-bare] > .fig-head { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.fig[data-bare] > .fig-drawing { margin-top: 0; }
 .fig-head { display: flex; align-items: baseline; gap: 0.75rem; margin: 0; }
 .fig-n { font-family: var(--mono); font-size: 0.875rem; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .fig-n a { text-decoration: none; color: inherit; }

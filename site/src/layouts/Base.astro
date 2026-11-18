@@ -6,6 +6,7 @@ import Header from '../components/site/Header.astro';
 import Footer from '../components/site/Footer.astro';
 import LevelBoot from '../components/level/LevelBoot.astro';
 import LevelOffer from '../components/level/LevelOffer.astro';
+import SideView from '../components/site/SideView.astro';
 import type { SectionId } from '../lib/nav';
 
 export interface Props {
@@ -39,5 +40,6 @@ const { title, description, section, progress = false, noindex = false, type = '
     </main>
     <Footer />
     <LevelOffer />
+    <SideView />
   </body>
 </html>

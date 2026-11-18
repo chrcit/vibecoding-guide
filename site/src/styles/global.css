@@ -32,6 +32,8 @@
 
   /* Type */
   --serif: 'Newsreader', 'Newsreader Fallback', 'Iowan Old Style', Georgia, serif;
+  /* Interface text on boards: the system's own sans, so no font file. */
+  --sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   --mono: 'JetBrains Mono', 'JetBrains Mono Fallback', ui-monospace, 'SF Mono', Menlo, monospace;
   /* A 1.2 scale around the 19px body. Steps below 0 stop at 13px. */
   --text-xs: 0.8125rem;    /* 13px: the floor */
@@ -66,6 +68,7 @@
   --measure: 39rem;        /* prose line length, about 70 characters */
   --wide: 56rem;           /* figures and tables that break out */
   --full: 78rem;           /* the page frame */
+  --board: 100rem;         /* a board: the dashboard pages */
   --gutter: clamp(16px, 4vw, 40px);
   --header-h: 3.5rem;
 

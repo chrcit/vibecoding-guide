@@ -1,0 +1,14 @@
+---
+/*
+  A number that matters, with its name. Put several in <dl class="stats">.
+  Props: name (string), id? (scripts find it as [data-stat="id"] and set its
+  text), tone? ('accent' | 'green' | 'blue').
+  Slot: the value in its first state.
+*/
+interface Props { name: string; id?: string; tone?: 'accent' | 'green' | 'blue' }
+const { name, id, tone } = Astro.props;
+---
+<div class="stat" data-tone={tone}>
+  <dt class="stat-name">{name}</dt>
+  <dd class="stat-value" data-stat={id}><slot /></dd>
+</div>
