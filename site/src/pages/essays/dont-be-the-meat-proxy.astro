@@ -1,0 +1,48 @@
+---
+import Essay from '../../layouts/Essay.astro';
+import Fact from '../../components/data/Fact.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import { url } from '../../lib/nav';
+import { anchor } from '../../lib/facts';
+import { links } from '../../data/links';
+
+export const meta = {
+  title: 'Don’t be the meat proxy',
+  description: 'If all you do is carry someone’s words to the agent and carry the result back, you add nothing. Give them the tool and let them run the loop themselves.',
+  order: 15,
+};
+
+const src = (id: string) => `sources/#${anchor(id)}`;
+const leansOn = [
+  { href: '', title: 'Home: you are the bottleneck (Fig. 6)' },
+  { href: 'explain/voice/', title: 'Voice: talking to the agent' },
+  { href: src('claims.research.speechFaster'), title: 'Speech against typing, in one study' },
+  { href: src('harnesses.claudeCode.contextFile'), title: 'The context file Claude Code reads' },
+  { href: src('harnesses.codex.contextFile'), title: 'The context files Codex reads' },
+];
+---
+<Essay meta={meta} leansOn={leansOn}>
+  <p>If all you do is carry someone's words to the agent and carry the result back to them, you add nothing. You are a relay with a delay. Give that person the tool so they can run the loop themselves.</p>
+
+  <p>I caught myself doing it. A designer I work with sent me ten minutes of spoken feedback on a piece of work. I transcribed the voice note, pasted the whole thing into the agent and let it make the changes. I call that being a meat proxy for the AI: taking what a client, a friend or a colleague needs, copying it into a thread, and letting the agent do the rest. It felt productive. It wasn't my judgement doing any of the work.</p>
+
+  <h2>What handing it over gains</h2>
+
+  <p>I want to be honest about the gain. Giving the designer access doesn't save me much time. What it does is make him far more capable. Nothing stops him saying the same ten minutes straight into the same tool, then looking at the result and saying the next thing, round after round, without waiting for me. Speaking is a fast way in. In one Stanford study, speech input was <Fact id="claims.research.speechFaster" /> faster than typing on a phone keyboard. Claude Code takes dictation through <Fact id="harnesses.claudeCode.voice" />, and the <a href={url('explain/voice/')}>voice explainer</a> covers the other tools. Every round that goes through me adds my delay and none of my expertise, because the expertise in that loop is his.</p>
+
+  <p>The home page draws the bottleneck: a person whose attention every piece of work has to pass through. <!-- FIG 6 --> A relay is that bottleneck with no judgement attached. When the person in the middle is checking the work against what they know, the wait is worth it. When they are only copying, it isn't.</p>
+
+  <p>In fairness to myself, that time there was no client waiting. I was testing how well the setup holds up. The point stands anyway: I already had a tool and a plan ready for him, and the right move was to hand them over.</p>
+
+  <h2>How to remove yourself</h2>
+
+  <p>I did it properly for a friend, a scientist I was showing this to. I had the agent set up a shared project for her, with a base file of everything it had learned about her and her work, and a reusable viewer so she wouldn't rebuild the same screen each time. Then I could step out. That base file is an ordinary context file, the kind an agent reads at the start of every session. Claude Code reads <Fact id="harnesses.claudeCode.contextFile" />. Codex reads <Fact id="harnesses.codex.contextFile" />.</p>
+
+  <p>You don't have to design the handover yourself. Ask the agent.</p>
+
+  <CopyPrompt title="Hand the project over">I want to hand this project to someone else so they can carry on without me. Write a context file for their agent: who they are, what this project is for, what we have decided so far and why, what is unfinished, and how to check that something works. Then write them a short note on how to get started, and tell them their first step is to ask their own agent to help them get started.</CopyPrompt>
+
+  <p>That last line is the real advice. The way to get started in someone else's project is to ask your agent to help you get started. Once the person who needs the work can do that, stop carrying their words.</p>
+
+  <p>One note on the term. “Meat proxy” is what I call it, and I have heard others use it. I haven't checked how widely.</p>
+</Essay>

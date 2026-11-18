@@ -1,0 +1,50 @@
+---
+import Essay from '../../layouts/Essay.astro';
+import Fact from '../../components/data/Fact.astro';
+import Opinion from '../../components/site/Opinion.astro';
+import { url } from '../../lib/nav';
+import { anchor, fact } from '../../lib/facts';
+import { links } from '../../data/links';
+
+export const meta = {
+  title: 'Scores are not judgement',
+  description: 'Benchmark scores come from short tasks. On long work I choose a model by how well I think it decides, and I have no number for that.',
+  order: 9,
+};
+
+const src = (id: string) => `sources/#${anchor(id)}`;
+const decisions = fact('observations.opinions.decisions');
+const leansOn = [
+  { href: 'models/', title: 'Models: score against cost (Fig. 10)' },
+  { href: '', title: 'Home: METR time horizons (Fig. 7)' },
+  { href: src('benchmarks.aa.method'), title: 'What the Artificial Analysis Intelligence Index combines' },
+  { href: src('benchmarks.aa.caveat'), title: 'Artificial Analysis on the limits of its own index' },
+  { href: src('benchmarks.metr.definition'), title: 'What a METR time horizon measures' },
+  { href: src('observations.opinions.decisions'), title: 'The opinion stated here, with its date' },
+];
+---
+<Essay meta={meta} leansOn={leansOn}>
+  <p>When I hand an agent a long, hard job, I pick the model by how well I think it makes decisions. I can't prove that with a benchmark. This essay is my opinion from start to finish, and it explains why the scores don't settle the choice for me.</p>
+
+  <p>On long work the difficulty is rarely one problem. The agent meets fifty of them in a row. At each one it has to choose: keep going, back out, try another route, or notice that the thing it is stuck on isn't a real problem at all. A model that makes slightly better calls each time ends the day somewhere very different from one that makes slightly worse ones, because the bad calls pile up and it ends up digging a hole. I call the difference taste, for want of a better word. What I mean is good decision-making over a long stretch of context.</p>
+
+  <Opinion date={decisions.verified}>
+    <p>{decisions.value}</p>
+  </Opinion>
+
+  <p>That is the whole of my ranking, and it is a view from my own use. I have no measurement behind it.</p>
+
+  <h2>What the scores do tell you</h2>
+
+  <p>I still look at benchmarks. The one I use most is from <a href={links.artificialAnalysis.url}>Artificial Analysis</a>, which describes itself as “<Fact id="benchmarks.aa.selfDescription" />”. Its Intelligence Index rolls <Fact id="benchmarks.aa.method" /> evaluations into a single number, spread across knowledge work, coding, science and general tasks. I read it as a rough curve of general capability, and the independence is what makes it worth reading. The chart of score against cost on the <a href={url('models/')}>models page</a> shows what the index can tell you, and it is a lot. <!-- FIG 10 --></p>
+
+  <p>Its limits are the ones its makers state. They say the index “<Fact id="benchmarks.aa.caveat" />”. Not every benchmark in it is worth the same to you, and I don't know of any that maps reliably onto your own problem. As far as I can tell, the tasks are short next to a day of agent work. A model can do very well on small and medium tasks and still lose its way on the fiftieth decision of an afternoon.</p>
+
+  <p>The nearest thing to a measure of staying on track is METR's time horizon, charted on the <a href={url('')}>home page</a>. <!-- FIG 7 --> It is the length of task, counted in the time a human expert would need, that a model finishes half the time. That tells you how long a job a model can carry. It doesn't tell you how good its choices were along the way, and METR's last update to the page was on <Fact id="benchmarks.metr.lastUpdate" />.</p>
+
+  <h2>Choose by the kind of work</h2>
+
+  <p>So I sort jobs into two kinds. Some need judgement: deciding what is a dead end, noticing that a problem isn't worth solving, choosing between two designs that both work. For those I use the class of model in the opinion above, and I accept the price. Others are grind: running thousands of variations against a clear check, where each step is simple and the test says whether it passed. Judgement matters much less there, so I choose on cost and speed.</p>
+
+  <p>Here is the caveat, and it is a big one. I have never seen a published comparison where a model's rank on short tasks and its rank on long, judgement-heavy work disagree. Without one, “scores are not judgement” rests on my experience alone. Read the scores, use them, and then try the models on your own long jobs before you believe either the numbers or me.</p>
+</Essay>

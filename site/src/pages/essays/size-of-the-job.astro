@@ -1,0 +1,43 @@
+---
+import Essay from '../../layouts/Essay.astro';
+import Fact from '../../components/data/Fact.astro';
+import { url } from '../../lib/nav';
+import { anchor } from '../../lib/facts';
+
+export const meta = {
+  title: 'Find the size of job it can do without you, then stack them',
+  description: 'Work out how big a piece the agent can finish alone, then run as many of those pieces as you can still watch. The piece keeps growing; your attention does not.',
+  order: 10,
+};
+
+const src = (id: string) => `sources/#${anchor(id)}`;
+const leansOn = [
+  { href: '', title: 'Home: you are the bottleneck (Fig. 6) and METR time horizons (Fig. 7)' },
+  { href: 'explain/orchestration/', title: 'Orchestration: six ways to run a team of agents (Fig. 12)' },
+  { href: src('benchmarks.metr.doublingDays'), title: 'How fast the METR time horizon doubles' },
+  { href: src('benchmarks.metr.definition'), title: 'What a time horizon measures' },
+  { href: src('harnesses.claudeCode.subagents'), title: 'Claude Code subagents and how deep they nest' },
+  { href: src('observations.experience.parallelThreads'), title: 'The guide’s own reading on parallel threads' },
+];
+---
+<Essay meta={meta} leansOn={leansOn}>
+  <p>Most of my work now comes down to one question. How big a piece can the agent finish without my attention? Once I know, I run as many of those pieces as I can still watch and steer. The piece keeps getting bigger. My attention stays the same size.</p>
+
+  <p>It has always worked this way. In 2023 I used an early AI code editor, and the piece it could handle was small: here are three files, here is the change I want, make it. One function, or the same small change to five functions across files. I got around that by stacking small pieces myself and trying to hold the whole thing together in my head. That was most of the job.</p>
+
+  <h2>The piece keeps growing</h2>
+
+  <p>Since then the piece has grown and grown. METR, a research group that tracks this, measures a model's time horizon: the length of task, counted in the time a human expert needs, that a model completes half the time. GPT-4 measured <Fact id="benchmarks.metr.p50.gpt-4.minutes" />. Claude Opus 4.6 measured <Fact id="benchmarks.metr.p50.claude-opus-4-6.minutes" />. Since 2023 the horizon has doubled about every <Fact id="benchmarks.metr.doublingDays" />, and you can see the curve on the <a href={url('')}>home page</a>. <!-- FIG 7 --> It counts the length of the task and says nothing about how long the agent runs. Still, it matches what I see. The piece I hand over today can be a whole small app, where in 2023 it was one function.</p>
+
+  <h2>Then count your attention</h2>
+
+  <p>Because trying an idea costs so little, it becomes natural to have several going at once. The tools make you quick on your feet. On a normal day I have a few experiments running. Each one runs for a good while without me and then needs a few minutes of my attention when it finishes. One hour of my attention spreads across a lot of work that way. In the guide's own use, runs of <Fact id="observations.experience.runLength" /> without input are routine, and past <Fact id="observations.experience.parallelThreads" /> parallel threads the agents start waiting on you and the reviews get worse. Those are my working numbers. Nobody has measured them.</p>
+
+  <p>The shape on screen is simple. I type in one thread and leave the rest alone. In the first prompt I ask for several workers in parallel, and sub-threads appear at the side, each doing its part, while the main thread reports back to me. In Claude Code these workers are subagents: each runs in a fresh context window of its own, and by default they can start subagents of their own down to <Fact id="harnesses.claudeCode.nestingDepth" /> layers below the main conversation. The <a href={url('explain/orchestration/')}>orchestration explainer</a> lays out the ways a team of agents can be arranged. <!-- FIG 12 --></p>
+
+  <h2>The limit is you</h2>
+
+  <p>Read the first sentence again: as many as you can still watch. The bottleneck is your attention, and the figure on the <a href={url('')}>home page</a> shows where it sits. <!-- FIG 6 --> Near the end of one long session I told an agent to produce less than it had planned, because the full amount would have buried me. I wanted a starting point on each idea I had picked, and no more than I could read. Size the output to what a person can take in. If you lose track of what is running, ask the agent for a page that tells you.</p>
+
+  <p>One caveat. Going wide is only one way to spend the gain. Going deep on a single subject speeds up just as much, and some weeks that is the better use of the hour.</p>
+</Essay>
