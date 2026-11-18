@@ -14,7 +14,6 @@ type Data = {
   vb: { x: number; y: number; w: number; h: number };
   nodes: Node[];
   edges: [number, number][];
-  labels: { id: string; label: string; x: number; y: number }[];
   search: string[];
   marks: Record<string, { d: string; tone: string }>;
 };
@@ -35,7 +34,6 @@ export function mountGraph(root: HTMLElement) {
   const posEls = nodeEls.map((a) => a.querySelector<SVGGElement>('.gv-pos')!);
   const lblEls = nodeEls.map((a) => a.querySelector<SVGTextElement>('.gv-lbl')!);
   const lineEls = [...svg.querySelectorAll<SVGLineElement>('.gv-edges line')];
-  const clEls = [...svg.querySelectorAll<SVGTextElement>('.gv-clabel')];
   const card = root.querySelector<HTMLElement>('.gv-card')!;
   const cardMk = card.querySelector<HTMLElement>('.gv-card-mk')!;
   const cardA = card.querySelector<HTMLAnchorElement>('.gv-card-a')!;
@@ -52,7 +50,6 @@ export function mountGraph(root: HTMLElement) {
   // quarter (clockwise), so a landscape graph fills a phone.
   let rotated = false;
   let P = N.map((n) => ({ x: n.x, y: n.y }));
-  let CL = data.labels.map((l) => ({ x: l.x, y: l.y }));
   let bounds: Box = { ...data.vb };
 
   function orient(turn: boolean) {
@@ -60,7 +57,6 @@ export function mountGraph(root: HTMLElement) {
     const vb = data.vb;
     const rot = (p: { x: number; y: number }) => (turn ? { x: -p.y, y: p.x } : { x: p.x, y: p.y });
     P = N.map(rot);
-    CL = data.labels.map(rot);
     bounds = turn ? { x: -(vb.y + vb.h), y: vb.x, w: vb.h, h: vb.w } : { ...vb };
     P.forEach((p, i) => posEls[i].setAttribute('transform', `translate(${p.x} ${p.y})`));
     data.edges.forEach(([a, b], i) => {
@@ -68,7 +64,6 @@ export function mountGraph(root: HTMLElement) {
       l.setAttribute('x1', String(P[a].x)); l.setAttribute('y1', String(P[a].y));
       l.setAttribute('x2', String(P[b].x)); l.setAttribute('y2', String(P[b].y));
     });
-    CL.forEach((p, i) => { clEls[i].setAttribute('x', String(p.x)); clEls[i].setAttribute('y', String(p.y)); });
   }
 
   // ------------------------------------------------------------ camera
@@ -77,8 +72,31 @@ export function mountGraph(root: HTMLElement) {
   let touched = false; // the reader has moved the camera themselves
   let anim = 0;
 
-  const fitTo = (b: Box, pad = 0.92) => ({ cx: b.x + b.w / 2, cy: b.y + b.h / 2, k: Math.min(W / b.w, H / b.h) * pad });
-  const fitAllK = () => fitTo(bounds).k;
+  // The title, search and cluster row sit over the graph on wide screens;
+  // fitting leaves room for them.
+  const topBar = root.querySelector<HTMLElement>('.gv-top')!;
+  const chipRow = root.querySelector<HTMLElement>('.gv-clusters')!;
+  function insets() {
+    const fr = stage.getBoundingClientRect();
+    const t = getComputedStyle(topBar).position === 'absolute' ? Math.max(0, topBar.getBoundingClientRect().bottom - fr.top) : 0;
+    const b = Math.max(0, fr.bottom - chipRow.getBoundingClientRect().top);
+    return { t: Math.min(t, H * 0.3), b: Math.min(b, H * 0.3) };
+  }
+  /** The camera that shows these nodes, clear of the overlays. */
+  function fitNodes(idx: number[], maxK = Infinity) {
+    const ins = insets();
+    const pts = idx.map((i) => P[i]);
+    const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    const mx = Math.min(100, W * 0.1), mt = 28, mb = 44; // room for labels, which sit under their nodes
+    const aw = Math.max(80, W - 2 * mx), ah = Math.max(80, H - ins.t - ins.b - mt - mb);
+    const k = Math.min(aw / Math.max(1, x1 - x0), ah / Math.max(1, y1 - y0), maxK);
+    const sy = ins.t + mt + ah / 2;
+    return { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 - (sy - H / 2) / k, k };
+  }
+  const ALL = N.map((_, i) => i);
+  const fitAll = () => fitNodes(ALL);
+  const fitAllK = () => fitAll().k;
   const kMin = () => fitAllK() * 0.55;
   const kMax = () => Math.max(3, fitAllK() * 4);
   // Marks grow a little when the graph is small on screen, so they stay visible.
@@ -125,14 +143,9 @@ export function mountGraph(root: HTMLElement) {
   }
 
   function fitVisible() {
-    const idx = N.map((_, i) => i).filter((i) => !out[i]);
-    if (!idx.length || idx.length === N.length) return animateTo(fitTo(bounds));
-    const xs = idx.map((i) => P[i].x), ys = idx.map((i) => P[i].y);
-    const m = 70;
-    const b = { x: Math.min(...xs) - m, y: Math.min(...ys) - m, w: Math.max(...xs) - Math.min(...xs) + 2 * m, h: Math.max(...ys) - Math.min(...ys) + 2 * m };
-    const t = fitTo(b, 0.9);
-    t.k = Math.min(t.k, Math.max(fitAllK() * 2.2, 1.1));
-    animateTo(t);
+    const idx = ALL.filter((i) => !out[i]);
+    if (!idx.length || idx.length === N.length) return animateTo(fitAll());
+    animateTo(fitNodes(idx, Math.max(fitAllK() * 2.2, 1.1)));
   }
 
   function ensureVisible(i: number) {
@@ -146,59 +159,71 @@ export function mountGraph(root: HTMLElement) {
   // Widths are measured once at --k: 1, where 14px text is 14 graph units:
   // the same as its width on screen at any zoom.
   let widths: number[] = [];
-  let clWidths: number[] = [];
   function measure() {
     const k0 = svg.style.getPropertyValue('--k');
     svg.style.setProperty('--k', '1');
     widths = lblEls.map((t) => { try { return t.getComputedTextLength(); } catch { return t.textContent!.length * 7; } });
-    clWidths = clEls.map((t) => { try { return t.getComputedTextLength(); } catch { return t.textContent!.length * 10; } });
     svg.style.setProperty('--k', k0 || '1');
   }
 
   let labelFrame = 0;
   const scheduleLabels = () => { if (!labelFrame) labelFrame = requestAnimationFrame(() => { labelFrame = 0; placeLabels(); }); };
+  const SPOTS = ['below', 'above', 'right', 'left'] as const;
+  const LH = 18; // label box height in screen pixels
 
+  /** Shows the labels that fit, most important first: under the node, else above, right or left of it. */
   function placeLabels() {
     const k = cam.k, ns = nodeScale(k);
-    const marks: Box[] = [];
-    const vis: boolean[] = N.map((_, i) => {
-      const s = toScreen(P[i]);
-      return s.x > -60 && s.x < W + 60 && s.y > -40 && s.y < H + 40;
-    });
-    N.forEach((n, i) => {
+    const scr = P.map(toScreen);
+    const vis = scr.map((s) => s.x > -80 && s.x < W + 80 && s.y > -40 && s.y < H + 40);
+    const rad = N.map((n) => n.r * ns * k);
+    const marks: (Box & { i: number })[] = [];
+    N.forEach((_, i) => {
       if (!vis[i] || out[i]) return;
-      const s = toScreen(P[i]), r = n.r * ns * k + 2;
-      marks.push({ x: s.x - r, y: s.y - r, w: 2 * r, h: 2 * r });
+      const r = rad[i] + 2;
+      marks.push({ x: scr[i].x - r, y: scr[i].y - r, w: 2 * r, h: 2 * r, i });
     });
-    const placed: Box[] = [];
-    // Cluster names: only while the graph is small enough to read as a map.
-    const showClusters = k < fitAllK() * 1.9 && current === null;
-    CL.forEach((p, i) => {
-      const s = toScreen(p);
-      const w = clWidths[i] * 17 / 14 + 8, h = 24;
-      const b = { x: s.x - w / 2, y: s.y - h / 2, w, h };
-      const clusterOn = !filter.size || filter.has(data.labels[i].id);
-      const ok = showClusters && clusterOn && !query;
-      clEls[i].classList.toggle('off', !ok);
-      if (ok) placed.push(b);
-    });
-    // Node labels, most important first.
+    // The overlays (title and search, cluster chips, zoom buttons) count as taken.
+    const fr = stage.getBoundingClientRect();
+    const placed: Box[] = [topBar, ...chips, zoomBox]
+      .filter((el) => el.offsetParent !== null && (el !== topBar || getComputedStyle(topBar).position === 'absolute'))
+      .map((el) => { const r = el.getBoundingClientRect(); return { x: r.left - fr.left - 4, y: r.top - fr.top - 4, w: r.width + 8, h: r.height + 8 }; });
+    const inside = (b: Box) => b.x >= 4 && b.y >= 4 && b.x + b.w <= W - 4 && b.y + b.h <= H - 4;
+    const focus = current !== null ? new Set([current, ...N[current].nb]) : null;
     const rank = (i: number) =>
-      (i === current ? 0 : current !== null && N[current].nb.includes(i) ? 1 : matches.has(i) ? 2 : N[i].m ? 3 : 4) * 1000 - N[i].d;
+      (i === current ? 0 : focus?.has(i) ? 1 : peek && N[i].c === peek ? 2 : matches.has(i) ? 2 : N[i].m ? 3 : 4) * 1000 - N[i].d;
     const order = N.map((_, i) => i).sort((a, b) => rank(a) - rank(b));
     for (const i of order) {
       const el = lblEls[i];
-      let show = vis[i] && !out[i];
-      if (show && current !== null && i !== current && !N[current].nb.includes(i)) show = false;
-      if (show) {
-        const s = toScreen(P[i]);
-        const top = s.y + N[i].r * ns * k + 5;
-        const b = { x: s.x - widths[i] / 2 - 3, y: top - 2, w: widths[i] + 6, h: 20 };
-        const own = { x: s.x - 1, y: s.y - 1, w: 2, h: 2 };
-        if (placed.some((p) => overlap(p, b)) || marks.some((m) => !overlap(m, own) && overlap(m, b))) show = i === current;
-        if (show) placed.push(b);
+      let spot: (typeof SPOTS)[number] | null = null;
+      if (vis[i] && !out[i] && (!focus || focus.has(i)) && (!peek || N[i].c === peek)) {
+        const s = scr[i], r = rad[i], w = widths[i] + 6;
+        // Two tries: clear of every mark; then, for the hubs, over small marks if need be.
+        for (const strict of [true, false]) {
+          if (!strict && !(N[i].m || i === current)) break;
+          for (const at of SPOTS) {
+          const b =
+            at === 'below' ? { x: s.x - w / 2, y: s.y + r + 3, w, h: LH } :
+            at === 'above' ? { x: s.x - w / 2, y: s.y - r - 3 - LH, w, h: LH } :
+            at === 'right' ? { x: s.x + r + 4, y: s.y - LH / 2, w, h: LH } :
+            { x: s.x - r - 4 - w, y: s.y - LH / 2, w, h: LH };
+          if (!inside(b) || placed.some((p) => overlap(p, b))) continue;
+          // Only over marks painted earlier (lower index), so the label lands on top of them.
+          if (marks.some((m) => m.i !== i && overlap(m, b) && (strict || N[m.i].m || m.i > i))) continue;
+          spot = at;
+          placed.push(b);
+          break;
+          }
+          if (spot) break;
+        }
+        if (!spot && i === current) spot = 'below';
       }
-      el.classList.toggle('off', !show);
+      el.classList.toggle('off', !spot);
+      if (spot && el.dataset.at !== spot) {
+        el.dataset.at = spot;
+        el.setAttribute('text-anchor', spot === 'right' ? 'start' : spot === 'left' ? 'end' : 'middle');
+        el.setAttribute('dominant-baseline', spot === 'below' ? 'hanging' : spot === 'above' ? 'auto' : 'central');
+      }
     }
   }
 
@@ -254,6 +279,7 @@ export function mountGraph(root: HTMLElement) {
 
   // ------------------------------------------------------------ filter and search
   const filter = new Set<string>();
+  let peek: string | null = null; // a cluster previewed by hovering or focusing its chip
   let query = '';
   let matches = new Set<number>();
   let out: boolean[] = N.map(() => false);
@@ -354,7 +380,18 @@ export function mountGraph(root: HTMLElement) {
   input.addEventListener('blur', () => { results.hidden = true; input.setAttribute('aria-expanded', 'false'); });
   input.addEventListener('focus', () => { if (query) { results.hidden = false; input.setAttribute('aria-expanded', 'true'); } });
 
+  const setPeek = (id: string | null) => {
+    peek = id;
+    svg.classList.toggle('peek', !!id);
+    nodeEls.forEach((el, i) => el.classList.toggle('pk', N[i].c === id));
+    data.edges.forEach(([a, b], e) => lineEls[e].classList.toggle('pk', !!id && N[a].c === id && N[b].c === id));
+    scheduleLabels();
+  };
   for (const b of chips) {
+    b.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') setPeek(b.dataset.cluster!); });
+    b.addEventListener('pointerleave', () => setPeek(null));
+    b.addEventListener('focus', () => setPeek(b.dataset.cluster!));
+    b.addEventListener('blur', () => setPeek(null));
     b.addEventListener('click', () => {
       const id = b.dataset.cluster!;
       if (filter.has(id)) filter.delete(id); else filter.add(id);
@@ -552,7 +589,7 @@ export function mountGraph(root: HTMLElement) {
   W = stage.clientWidth; H = stage.clientHeight;
   orient(W / H < 0.85 && data.vb.w > data.vb.h);
   measure();
-  Object.assign(cam, fitTo(bounds));
+  Object.assign(cam, fitAll());
   apply();
   document.fonts?.ready.then(() => { measure(); scheduleLabels(); });
 
@@ -562,7 +599,7 @@ export function mountGraph(root: HTMLElement) {
     W = w; H = h;
     const turn = W / H < 0.85 && data.vb.w > data.vb.h;
     if (turn !== rotated) { orient(turn); touched = false; }
-    if (!touched) Object.assign(cam, filter.size ? cam : fitTo(bounds));
+    if (!touched) Object.assign(cam, filter.size ? cam : fitAll());
     apply();
   }).observe(stage);
 

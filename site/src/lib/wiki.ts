@@ -63,7 +63,6 @@ export type Graph = {
   /** Undirected, each pair once, as indices into nodes. */
   edges: [number, number][];
   viewBox: { x: number; y: number; w: number; h: number };
-  clusterLabels: { id: string; label: string; x: number; y: number }[];
 };
 
 export type Wiki = {
@@ -119,6 +118,10 @@ const LABEL_H = 18;
 
 type P = { x: number; y: number };
 
+// Clusters around basics, clockwise from the top. Neighbours on the ring are
+// the clusters that share the most links, which keeps long edges few.
+const RING = ['context', 'working', 'teams', 'checking', 'shipping', 'web', 'models'];
+
 /**
  * A deterministic force layout. Clusters get anchors (basics in the middle,
  * the rest on a ring), nodes start near their anchor with seeded jitter, and
@@ -128,20 +131,20 @@ type P = { x: number; y: number };
 export function layout(nodes: { slug: string; cluster: string; title: string; degree: number }[], edges: [number, number][], seed = 'acg-wiki') {
   const rand = seeded(seed);
   const n = nodes.length;
-  const W = 1200, H = 800;
-  const ring = CLUSTERS.filter((c) => c.id !== 'basics');
+  const W = 2000, H = 640; // wide, to fill a desktop screen; phones turn it a quarter
   const anchor = new Map<string, P>();
   anchor.set('basics', { x: W / 2, y: H / 2 });
-  ring.forEach((c, i) => {
+  const ring = [...RING, ...CLUSTERS.map((c) => c.id).filter((id) => id !== 'basics' && !RING.includes(id))];
+  ring.forEach((id, i) => {
     const a = -Math.PI / 2 + (i / ring.length) * Math.PI * 2;
-    anchor.set(c.id, { x: W / 2 + Math.cos(a) * W * 0.36, y: H / 2 + Math.sin(a) * H * 0.38 });
+    anchor.set(id, { x: W / 2 + Math.cos(a) * W * 0.42, y: H / 2 + Math.sin(a) * H * 0.36 });
   });
 
   const p: P[] = nodes.map((nd) => {
     const a = anchor.get(nd.cluster) ?? { x: W / 2, y: H / 2 };
     return { x: a.x + (rand() - 0.5) * 120, y: a.y + (rand() - 0.5) * 120 };
   });
-  const L = 92; // ideal edge length
+  const L = 78; // ideal edge length
   const iterations = 700;
   for (let it = 0; it < iterations; it++) {
     const t = 40 * (1 - it / iterations) + 0.5;
@@ -151,7 +154,8 @@ export function layout(nodes: { slug: string; cluster: string; title: string; de
         let dx = p[i].x - p[j].x, dy = p[i].y - p[j].y;
         let dist = Math.hypot(dx, dy);
         if (dist < 0.01) { dx = rand() - 0.5; dy = rand() - 0.5; dist = 0.5; }
-        const f = (L * L) / dist;
+        // Nodes of different clusters push apart harder, so each cluster gets its own ground.
+        const f = ((L * L) / dist) * (nodes[i].cluster === nodes[j].cluster ? 1 : 3);
         const fx = (dx / dist) * f, fy = (dy / dist) * f;
         d[i].x += fx; d[i].y += fy; d[j].x -= fx; d[j].y -= fy;
       }
@@ -159,14 +163,16 @@ export function layout(nodes: { slug: string; cluster: string; title: string; de
     for (const [a, b] of edges) {
       const dx = p[a].x - p[b].x, dy = p[a].y - p[b].y;
       const dist = Math.max(0.01, Math.hypot(dx, dy));
-      const f = (dist * dist) / L;
+      // A link across clusters pulls less than one inside a cluster.
+      const f = ((dist * dist) / L) * (nodes[a].cluster === nodes[b].cluster ? 1 : 0.12);
       const fx = (dx / dist) * f, fy = (dy / dist) * f;
       d[a].x -= fx; d[a].y -= fy; d[b].x += fx; d[b].y += fy;
     }
     for (let i = 0; i < n; i++) {
       const a = anchor.get(nodes[i].cluster)!;
-      d[i].x += (a.x - p[i].x) * 1.1;
-      d[i].y += (a.y - p[i].y) * 1.1;
+      const pull = nodes[i].cluster === 'basics' ? 4 : 2;
+      d[i].x += (a.x - p[i].x) * pull;
+      d[i].y += (a.y - p[i].y) * pull;
       const len = Math.hypot(d[i].x, d[i].y);
       if (len > 0) {
         const m = Math.min(len, t);
@@ -203,46 +209,6 @@ export function layout(nodes: { slug: string; cluster: string; title: string; de
     if (!moved) break;
   }
   return { positions: p.map((q) => ({ x: Math.round(q.x * 10) / 10, y: Math.round(q.y * 10) / 10 })), box };
-}
-
-function placeClusterLabels(nodes: GraphNode[]) {
-  const boxes = nodes.map((nd) => {
-    const w = Math.max(nd.r * 2, labelWidth(nd.title)) + 6;
-    return { x: nd.x - w / 2, y: nd.y - nd.r - 4, w, h: nd.r * 2 + LABEL_GAP + LABEL_H + 6 };
-  });
-  const cx = nodes.reduce((s, nd) => s + nd.x, 0) / nodes.length;
-  const cy = nodes.reduce((s, nd) => s + nd.y, 0) / nodes.length;
-  const placed: { x: number; y: number; w: number; h: number }[] = [];
-  const out: Graph['clusterLabels'] = [];
-  for (const c of CLUSTERS) {
-    const own = nodes.filter((nd) => nd.cluster === c.id);
-    if (!own.length) continue;
-    const mx = own.reduce((s, nd) => s + nd.x, 0) / own.length;
-    const my = own.reduce((s, nd) => s + nd.y, 0) / own.length;
-    const spread = Math.max(...own.map((nd) => Math.hypot(nd.x - mx, nd.y - my)));
-    const w = c.label.length * 11 + 8, h = 30;
-    let best = { x: mx, y: my, score: Infinity };
-    for (let k = 0; k < 24; k++) {
-      const a = (k / 24) * Math.PI * 2;
-      for (const rr of [spread * 0.6, spread + 20, spread + 50]) {
-        const x = mx + Math.cos(a) * rr, y = my + Math.sin(a) * rr;
-        const b = { x: x - w / 2, y: y - h / 2, w, h };
-        let score = 0;
-        for (const o of [...boxes, ...placed]) {
-          const ox = Math.min(b.x + b.w, o.x + o.w) - Math.max(b.x, o.x);
-          const oy = Math.min(b.y + b.h, o.y + o.h) - Math.max(b.y, o.y);
-          if (ox > 0 && oy > 0) score += ox * oy;
-        }
-        // Prefer close to the cluster, and on its outer side.
-        const outward = (x - mx) * (mx - cx) + (y - my) * (my - cy);
-        score += rr * 1.5 - (c.id === 'basics' ? 0 : outward * 0.02);
-        if (score < best.score) best = { x, y, score };
-      }
-    }
-    placed.push({ x: best.x - w / 2, y: best.y - h / 2, w, h });
-    out.push({ id: c.id, label: c.label, x: Math.round(best.x), y: Math.round(best.y) });
-  }
-  return { labels: out, boxes: [...boxes, ...placed] };
 }
 
 // ---------------------------------------------------------------- loading
@@ -326,7 +292,10 @@ async function load(): Promise<Wiki> {
     r: Math.round(nodeRadius(base[i].degree) * 10) / 10,
     major: majors.has(a.slug),
   }));
-  const { labels, boxes } = placeClusterLabels(nodes);
+  const boxes = nodes.map((nd) => {
+    const w = Math.max(nd.r * 2, labelWidth(nd.title)) + 6;
+    return { x: nd.x - w / 2, y: nd.y - nd.r - 4, w, h: nd.r * 2 + LABEL_GAP + LABEL_H + 6 };
+  });
   const pad = 24;
   const minX = Math.min(...boxes.map((b) => b.x)) - pad;
   const minY = Math.min(...boxes.map((b) => b.y)) - pad;
@@ -337,7 +306,7 @@ async function load(): Promise<Wiki> {
   return {
     articles,
     bySlug,
-    graph: { nodes, edges, viewBox, clusterLabels: labels },
+    graph: { nodes, edges, viewBox },
     neighbours: (slug) => [...(nb.get(slug) ?? [])],
   };
 }
