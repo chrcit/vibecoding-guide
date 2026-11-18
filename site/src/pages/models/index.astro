@@ -78,7 +78,7 @@ const headings = [
 
   <Deeper level="technical" title="Tokens, prices and the context window">
     <p>
-      Models read and write <Term def="A piece of a word, a few characters long. Prices, limits and the context window are all counted in tokens.">tokens</Term>. API prices are quoted per million tokens, separately for input (what the model reads) and output (what it writes). On every current Claude model <Fact id="lineup.claudeOutputRatio" show="claim" />
+      Models read and write <Term def="A piece of a word, a few characters long. Prices, limits and the context window are all counted in tokens.">tokens</Term>. API prices are quoted per million tokens, separately for input (what the model reads) and output (what it writes). <Fact id="lineup.claudeOutputRatio" show="claim" />
     </p>
     <p>
       The context window is the most the model can hold in one request: system instructions, your messages, files, tool results and its own replies. A harness may use less than the model allows: <Fact id="models.gpt-6-2-astra.context" show="claim" />
@@ -102,7 +102,7 @@ const headings = [
   )}
   <Note title="On a $20 plan">
     <p>
-      Most readers pay a flat monthly fee, not per token. Claude Pro costs <Fact id="plans.claude.pro.price" /> a month; <Fact id="plans.claude.pro.models" show="claim" /> <Fact id="plans.claude.pro.fable" show="claim" />
+      Most readers pay a flat monthly fee. Claude Pro costs <Fact id="plans.claude.pro.price" /> a month; <Fact id="plans.claude.pro.models" show="claim" /> <Fact id="plans.claude.pro.fable" show="claim" />
       ChatGPT Plus costs <Fact id="plans.chatgpt.plus.price" /> and runs all four OpenAI models in Codex, with published message estimates per model. The <a href={url('explain/plans-and-api/')}>plans explainer</a> says what a plan's limit means.
     </p>
   </Note>
@@ -133,7 +133,7 @@ const headings = [
       Variance. A single run of an agentic task is one sample from a noisy process; small differences in points are within run-to-run variation unless the publisher reports intervals.
     </p>
     <p>
-      Cost per task against cost per token. The price per token says nothing about how many tokens a model spends on a task. A cheaper model that writes three times as much, or fails and retries, can cost more per finished task. Artificial Analysis reports cost per task where it can: <Fact id="benchmarks.aa.opusByEffort.max.costPerTask" show="claim" /> That figure is the one to compare, not the list price.
+      Cost per task against cost per token. The price per token says nothing about how many tokens a model spends on a task. A cheaper model that writes three times as much, or fails and retries, can cost more per finished task. Artificial Analysis reports cost per task where it can: <Fact id="benchmarks.aa.opusByEffort.max.costPerTask" show="claim" /> Compare that figure across models; the list price alone misleads.
     </p>
     <p>
       Effort. Scores are taken at a stated effort level. The same model at a lower level is a different point on Fig. 11, so compare models at the effort you will run them at.
@@ -145,7 +145,7 @@ const headings = [
     Most current models let you set an effort level: how hard the model may think before it answers and how thoroughly it works. Higher effort means more thinking, more tool calls and more checking. All of that is written output, so it takes longer and uses more of what you pay for, in API dollars or in plan usage.
   </p>
   <p>
-    Effort works as a ceiling. Anthropic puts it this way: <Fact id="lineup.effortSignal" show="claim" /> A simple edit at high effort may cost little more than at low, because the model has nothing hard to think about. The dial matters on hard tasks, where a higher level lets the model keep going.
+    Effort works as a ceiling. <Fact id="lineup.effortSignal" show="claim" /> A simple edit at high effort may cost little more than at low, because the model has nothing hard to think about. The dial matters on hard tasks, where a higher level lets the model keep going.
     Opus 5.5 starts at <Fact id="models.claude-opus-5-5.effort.apiDefault" /> effort on the API, and Claude Code starts the current Claude models at <Fact id="lineup.claudeCodeEffortDefault" />.
   </p>
 
@@ -160,10 +160,10 @@ const headings = [
 
   <Deeper level="technical" title="What effort is called in each harness">
     <p>
-      Claude Code: <Fact id="harnesses.claudeCode.effort" show="claim" /> <Fact id="lineup.claudeCodeEffortLevels" show="claim" />
+      <Fact id="harnesses.claudeCode.effort" show="claim" /> <Fact id="lineup.claudeCodeEffortLevels" show="claim" />
     </p>
     <p>
-      Codex: <Fact id="harnesses.codex.effort" show="claim" /> <Fact id="lineup.codexEffortLevels" show="claim" />
+      <Fact id="harnesses.codex.effort" show="claim" /> <Fact id="lineup.codexEffortLevels" show="claim" />
     </p>
     <p>On the API the parameter is <code>output_config.effort</code> on a Claude request. The names line up loosely across labs; the same word does not mean the same amount of thinking on two models.</p>
   </Deeper>
@@ -182,8 +182,8 @@ const headings = [
 
   <h2 id="choosing">Choosing a size and an effort</h2>
   <p>
-    Start with the model the lab suggests for most work, at its default effort. For Anthropic that is Opus: <Fact id="lineup.anthropicAdvice" show="claim" /> It is also what <Fact id="harnesses.claudeCode.defaultModel" show="claim" />
-    For OpenAI, the lab points everyday coding at Sol.
+    Start with the model the lab suggests for most work, at its default effort. For Anthropic that is Opus. <Fact id="lineup.anthropicAdvice" show="claim" /> <Fact id="harnesses.claudeCode.defaultModel" show="claim" />
+    For OpenAI it is Sol, which the lab describes this way: “<Fact id="models.gpt-6-2-sol.purpose" />”
   </p>
   <p>
     Go up a size or an effort level when the task is mostly judgement: planning the club list before any code exists, choosing how its data should be stored, or a bug like the bakery's holiday hours that has survived two attempts. A wrong plan costs more than the tokens to get it right.
@@ -200,7 +200,7 @@ const headings = [
 
   <Deeper level="engineer" title="Cache pricing and why behaviour differs by harness">
     <p>
-      In a long agent session much of the input is the same conversation read again, which the prompt cache serves at a lower price. <Fact id="lineup.cacheReadShare" show="claim" /> A model with a cheap cache read can cost less per session than its list price suggests, and a cache miss (after a change of effort, model or system prompt) bills the whole conversation at the input price.
+      In a long agent session much of the input is the same conversation read again, which the prompt cache serves at a lower price. <Fact id="lineup.cacheReadShare" show="claim" /> A model with a cheap cache read can cost less per session than its list price suggests, and a cache miss (after a change of effort, model or system prompt) bills the whole conversation again at the full input price or more.
     </p>
     <p>
       The same model differs by harness because the harness writes the system prompt, decides which tools exist and how their results are shown, manages and compacts the context, and sets defaults. One example from the data: the API default effort for Sonnet 5.5 is <Fact id="models.claude-sonnet-5-5.effort.apiDefault" />, while Claude Code starts it at <Fact id="lineup.claudeCodeEffortDefault" />. Before you blame a model for a result, check which harness ran it and with which settings.
@@ -212,7 +212,7 @@ const headings = [
 
   <h2 id="compare">Run your own comparison</h2>
   <p>
-    The best test of a model is your own task. Give two models the same job, in the same project, and read what comes back. Run them side by side in two threads, or one after the other in a fresh session each, so neither sees the other's work. Then look at the result, not the summary: did the fix work, was the change small, did it run the tests?
+    The best test of a model is your own task. Give two models the same job, in the same project, and read what comes back. Run them side by side in two threads, or one after the other in a fresh session each, so neither sees the other's work. Then look at the result itself: did the fix work, was the change small, did it run the tests?
   </p>
   <CopyPrompt title="The same task for two models">{`The bakery website shows the normal opening hours on public holidays. It should show the holiday hours.
 
