@@ -224,11 +224,11 @@ An agent can run any command your user account can run, unless something stops i
 
 List prices per million tokens, input / output, in November 2026: Claude Fable 5.2 $8 / $40, Opus 5.5 $4 / $20, Sonnet 5.5 $2 / $10 ([pricing](https://platform.claude.com/docs/en/about-claude/pricing)). Output is where the cost is, because output tokens cost five times input on every current Claude model and thinking is billed as output. Moving the bulk of the output from Fable to Sonnet cuts that part of the bill by a factor of four.
 
-Anthropic's own [advice](https://platform.claude.com/docs/en/about-claude/models/overview) is to start with Opus 5.5 and move to Fable only when Opus at higher effort still falls short. Orchestration follows the same idea: put the expensive judgement where it matters.
+Anthropic's own [advice](https://platform.claude.com/docs/en/models/overview) is to start with Opus 5.5 and move to Fable only when Opus at higher effort still falls short. Orchestration follows the same idea: put the expensive judgement where it matters.
 
 > Create a fresh thread whose only job is to orchestrate. Use Opus as the orchestrator. Break the work into independent pieces, hand each to a Sonnet subthread running in parallel in its own worktree, and review what comes back against the tests. For decisions you are unsure about, start a separate Fable thread for a second opinion. Keep a dashboard of what each worker is doing.
 
-In T3 Code the workers can be on a different provider than the orchestrator. See [Models and Costs](./models-and-costs.md#the-model-landscape) for what each is good at.
+In T3 Code the workers can be on a different provider than the orchestrator. See [Models and Costs](./models-and-costs.md#the-model-landscape) for prices and for how to compare two models on your own work.
 
 It is not worth it when:
 

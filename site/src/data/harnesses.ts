@@ -42,6 +42,7 @@ export const harnesses = {
       CC('worktrees'),
     ),
     queue: fact(true, 'Claude Code queues a message you send while it is working.', CC('interactive-mode')),
+    web: fact(true, 'Claude Code also runs on the web, in cloud sessions that work on your GitHub repositories.', CC('claude-code-on-the-web')),
     login: fact('claude auth login', 'Sign in to Claude Code with claude auth login.', CC('quickstart')),
     bestPractice: fact(
       'Before a run goes unattended, make sure it knows what done looks like, can check its own work, and can only touch what it should.',

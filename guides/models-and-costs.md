@@ -15,25 +15,21 @@ API list prices per million tokens, input / output ([Anthropic](https://platform
 | Claude Fable 5.2 | 9 Nov 2026 | $8 | $40 |
 | Claude Opus 5.5 | 22 Sep 2026 | $4 | $20 |
 | Claude Sonnet 5.5 | 28 Sep 2026 | $2 | $10 |
-| Claude Haiku 5.5 | 7 Oct 2026 | $0.10 | $0.50 |
-| GPT-6.2 Astra | 17 Nov 2026 | $8 | $40 |
-| GPT-6.2 Sol | 17 Nov 2026 | $2 | $10 |
-| GPT-6.1 Terra | 26 Oct 2026 | $1 | $5 |
-| GPT-6 Luna | 22 Sep 2026 | $0.10 | $0.50 |
+| Claude Haiku 5.5 | 7 Oct 2026 | $0.10 (prompts up to 100k tokens), $0.50 above | $0.50, $2.50 above |
+| GPT-6.2 Astra | not listed | $8 | $40 |
+| GPT-6.2 Sol | not listed | $2 | $10 |
+| GPT-6.1 Terra | not listed | $1 | $5 |
+| GPT-6 Luna | not listed | $0.10 | $0.50 |
 
-All current Claude models have a 1M-token context window. Cache reads on Fable and Opus cost $0.20 per million, which matters for agents because they reread the same context on every step.
+All current Claude models have a 1M-token context window. Cache reads cost $0.20 per million on Fable and Opus and $0.10 on Sonnet, which matters for agents because they reread the same context on every step. Haiku 5.5 is the one Claude model priced by prompt length: a request whose prompt is over 100,000 tokens, cache reads included, pays five times the rate. OpenAI no longer lists release dates on its models page.
 
-Anthropic's own [advice](https://platform.claude.com/docs/en/about-claude/models/overview) is to start with Opus 5.5 and move to Fable 5.2 only when Opus at higher effort still falls short.
+Anthropic's own [advice](https://platform.claude.com/docs/en/models/overview) is to start with Opus 5.5 and move to Fable 5.2 only when Opus at higher effort still falls short.
 
-### Judgement vs. grind
+### Comparing two models yourself
 
-This part is working experience, not measurement.
+Claims of the kind "this lab's models are better at X" do not keep: the models change every few weeks and so do the opinions of the people who use them. A comparison you run yourself lasts longer. Give two models the same real task from your work, with the same context and the same way to check the result, and compare the diffs and what each one could not verify. In T3 Code that is two threads on two providers.
 
-In our use, the Anthropic models make better decisions over long stretches of work. They stay coherent across many interacting problems, notice dead ends early, and recognise when a reported problem is not a real one. That shows most on work that needs judgement: architecture, ambiguous requirements, qualitative trade-offs.
-
-The OpenAI models are very goal-driven and token-efficient. Given a checkable target (a test suite, a numerical tolerance, 10,000 cases that must pass) they grind on it for hours. That suits quantitative work with a clear pass/fail.
-
-Plenty of people who use both would put it differently. Try both on your own work.
+> **The owner's opinion, 18 November 2026.** Claude is better at design work, and the current class of Fable 5.2 and Opus 5.5 is better at high-level decision making. That is one person's view, not a measurement.
 
 ### One public case
 
@@ -78,19 +74,19 @@ Before answering, current models write tokens for themselves: working through th
 
 ### The effort levels
 
-Claude Code and the Claude API offer low, medium, high, xhigh and max. Claude Code defaults to medium. Codex offers low, medium, high, extra high, max and ultra.
+Claude Code and the Claude API offer low, medium, high, xhigh and max. The default depends on the model: medium on Opus 5.5 (Claude Code's default model) and Haiku 5.5, high on Fable 5.2 and Sonnet 5.5 ([effort](https://platform.claude.com/docs/en/build-with-claude/effort)). Codex offers low, medium, high, extra high, and on some models max and ultra, where ultra hands work to subagents.
 
-What the levels do on Opus 5.5, measured by [Artificial Analysis](https://artificialanalysis.ai/models/claude-opus-5-5) on its index:
+What the levels do on Opus 5.5, measured by [Artificial Analysis](https://artificialanalysis.ai/models/claude-opus-5-5) on its index. Tokens are the output tokens Opus wrote over the whole index run, thinking included:
 
-| Effort | Index score | Output tokens per task | Cost per task |
-|--------|-------------|------------------------|---------------|
-| low | 34.8 | 19.1k | $0.98 |
-| medium | 48.2 | 43.8k | $2.45 |
-| high | 51.8 | 60.1k | $3.46 |
-| xhigh | 57.4 | 103.4k | $6.05 |
-| max | 59.1 | 173.3k | $10.04 |
+| Effort | Index score | Output tokens, whole run |
+|--------|-------------|--------------------------|
+| low | 34.8 | 21.1M |
+| medium | 48.2 | 42.5M |
+| high | 51.8 | 56.1M |
+| xhigh | 57.4 | 101M |
+| max | 59.1 | 218M |
 
-The curve has a knee. Going from medium to xhigh buys 9.2 points for 2.5× the cost per task. Going from xhigh to max buys another 1.7 points for 1.7× more. Higher effort also means longer waits. In our experience, extra thinking on easy tasks mostly adds time.
+At max, one index task costs $10.04 at list price. The curve has a knee. Going from medium to xhigh buys 9.2 points for 2.4× the output tokens. Going from xhigh to max buys another 1.7 points for 2.2× more. Higher effort also means longer waits. In our experience, extra thinking on easy tasks mostly adds time.
 
 Default to medium. Raise it for hard problems, for orchestrators making decisions that many workers depend on, and for long autonomous runs where a wrong turn early is expensive. Lower it for mechanical work.
 
@@ -105,24 +101,29 @@ Output tokens cost five times input tokens on every current Claude model, and th
 | Provider | Plan | Monthly | Notes |
 |----------|------|---------|-------|
 | Claude | Pro | $20 | Claude Code included. Fable only via usage credits. |
-| Claude | Max | $100 | 5× Pro usage. Fable included for up to half the weekly limit. |
-| Claude | Ultra | $200 | 10× Pro per week (formerly "Max 20x"). Fable as on Max. |
-| ChatGPT | Free / Go | $0 / $8 | Codex included, smallest model only. |
+| Claude | Max | $100 | 5× Pro usage. Fable included for up to half the weekly limit. $100 a month of API credit. |
+| Claude | Ultra | $200 | 10× Pro per week (formerly "Max 20x"). No five-hour limit on verified accounts. Fable as on Max. $200 a month of API credit. |
+| ChatGPT | Free / Go | $0 / $8 | Codex included. |
 | ChatGPT | Plus | $20 | Codex included. |
 | ChatGPT | Pro | $100, $200 or $500 | Codex included, no five-hour limit. |
 
-Sources: [Claude pricing](https://claude.com/pricing), [Fable on plans](https://support.claude.com/en/articles/15424964), [Codex pricing](https://learn.chatgpt.com/docs/pricing). Claude Code is not on the free Claude plan.
+Sources: [Claude pricing](https://claude.com/pricing), [Ultra](https://support.claude.com/en/articles/17728952), [Fable on plans](https://support.claude.com/en/articles/15424964), [Codex pricing](https://learn.chatgpt.com/docs/pricing). Claude Code is not on the free Claude plan.
+
+The API credit on Max and Ultra is for building on the Claude Platform. It cannot be spent in interactive Claude Code or the Claude apps, and it does not raise your plan limits ([API credits](https://support.claude.com/en/articles/17154008)).
 
 ### How limits work
 
-Claude plans have a session limit that resets every five hours, plus weekly limits ([usage limits](https://support.claude.com/en/articles/11647753)). With usage credits turned on, work continues past the limit at API rates. Codex counts messages per five-hour period on Plus and Business, weekly limits may apply, and Pro has no five-hour limit.
+Claude plans have a five-hour limit that starts with your first message and resets in full five hours later, plus weekly limits shared across all models ([usage limits](https://support.claude.com/en/articles/11647753)). Verified Ultra accounts have no five-hour limit. With usage credits turned on, work continues past the limit at API rates.
 
-Neither Anthropic nor OpenAI publishes a dollar or token value for a plan's limits. Two data points, both clearly not official:
+Codex counts messages per five-hour period on Plus and Business, weekly limits may apply, and Pro has no five-hour limit. OpenAI publishes estimated ranges for Plus: 6 to 50 local messages per five hours on GPT-6.2 Astra, 17 to 180 on Sol, 35 to 285 on Terra and 350 to 3,000 on Luna ([Codex pricing](https://learn.chatgpt.com/docs/pricing)). Anthropic publishes no such figure.
 
-- **One account, one afternoon (our observation):** the usage meter suggested roughly $30 of API-priced usage per five-hour window on Claude Pro and roughly $150 on Max. Your mix of models and effort will change this a lot.
-- **One public project:** in the [ts-rust](https://github.com/pingdotgg/ts-rust) write-up, about $24,000 of API-priced usage came to roughly 9.5 weeks of a $200 plan's limit, so about $2,500 per week at list price.
+Neither publishes a dollar value for a plan's limits. Some public, attributed estimates, none of them official:
 
-Both suggest that for sustained agentic work a subscription costs far less than the same usage billed through the API.
+- [Theo](https://www.youtube.com/@theo), who makes T3 Code, measures his own plans in public. On 2 October 2026 he put a $200 Claude plan at about $8,000 of API-priced tokens a month, of which $4,000 can be Fable ([video](https://www.youtube.com/watch?v=D8PikZ1KhUo)). On 13 November 2026 he put a $100 Claude plan at "like three to five grand" ([video](https://www.youtube.com/watch?v=XtykeVoSmP8)). His figures move from video to video as the plans change.
+- In the public [ts-rust](https://github.com/pingdotgg/ts-rust) write-up, about $24,000 of API-priced usage came to roughly 9.5 weeks of a $200 plan's limit, so about $2,500 per week at list price.
+- On one account, one afternoon (our observation), the usage meter suggested roughly $30 of API-priced usage per five-hour window on Claude Pro and roughly $150 on Max. Your mix of models and effort will change this a lot.
+
+All of them suggest that for sustained agentic work a subscription costs far less than the same usage billed through the API.
 
 ### Recommendation
 

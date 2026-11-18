@@ -94,10 +94,12 @@ This guide started in early 2026 as *Vibe Coding 101*, built around web builders
 ```
 ├── README.md                    ← You are here
 ├── guides/                      ← Educational content
-│   └── fact-check.md            ← Sources for every number and tool claim
+│   └── fact-check.md            ← Sources for every number and tool claim (generated from site/src/data/)
 ├── skills/                      ← Prompts you can use as skills
 ├── skills-table.md              ← Skills reference
 ├── site/                        ← Visual essay + reference site (Astro); reads guides/ and skills/
+│   └── src/data/                ← Every dated fact, with its source (see UPDATE.md)
+├── UPDATE.md                    ← How to update a price, add a model, refresh benchmarks
 ├── CLAUDE.md                    ← Context for Claude-based tools
 └── AGENTS.md                    ← Context for Codex and other agents
 ```

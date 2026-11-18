@@ -64,8 +64,8 @@ Guides and skills for people learning to build software by directing AI agents. 
 2. Link related guides at the end of each guide
 3. Update README.md when adding or removing content
 4. Verify tool claims against official docs (t3.codes, Claude Code docs, Codex docs, v0, Lovable)
-5. Date time-sensitive facts (model names, prices, limits) and keep them in `models-and-costs.md`
-6. Every number or tool claim needs a row in `guides/fact-check.md` with a source; personal experience must be labelled as such
+5. Dated facts (model names, prices, limits, scores, tool features) live in `site/src/data/*.ts`, each with a source URL, the date it was verified and a status (`verified`, `observation` or `unverified`). Prose may restate them, but a change starts in the data file. See `UPDATE.md`
+6. `guides/fact-check.md` is generated from the data: never edit it by hand, run `cd site && node scripts/check-facts.mjs --write`. Personal experience and estimates go in `observations.ts` with status `observation` and must be labelled as such in prose
 7. Never include private details from source material (names, employers, clients, research data)
 8. Use TypeScript in code examples
 9. The site renders the markdown directly: keep relative `.md` links (they become site routes). When an essay figure states a fact, keep it in sync with the matching guide
