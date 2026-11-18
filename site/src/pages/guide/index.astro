@@ -1,35 +1,23 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { groups, url } from '../../lib/nav';
+import PageHeader from '../../components/site/PageHeader.astro';
+import CardGrid from '../../components/site/CardGrid.astro';
+import Card from '../../components/site/Card.astro';
+import { groups } from '../../lib/nav';
 ---
 <Base title="Reference · Agentic Coding Guide" description="The full reference: ways of working, T3 Code, models and costs, skills, web foundations and shipping." section="reference">
-  <main class="ref-index">
-    <h1>Reference</h1>
-    <p class="lede">The essay is the tour. This is the toolbox: every guide in full, for when you are stuck or want the details. Same text as the <a href="https://github.com/chrcit/vibecoding-guide">markdown on GitHub</a>.</p>
+  <div class="frame ref-index">
+    <PageHeader title="Reference">
+      <p>The essay is the tour. This is the toolbox: every guide in full, for when you are stuck or want the details. Same text as the <a href="https://github.com/chrcit/vibecoding-guide">markdown on GitHub</a>.</p>
+    </PageHeader>
     {groups.map((g) => (
-      <section>
-        <h2>{g.name}</h2>
-        <ul>
-          {g.items.map((i) => (
-            <li><a href={url(`guide/${i.id}/`)}><strong>{i.title}</strong><span>{i.blurb}</span></a></li>
-          ))}
-        </ul>
-      </section>
+      <CardGrid title={g.name}>
+        {g.items.map((i) => <Card href={`guide/${i.id}/`} title={i.title} />)}
+      </CardGrid>
     ))}
-  </main>
+  </div>
 </Base>
+
 <style>
-  .ref-index { max-width: 52rem; margin: 0 auto; padding: 3rem var(--gutter) 0; }
-  h1 { font-size: clamp(2.4rem, 7vw, 3.6rem); font-weight: 500; letter-spacing: -0.02em; margin: 0 0 0.5rem; }
-  .lede { color: var(--ink-2); max-width: var(--measure); margin: 0 0 2.5rem; }
-  h2 { font-family: var(--mono); font-size: 0.8rem; font-weight: 600; color: var(--muted); margin: 2.5rem 0 0.75rem; }
-  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); }
-  li a {
-    display: flex; flex-direction: column; gap: 0.25rem; height: 100%;
-    text-decoration: none; padding: 0.9rem 1rem; border: 1px solid var(--rule); border-radius: 12px; background: var(--card);
-    transition: border-color 160ms ease, transform 160ms ease;
-  }
-  li a:hover { border-color: var(--accent); color: inherit; }
-  li strong { font-weight: 600; font-size: 1.05rem; }
-  li span { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); line-height: 1.45; }
+  .ref-index { max-width: calc(var(--wide) + 2 * var(--gutter)); padding-top: clamp(2rem, 6vw, 4.5rem); }
 </style>

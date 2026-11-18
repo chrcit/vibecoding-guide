@@ -1,0 +1,183 @@
+---
+/*
+  Layout for explainers, wiki and reference pages. Wraps Base.
+  Props:
+    title, description   page title (the <h1>) and meta description
+    section?             SectionId, marks the nav item
+    lede?                plain-text lede under the title (or use slot "lede")
+    updated?             Date or ISO string, shown under the title
+    headings?            { depth, slug, text }[]: builds the contents; shown
+                         when there are three or more h2s
+    prev?, next?         { href, title }: previous/next links; href goes
+                         through url() unless it is absolute
+    docTitle?            the <title>, if it should differ from title
+  Slots:
+    default              the article body, styled by .prose
+    lede                 a rich lede (links, emphasis) in place of the prop
+    verified             a "last verified" line, shown after the body
+    sidebar              a left column on wide screens (e.g. a list of sibling
+                         pages); after the article on narrow ones
+*/
+import Base from './Base.astro';
+import PageHeader from '../components/site/PageHeader.astro';
+import Toc from '../components/site/Toc.astro';
+import { url, type SectionId } from '../lib/nav';
+
+type Link = { href: string; title: string };
+interface Props {
+  title: string;
+  description: string;
+  section?: SectionId;
+  lede?: string;
+  updated?: Date | string;
+  headings?: { depth: number; slug: string; text: string }[];
+  prev?: Link;
+  next?: Link;
+  docTitle?: string;
+}
+const { title, description, section, lede, updated, headings = [], prev, next, docTitle } = Astro.props;
+const h2s = headings.filter((h) => h.depth === 2);
+const showToc = h2s.length >= 3;
+const hasSidebar = Astro.slots.has('sidebar');
+const hasVerified = Astro.slots.has('verified');
+const hasLedeSlot = Astro.slots.has('lede');
+const to = (href: string) => (/^(https?:|#)/.test(href) ? href : url(href));
+---
+<Base title={docTitle ?? `${title} · Agentic Coding Guide`} description={description} section={section} progress type="article">
+  <div class:list={['article', { 'has-toc': showToc, 'has-side': hasSidebar }]}>
+    <div class="main">
+      {hasLedeSlot ? (
+        <PageHeader title={title} updated={updated}><slot name="lede" /></PageHeader>
+      ) : lede ? (
+        <PageHeader title={title} updated={updated}><p>{lede}</p></PageHeader>
+      ) : (
+        <PageHeader title={title} updated={updated} />
+      )}
+
+      {showToc && <div class="toc-narrow"><Toc headings={headings} maxDepth={2} collapsible /></div>}
+
+      <article class="prose">
+        <slot />
+      </article>
+
+      {hasVerified && <p class="verified"><slot name="verified" /></p>}
+
+      {(prev || next) && (
+        <nav class="pager" aria-label="Previous and next">
+          {prev ? (
+            <a class="prev" href={to(prev.href)} rel="prev">
+              <span class="dir">
+                <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8H4M7.5 4.5 4 8l3.5 3.5" /></svg>
+                Previous
+              </span>
+              <span class="t">{prev.title}</span>
+            </a>
+          ) : <span />}
+          {next && (
+            <a class="next" href={to(next.href)} rel="next">
+              <span class="dir">
+                Next
+                <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" /></svg>
+              </span>
+              <span class="t">{next.title}</span>
+            </a>
+          )}
+        </nav>
+      )}
+    </div>
+
+    {showToc && <aside class="toc-side"><Toc headings={headings} maxDepth={2} /></aside>}
+    {hasSidebar && <aside class="side"><slot name="sidebar" /></aside>}
+  </div>
+</Base>
+
+<style>
+  .article {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'main' 'side';
+    gap: var(--space-8) var(--space-8);
+    max-width: var(--full);
+    margin-inline: auto;
+    padding: clamp(2rem, 6vw, 4.5rem) var(--gutter) 0;
+  }
+  .main { grid-area: main; min-width: 0; max-width: var(--measure); }
+  .side { grid-area: side; min-width: 0; }
+  .toc-side { display: none; grid-area: toc; }
+  .toc-narrow { margin: calc(-1 * var(--space-4)) 0 var(--space-7); }
+  .article:not(.has-side) { justify-content: center; grid-template-columns: minmax(0, var(--measure)); }
+
+  /* Laptop: body and contents side by side. */
+  @media (min-width: 64rem) {
+    .article.has-toc {
+      grid-template-columns: minmax(0, var(--measure)) 14rem;
+      grid-template-areas: 'main toc' 'side side';
+      justify-content: center;
+    }
+    .article.has-side:not(.has-toc) { grid-template-columns: minmax(0, var(--measure)); justify-content: center; }
+    .has-toc .toc-side { display: block; }
+    .has-toc .toc-narrow { display: none; }
+    .toc-side :global(.toc) {
+      position: sticky;
+      top: calc(var(--header-h) + var(--space-6));
+      max-height: calc(100vh - var(--header-h) - var(--space-7));
+      overflow-y: auto;
+      padding-top: 0.35rem;
+    }
+  }
+  /* Wide: sibling list | body | contents. */
+  @media (min-width: 80rem) {
+    .article.has-side {
+      grid-template-columns: 13rem minmax(0, var(--measure)) 13rem;
+      grid-template-areas: 'side main toc';
+      justify-content: center;
+      column-gap: var(--space-7);
+    }
+    .article.has-side:not(.has-toc) {
+      grid-template-columns: 13rem minmax(0, var(--measure)) 13rem;
+      grid-template-areas: 'side main .';
+    }
+    .has-side .side {
+      position: sticky;
+      top: calc(var(--header-h) + var(--space-6));
+      align-self: start;
+      max-height: calc(100vh - var(--header-h) - var(--space-7));
+      overflow-y: auto;
+      padding-top: 0.35rem;
+    }
+  }
+
+  .verified {
+    margin: var(--space-7) 0 0;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--rule);
+    color: var(--muted);
+    font-size: var(--text-s);
+    font-variant-numeric: lining-nums;
+  }
+
+  .pager {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin-top: var(--space-8);
+  }
+  .pager a {
+    display: flex; flex-direction: column; gap: var(--space-1);
+    padding: var(--space-4) 0 0;
+    border-top: 1px solid var(--rule-strong);
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .pager .next { text-align: right; align-items: flex-end; grid-column: 2; }
+  .dir { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--muted); font-size: var(--text-s); }
+  .dir svg { transition: transform var(--dur) var(--ease-out); }
+  .t { font-size: var(--text-l); font-weight: 520; line-height: 1.25; text-wrap: balance; }
+  .pager a:hover .t { color: var(--accent); }
+  .pager .prev:hover svg { transform: translateX(-3px); }
+  .pager .next:hover svg { transform: translateX(3px); }
+  @media (max-width: 30rem) {
+    .pager { grid-template-columns: 1fr; }
+    .pager .next { grid-column: 1; }
+  }
+</style>

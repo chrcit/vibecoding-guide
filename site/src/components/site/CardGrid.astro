@@ -1,0 +1,32 @@
+---
+/*
+  A grid of link cards for index pages. Renders a <ul>; put <Card> elements
+  (which render <li>) inside it.
+  Props: title? (string, a heading for the group, rendered as <h2>),
+  min? (string, the narrowest a column may get; default "17rem").
+  Slots: default (Card elements).
+*/
+interface Props { title?: string; min?: string }
+const { title, min = '17rem' } = Astro.props;
+---
+<section class="card-grid">
+  {title && <h2>{title}</h2>}
+  <ul style={`--min: ${min}`}><slot /></ul>
+</section>
+
+<style>
+  .card-grid { margin: 0 0 var(--space-7); }
+  h2 {
+    margin: 0 0 var(--space-4);
+    font-size: var(--text-xl);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: var(--leading-tight);
+  }
+  ul {
+    list-style: none; margin: 0; padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--min)), 1fr));
+    column-gap: var(--space-6);
+  }
+</style>

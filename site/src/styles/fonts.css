@@ -1,0 +1,46 @@
+/*
+  Self-hosted faces. Both are SIL Open Font License 1.1; the licence files sit
+  next to the fonts in src/assets/fonts/. The files are the variable fonts from
+  the Google Fonts repository (ofl/newsreader, ofl/jetbrainsmono), subset to
+  Latin, Latin Extended-A, punctuation, arrows, maths and box drawing with
+  fontTools, all OpenType features kept. Relative URLs so Vite fingerprints
+  them and rewrites them under BASE_PATH.
+*/
+@font-face {
+  font-family: 'Newsreader';
+  src: url('../assets/fonts/Newsreader-Roman.woff2') format('woff2-variations'),
+       url('../assets/fonts/Newsreader-Roman.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Newsreader';
+  src: url('../assets/fonts/Newsreader-Italic.woff2') format('woff2-variations'),
+       url('../assets/fonts/Newsreader-Italic.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('../assets/fonts/JetBrainsMono.woff2') format('woff2-variations'),
+       url('../assets/fonts/JetBrainsMono.woff2') format('woff2');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Metric-matched fallbacks so the swap does not shift the page. */
+@font-face {
+  font-family: 'Newsreader Fallback';
+  src: local('Georgia');
+  size-adjust: 92%;
+  ascent-override: 98%;
+  descent-override: 26%;
+}
+@font-face {
+  font-family: 'JetBrains Mono Fallback';
+  src: local('Menlo'), local('Consolas'), local('DejaVu Sans Mono');
+  size-adjust: 101%;
+}

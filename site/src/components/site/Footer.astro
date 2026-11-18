@@ -1,7 +1,52 @@
 ---
-// STUB. Owner: design-system worker.
+/*
+  The site footer: source, licence, the sources page (linked only once
+  src/pages/sources/index.astro exists, so the link check passes before it
+  does) and the build date. No props.
+*/
+import { url } from '../../lib/nav';
+const hasSources = Object.keys(import.meta.glob('../../pages/sources/index.astro')).length > 0;
+const built = new Date();
+const builtIso = built.toISOString().slice(0, 10);
+const builtText = built.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 ---
-<footer class="site">
-  <span>Agentic Coding Guide</span>
-  <span><a href="https://github.com/chrcit/vibecoding-guide">Source on GitHub</a> · MIT</span>
+<footer class="site-footer">
+  <div class="inner">
+    <p class="name">
+      <a href={url('')}>Agentic Coding Guide</a>
+    </p>
+    <ul class="links">
+      <li><a href="https://github.com/chrcit/vibecoding-guide">Source on GitHub</a></li>
+      {hasSources && <li><a href={url('sources/')}>Sources</a></li>}
+      <li>MIT licence</li>
+      <li>Built <time datetime={builtIso}>{builtText}</time></li>
+    </ul>
+  </div>
 </footer>
+
+<style>
+  .site-footer {
+    margin-top: var(--space-9);
+    border-top: 1px solid var(--rule);
+    color: var(--muted);
+    font-size: var(--text-s);
+  }
+  .inner {
+    max-width: var(--full); margin-inline: auto;
+    padding: var(--space-6) var(--gutter) var(--space-7);
+    display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+    gap: var(--space-4) var(--space-6);
+  }
+  .name { margin: 0; display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; align-items: baseline; }
+  .name a { color: var(--ink); font-weight: 600; font-size: var(--text-m); text-decoration: none; }
+  .name a:hover { color: var(--accent); }
+  .links {
+    list-style: none; margin: 0; padding: 0;
+    display: flex; flex-wrap: wrap; gap: 0.25rem 1.5rem;
+    font-variant-numeric: lining-nums;
+  }
+  .links li { display: block; }
+  .links a { color: var(--ink-2); display: inline-block; padding: 0.6rem 0; }
+  .links li:not(:has(a)) { padding: 0.6rem 0; }
+  .links a:hover { color: var(--accent); }
+</style>

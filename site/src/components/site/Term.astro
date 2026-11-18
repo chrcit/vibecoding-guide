@@ -1,0 +1,124 @@
+---
+/*
+  An inline term with a definition popover.
+  Props: def (string, the definition, one or two sentences).
+  Slots: default (the term as it appears in the sentence).
+
+  The term is a disclosure button (aria-expanded). The definition sits right
+  after it in the DOM and is display:none until opened, so a screen reader
+  reads it once, in place, and only when asked. Opens on click, tap, Enter or
+  Space, and on mouse hover; closes on Escape (focus returns to the term), a
+  second press, an outside click or its close button. On phones it shows as a
+  card pinned to the bottom of the screen. Without JavaScript, hover still
+  shows it and the text is always in the HTML.
+*/
+interface Props { def: string }
+const { def } = Astro.props;
+const id = 'term-' + Math.random().toString(36).slice(2, 9);
+---
+<script>
+  const terms = [...document.querySelectorAll<HTMLElement>('[data-term]')];
+  let current: HTMLElement | null = null;
+
+  // Keep the popover inside the viewport horizontally.
+  const place = (t: HTMLElement) => {
+    const def = t.querySelector<HTMLElement>('.term-def');
+    if (!def) return;
+    def.style.setProperty('--dx', '0px');
+    const r = def.getBoundingClientRect();
+    const pad = 12;
+    let dx = 0;
+    if (r.right > innerWidth - pad) dx = innerWidth - pad - r.right;
+    if (r.left + dx < pad) dx = pad - r.left;
+    def.style.setProperty('--dx', `${Math.round(dx)}px`);
+  };
+
+  const close = (t: HTMLElement | null, focus = false) => {
+    if (!t) return;
+    t.removeAttribute('data-open');
+    const btn = t.querySelector<HTMLButtonElement>('.term-btn');
+    btn?.setAttribute('aria-expanded', 'false');
+    if (focus) btn?.focus();
+    if (current === t) current = null;
+  };
+  const open = (t: HTMLElement) => {
+    if (current && current !== t) close(current);
+    t.setAttribute('data-open', '');
+    t.querySelector('.term-btn')?.setAttribute('aria-expanded', 'true');
+    current = t;
+    place(t);
+  };
+
+  for (const t of terms) {
+    t.querySelector('.term-btn')?.addEventListener('click', () => (t.hasAttribute('data-open') ? close(t) : open(t)));
+    t.querySelector('[data-term-close]')?.addEventListener('click', () => close(t, true));
+    t.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') place(t); });
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && current) close(current, true); });
+  document.addEventListener('click', (e) => {
+    if (current && !current.contains(e.target as Node)) close(current);
+  });
+  addEventListener('resize', () => { if (current) place(current); });
+</script>
+
+<style>
+  .term { position: relative; }
+  .term-btn {
+    display: inline;
+    padding: 0; margin: 0; border: 0; background: none;
+    font: inherit; color: inherit; line-height: inherit; text-align: inherit;
+    text-decoration: underline dotted;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 0.09em;
+    text-underline-offset: 0.22em;
+    cursor: help;
+    border-radius: 2px;
+  }
+  .term-btn:hover, .term[data-open] .term-btn { color: var(--accent); }
+  .term-btn[aria-expanded='true'] { text-decoration-style: solid; }
+
+  .term-def {
+    display: none;
+    position: absolute; z-index: 30;
+    left: 0; top: calc(100% + 0.4rem);
+    transform: translateX(var(--dx, 0px));
+    width: max-content; max-width: min(22rem, calc(100vw - 24px));
+    padding: var(--space-3) 2.75rem var(--space-3) var(--space-4);
+    background: var(--ink); color: var(--paper);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-pop);
+    font-family: var(--serif); font-size: var(--text-m); font-style: normal; font-weight: 400;
+    line-height: 1.5; text-align: left; text-indent: 0; letter-spacing: normal;
+    white-space: normal;
+  }
+  .term[data-open] .term-def { display: block; animation: term-in var(--dur) var(--ease-out); }
+  @media (hover: hover) {
+    .term:hover .term-def { display: block; }
+  }
+  .term-text { display: block; }
+  .term-close {
+    position: absolute; top: 0.25rem; right: 0.25rem;
+    display: grid; place-items: center;
+    width: 2.5rem; height: 2.5rem;
+    border: 0; border-radius: var(--radius-pill);
+    background: transparent; color: color-mix(in oklab, var(--paper) 75%, transparent);
+  }
+  .term-close:hover { color: var(--paper); background: color-mix(in oklab, var(--paper) 12%, transparent); }
+  .term-close:focus-visible { outline-color: var(--paper); }
+  /* Mouse hover shows the definition without a close button. */
+  .term:not([data-open]) .term-close { display: none; }
+  .term:not([data-open]) .term-def { padding-right: var(--space-4); }
+  @keyframes term-in { from { opacity: 0; transform: translate(var(--dx, 0px), -4px); } }
+
+  @media (max-width: 40rem) {
+    .term-def {
+      position: fixed; left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; transform: none;
+      padding: var(--space-4) 3rem var(--space-4) var(--space-4);
+      font-size: var(--text-body);
+    }
+    @keyframes term-in { from { opacity: 0; transform: translateY(8px); } }
+  }
+</style>
+
+<span class="term" data-term><button type="button" class="term-btn" aria-expanded="false" aria-controls={id}><slot /></button><span class="term-def" id={id}><span class="term-text">{def}</span><button type="button" class="term-close" data-term-close><span class="visually-hidden">Close definition</span><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg></button></span></span>
