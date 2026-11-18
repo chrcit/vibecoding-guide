@@ -31,6 +31,7 @@ Dependencies stay few. Pin exact versions that are at least two weeks old. Ask t
 | `src/components/fig/` | Figure frame, drawing kit, the figures. See `FIGURES.md` |
 | `src/components/legacy/` | First-version figures, kept only until each is replaced |
 | `src/data/` | Everything that goes out of date. See `../UPDATE.md` |
+| `src/pages/essays/` | The author's first-person essays, on the `Essay` layout |
 | `src/dev/` | Review pages, routed at `/dev/<name>/` in `astro dev` only |
 | `integrations/` | Dev-only comment tool, dev pages |
 | `scripts/` | The checks |
@@ -90,7 +91,7 @@ Fundamentals (how a loop works, what context is) stay in prose and stay free of 
 
 The guide states sourced facts. It does not rank labs or models in its own voice, and never says "X is better for Y".
 
-- The owner's own opinions go in an `<Opinion>` box, visibly his, with a date. Only opinions the owner has given.
+- The owner's own opinions go in an `<Opinion>` box, visibly his, with a date. Only opinions the owner has given. The essays under `/essays/` are his views throughout and say so at the top; they still rank labs or models only where he has approved the opinion for print (`src/data/observations.ts`).
 - A practitioner's estimate goes in an `<Estimate>` box with the person's name, a link and the date, kept apart from the sourced facts.
 
 ## Writing
@@ -120,4 +121,4 @@ This repo is public. No real names of private people, no employers, research top
 
 ## Review pages and checks
 
-`pnpm dev` serves review pages under `/dev/`. To look at your work in a real browser, use Playwright (`import { chromium } from 'playwright'`) against the dev server and take screenshots at 390px and 1280px, light and dark. Look at them before you say a visual change is done.
+`pnpm dev` serves review pages under `/dev/` (registered when the server starts, so restart it after adding one). To look at your work in a real browser, use Playwright (`import { chromium } from 'playwright'`) against the dev server and take screenshots at 390px and 1280px, light and dark. Look at them before you say a visual change is done.

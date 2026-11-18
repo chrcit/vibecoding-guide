@@ -1,0 +1,13 @@
+---
+// Placeholder for a page that is being written. Remove once every route is real.
+import Base from '../../layouts/Base.astro';
+import PageHeader from './PageHeader.astro';
+import type { SectionId } from '../../lib/nav';
+interface Props { title: string; section?: SectionId }
+const { title, section } = Astro.props;
+---
+<Base title={`${title} · Agentic Coding Guide`} description={`${title}: this page is being written.`} section={section} noindex>
+  <div style="max-width: var(--measure); margin: 0 auto; padding: var(--space-7) var(--gutter)">
+    <PageHeader title={title}><p>This page is being written.</p></PageHeader>
+  </div>
+</Base>

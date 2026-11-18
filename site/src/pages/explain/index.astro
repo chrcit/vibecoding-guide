@@ -1,0 +1,20 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHeader from '../../components/site/PageHeader.astro';
+import CardGrid from '../../components/site/CardGrid.astro';
+import Card from '../../components/site/Card.astro';
+import { explainers } from '../../lib/explainers';
+---
+<Base title="Explainers · Agentic Coding Guide" description="One page per idea you need to work with coding agents: cost, context, checking the work, running several agents, skills, connectors and voice." section="explain">
+  <div class="wrap">
+    <PageHeader title="Explainers">
+      <p>One page per idea. Each starts plain and goes as deep as you ask it to.</p>
+    </PageHeader>
+    <CardGrid>
+      {explainers.map((e) => <Card href={`explain/${e.slug}/`} title={e.title}>{e.blurb}</Card>)}
+    </CardGrid>
+  </div>
+</Base>
+<style>
+  .wrap { max-width: var(--wide); margin: 0 auto; padding: var(--space-7) var(--gutter) 0; }
+</style>
