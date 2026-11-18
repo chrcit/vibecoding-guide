@@ -169,7 +169,7 @@ export function prism(ring: Plane[], z: number, h: number, P: Projection): Solid
 export const box = (plan: Plan, z: number, h: number, P: Projection) => prism(roundedPlan(plan), z, h, P);
 
 /** An upright cylinder. */
-export const cylinder = (cx: number, cy: number, r: number, z: number, h: number, P: Projection, steps = 36) =>
+export const cylinder = (cx: number, cy: number, r: number, z: number, h: number, P: Projection, steps = 24) =>
   prism(circleRing(cx, cy, r, steps), z, h, P);
 
 /**
@@ -225,7 +225,7 @@ export const ringLine = (cx: number, cy: number, r: number, z: number, P: Projec
 
 /** A flat annulus (ring band) on the plane z, filled with the even-odd rule. */
 export const annulus = (cx: number, cy: number, r0: number, r1: number, z: number, P: Projection) =>
-  ringLine(cx, cy, r1, z, P, 72) + ringLine(cx, cy, r0, z, P, 72);
+  ringLine(cx, cy, r1, z, P, 56) + ringLine(cx, cy, r0, z, P, 56);
 
 /** A flat chevron arrow on the plane z, pointing from `at` along angle `a` (radians, world). */
 export function arrow(at: Plane, a: number, size: number, z: number, P: Projection) {
