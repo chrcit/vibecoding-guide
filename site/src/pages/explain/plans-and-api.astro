@@ -1,4 +1,248 @@
 ---
-import Stub from '../../components/site/Stub.astro';
+// Explainer C1: a subscription and the API are two ways to pay for the same models.
+// Every number on this page comes from src/data/ through <Fact> or a data import.
+import Article from '../../layouts/Article.astro';
+import Deeper from '../../components/level/Deeper.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import Estimate from '../../components/site/Estimate.astro';
+import Note from '../../components/site/Note.astro';
+import Term from '../../components/site/Term.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import Embed from '../../components/site/Embed.astro';
+import MeterTank from '../../components/fig/meter-tank/MeterTank.astro';
+import PlanRuns from '../../components/fig/plan-runs/PlanRuns.astro';
+import { planRunsFromData, planRunsFacts } from '../../components/fig/plan-runs/from-data';
+import { plans } from '../../data/plans';
+import { estimates } from '../../data/observations';
+import { links } from '../../data/links';
+import { formatDate } from '../../lib/facts';
+import { url } from '../../lib/nav';
+
+const usd = (n: number) => `$${n}`;
+const tiers = `${usd(plans.claude.pro.price.value)}, ${usd(plans.claude.max.price.value)} and ${usd(plans.claude.ultra.price.value)}`;
+const ultraVideo = estimates['theo-2026-11-02-ultra'];
+const seconds = (at: string) => at.split(':').reduce((m, s) => m * 60 + Number(s), 0);
+const headings = [
+  { depth: 2, slug: 'two-ways-to-pay', text: 'Two ways to pay for the same models' },
+  { depth: 2, slug: 'the-plans', text: `The plans at ${tiers}` },
+  { depth: 2, slug: 'what-usage-means', text: 'Usage is an allowance with no price tag' },
+  { depth: 2, slug: 'the-window-and-the-week', text: 'The five-hour window and the weekly limit' },
+  { depth: 2, slug: 'twenty-dollars', text: `What fits in a window on ${usd(plans.claude.pro.price.value)}` },
+  { depth: 2, slug: 'when-the-api-is-right', text: 'When the API is the right choice' },
+  { depth: 2, slug: 'what-a-plan-is-worth', text: 'What a plan is worth in API terms' },
+];
+
+const theoEstimates = Object.values(estimates).sort((a, b) => a.published.localeCompare(b.published));
+const newest = theoEstimates[theoEstimates.length - 1]!;
+
+const pageFacts = [
+  ...planRunsFacts,
+  'plans.chatgpt.plus.price', 'plans.claude.pro.surfaces', 'plans.claude.pro.fable', 'plans.claude.pro.apiCredit', 'plans.claude.free.models',
+  'plans.claude.limits.fiveHour', 'plans.claude.limits.weekly', 'plans.claude.limits.windowHours', 'plans.claude.limits.whatUsageMeans',
+  'plans.claude.limits.sharedAcrossSurfaces', 'plans.claude.limits.effort', 'plans.claude.limits.longConversations', 'plans.claude.limits.atTheLimit',
+  'plans.claude.limits.sharedAcrossModels', 'plans.claude.limits.usageCommand', 'plans.claude.limits.subagentsDraw', 'plans.claude.limits.wholeConversation',
+  'plans.chatgpt.limits.estimates', 'plans.chatgpt.limits.codexOnEveryPlan', 'plans.chatgpt.limits.cloudTasks', 'plans.chatgpt.limits.atTheLimit', 'plans.chatgpt.limits.apiKey',
+  'plans.claude.api.rateLimits', 'plans.claude.api.cacheAwareLimits', 'plans.claude.api.startSpendCap',
+  'models.claude-opus-5-5.price.input', 'models.claude-opus-5-5.price.output', 'models.claude-opus-5-5.price.cacheRead',
+  'models.claude-haiku-5-5.price.input', 'models.claude-haiku-5-5.price.output', 'models.claude-haiku-5-5.price.longPrompt.threshold',
+  'models.claude-haiku-5-5.price.longPrompt.input', 'models.claude-haiku-5-5.price.longPrompt.output',
+  'lineup.claudeOutputRatio', 'lineup.thinkingBilledAsOutput', 'lineup.workedExampleOutputShare', 'lineup.batchDiscount',
+  'lineup.cacheWrite5m', 'lineup.cacheWrite1h', 'lineup.cacheReadOpusSonnet', 'lineup.opusCacheWrite5m', 'lineup.cachePaysBack',
+  'lineup.fullContextStandardPrice', 'lineup.claudeCodeCacheTtl', 'lineup.cacheBreakers',
+  'harnesses.claudeCode.defaultModel', 'harnesses.claudeCode.agentTeamTokens', 'harnesses.claudeCode.enterpriseCost', 'harnesses.codex.subagents',
+];
 ---
-<Stub title="Plans against the API" section="explain" />
+<Article
+  title="Plans against the API"
+  description="A subscription and the API are two ways to pay for the same models. What each plan includes, what a five-hour window is, and when paying per token makes sense."
+  section="explain"
+  headings={headings}
+  lede="You can pay for the same model by the token or by the month. Which one you are on decides what a long afternoon of agent work costs you, and what happens when you push it too far."
+>
+  <h2 id="two-ways-to-pay">Two ways to pay for the same models</h2>
+  <p>
+    There are two ways to pay for Claude or GPT. The first is the <Term def="Application programming interface: the way programs talk to the model directly. You get a key, and every request your program makes is billed.">API</Term>, which works like an electricity meter: every piece of text that goes into the model and every piece that comes out is counted and billed. The second is a subscription, a plan such as Claude Pro or ChatGPT Plus, which costs a fixed amount a month and gives you an allowance of use.
+  </p>
+  <p>
+    The models are the same either way. What differs is how you are charged and what stops you. On the API nothing stops you: you keep working and the bill keeps growing. On a plan the price never moves, but the allowance runs out, and then you wait for it to refill. Most people learning to work with agents should be on a plan, and this guide assumes the <Fact id="plans.claude.pro.price" /> one unless a page says otherwise.
+  </p>
+
+  <Deeper level="technical" title="Tokens, and why output costs more">
+    <p>
+      Models read and write in <Term def="A piece of a word, a few characters long. A short English word is usually one token; code takes more tokens than prose of the same length.">tokens</Term>. The API prices them per million, separately for the text you send (input) and the text the model writes (output). Claude Opus 5.5 costs <Fact id="models.claude-opus-5-5.price.input" /> per million input tokens and <Fact id="models.claude-opus-5-5.price.output" /> per million output tokens, and on every current Claude model output costs <Fact id="lineup.claudeOutputRatio" /> as much as input. The model's thinking counts as output: <Fact id="lineup.thinkingBilledAsOutput" show="claim" />
+    </p>
+    <p>
+      Agent sessions send far more than they receive, yet output still carries much of the bill. In Anthropic's own worked example, an Opus 5.5 session with fifty thousand input tokens and fifteen thousand output tokens comes to <Fact id="lineup.workedExampleOutputShare" /> output by cost.
+    </p>
+  </Deeper>
+
+  <MeterTank
+    currency="$"
+    planPricePerMonth={plans.claude.pro.price.value}
+    windowHours={plans.claude.limits.windowHours.value}
+    source={{ label: links.claudeLimits.label, href: links.claudeLimits.url }}
+  />
+
+  <h2 id="the-plans">{headings[1]!.text}</h2>
+  <p>
+    Both labs the guide covers sell plans at three price points that line up. At the bottom, Claude Pro and ChatGPT Plus both cost <Fact id="plans.chatgpt.plus.price" /> a month. Above that, Claude Max costs <Fact id="plans.claude.max.price" /> and Claude Ultra <Fact id="plans.claude.ultra.price" />, while ChatGPT Pro comes at <Fact id="plans.chatgpt.pro.price" />. Each plan works in its own lab's tools: a Claude plan covers the Claude apps and Claude Code, a ChatGPT plan covers ChatGPT and Codex. <a href={url('t3-code/')}>T3 Code</a> sits on top and uses whichever accounts you sign in with.
+  </p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Plan</th><th>Price a month</th><th>What it adds</th></tr></thead>
+      <tbody>
+        <tr><td>Claude Pro</td><td><Fact id="plans.claude.pro.price" /></td><td>Claude Code and Opus, which Free leaves out. Fable runs on usage credits, outside the plan.</td></tr>
+        <tr><td>Claude Max</td><td><Fact id="plans.claude.max.price" /></td><td><Fact id="plans.claude.max.usage" /> Pro usage every five hours and every week. Fable included up to <Fact id="plans.claude.max.fable" /> of the weekly limit. <Fact id="plans.claude.max.apiCredit" /> a month of API credit.</td></tr>
+        <tr><td>Claude Ultra</td><td><Fact id="plans.claude.ultra.price" /></td><td>No five-hour limit on a verified account. <Fact id="plans.claude.ultra.usage" /> Pro usage every week. <Fact id="plans.claude.ultra.apiCredit" /> a month of API credit.</td></tr>
+        <tr><td>ChatGPT Plus</td><td><Fact id="plans.chatgpt.plus.price" /></td><td>Codex, with published estimates of messages per five hours.</td></tr>
+        <tr><td>ChatGPT Pro</td><td><Fact id="plans.chatgpt.pro.price" /></td><td>No five-hour limit. No published message estimates.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Codex comes with every ChatGPT plan, the free one included. Claude Code needs Pro or above. The figure below sets the plans side by side at each price and draws only what each lab publishes.
+  </p>
+
+  <Deeper level="technical" title="What each plan includes, in the labs' words">
+    <ul>
+      <li><Fact id="plans.claude.free.models" show="claim" /> <Fact id="plans.claude.pro.surfaces" show="claim" /></li>
+      <li><Fact id="plans.claude.pro.fable" show="claim" /> <Fact id="plans.claude.max.fable" show="claim" /></li>
+      <li><Fact id="plans.claude.ultra.noFiveHourLimit" show="claim" /> <Fact id="plans.chatgpt.pro.noFiveHourLimit" show="claim" /></li>
+      <li><Fact id="plans.chatgpt.limits.codexOnEveryPlan" show="claim" /> <Fact id="plans.chatgpt.limits.cloudTasks" show="claim" /></li>
+    </ul>
+  </Deeper>
+
+  <PlanRuns {...planRunsFromData()} source={{ label: `${links.claudePricing.label} and ${links.codexPricing.label}`, href: links.claudePricing.url }} />
+
+  <h2 id="what-usage-means">Usage is an allowance with no price tag</h2>
+  <p>
+    On a plan there is no meter in dollars that you can watch. There is an allowance, shown as a bar that fills up, and Anthropic publishes no figure for what it holds: <Fact id="plans.claude.limits.whatUsageMeans" show="claim" /> What you can know is what makes it drain faster.
+  </p>
+  <p>
+    A bigger model drains it faster than a smaller one. A higher effort setting drains it faster, because the model thinks for longer before it answers. A long conversation drains it faster with every message, because the agent sends the whole conversation to the model each time. And every helper agent the main one starts, a <Term def="A second agent that the main one starts for a side task. It works in its own context and reports back a summary.">subagent</Term>, uses the same allowance on top. In Anthropic's words, <Fact id="plans.claude.limits.effort" show="claim" /> <Fact id="plans.claude.limits.subagentsDraw" show="claim" />
+  </p>
+  <p>
+    The allowance is shared. <Fact id="plans.claude.limits.sharedAcrossSurfaces" show="claim" /> Chatting in the Claude app while an agent works in Claude Code uses the same tank.
+  </p>
+
+  <Deeper level="technical" title="Why long threads cost more each turn, and what caching does">
+    <p>
+      A model remembers nothing between requests. Each time you send a message, the agent sends the whole conversation again: its instructions, your project's context file, every earlier message and every tool result. <Fact id="plans.claude.limits.wholeConversation" show="claim" /> So the fiftieth message in a thread costs far more than the first, even when it is one line long.
+    </p>
+    <p>
+      Caching softens this. The provider keeps the start of a recent request, and when the next request begins with exactly the same text it reads that part from the cache at a much lower price. On Opus 5.5 a cache read costs <Fact id="models.claude-opus-5-5.price.cacheRead" /> per million tokens against <Fact id="models.claude-opus-5-5.price.input" /> for fresh input. Caching is why long sessions are affordable at all, and why the habits further down (fresh threads, one model per thread) matter.
+    </p>
+  </Deeper>
+
+  <Deeper level="engineer" title="Cache reads and writes, and why they dominate the bill">
+    <p>
+      An agent session's token count is mostly cache reads: the same prefix re-read on every turn. Writes are the other large term. Writing to the five-minute cache costs <Fact id="lineup.cacheWrite5m" /> the base input price and the one-hour cache <Fact id="lineup.cacheWrite1h" />; on Opus 5.5 that is <Fact id="lineup.opusCacheWrite5m" /> per million for a five-minute write. Reads on Opus and Sonnet 5.5 cost <Fact id="lineup.cacheReadOpusSonnet" /> the base input price. <Fact id="lineup.cachePaysBack" show="claim" /> Fresh input and output, the numbers on the price list, are often the smaller part of a real bill.
+    </p>
+    <p>
+      The cache matches an exact prefix, so anything that changes the start of the request throws it away. <Fact id="lineup.cacheBreakers" show="claim" /> The lifetime differs by how you pay: <Fact id="lineup.claudeCodeCacheTtl" show="claim" /> A coffee break longer than the lifetime means the next turn re-processes the whole context at the write price.
+    </p>
+    <p>
+      Multipliers stack. Effort raises output tokens per turn, including thinking. Every subagent starts its own context, writes its own cache and does not read the parent's. Codex says the same of its own: <Fact id="harnesses.codex.subagents" show="claim" /> Anthropic measures agent teams at <Fact id="harnesses.claudeCode.agentTeamTokens" /> the tokens of a standard session when teammates run in plan mode.
+    </p>
+    <p>
+      Some prices are tiered by prompt size. Haiku 5.5 costs <Fact id="models.claude-haiku-5-5.price.input" /> and <Fact id="models.claude-haiku-5-5.price.output" /> per million up to a <Fact id="models.claude-haiku-5-5.price.longPrompt.threshold" /> prompt, then <Fact id="models.claude-haiku-5-5.price.longPrompt.input" /> and <Fact id="models.claude-haiku-5-5.price.longPrompt.output" />, with cache reads and writes counting towards the threshold. <Fact id="lineup.fullContextStandardPrice" show="claim" />
+    </p>
+    <p>
+      To measure your own cost per task, run one representative task in a fresh session and read the token counts by kind. <Fact id="plans.claude.limits.usageCommand" show="claim" /> On the API, the per-response usage fields give input, output, cache-read and cache-write tokens; multiply each by its price and sum. Do it for three or four tasks before trusting the average. For a scale reference, <Fact id="harnesses.claudeCode.enterpriseCost" show="claim" />
+    </p>
+  </Deeper>
+
+  <h2 id="the-window-and-the-week">The five-hour window and the weekly limit</h2>
+  <p>
+    A plan's allowance comes in two layers. The inner one is a five-hour window. On a Claude plan it starts with your first message and refills in full five hours later: <Fact id="plans.claude.limits.fiveHour" show="claim" /> If you run out at hour three, you wait two hours. If your first message goes at nine in the morning, the allowance is back in full at two in the afternoon, however much of it you used.
+  </p>
+  <p>
+    The outer layer is the week. Every window you use also draws on a weekly allowance, and when that is gone the windows stop refilling until the weekly reset. <Fact id="plans.claude.limits.weekly" show="claim" /> Switching to another model does not help: <Fact id="plans.claude.limits.sharedAcrossModels" show="claim" />
+  </p>
+  <p>
+    The top plans drop the inner layer. Verified Claude Ultra accounts and the ChatGPT Pro plans have no five-hour limit, so only the week constrains them. OpenAI also notes, for the plans it publishes estimates for, that <Fact id="plans.chatgpt.limits.estimates" show="claim" />
+  </p>
+  <p>
+    When you hit a limit, the two labs behave a little differently. On Claude: <Fact id="plans.claude.limits.atTheLimit" show="claim" /> On Codex: <Fact id="plans.chatgpt.limits.atTheLimit" show="claim" /> Usage credits are billed at API rates, so turning them on puts the meter back in your life; set a monthly cap if you turn them on.
+  </p>
+
+  <Embed id={ultraVideo.url.split('v=')[1]!} title="Theo on the Claude Ultra plan and five-hour windows" start={seconds(ultraVideo.at!)} />
+  <p class="credit">
+    <a href={links.theo.url}>Theo</a> explains how five-hour windows sit inside the weekly limit, in a video of {formatDate(ultraVideo.published, true)}. His numbers in it are his own estimates.
+  </p>
+
+  <h2 id="twenty-dollars">{headings[4]!.text}</h2>
+  <p>
+    OpenAI publishes estimates for its <Fact id="plans.chatgpt.plus.price" /> plan, per five hours of local Codex work: <Fact id="plans.chatgpt.plus.messages.astra" /> messages with GPT-6.2 Astra, <Fact id="plans.chatgpt.plus.messages.sol" /> with GPT-6.2 Sol, <Fact id="plans.chatgpt.plus.messages.terra" /> with GPT-6.1 Terra and <Fact id="plans.chatgpt.plus.messages.luna" /> with GPT-6 Luna. The ranges are wide because a message can be a one-line question or an hour of work. Anthropic publishes no such figure for Pro, so this guide gives none.
+  </p>
+  <p>
+    What a window holds in practice depends on your habits more than your plan. These stretch it, in rough order of effect:
+  </p>
+  <ul>
+    <li>Use the smaller model for routine work. Renaming things, tidying the contact export, writing a test you have already described: none of it needs the largest model.</li>
+    <li>Lower the effort for simple tasks. Claude Code's default is already moderate: <Fact id="harnesses.claudeCode.defaultModel" show="claim" /></li>
+    <li>Start a fresh thread for each new task. A thread that has been open all day drags its whole history into every message.</li>
+    <li>Run fewer agents at once. Two parallel threads drain the window about twice as fast as one, and each subagent adds its own share.</li>
+    <li>Pick the model and effort at the start of a thread and leave them. Changing either halfway can throw away the cache and make the next turn expensive.</li>
+    <li>Tell the agent where to look. A specific request reads a few files; "improve this codebase" reads everything.</li>
+  </ul>
+  <CopyPrompt title="A prompt that keeps a window light" id="prompt-light">{`The bakery site shows the normal opening hours on public holidays. The hours are computed in src/hours.ts and the holiday list is in data/holidays.json. Read only those two files and their tests to start.
+
+Write one failing test for 25 December, fix the bug, then run only the tests for hours.
+
+Don't explore the rest of the repository unless the fix needs it. When you are done, tell me what you changed in two sentences.`}</CopyPrompt>
+
+  <Note title="Check where you stand">
+    In Claude, Settings and then Usage shows how much of the current window you have used and when it resets. In Claude Code, type <code>/usage</code>. Look before you start a long task, not after.
+  </Note>
+
+  <h2 id="when-the-api-is-right">When the API is the right choice</h2>
+  <p>
+    A plan is for you, at a keyboard, working with an agent. The API is for programs. If a script should run every night, if a check should run on every change you push, or if you are building something other people will use, it needs an API key, and every token it uses is billed. The contact tidy is a fair example: as a one-off you ask your agent to do it on your plan; as a nightly job that cleans each new export, it calls the API.
+  </p>
+  <p>
+    The API is also the way past a plan's limits, either directly or through usage credits at API rates. And Codex will use a key if you give it one: <Fact id="plans.chatgpt.limits.apiKey" show="claim" />
+  </p>
+  <p>
+    Some plans come with API credit, and the rules on where you can spend it are strict. <Fact id="plans.claude.max.apiCredit" show="claim" /> <Fact id="plans.claude.ultra.apiCredit" show="claim" /> <Fact id="plans.claude.pro.apiCredit" show="claim" /> The credit is for the programs you build, not for your own agent sessions.
+  </p>
+
+  <Deeper level="engineer" title="Rate limits are not usage limits">
+    <p>
+      A plan's limits are an allowance over hours and weeks. API limits are a throughput ceiling and a spending cap. <Fact id="plans.claude.api.rateLimits" show="claim" /> <Fact id="plans.claude.api.cacheAwareLimits" show="claim" /> That makes caching a throughput tool as well as a cost one: a high hit rate lets the same limit carry several times the total input.
+    </p>
+    <p>
+      Spending is capped separately per tier: <Fact id="plans.claude.api.startSpendCap" show="claim" /> For work that need not answer at once, such as a nightly run over the contact exports, batch requests cost less: <Fact id="lineup.batchDiscount" show="claim" />
+    </p>
+  </Deeper>
+
+  <h2 id="what-a-plan-is-worth">What a plan is worth in API terms</h2>
+  <p>
+    No provider publishes what a plan would cost if the same use were billed through the API. People who measure it in public arrive at large multiples of the monthly price, and their figures move from month to month as the labs change limits. Treat them as one practitioner's readings, kept apart from the facts on this page.
+  </p>
+  <Estimate name="Theo" href={links.theo.url} date={newest.published}>
+    <p>His estimates of API-priced usage per month, from videos between {formatDate(theoEstimates[0]!.published, true)} and {formatDate(newest.published, true)}:</p>
+    <ul>
+      {theoEstimates.map((e) => (
+        <li><a href={`${e.url}&t=${seconds(e.at!)}s`}>{formatDate(e.published)}</a>: {e.fact.claim}</li>
+      ))}
+    </ul>
+  </Estimate>
+
+  <h2 id="related">Related pages</h2>
+  <ul>
+    <li><a href={url('explain/orchestration/')}>Orchestration</a>: subagents and teams, and what each one costs on a plan.</li>
+    <li><a href={url('explain/context/')}>Context</a>: what goes into every request, and why it grows.</li>
+    <li><a href={url('models/')}>Models</a>: prices, context windows and effort levels for each model.</li>
+    <li><a href={url('start/')}>Start</a>: choosing a plan and setting up your first agent.</li>
+  </ul>
+
+  <Verified ids={pageFacts} />
+</Article>
+
+<style>
+  .table-wrap { overflow-x: auto; margin: 1.25rem 0; }
+  .table-wrap table { min-width: 32rem; margin: 0; }
+  .credit { font-size: var(--text-m); color: var(--muted); margin-top: -0.5rem; }
+</style>
