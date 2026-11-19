@@ -83,6 +83,19 @@ export function boot(root: HTMLElement) {
 
   let current: HTMLElement | null = null;
   let lastStat = new Map<string, string>();
+  // On a narrow page the picture sits on top and has little room: the note and the colour key move
+  // out of the sticky view into the step on show, under its text. On a wide page they stay under
+  // the picture.
+  const readEl = root.querySelector<HTMLElement>('.j-read')!;
+  const extra = document.createElement('div');
+  extra.className = 'j-step-extra';
+  function placeExtras() {
+    if (wide()) { if (modelEl && modelEl.parentElement !== readEl) readEl.append(...[modelEl, keyEl].filter(Boolean) as HTMLElement[]); extra.remove(); return; }
+    if (!current) return;
+    if (extra.parentElement !== current) current.append(extra);
+    if (modelEl && modelEl.parentElement !== extra) extra.append(modelEl);
+    if (keyEl.parentElement !== extra) extra.append(keyEl);
+  }
   function activate(el: HTMLElement, instant = false) {
     if (el === current) return;
     current?.removeAttribute('data-active');
@@ -104,17 +117,27 @@ export function boot(root: HTMLElement) {
     statEl.removeAttribute('data-reset');
     for (const b of el.querySelectorAll<HTMLElement>('.pick[data-multi] button')) b.setAttribute('aria-pressed', String(b.hasAttribute('data-default')));
     for (const b of el.querySelectorAll<HTMLElement>('[data-default]')) pressOnly(b);
+    placeExtras();
     scene.set(def.scene(ctx), instant);
     def.enter?.(ctx);
     if (isOverview) {
       root.querySelectorAll<HTMLElement>('[data-rung-link]').forEach((a) => {
         const here = a.dataset.rungLink === el.dataset.step;
         a.toggleAttribute('data-here', here);
-        const list = a.closest('ol');
-        if (here && list && list.scrollWidth > list.clientWidth) list.scrollLeft = a.offsetLeft - list.offsetLeft - (list.clientWidth - a.offsetWidth) / 2;
+        if (here && !a.closest('.j-strip')) centreInRail(a);
       });
     }
   }
+
+  // The rail scrolls sideways on a narrow page: keep the lesson on show in the middle of it.
+  function centreInRail(a: HTMLElement) {
+    const list = a.closest<HTMLElement>('.j-rail-all');
+    if (!list || list.scrollWidth <= list.clientWidth) return;
+    const l = a.getBoundingClientRect(), r = list.getBoundingClientRect();
+    list.scrollLeft += l.left - r.left - (r.width - l.width) / 2;
+  }
+  const mineInRail = root.querySelector<HTMLElement>('.j-rail a[aria-current="page"]');
+  if (mineInRail) centreInRail(mineInRail);
 
   // The last step whose top has passed the reading line is the one on show.
   // Two columns or one is decided in the stylesheet, by the room the page has.
@@ -132,7 +155,7 @@ export function boot(root: HTMLElement) {
   let queued = false;
   const onScroll = () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; pick(); }); };
   addEventListener('scroll', onScroll, { passive: true });
-  addEventListener('resize', onScroll);
+  addEventListener('resize', () => { placeExtras(); onScroll(); });
   // A change of level re-runs the step on show: its picture (labels that name a term pick their
   // word for the level), its script (ctx.level), the line under the picture, the readout and the
   // note. A step only for higher levels may have just been hidden: then the one now in view runs.

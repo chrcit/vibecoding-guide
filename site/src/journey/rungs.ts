@@ -27,8 +27,12 @@ export interface Part {
   title: string;
   short: string;
   range: string;
+  /** What the part builds, in one plain sentence. */
   blurb: string;
+  /** Where the part picks up: one line that ties it to the part before. */
+  recap?: string;
   href: string;
+  /** The overview's chapter script (journey/chapters): one step per lesson, keyed by lesson id. */
   chapter: string;
 }
 
@@ -38,7 +42,7 @@ export const parts: Part[] = [
     title: 'Before your first code',
     short: 'Part one · Foundations',
     range: '1–4',
-    blurb: 'What AI is, Chat vs Work vs Coding Agent, providers and where models run, Git and cloud hosting, and your first real loop on a laptop, desktop or phone.',
+    blurb: 'What AI is and where it runs, the tools around your code (Git, GitHub, hosting), and your first loop with a coding agent on a laptop, desktop or phone.',
     href: 'journey/foundations/',
     chapter: 'foundations',
   },
@@ -47,7 +51,8 @@ export const parts: Part[] = [
     title: 'From one chat to twenty agents',
     short: 'Part two · The agents',
     range: '5–13',
-    blurb: 'One chat, tool loops, context windows and context rot, memory files, automated checks, helpers, parallel worktrees, leads and fleets.',
+    blurb: 'One chat grows into an agent with tools, a window that fills, an instruction file and a check, then helpers, a lead and a fleet of twenty.',
+    recap: 'The loop you ran at the end of part one is one agent. This part takes it apart and grows it into twenty.',
     href: 'journey/agents/',
     chapter: 'whole',
   },
@@ -56,7 +61,8 @@ export const parts: Part[] = [
     title: 'From one job to a working week',
     short: 'Part three · The working week',
     range: '14–21',
-    blurb: 'Tokens and billing, adversarial second-model review, readable proof, stepping in, parallel jobs, keeping a growing codebase healthy, teams and remote machines.',
+    blurb: 'What the agents cost, who reviews their work, the proof you read, where you step in, several jobs at once, a growing project, other people and other machines.',
+    recap: 'The fleet you just watched is what this part prices, checks and runs through a working week.',
     href: 'journey/week/',
     chapter: 'week',
   },
@@ -503,24 +509,24 @@ export const rungs: Rung[] = [
     part: 3,
     title: 'Several jobs',
     short: 'Jobs',
-    line: 'Run multiple jobs at once across one project or several—while remembering there is still only one of you.',
+    line: 'Several jobs at once, in one project or in several, with one of you to answer them.',
     theme: 'scale',
     adds: {
-      plain: 'Start a second job while the first one runs, but cap how many you juggle at once—and ask for clear proof so checking them doesn’t become a full-time bottleneck.',
-      technical: 'Keep 2–3 isolated worktrees moving in parallel; use a simple status board (job name, test state, what it needs from you) so context-switching stays cheap.',
-      engineer: 'Optimize for human review bandwidth, not idle GPU avoidance: cap WIP where your review latency keeps agents fed, and decouple independent repos from shared-codebase merge queues.',
+      plain: 'Three jobs on the club list, each in its own thread and its own copy of the project. You go to whichever needs you; proof and short questions keep each stop to a couple of minutes.',
+      technical: 'One worktree and branch per job; each merges into main after the type check and tests. In one repo a later branch rebases when an earlier one touched the same file.',
+      engineer: 'Throughput is set by your review time per stop, not by the number of agents. One repo shares history, CI and merge order; several repos isolate everything, secrets included.',
     },
     steps: [
       { id: 'one', label: 'Waiting on one job' },
       { id: 'three', label: 'Start another' },
-      { id: 'many', label: 'Only one of you' },
-      { id: 'projects', label: 'One project vs several' },
-      { id: 'board', label: 'A job board' },
+      { id: 'many', label: 'One of you' },
+      { id: 'projects', label: 'One project or several' },
+      { id: 'board', label: 'A readable board' },
     ],
     concepts: [
       { slug: 'parallel-work', label: 'Parallel work' },
       { slug: 'worktree', label: 'Worktree' },
-      { slug: 'shortcuts', label: 'Shortcuts' },
+      { slug: 'thread', label: 'Thread' },
     ],
   },
   {
@@ -529,18 +535,19 @@ export const rungs: Rung[] = [
     part: 3,
     title: 'The project grows',
     short: 'Growth',
-    line: 'Every feature adds files and leftover code. Clean-ups and test-guarded refactors are real jobs too.',
+    line: 'Every feature adds code and some leave clutter. Clean-ups and refactors are jobs too.',
     theme: 'quality',
     adds: {
-      plain: 'As your app grows, leftover unused code slows every future job down—schedule a quick tidy-up pass every few features so the app stays easy to change.',
-      technical: 'Dead files bloat context reads and confuse agents; run dedicated dead-code clean-ups and always require green typechecks + unit tests before and after any refactor.',
-      engineer: 'Manage architectural entropy deliberately: separate behavioral changes from structural refactors, enforce module boundaries, and use regression suites as safety nets during extraction.',
+      plain: 'Feature 13 reads 39% of its window before its first edit. One clean-up later, feature 14 reads 28%. Every five features, a clean-up first.',
+      technical: 'Clean-ups delete only, with the tests green before and after. Refactors run tsc and the tests after every move; without tests, a broken export reaches main.',
+      engineer: 'Keep structural and behavioural changes in separate pull requests; the test suite is the only statement that behaviour stayed the same.',
     },
     steps: [
-      { id: 'adds', label: 'Code piles up' },
-      { id: 'junk', label: 'Dead code slows reads' },
-      { id: 'clean', label: 'Clean-up as a job' },
-      { id: 'refactor', label: 'Test-guarded refactors' },
+      { id: 'adds', label: 'Features add up' },
+      { id: 'junk', label: 'Clutter left behind' },
+      { id: 'clean', label: 'A clean-up' },
+      { id: 'refactor', label: 'A refactor with tests' },
+      { id: 'rhythm', label: 'Every five features' },
     ],
     concepts: [
       { slug: 'test', label: 'Tests' },
@@ -554,19 +561,19 @@ export const rungs: Rung[] = [
     part: 3,
     title: 'Other people',
     short: 'People',
-    line: 'Pull requests, colleagues, clients and real users—small verified changes get fast feedback that drives the next job.',
+    line: 'Agents write the change; people decide what gets built and whether it ships.',
     theme: 'scale',
     adds: {
-      plain: 'Share small working updates with a live preview link instead of huge mystery changes—colleagues and clients reply faster, and their notes become your next prompt.',
-      technical: 'Keep PRs small (<200 lines) with green CI, unit tests and screenshots attached; deploy preview links per branch so non-technical reviewers test real behavior, not code.',
-      engineer: 'Treat human review attention as a scarce resource: slice changes along clean boundaries, attach automated proof and preview URLs, and close the loop from user telemetry/feedback into queued tickets.',
+      plain: 'A change waits in front of main as a pull request until a person says yes. A colleague reads it, a client tries a link, users report bugs, and each of them hands you the next job.',
+      technical: 'CI runs the type check and tests on every pull request; keep each one small with its test and a screenshot, and fix user bugs with a test first.',
+      engineer: 'Reviewer time is the scarce resource. Size and evidence per pull request set throughput; tests written from incidents keep the same bug out.',
     },
     steps: [
-      { id: 'pr', label: 'Pull requests' },
-      { id: 'peer', label: 'Colleague review' },
-      { id: 'client', label: 'Client previews' },
-      { id: 'users', label: 'Real users' },
-      { id: 'loop', label: 'Feedback into next job' },
+      { id: 'pr', label: 'A pull request' },
+      { id: 'peer', label: 'A colleague reads it' },
+      { id: 'client', label: 'A client tries it' },
+      { id: 'users', label: 'Users find bugs' },
+      { id: 'loop', label: 'The widest loop' },
     ],
     concepts: [
       { slug: 'pull-request', label: 'Pull request' },
@@ -580,23 +587,23 @@ export const rungs: Rung[] = [
     part: 3,
     title: 'Other machines',
     short: 'Machines',
-    line: 'Your laptop, a desktop PC or always-on box, the cloud—and your phone steering them from anywhere.',
+    line: 'Your laptop, an always-on computer, the cloud, and your phone to follow them.',
     theme: 'scale',
     adds: {
-      plain: 'Close your laptop lid and local jobs pause; run long jobs on a desktop PC that stays on or in the cloud, and check in or approve work from your phone.',
-      technical: 'Match execution host to the job: laptop for interactive UI work, always-on desktop/home box for long test runs and remote phone control, cloud sandboxes (with setup scripts) for parallel background PRs.',
-      engineer: 'Ensure environment parity across laptop, always-on workstation and ephemeral cloud containers (declarative setup scripts, seeded test DBs, isolated credentials) so any job can migrate cleanly.',
+      plain: 'Close the lid and the laptop’s job stops; the always-on computer and the cloud carry on. Start on your laptop, and choose the permission mode before you walk away.',
+      technical: 'Reach the always-on computer over Tailscale, SSH or T3 Connect. A cloud machine starts empty: give it a setup script so the tests can run there.',
+      engineer: 'State lives where the agent runs: repository, threads, logins and secrets. Keep one setup script and one test command so any job runs anywhere.',
     },
     steps: [
       { id: 'laptop', label: 'On your laptop' },
       { id: 'lid', label: 'Close the lid' },
-      { id: 'box', label: 'Desktop / always-on box' },
-      { id: 'cloud', label: 'Cloud sandboxes' },
+      { id: 'box', label: 'An always-on computer' },
+      { id: 'cloud', label: 'A machine in the cloud' },
       { id: 'mix', label: 'Which job goes where' },
     ],
     concepts: [
-      { slug: 'always-on-machine', label: 'Always-on machine' },
-      { slug: 'deployment', label: 'Deployment' },
+      { slug: 'always-on-machine', label: 'Always-on computer' },
+      { slug: 'permission-mode', label: 'Permission modes' },
       { slug: 'secrets', label: 'Secrets' },
     ],
   },

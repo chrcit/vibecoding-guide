@@ -1,0 +1,22 @@
+---
+/*
+  A lesson as a small picture that plays (journey/thumbs.ts), with its number and name.
+  Props:
+    id      the lesson
+    href?   where it leads; default the lesson. The overviews point at their own step (#id).
+    title?  show the lesson's title under the name (the home page and the library do)
+  The page needs one <ThumbsBoot /> for the script and the sourced numbers, and the picture's
+  styles (board.css, fig/fig.css, journey.css: the Journey layout has them).
+*/
+import { rung } from '../../journey/rungs';
+import { url } from '../../lib/nav';
+interface Props { id: string; href?: string; title?: boolean; here?: boolean }
+const { id, href, title = false, here = false } = Astro.props;
+const r = rung(id);
+if (!r) throw new Error(`Thumb: no lesson "${id}"`);
+---
+<a class="j-thumb" href={href ?? url(`journey/${id}/`)} data-thumb={id} data-rung-link={id} aria-current={here ? 'page' : undefined}>
+  <span class="j-thumb-stage tile" aria-hidden="true"></span>
+  <span class="j-thumb-name"><span class="j-thumb-n">{r.n}</span> {r.short}</span>
+  {title && <span class="j-thumb-title">{r.title}</span>}
+</a>

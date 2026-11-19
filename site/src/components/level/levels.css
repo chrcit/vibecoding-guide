@@ -254,3 +254,16 @@ html[data-level='engineer'] .level-current[data-when='engineer'] { display: inli
 
 /* The offer is the three choices and nothing else; keep them clear of the close button. */
 .level-offer-choices { margin-right: 2.5rem; }
+
+/* The level picker: what a level changes, and the flash after a switch (LevelPicker.astro). */
+.level-shows { display: block; margin-top: 0.15rem; font-size: var(--text-xs); color: var(--muted); }
+.level-said {
+  position: fixed; z-index: 60; top: calc(var(--header-h) + 0.5rem); right: max(var(--gutter), calc((100vw - var(--full)) / 2));
+  max-width: min(24rem, calc(100vw - 2 * var(--gutter))); margin: 0; padding: 0.55rem 0.8rem;
+  border-radius: var(--radius-s); background: var(--ink); color: var(--paper); box-shadow: var(--shadow-pop);
+  font-family: var(--sans); font-size: var(--text-s); line-height: 1.4;
+}
+.level-said[hidden] { display: none; }
+@keyframes level-new { from { background-color: color-mix(in oklab, var(--ink) 14%, transparent); box-shadow: 0 0 0 0.35rem color-mix(in oklab, var(--ink) 14%, transparent); } }
+[data-level-new] { border-radius: var(--radius-s); animation: level-new 1.4s var(--ease-out); }
+@media (prefers-reduced-motion: reduce) { [data-level-new] { animation-duration: 1ms; } }

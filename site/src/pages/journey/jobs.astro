@@ -3,29 +3,36 @@ import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
 import More from '../../components/journey/More.astro';
 import Next from '../../components/journey/Next.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
+import Term from '../../components/journey/Term.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
 import Fact from '../../components/data/Fact.astro';
 import Verified from '../../components/data/Verified.astro';
 import { url } from '../../lib/nav';
 // The stop lengths below are the made-up ones in journey/chapters/jobs.ts (STOP, OPEN_THREAD).
-const facts = ['t3code.worktrees', 't3code.shortcuts.workspace', 't3code.shortcuts.background', 't3code.limited', 't3code.queueSteer'];
+const facts = ['t3code.worktrees', 't3code.shortcuts.workspace', 't3code.shortcuts.background', 't3code.queueSteer', 't3code.worktreeFolder'];
 ---
-<Journey chapter="jobs" first="one" title="Several jobs" description="Running several agent jobs at once, in one project or across several—with only one of you to answer them.">
+<Journey chapter="jobs" first="one" title="Several jobs" description="Running several agent jobs at once, in one project or in several, with one of you to answer them.">
   <Step id="one" title="While it works, you wait">
-    <p>Run one <a href={url('journey/loop/')}>agent loop from step 2</a> across an hour and most of your time is spent waiting for it to finish or ask a question.</p>
-    <p>In <a href={url('journey/parallel/')}>step 7</a> several agents split one task. Here each job is independent, and the scarce resource is your attention.</p>
+    <p>One <Term id="job" /> is one agent loop from <LessonRef id="loop" />, here on the club’s member list. Watch the readout: across a made-up hour you spend most of it waiting.</p>
+    <ForLevel is={['technical', 'engineer']}><p>In <LessonRef id="parallel" /> helpers split one task. Here each job is separate, with its own end.</p></ForLevel>
   </Step>
   <Step id="three" title="Start another">
-    <p>Start three jobs in parallel and track each one as a card on your board. Whenever one pauses for your input, you step in, answer it, and move to the next—staying busy instead of waiting around.</p>
+    <p>Each job runs in its own <Term id="thread" />, one conversation with one agent, and its own copy of the project, a <Term id="worktree" />. Each copy sits on its own <Term id="branch" />, a line of changes that joins main when the job is done.</p>
+    <ForLevel is={['technical', 'engineer']}><p>By hand: <code>git worktree add ../club-search -b search</code>, one per job; each branch merges into main on its own after the type check and tests.</p></ForLevel>
+    <ForLevel is="engineer"><p>The worktrees share one repository’s history; each needs its own dependencies, its own dev server port and, if the app has one, its own test database.</p></ForLevel>
     <More title="Three at once in T3 Code">
       <ol>
         <li>One thread per job. <Fact id="t3code.shortcuts.workspace" /> opens the workspace menu: pick a new worktree so the job gets its own copy and branch.</li>
         <li>Send the brief with <Fact id="t3code.shortcuts.background" />: the thread runs in the background and a fresh composer opens for the next job.</li>
-        <li>Each thread has a diff per turn and its own commit, push, and pull request buttons. Merge into main one job at a time.</li>
+        <li><Fact id="t3code.worktrees" show="claim" /> Merge into main one job at a time.</li>
+        <li><Fact id="t3code.queueSteer" show="claim" /></li>
       </ol>
     </More>
   </Step>
-  <Step id="many" title="There is still only one of you">
-    <p>At five jobs, questions arrive faster than you can answer them. A bare “Done.” takes roughly eight minutes to verify because you have to read the work yourself; proof cards and crisp questions take two.</p>
+  <Step id="many" title="There is still one of you">
+    <p>Push it to five. A bare “Done.” means you read the work yourself, about eight made-up minutes; proof and one short question take two.</p>
     <div class="controls">
       <label class="control"><span>Jobs at once <output>5</output></span>
         <input type="range" min="1" max="5" step="1" value="5" data-bind="n" />
@@ -37,26 +44,27 @@ const facts = ['t3code.worktrees', 't3code.shortcuts.workspace', 't3code.shortcu
     </div>
   </Step>
   <Step id="projects" title="One project or several">
-    <p>Within one project, finished jobs still have to merge into main one at a time. Spread across several projects, each job gets its own codebase and instruction file—and merges never queue behind each other.</p>
+    <p>In one project, jobs share one main: when two touch the same page, the later one is sent back to update first. In several projects nothing collides, and each has its own instruction file you switch between.</p>
+    <ForLevel is="engineer"><p>One repository: one history, one merge order, one CI. Several: separate histories, separate secrets and settings, and nothing that checks they still fit together.</p></ForLevel>
     <div class="pick">
       <button type="button" data-do="projects" data-val="one" data-default aria-pressed="true">One project</button>
-      <button type="button" data-do="projects" data-val="many" aria-pressed="false">Several</button>
+      <button type="button" data-do="projects" data-val="many" aria-pressed="false">Several projects</button>
     </div>
   </Step>
-  <Step id="board" title="Keep the board readable">
-    <p>A thread labelled “fix” forces you to open it every time just to remember what it is doing. Giving each card a clear title, a status, and what it needs next saves minutes on every single switch.</p>
+  <Step id="board" title="Keep the tray readable">
+    <p>Each job has a card on <Term id="tray">the tray</Term>. A thread called “fix” has to be opened before you know what it wants; a name, a state and what it needs saves those minutes at every stop.</p>
     <div class="pick" aria-label="How a card reads">
       <button type="button" data-do="board" data-val="vague" data-default aria-pressed="true">A thread called “fix”</button>
       <button type="button" data-do="board" data-val="clear" aria-pressed="false">A name, a state, what it needs</button>
     </div>
-    <More title="In T3 Code">
-      <p><Fact id="t3code.queueSteer" show="claim" /></p>
-      <p><Fact id="t3code.limited" show="claim" /></p>
+    <More title="Do this">
+      <p>Start each job in a new worktree, name its thread after the job, and end every brief with this:</p>
+      <CopyPrompt compact title="Ending for every brief">When you stop, start with one line: done, blocked, or a question for me. If done, say which tests you ran and what they printed, and attach a screenshot of anything visible. If a question, ask one question I can answer in a sentence.</CopyPrompt>
     </More>
     <Next from="jobs" more={[{ href: 'wiki/parallel-work/', text: 'Parallel work', side: true }, { href: 'wiki/worktree/', text: 'Worktrees', side: true }]} />
   </Step>
   <Fragment slot="foot">
-    <p>The one-hour timeline and review times (eight minutes versus two, plus three minutes to reopen vague threads) are illustrative examples.</p>
+    <p>The hour, the jobs and the minutes per stop are made up to show the mechanism.</p>
     <Verified ids={facts} />
   </Fragment>
 </Journey>
