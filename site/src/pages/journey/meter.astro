@@ -26,7 +26,7 @@ const priceIds = picks.flatMap((id) => ['input', 'output', ...('cacheRead' in mo
 const ids = [
   ...priceIds, 'lineup.cacheWrite5m', 'lineup.opusCacheWrite5m', 'lineup.cacheReadOpusSonnet', 'lineup.cacheBreakers', 'lineup.claudeCodeCacheTtl', 'plans.claude.pro.price',
   'plans.claude.limits.wholeConversation', 'plans.claude.limits.whatUsageMeans', 'plans.claude.limits.fiveHour', 'plans.claude.limits.weekly',
-  'plans.claude.limits.sharedAcrossModels', 'plans.claude.limits.usageCredits', 'plans.claude.limits.subagentsDraw', 'plans.claude.limits.whereToSee',
+  'plans.claude.limits.sharedAcrossModels', 'plans.claude.limits.usageCredits', 'plans.claude.limits.subagentsDraw', 'plans.claude.limits.whereToSee', 'plans.claude.limits.effort',
 ];
 // The sums, worked out by the same code the picture runs, so the reader can redo them.
 const opus = priced['claude-opus-5-5']!;
@@ -68,7 +68,7 @@ const pr = { read: d(opus.input), write: d(opus.output), hit: d(opus.cacheRead ?
   </Step>
   <Step id="cache" title="Reading the same thing again costs less">
     <ForLevel is="plain">
-      <p>Claude Code keeps what the model read last turn in a <Term id="cache" />, and on {opus.name} reading it from there costs <Fact id="lineup.cacheReadOpusSonnet" /> the normal price, a twentieth. Turn the cache off, or change the effort level halfway and watch one turn miss it.</p>
+      <p>Claude Code keeps what the model read last turn in a <Term id="cache" />, and on {opus.name} reading it from there costs <Fact id="lineup.cacheReadOpusSonnet" /> the normal price, a twentieth. Turn the cache off, or change the effort level halfway (a setting where <Fact id="plans.claude.limits.effort" /> tokens) and watch one turn miss it.</p>
     </ForLevel>
     <ForLevel is={['technical', 'engineer']}>
       <p>With the <Term id="cache">prompt cache</Term>, the part of the window the last request already sent is billed as a cache read; only the new part is a cache write. Anything that changes the top of the request makes the next turn miss.</p>
@@ -89,7 +89,13 @@ const pr = { read: d(opus.input), write: d(opus.output), hit: d(opus.cacheRead ?
       <button class="btn" type="button" data-do="another">Run another date fix</button>
     </div>
     <More title="The limits">
-      <p><Fact id="plans.claude.limits.whatUsageMeans" show="claim" /> <Fact id="plans.claude.limits.fiveHour" show="claim" /> <Fact id="plans.claude.limits.weekly" show="claim" /> <Fact id="plans.claude.limits.whereToSee" show="claim" /> <Fact id="plans.claude.limits.usageCredits" show="claim" /></p>
+      <ul>
+        <li><Fact id="plans.claude.limits.whereToSee" show="claim" /></li>
+        <li><Fact id="plans.claude.limits.fiveHour" show="claim" /></li>
+        <li><Fact id="plans.claude.limits.weekly" show="claim" /></li>
+        <li><Fact id="plans.claude.limits.whatUsageMeans" show="claim" /></li>
+        <li><Fact id="plans.claude.limits.usageCredits" show="claim" /></li>
+      </ul>
     </More>
   </Step>
   <Step id="many" title="Twenty agents draw from one meter">
