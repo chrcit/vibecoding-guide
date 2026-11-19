@@ -19,7 +19,7 @@ Every step of [the loop](./agent-loop.md) sends the whole conversation again: th
 What follows from that, in practice:
 
 - Keep one task per [thread](./thread.md). A thread that wanders keeps rereading history that no longer matters.
-- Pick the model at the start. Switching mid-thread starts a new cache.
+- Pick the [model](./model.md) at the start. Switching mid-thread starts a new cache.
 - Expect one dear step after [compaction](./compaction.md), which rewrites the history.
 - Leave the instruction file alone mid-session; a change near the start invalidates everything after it.
 

@@ -14,7 +14,7 @@ Sources: guides/t3-code.md "Harness vs. ADE", "Where It Hits Walls"; guides/agen
 
 The harness is the program that turns a model into an agent: it gives the model tools, runs them, and feeds the results back.
 
-A [model](./model.md) only reads and writes text. The harness is the part that opens files, runs commands and shows you the change. Each time the model asks for a tool (a [tool call](./tool-call.md)), the harness runs it and hands back the result; that back and forth is [the loop](./agent-loop.md). Claude Code, Codex, Cursor's agent and OpenCode are harnesses.
+A [model](./model.md) only reads and writes text. The harness is the part that opens files, runs commands and shows you the change. Each time the model asks for a tool (a [tool call](./tool-call.md)), the harness runs it and hands back the result; that back and forth is [the loop](./agent-loop.md). Model and harness together make the [agent](./agent.md). Claude Code, Codex, Cursor's agent and OpenCode are harnesses.
 
 The harness, more than the model, decides how an agent behaves: what it may do without asking ([permission mode](./permission-mode.md)), what goes into its [context window](./context-window.md), and what happens when the conversation gets too long ([compaction](./compaction.md)). It also loads what makes the agent yours: the project's [instruction file](./instruction-file.md), your [skills](./skill.md), [MCP](./mcp.md) servers, and [subagents](./subagent.md) where it has them.
 
