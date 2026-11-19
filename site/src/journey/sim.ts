@@ -98,3 +98,90 @@ export async function fleet(ctx: Ctx, h: Script, o: FleetOpts = {}): Promise<Tal
   stats();
   return tally;
 }
+
+// ---------- several jobs, one of you (chapter 14) ----------
+// A made-up hour at a desk. Each job works for a while, then needs you: a question half-way
+// through its task, a result to look at the end. It waits until you have walked over and stayed
+// for the length of a stop. There is one of you, so jobs queue: you go to whichever has waited
+// longest. Pure and deterministic; the chapter draws what this returns and counts the readout
+// from the same minutes.
+
+export type Need = 'question' | 'result';
+export type JobState = 'work' | 'wait' | 'with';
+export interface DeskOpts {
+  jobs: number;
+  /** Minutes you stay at a job each time it needs you. */
+  stop: number;
+  /** Length of the run. Default 60. */
+  minutes?: number;
+  /** Minutes to walk from one job to another. Default 1. */
+  walk?: number;
+}
+export interface DeskEvent {
+  t: number;
+  job: number;
+  /** need: its lamp turns blue. go: you set off towards it. arrive, leave: your stop. */
+  what: 'need' | 'go' | 'arrive' | 'leave';
+  need: Need;
+  /** Which task of this job, counting from 0. */
+  task: number;
+}
+export interface DeskMinute { jobs: JobState[]; you: 'idle' | 'walk' | 'with' }
+export interface Desk {
+  events: DeskEvent[];
+  /** What each job and you were doing in each minute. */
+  minutes: DeskMinute[];
+  /** Tasks whose result you had looked at before the hour ran out. */
+  finished: number;
+  /** Agent-minutes spent waiting for you, your stops included. */
+  waited: number;
+  /** Your minutes with nothing to attend to. */
+  idle: number;
+}
+
+/** How long job j works before it next needs you: 5 to 13 made-up minutes, fixed. */
+export const workFor = (job: number, part: number) => 5 + ((job * 5 + part * 7 + 3) % 9);
+
+export function desk(o: DeskOpts): Desk {
+  const T = o.minutes ?? 60, walk = o.walk ?? 1, n = Math.max(1, o.jobs);
+  const jobs = Array.from({ length: n }, (_, j) => ({ part: 0, state: 'work' as JobState, until: workFor(j, 0), since: 0 }));
+  const need = (j: number): Need => (jobs[j]!.part % 2 ? 'result' : 'question');
+  const task = (j: number) => Math.floor(jobs[j]!.part / 2);
+  const you = { state: 'idle' as DeskMinute['you'], job: -1, at: -1, until: 0 };
+  const events: DeskEvent[] = [];
+  const minutes: DeskMinute[] = [];
+  const log = (t: number, job: number, what: DeskEvent['what']) => events.push({ t, job, what, need: need(job), task: task(job) });
+  let finished = 0;
+
+  for (let t = 0; t < T; t++) {
+    if (you.state === 'with' && you.until === t) {
+      const j = jobs[you.job]!;
+      log(t, you.job, 'leave');
+      if (need(you.job) === 'result') finished++;
+      j.part++;
+      j.state = 'work';
+      j.until = t + workFor(you.job, j.part);
+      you.state = 'idle';
+    }
+    if (you.state === 'walk' && you.until === t) {
+      you.state = 'with'; you.at = you.job; you.until = t + o.stop;
+      jobs[you.job]!.state = 'with';
+      log(t, you.job, 'arrive');
+    }
+    jobs.forEach((j, i) => { if (j.state === 'work' && j.until === t) { j.state = 'wait'; j.since = t; log(t, i, 'need'); } });
+    if (you.state === 'idle') {
+      let pick = -1;
+      jobs.forEach((j, i) => { if (j.state === 'wait' && (pick < 0 || j.since < jobs[pick]!.since)) pick = i; });
+      if (pick >= 0) {
+        you.job = pick;
+        log(t, pick, 'go');
+        if (you.at === pick) { you.state = 'with'; you.until = t + o.stop; jobs[pick]!.state = 'with'; log(t, pick, 'arrive'); }
+        else { you.state = 'walk'; you.until = t + walk; }
+      }
+    }
+    minutes.push({ jobs: jobs.map((j) => j.state), you: you.state });
+  }
+  const waited = minutes.reduce((a, m) => a + m.jobs.filter((s) => s !== 'work').length, 0);
+  const idle = minutes.filter((m) => m.you === 'idle').length;
+  return { events, minutes, finished, waited, idle };
+}

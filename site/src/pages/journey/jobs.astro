@@ -1,11 +1,48 @@
 ---
 import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
+import More from '../../components/journey/More.astro';
 import Next from '../../components/journey/Next.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
 ---
-<Journey chapter="jobs" first="first" title="Several jobs" description="Running several agent jobs at once, in one project or in different ones, with one of you to answer them.">
-  <Step id="first" title="Several jobs">
-    <p>This chapter is being built.</p>
-    <Next from="jobs" />
+<Journey chapter="jobs" first="one" title="Several jobs" description="Running several agent jobs at once, in one project or in different ones, with one of you to answer them.">
+  <Step id="one" title="While it works, you wait">
+    <p>One made-up job over a made-up hour. When its lamp turns blue it needs you; the rest of the time you stand by.</p>
   </Step>
+  <Step id="three" title="Start another">
+    <p>Three jobs in one project, each in its own copy. You walk to whichever lamp turns blue.</p>
+  </Step>
+  <Step id="many" title="There is still one of you">
+    <p>Jobs queue for you. A bare “Done.” means a long stop; proof and a short question mean a short one.</p>
+    <div class="controls">
+      <label class="control"><span>Jobs at once <output>5</output></span>
+        <input type="range" min="1" max="5" step="1" value="5" data-bind="n" />
+      </label>
+    </div>
+    <div class="pick" aria-label="What reaches you">
+      <button type="button" data-do="stop" data-val="long" data-default aria-pressed="true">“Done.”</button>
+      <button type="button" data-do="stop" data-val="short" aria-pressed="false">Proof and short questions</button>
+    </div>
+  </Step>
+  <Step id="projects" title="One project or several">
+    <p>In one project every job merges into main, one at a time. Several projects each have their own instruction file.</p>
+    <div class="pick">
+      <button type="button" data-do="projects" data-val="one" data-default aria-pressed="true">One project</button>
+      <button type="button" data-do="projects" data-val="many" aria-pressed="false">Several</button>
+    </div>
+  </Step>
+  <Step id="board" title="Keep the board short">
+    <p>A card should say what the job is and what it needs from you.</p>
+    <div class="pick" aria-label="How a card reads">
+      <button type="button" data-do="board" data-val="vague" data-default aria-pressed="true">A thread called “fix”</button>
+      <button type="button" data-do="board" data-val="clear" aria-pressed="false">A name, a state, what it needs</button>
+    </div>
+    <More title="In T3 Code">
+      <p><Fact id="t3code.worktrees" show="claim" /></p>
+      <p><Fact id="t3code.queueSteer" show="claim" /></p>
+    </More>
+    <Next from="jobs" more={[{ href: 'wiki/parallel-work/', text: 'Parallel work', side: true }, { href: 'explain/orchestration/', text: 'Ways to split work' }]} />
+  </Step>
+  <Verified slot="foot" ids={['t3code.worktrees', 't3code.queueSteer']} />
 </Journey>
