@@ -55,7 +55,7 @@ const data = { autoCompactAt: harnesses.claudeCode.autoCompactAt.value };
       </label>
       <label class="control"><span>Window size</span>
         <select data-bind="cap" aria-label="Window size">
-          {windows.map((w) => <option value={w.k}>{w.label}: {w.names.join(', ')}</option>)}
+          {windows.map((w) => <option value={w.k}>{w.label} ({w.names.length > 2 ? `${w.names.length} models` : w.names.join(', ')})</option>)}
         </select>
       </label>
     </div>
