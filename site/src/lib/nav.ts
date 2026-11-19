@@ -13,7 +13,7 @@ export const sections = [
   { id: 't3-code', label: 'T3 Code', path: 't3-code/', ready: true },
   { id: 'wiki', label: 'Wiki', path: 'wiki/', ready: false },
   { id: 'essays', label: 'Essays', path: 'essays/', ready: true },
-  { id: 'showcase', label: 'Showcase', path: 'showcase/', ready: false },
+  { id: 'showcase', label: 'Showcase', path: 'showcase/', ready: true },
   { id: 'reference', label: 'Reference', path: 'guide/', ready: true },
 ] as const;
 export type SectionId = (typeof sections)[number]['id'];

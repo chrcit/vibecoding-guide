@@ -1,0 +1,11 @@
+---
+/*
+  A word that opens its explanation in the side view.
+    <Explain to="wiki/worktree/">worktree</Explain>
+  Props: to (a site path). Without JavaScript it is an ordinary link.
+*/
+import { url } from '../../lib/nav';
+interface Props { to: string }
+const { to } = Astro.props;
+---
+<a class="explain" href={url(to)} data-side><slot /></a>

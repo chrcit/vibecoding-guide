@@ -2,6 +2,43 @@
 
 Rules for anyone, person or agent, who changes the site. The repo-wide rules in `../AGENTS.md` still apply; this file adds what is specific to `site/`.
 
+## What the site is
+
+A dashboard you learn from by poking at it. The owner's words: "more like an analysis dashboard: everything a bit tighter, less text, and more of the illustrations actually showing something, being a bit deeper, and allowing for more boundary testing", "concepts explained to me visually in different examples", "click something, and it opens up like a side view, which I can maximize, minimize, and then close again".
+
+Three rules follow from that, and they outrank habits you bring from writing articles:
+
+1. Picture first. A concept is shown by something the reader can operate, with controls that go to the extremes (one agent and sixteen, an empty context window and a full one, the cheapest plan and the dearest), so they can find where it breaks. Words come second and stay short.
+2. We tell people how; we do not explain everything. The guide teaches the reader to use a machine that can explain things at their own level. Give the move and the prompt. The long explanation is one click away in the side view, never in the way.
+3. "Cut taglines, helper text and secondary labels. If a screen needs them to make sense, fix the layout." No line under a title, no hint under a control ("drag the slider"), no caption that repeats the picture, no label on top of a label.
+
+## Boards
+
+The start page, the explainers, the model pages and the home page are boards: `src/layouts/Board.astro`, a title and a 12-column grid of tiles.
+
+```astro
+<Board title="Orchestration" description="…" section="explain">
+  <Tile title="Sixteen agents, one of you" span={8} side="wiki/parallel-work/">…figure…</Tile>
+  <Tile title="What it costs" span={4}><dl class="stats"><Stat name="Tokens" id="tok">1.2M</Stat></dl></Tile>
+  <Tile title="Cache reads" span={6} level="engineer">…</Tile>
+  <Verified slot="foot" ids={factIds} />
+</Board>
+```
+
+- `Tile` (`src/components/board/Tile.astro`): `title` states the point in a few words; `span` is columns out of 12; `side` adds the button that opens a page in the side view; `level` shows the tile to readers at or above `technical` or `engineer` only. Same board for everyone, more tiles and controls as the level goes up; never a different path per level.
+- A tile holds one thing: a figure, a control strip, a few stats, a prompt to copy. At most about forty words of running text. If you need more, it belongs in a wiki article or the page's long read, opened in the side view.
+- Parts in `src/styles/board.css`: `<Stat>` in `<dl class="stats">`, `.controls` and `.control` for sliders and selects, `.pick` for one-of-several, `.finding` for the sentence a script rewrites as the reader moves a control, `.hot` for a numbered marker on a drawing, `<Explain to="wiki/…">word</Explain>` for a word that opens in the side view.
+- A figure inside a tile uses `<Figure bare …>`: the tile is the frame and carries the title.
+- Board text is set in `--sans` at 16px; numbers in `--mono`. The serif is for page titles and the long reads.
+
+### The side view
+
+`src/components/site/SideView.astro`, one instance in `Base`. Anything with `data-side` opens in it: a link (`<a href={url('wiki/worktree/')} data-side>`), or any element, SVG parts included (`<g data-side={url('…')} tabindex="0" role="button" aria-label="…">`). It shows the target page in a frame with the site chrome removed, and has minimise, maximise, open-as-page and close. Use it for every "what is this" moment: a term, a part of a drawing, a number's source. Do not write the explanation into the board.
+
+### The long read
+
+Each explainer keeps its full text at `/explain/<slug>/read/` on the `Article` layout, with the reader levels. The board links to it once, through the side view. Sourced facts and the three levels live there; the board shows the same facts through `<Fact>` and the data files.
+
 ## The judge
 
 Nothing is done until this passes, from `site/`:
@@ -24,6 +61,8 @@ Dependencies stay few. Pin exact versions that are at least two weeks old. Ask t
 | Path | What | 
 |---|---|
 | `src/layouts/Base.astro` | The one page shell |
+| `src/layouts/Board.astro`, `src/components/board/`, `src/styles/board.css` | Boards: the dashboard pages |
+| `src/layouts/Article.astro` | Long reads, wiki articles, reference |
 | `src/styles/global.css` | Tokens and base styles |
 | `src/components/site/` | Header, footer, boxes, cards, copy-prompt, terms |
 | `src/components/level/` | Reader levels |
@@ -50,7 +89,7 @@ Tokens are CSS custom properties in `global.css`: `--paper`, `--card`, `--ink`, 
 - Everything works from the keyboard, with a visible focus ring.
 - Motion respects `prefers-reduced-motion`. Animate `transform` and `opacity` only.
 - Touch targets are at least 40px.
-- No tiny uppercase labels above headings. No tagline under every title.
+- No tiny uppercase labels above headings. No tagline under a title, no helper text, no secondary labels.
 
 ## Reader levels
 
@@ -62,7 +101,7 @@ Three levels, stored in `localStorage` under `acg-level`, mirrored to `data-leve
 | `technical` | Some technical background. I use a terminal, know Git and basic deployment. |
 | `engineer` | Serious engineer. Give me the full weight. |
 
-Every section leads with the plain explanation, which everyone sees. Deeper material goes in a block tagged with the lowest level it is written for:
+On a board, the level adds tiles and controls (`<Tile level="engineer">`). In a long read or a wiki article, every section leads with the plain explanation, which everyone sees, and deeper material goes in a block tagged with the lowest level it is written for:
 
 ```astro
 <Deeper level="technical" title="What a token is">…</Deeper>
@@ -71,7 +110,7 @@ Every section leads with the plain explanation, which everyone sees. Deeper mate
 
 In markdown the same thing is a blockquote: `> [!technical] What a token is` followed by the content.
 
-A reader at or above the block's level sees it open. A reader below it sees the first two lines and a button to open it. All text is always in the HTML, so search engines, the `.md` twins and readers without JavaScript get everything. `<ForLevel is="plain">` shows content to one level only, for the rare place where the path itself differs.
+A reader at or above the block's level sees it open. A reader below it sees the first two lines and a button to open it. All text is always in the HTML, so search engines, the `.md` twins and readers without JavaScript get everything. `<ForLevel is="plain">` shows content to one level only. Use it for wording (a prompt that speaks to the reader's level), never to send levels down different paths: everyone does the same exercises, and higher levels get more on top.
 
 Write the plain layer so it stands alone. A deeper block may not be the only place a fact a beginner needs is stated.
 
@@ -118,6 +157,12 @@ No pendulums, no to-do apps.
 ## Privacy
 
 This repo is public. No real names of private people, no employers, research topics, hostnames or email addresses. Public figures and projects are credited by name with a link.
+
+## Screenshots and samples
+
+`src/lib/samples.ts` is the catalog of pictures the guide still needs: what each model builds from the first-hour prompts, and screenshots of T3 Code at the moments the guide describes. It also says how a sample is made and where it is saved. Add to it when a page needs a picture you cannot make; do not draw a fake screenshot. A sample is evidence: never retouched, never re-run until it looks better.
+
+The prompts of the first hour live in `src/lib/start.ts`, and nowhere else.
 
 ## Review pages and checks
 

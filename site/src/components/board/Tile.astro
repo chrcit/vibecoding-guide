@@ -1,0 +1,40 @@
+---
+/*
+  One tile of a board: a short title that states the point, and one thing
+  to look at or play with.
+  Props:
+    title    what the tile shows, in a few words. No second line under it.
+    span?    columns out of 12 on a wide screen: 3, 4, 5, 6 (default), 7, 8, 9 or 12
+    side?    a site path ("wiki/worktree/"); adds a button that opens it in the side view
+    level?   'technical' | 'engineer': shown to readers at or above that level only
+    id?      anchor
+    flush?   no padding, for a drawing that runs to the edges
+    as?      'h2' (default) | 'h3'
+  Slots: default (the body), tools (controls in the title row), foot (a line under the body)
+*/
+import { url } from '../../lib/nav';
+interface Props {
+  title: string;
+  span?: 3 | 4 | 5 | 6 | 7 | 8 | 9 | 12;
+  side?: string;
+  level?: 'technical' | 'engineer';
+  id?: string;
+  flush?: boolean;
+  as?: 'h2' | 'h3';
+}
+const { title, span = 6, side, level, id, flush = false, as: H = 'h2' } = Astro.props;
+const forLevel = level === 'engineer' ? 'engineer' : level === 'technical' ? 'technical engineer' : undefined;
+---
+<section class="tile" id={id} data-span={span} style={`--span:${span}`} data-flush={flush ? '' : undefined} data-for-level={forLevel}>
+  <header class="tile-head">
+    <H>{title}</H>
+    {Astro.slots.has('tools') && <div class="tile-tools"><slot name="tools" /></div>}
+    {side && (
+      <a class="tile-more" href={url(side)} data-side aria-label={`Explain: ${title}`} title="Explain">
+        <svg viewBox="0 0 16 16" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="2" y="3" width="12" height="10" rx="1.5" /><path d="M9.5 3v10" /></svg>
+      </a>
+    )}
+  </header>
+  <div class="tile-body"><slot /></div>
+  {Astro.slots.has('foot') && <footer class="tile-foot"><slot name="foot" /></footer>}
+</section>
