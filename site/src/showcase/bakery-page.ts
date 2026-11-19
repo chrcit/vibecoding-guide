@@ -5,7 +5,7 @@ export const piece: Piece = {
   title: 'The bakery page',
   category: 'pages',
   summary: 'A one-page site for a made-up bakery that knows whether it is open, including on holidays, after midnight and from another time zone.',
-  path: 'showcase/pieces/bakery-page/',
+  path: 'showcase/pieces/bakery-page/index.html',
   height: 760,
   built: '2026-11-18',
   builtWith: 'Claude Opus 5.5 in Claude Code',

@@ -14,14 +14,11 @@ const date = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: '
 ---
 <Base title={`${category.title} · Showcase · Agentic Coding Guide`} description={`${category.title}: ${category.blurb} Built by an agent for this guide.`} section="showcase" noindex={list.length === 0}>
   <div class="wrap">
-    <PageHeader title={category.title}>
-      <p>{category.blurb} <a href={url('showcase/')}>All of the showcase</a>.</p>
-    </PageHeader>
+    <PageHeader title={category.title} />
     {list.length === 0 && <p>Nothing here yet.</p>}
     {list.map((p) => (
       <section class="piece" id={p.slug} aria-labelledby={`${p.slug}-h`}>
         <h2 id={`${p.slug}-h`}>{p.title}</h2>
-        <p class="summary">{p.summary}</p>
         <div class="stage" style={`--h: ${p.height ?? 560}px`}>
           <iframe src={url(p.path)} title={p.title} loading="lazy"></iframe>
         </div>
