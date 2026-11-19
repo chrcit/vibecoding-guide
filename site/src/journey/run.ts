@@ -47,6 +47,16 @@ export function boot(root: HTMLElement) {
     },
     model(part, text) {
       if (!modelEl) return;
+      // No lead-in labels: "Added to the model ·" goes. On an overview the step's heading already
+      // names the lesson, so the note has no lead-in at all, and a note that only repeats the step's
+      // own text is not shown.
+      part = (part ?? '').replace(/^\s*Added to the model\s*·\s*/i, '');
+      if (isOverview) {
+        part = '';
+        const said = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+        const own = current ? [...current.children].filter((c) => !c.classList.contains('j-step-extra')).map((c) => c.textContent ?? '').join(' ') : '';
+        if (text && said(own).includes(said(text).slice(0, 80))) text = '';
+      }
       if (!part && !text) { modelEl.replaceChildren(); modelEl.hidden = true; return; }
       modelEl.replaceChildren();
       if (part) { const b = document.createElement('b'); b.textContent = part; modelEl.append(b, ' '); }
@@ -92,7 +102,9 @@ export function boot(root: HTMLElement) {
   function placeExtras() {
     if (wide()) { if (modelEl && modelEl.parentElement !== readEl) readEl.append(...[modelEl, keyEl].filter(Boolean) as HTMLElement[]); extra.remove(); return; }
     if (!current) return;
-    if (extra.parentElement !== current) current.append(extra);
+    // Under the step's text and controls, but above a closing card that leads on.
+    const end = current.querySelector(':scope > .j-end, :scope > .j-next');
+    if (extra.parentElement !== current || (end && extra.nextElementSibling !== end)) current.insertBefore(extra, end);
     if (modelEl && modelEl.parentElement !== extra) extra.append(modelEl);
     if (keyEl.parentElement !== extra) extra.append(keyEl);
   }
