@@ -47,6 +47,9 @@ export interface Agent {
   model?: 'a' | 'b';
   /** Its machine is asleep: drawn faint. */
   off?: boolean;
+  /** Draw the window's contents at true scale instead of squeezing them in: what does not fit
+   *  sits on top of the cap, marked as over. */
+  spill?: boolean;
 }
 export type FileMark = '' | 'read' | 'edit' | 'bad' | 'ok';
 export interface Project {
@@ -203,7 +206,30 @@ const TREE: k.Plan = { x: 27, y: -13, w: 22, d: 26, r: 4 };
 const memo = new Map<string, string>();
 const once = (key: string, make: () => string) => memo.get(key) ?? (memo.set(key, make()), memo.get(key)!);
 
-function stackMarkup(blocks: Block[], cap: number, freshFrom: number) {
+/** What does not fit the window, drawn on top of the cap (Agent.spill). At most SPILL_MAX high. */
+const SPILL_MAX = 16;
+function spillMarkup(blocks: Block[], cap: number, freshFrom: number) {
+  const f = CAP / cap;
+  let z = 0, over = 0, out = '';
+  blocks.forEach((b, i) => {
+    let h = Math.max(1.3, b.h * f);
+    const inside = Math.max(0, Math.min(h, CAP - z));
+    if (inside > 0.01) {
+      out += S(k.box(SLAB, TZ + 0.4 + z, inside - 0.5, P), { crease: false, 'data-b': b.t, 'data-fresh': i >= freshFrom ? '' : undefined, style: `--i:${i}` });
+      z += inside;
+      h -= inside;
+    }
+    if (h > 0.01 && over < SPILL_MAX) {
+      const hh = Math.min(Math.max(h, 3), SPILL_MAX - over);
+      out += S(k.box(SLAB, TZ + TH + HEAD_H + 1.2 + over, Math.max(0.8, hh - 0.5), P), { crease: false, 'data-b': b.t, 'data-over': '', style: `--i:${i}` });
+      over += hh;
+    }
+  });
+  return out;
+}
+
+function stackMarkup(blocks: Block[], cap: number, freshFrom: number, spill = false) {
+  if (spill) return spillMarkup(blocks, cap, freshFrom);
   const total = blocks.reduce((a, b) => a + b.h, 0);
   const f = (CAP / cap) * (total > cap ? cap / total : 1);
   let z = 0;
@@ -230,7 +256,7 @@ function agentMarkup(a: Agent, freshFrom: number) {
         S(k.box({ x: 31, y: -9, w: 14, d: 7, r: 1.5 }, 2.6, 1.6, P), { 'data-part': 'leaf', crease: false }) +
         S(k.box({ x: 31, y: 1, w: 14, d: 7, r: 1.5 }, 2.6, 1.6, P), { 'data-part': 'leaf', crease: false }))
     : '';
-  return tree + under + stackMarkup(a.blocks ?? [], a.cap ?? CAP, freshFrom) + over;
+  return tree + under + stackMarkup(a.blocks ?? [], a.cap ?? CAP, freshFrom, a.spill) + over;
 }
 
 const youMarkup = () => once('you', () =>
@@ -395,7 +421,7 @@ function extent(s: SceneState, key: string): P3[] {
   const person = s.people?.find((x) => x.id === key);
   if (person) return boxPts(person.at, 8, 8, 24);
   const a = s.agents.find((x) => x.id === key);
-  if (a) { const m = a.scale ?? 1; return boxPts([a.at[0] + (a.tree ? 12 * m : 0), a.at[1]], (a.tree ? 36 : 22) * m, 22 * m, (TZ + TH + HEAD_H + 2) * m); }
+  if (a) { const m = a.scale ?? 1; return boxPts([a.at[0] + (a.tree ? 12 * m : 0), a.at[1]], (a.tree ? 36 : 22) * m, 22 * m, (TZ + TH + HEAD_H + 2 + (a.spill ? SPILL_MAX + 2 : 0)) * m); }
   return [];
 }
 
@@ -451,7 +477,7 @@ export function picture(s: SceneState, frame: Frame, prev?: SceneState): Picture
     ents.push({
       key: a.id,
       order: lead ? 500 : 100 + Math.round(depth(a.at) + 400) / 10,
-      sig: blockSig(a.blocks) + '|' + (a.cap ?? CAP) + '|' + (a.tree ? 1 : 0),
+      sig: blockSig(a.blocks) + '|' + (a.cap ?? CAP) + '|' + (a.tree ? 1 : 0) + (a.spill ? '|spill' : ''),
       html: () => agentMarkup(a, freshFrom),
       x, y, scale: a.scale ?? 1,
       attrs: { 'data-busy': a.busy ? '' : '-', 'data-lamp': a.lamp ?? 'off', 'data-model': a.model ?? 'a', 'data-tree': a.tree || '-', 'data-scan': a.scan ? '' : '-', 'data-asleep': a.off ? '' : '-' },

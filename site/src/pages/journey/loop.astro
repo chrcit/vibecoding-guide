@@ -8,24 +8,24 @@ import { url } from '../../lib/nav';
 ---
 <Journey chapter="loop" first="hands" title="It gets hands" description="Tools turn a model's text into actions. Each result goes back into the window and the model goes again, until the job is done.">
   <Step id="hands" title="Tools are its hands">
-    <p>Start with <a href={url('journey/chat/')}>the chat from step 1</a>, then put four tools beside the model and your project behind them. A model can only write text; tools turn that text into actions—search, read a file, edit it, or run a command.</p>
+    <p>The model and window from <a href={url('journey/chat/')}>One chat</a>, now with four tools beside it and your project behind them. The model only writes text; the tools turn it into actions: search, read a file, edit it, run a command.</p>
   </Step>
   <Step id="fix" title="One request, many turns">
-    <p>Ask it to fix a bug once. It searches the codebase, reads the right file, edits it, runs the tests, catches a failure, fixes that too, and runs them again.</p>
+    <p>You ask once: the dates on the member list are wrong. Watch it search, read, edit, run the tests, see one fail, and fix that too.</p>
     <div class="row"><button class="btn ghost" type="button" data-do="play">Play it again</button></div>
   </Step>
   <Step id="again" title="You sent one message">
-    <p>Every other turn was its own. Each tool result went back into the window, and the model decided what to do next. That loop is what makes it an agent.</p>
+    <p>Every other turn was its own: each tool result went back into the window and the model chose the next step. That loop makes it an agent.</p>
   </Step>
   <Step id="norun" title="Take one tool away">
-    <p>If it cannot run commands, it cannot check its own work. It will still tell you it is “fixed”.</p>
+    <p>The run cube is greyed out. It cannot try its own fix, and it still says “fixed”: look at the last line of the numbers.</p>
     <div class="pick">
       <button type="button" data-do="run" data-val="off" data-default aria-pressed="true">Without run</button>
       <button type="button" data-do="run" data-val="on" aria-pressed="false">With run</button>
     </div>
   </Step>
   <Step id="ask" title="You decide what it may do alone">
-    <p>Whenever it asks for permission, the loop pauses until you answer.</p>
+    <p>Each time it asks, the loop stops until you answer. Next, all of this piles up in its window.</p>
     <div class="pick">
       <button type="button" data-do="ask" data-val="always" data-default aria-pressed="true">Ask every time</button>
       <button type="button" data-do="ask" data-val="edits" aria-pressed="false">Ask before changes</button>

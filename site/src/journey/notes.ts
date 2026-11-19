@@ -12,77 +12,187 @@ export interface StepNote {
 export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
   chat: {
     two: {
-      part: 'Stateless model + context window.',
+      part: 'The model.',
       text: {
-        plain: 'The model has no hidden notebook behind the scenes—everything it knows about your project has to sit inside this visible window.',
-        technical: 'Each API call is stateless: the model reads only the current token window and produces the next completion with zero hidden memory.',
-        engineer: 'Treat the model as a pure function over the prompt buffer—reproducible behaviour comes from controlling what enters that buffer.',
+        plain: 'The model writes text. It has no notebook of its own: what it knows about you and your project is whatever sits in the glass column.',
+        technical: 'Each request to the model is stateless. The app sends the conversation; the model reads it and writes the next reply. Nothing is stored on the model’s side between calls.',
+        engineer: 'Inference is a function of the token sequence you send. Any state, chat history included, exists only because the harness puts it back into the request.',
       },
     },
     send: {
-      part: 'Every reply enters the window.',
+      part: 'Both sides land in the window.',
       text: {
-        plain: 'Both your message and the AI’s reply stack up inside the window so the next turn can see what was already said.',
-        technical: 'User prompts and assistant turns append sequentially; every follow-up turn re-sends the entire prefix to the model.',
-        engineer: 'Appending turns grows the prompt prefix monotonically, coupling conversation length directly to latency, cost and attention dilution.',
+        plain: 'Dark slabs are what you wrote, pale ones what it wrote. The column only grows while the chat goes on.',
+        technical: 'Your message and the reply are appended to the message list. The next request carries both.',
+        engineer: 'The prompt grows monotonically with the conversation, and so do latency and cost per turn.',
       },
     },
     reread: {
-      part: 'Full re-read on every turn.',
+      part: 'Read again, every turn.',
       text: {
-        plain: 'The model “remembers” your name only because the app replays the whole conversation from the top on every message.',
-        technical: 'Self-attention runs across the entire message history on every turn—if a detail is not in the transcript, the model cannot recall it.',
-        engineer: 'Conversation continuity is an illusion maintained by full-history replay (mitigated on cost by prefix caching, not on attention noise).',
+        plain: 'It “remembers” your name only because your first message is still in the column and gets read again.',
+        technical: 'Every turn the whole message list is sent again. Drop the first message and the name is gone.',
+        engineer: 'Continuity is full-history replay. Prompt caching makes the replay cheaper; it does not make the model attend to it any better.',
       },
     },
     fresh: {
-      part: 'New chat = clean slate.',
+      part: 'A new chat starts empty.',
       text: {
-        plain: 'Opening a new chat empties the window completely—great for clearing confusion, as long as anything worth keeping is saved in a file.',
-        technical: 'A fresh thread resets the token buffer to zero: no stale traces, no forgotten assumptions, ready for a clean task spec.',
-        engineer: 'Resetting context is your primary defense against attention rot; persist durable specs and invariants on disk, not in chat logs.',
+        plain: 'Handy when a chat has gone off track. Anything worth keeping has to be written down somewhere the next chat will read.',
+        technical: 'A new thread sends an empty history. Durable facts belong in a file the tool loads, which is lesson 8.',
+        engineer: 'A reset is free and total. Persist invariants on disk, versioned with the code, rather than in chat history.',
       },
     },
   },
   loop: {
     hands: {
-      part: 'Tools turn chat into an agent.',
+      part: 'Tools.',
       text: {
-        plain: 'Giving the model four tools—search, read, edit, run—lets it look at your real files and make changes instead of making you copy-paste.',
-        technical: 'Structured tool calls let the harness execute file reads, patches and shell commands (`tsc`, `vitest`) and pipe stdout back into context.',
-        engineer: 'The harness bridges probabilistic text generation to deterministic OS primitives; tool design determines what the agent can observe and verify.',
+        plain: 'Four cubes: search, read, edit, run. With them the model works on your real files instead of handing you code to paste.',
+        technical: 'The harness (Claude Code, Codex) runs the tool call the model asks for: a grep, a file read, a patch, a shell command, and puts the output back in the window.',
+        engineer: 'The harness maps text to side effects. Which tools exist decides what the agent can observe, and so what it can verify.',
       },
     },
     fix: {
-      part: 'Observe → edit → run → fix.',
+      part: 'One request, many turns.',
       text: {
-        plain: 'Notice the magic: when the first try breaks a check, the agent sees the failure itself and fixes it before coming back to you.',
-        technical: 'Running the test suite inside the loop turns compiler/test failures into immediate feedback—no manual copy-paste of stack traces.',
-        engineer: 'Closing the feedback loop with fast local oracles (typechecker + unit tests) converts open-ended generation into iterative convergence.',
+        plain: 'The red slab is a failing check. The agent read it and fixed its own mistake before telling you anything.',
+        technical: 'Here the run tool is `npm test`: 1 of 12 fails, the agent patches members.ts and runs it again until 12 of 12 pass.',
+        engineer: 'Fast local oracles (type checker, unit tests) turn generation into iteration: each failure is an observation the next turn can act on.',
       },
     },
     again: {
-      part: 'Autonomous inner loop.',
+      part: 'The loop.',
       text: {
-        plain: 'One clear goal from you triggers several turns of reading, editing and checking on its own—you only step in once the result is ready.',
-        technical: 'A single well-scoped prompt drives multiple read/patch/test cycles until the exit code is zero and the diff matches the brief.',
-        engineer: 'Maximize work-per-human-turn by investing in crisp specifications and fast deterministic checks rather than micro-steering each edit.',
+        plain: 'You wrote one message. The other turns were the agent reading results and deciding what to do next.',
+        technical: 'Each tool result goes back into the window and triggers another model call, until the model answers without a tool call.',
+        engineer: 'Work per human turn scales with how clear the request is and how fast the feedback is, not with how often you step in.',
       },
     },
     norun: {
-      part: 'No run tool = flying blind.',
+      part: 'No run, no proof.',
       text: {
-        plain: 'Without the ability to run your app or checks, the agent guesses that its fix worked—and hands you broken code with total confidence.',
-        technical: 'Disabling command execution strips away `tsc --noEmit` and unit tests; syntax errors and logic bugs survive straight into your diff.',
-        engineer: 'An agent without execution feedback is a blind code generator; always expose safe local build, typecheck and test runners.',
+        plain: 'The run cube is greyed out. It edits, cannot try the result, and still says “fixed”. Watch the last line of the readout.',
+        technical: 'Without shell access there is no `tsc` and no `npm test`; the swapped day and month go out unseen.',
+        engineer: 'An agent without execution feedback is a code generator with confidence. Give it a safe way to run builds and tests.',
       },
     },
     ask: {
-      part: 'Permission gates & trust boundaries.',
+      part: 'Who approves what.',
       text: {
-        plain: 'Auto-approve safe reads and local tests so the agent keeps moving, while keeping an approval gate on risky actions like deleting data or deploying.',
-        technical: 'Approve read-only tools and local `tsc`/`test` runs automatically; gate destructive shell commands, git pushes and external network calls.',
-        engineer: 'Design least-privilege sandboxes (local worktrees, isolated test DBs) so the inner loop runs uninterrupted while irreversible side effects require explicit consent.',
+        plain: 'Each blue question stops the loop until you answer. Let it read and run tests alone; keep the questions for deleting or publishing.',
+        technical: 'Allow reads and local `tsc`/test runs; ask before edits outside the project, `git push` and network calls.',
+        engineer: 'Least privilege: run the loop in a worktree or sandbox so it rarely needs you, and keep consent for irreversible actions.',
+      },
+    },
+  },
+  window: {
+    pile: {
+      part: 'Nothing leaves.',
+      text: {
+        plain: 'Every message, every file it read and every test output is still in the column, and all of it is read again before each turn.',
+        technical: 'Tool output is appended, not replaced. A 40k-token file read stays in the prompt for the rest of the thread.',
+        engineer: 'The prompt is an append-only log; cost per turn and attention load both grow with it until something truncates or compacts it.',
+      },
+    },
+    rot: {
+      part: 'Context rot.',
+      text: {
+        plain: 'A bigger window holds more; it does not think better. The more unrelated text sits beside your request, the more likely it edits the wrong thing or forgets what you said first.',
+        technical: 'Same request, same model, only the window changed. The tests would not catch the lost rule: nothing asserts the date format.',
+        engineer: 'Anthropic reports recall falling as the token count grows. Keep one task per thread, read only what the task needs, and push searches into a helper (lesson 10).',
+      },
+    },
+    long: {
+      part: 'Past the limit.',
+      text: {
+        plain: 'The window has a hard size. A smaller one (Codex runs some models at 272k) fills sooner with the same work.',
+        technical: 'Over the limit the request cannot be sent. Harnesses compact before that point; plain API calls fail.',
+        engineer: 'The limit is a wall; quality falls long before it. Budget the window like memory, not like disk.',
+      },
+    },
+    compact: {
+      part: 'What survives.',
+      text: {
+        plain: 'Compaction keeps the gist. A rule you said once in chat may not make it into the gist; a new thread keeps exactly what you put in the brief.',
+        technical: 'Claude Code’s compaction keeps a summary, reloads CLAUDE.md/AGENTS.md from disk and re-reads up to five recent files. Everything else in the conversation is gone.',
+        engineer: 'Compaction is lossy and repeated compaction drifts. Prefer task boundaries: commit, write a short brief, start a new thread.',
+      },
+    },
+    paste: {
+      part: 'What you paste stays.',
+      text: {
+        plain: 'Paste the error, not the whole log. The big slab is read again on every turn after it.',
+        technical: 'Pipe it: `npm test 2>&1 | tail -40` gives the failure and the summary line, not 200k tokens of passing tests.',
+        engineer: 'Bound tool output (filters, line ranges, quiet flags) so noise never takes permanent residence in the prompt.',
+      },
+    },
+  },
+  memory: {
+    gone: {
+      part: 'A new session.',
+      text: {
+        plain: 'The new thread from lesson 7 is clean, and also forgets the format and the style it worked out yesterday.',
+        technical: 'A new session knows nothing about pnpm, the test command or the folder layout until it finds them again, turn by turn.',
+        engineer: 'A fresh context removes rot only if the invariants it needs are loaded deterministically at the start.',
+      },
+    },
+    file: {
+      part: 'AGENTS.md.',
+      text: {
+        plain: 'The green tile is a text file in your project. The tool loads it before your first word, every session.',
+        technical: 'Put the package manager, the check command (`pnpm tsc --noEmit && pnpm test`) and the folder map in it. Claude Code reads CLAUDE.md, Codex reads AGENTS.md.',
+        engineer: 'Record stack decisions, module boundaries and the verify command. It is versioned with the code and reviewed like code.',
+      },
+    },
+    grow: {
+      part: 'Short beats long.',
+      text: {
+        plain: 'Add a line when a mistake repeats, and delete lines that stopped mattering. Every line is read every session.',
+        technical: 'Anthropic advises keeping CLAUDE.md under 200 lines: longer files take more of the window and are followed less.',
+        engineer: 'Keep always-true invariants here; move procedures that only some tasks need into skills.',
+      },
+    },
+    skills: {
+      part: 'Skills.',
+      text: {
+        plain: 'Each skill is a checklist on the shelf. Only its name and one line sit in the window until a job needs it.',
+        technical: 'Skill descriptions load at start; the full SKILL.md loads only when the task matches.',
+        engineer: 'Progressive disclosure: conditional procedures cost a line of context until used.',
+      },
+    },
+  },
+  check: {
+    done: {
+      part: '“Done” is a word.',
+      text: {
+        plain: 'Orange pucks are broken work. They arrive looking exactly like the good ones.',
+        technical: 'The agent ends every job with “Done.” A green exit code is evidence; the word is not.',
+        engineer: 'Without an oracle, defects surface at the most expensive point: you, or your users.',
+      },
+    },
+    tests: {
+      part: 'The check.',
+      text: {
+        plain: 'Here the check is the agent running the app and clicking through it before saying done. Broken work goes back to it, not to you.',
+        technical: 'Here the check is `tsc --noEmit && npm test`, run by the agent before it reports. A failure goes back into its loop.',
+        engineer: 'Make the check a single command the agent must run green: types and unit tests first, because they are fast and deterministic.',
+      },
+    },
+    more: {
+      part: 'One check, one kind of wrong.',
+      text: {
+        plain: 'Running the app catches crashes and wrong values; looking on a phone catches layout. Switch one off and its kind gets through.',
+        technical: 'tsc catches the renamed field, the unit tests catch the date, the browser check catches the overflow. None of them catches the others’ bugs.',
+        engineer: 'Orthogonal oracles: types (contracts), unit tests (logic), browser (rendering). Put the fast ones in pre-commit, all of them in CI before merge.',
+      },
+    },
+    spec: {
+      part: 'What no check sees.',
+      text: {
+        plain: 'A check only looks for what someone told it to. Tell the agent what must never happen, and it can write a check for it.',
+        technical: 'Turn the rule into a test: export the CSV with a hidden rating and assert it is absent. Now the gate knows.',
+        engineer: 'A check proves what it asserts and nothing more. Spec gaps need a test written from the requirement, or a reviewer (lesson 15).',
       },
     },
   },

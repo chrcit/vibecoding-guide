@@ -13,6 +13,9 @@ const base = (rules: boolean, size = 4, skills = 0) => {
   return s;
 };
 
+/** How many lines the file has at a given size on the picture. Made up, roughly 12 lines a slab unit. */
+const lines = (size: number) => (size <= 4 ? 12 : Math.round(size * 11 - 8));
+
 /** A new session: the window is empty, then the file (if there is one) is loaded before you speak. */
 export async function session(ctx: Ctx, h: Script, o: { rules: boolean; size?: number; ask?: boolean }) {
   const size = o.size ?? 4;
@@ -22,12 +25,13 @@ export async function session(ctx: Ctx, h: Script, o: { rules: boolean; size?: n
   if (o.rules) {
     const p = ctx.scene.state.project!;
     h.set((s) => { s.project!.rules = 'lit'; });
-    ctx.say(null, 'Before your first word, the harness loads AGENTS.md.');
+    ctx.say(null, 'Before your first word, the tool loads AGENTS.md into the window.');
     await h.send(reverse(route.agentToRules(p)), 'rules');
     h.set((s) => { s.project!.rules = 'plain'; s.agents[0]!.blocks!.push({ t: 'rules', h: size }); });
     await h.wait(450);
   }
-  ctx.stat([['taken by AGENTS.md every session', o.rules ? `${Math.round((size / 60) * 100)}% of the window` : 'nothing']]);
+  const long = o.rules && size >= 20;
+  ctx.stat([['AGENTS.md', o.rules ? `${lines(size)} lines, read every session` : 'none'], ['the job', '…']]);
   if (o.ask === false) return;
   ctx.say('you', byLevel(ctx.level, {
     plain: 'Add a profile page for each member.',
@@ -41,8 +45,21 @@ export async function session(ctx: Ctx, h: Script, o: { rules: boolean; size?: n
   await h.send(route.agentToTool(tools, 'run'), 'model');
   h.set((s) => { s.tools!.on = 'run'; });
   await h.wait(420);
-  await h.send(reverse(route.agentToTool(tools, 'run')), o.rules ? 'tool' : 'bad');
-  h.set((s) => { s.tools!.on = null; s.agents[0]!.busy = false; s.agents[0]!.blocks!.push({ t: o.rules ? 'tool' : 'bad', h: 3 }); s.agents[0]!.lamp = o.rules ? 'ok' : 'bad'; });
+  const good = o.rules && !long;
+  await h.send(reverse(route.agentToTool(tools, 'run')), good ? 'tool' : 'bad');
+  h.set((s) => { s.tools!.on = null; s.agents[0]!.busy = false; s.agents[0]!.blocks!.push({ t: good ? 'tool' : 'bad', h: 3 }); s.agents[0]!.lamp = good ? 'ok' : 'bad'; });
+  ctx.stat([['AGENTS.md', o.rules ? `${lines(size)} lines, read every session` : 'none'], ['the job', good ? 'followed your rules' : long ? 'missed a rule in the middle of the file' : 'guessed, and guessed wrong']]);
+  if (long) {
+    ctx.say('tool', byLevel(ctx.level, {
+      plain: 'The new page shows dates as 3/3/2026. The rule for day.month.year is on line 140.',
+      technical: 'npm test: command not found in CI. Line 140 says pnpm.',
+      engineer: 'UI component imports the database client directly. The boundary rule is on line 140.',
+    }));
+    await h.wait(450);
+    ctx.say('model', 'Done.');
+    await h.send(reverse(route.youToAgent()), 'bad');
+    return;
+  }
   ctx.say('tool', o.rules
     ? byLevel(ctx.level, {
         plain: 'Checks pass, dates formatted DD.MM.YYYY, layout matches the rest of the site.',
@@ -50,9 +67,9 @@ export async function session(ctx: Ctx, h: Script, o: { rules: boolean; size?: n
         engineer: 'pnpm verify: strict types green, domain boundary clean, 14/14 tests pass.',
       })
     : byLevel(ctx.level, {
-        plain: 'Wrong date format and mismatched colours—it forgot yesterday’s preferences.',
+        plain: 'Dates show as 3/3/2026 and the colours do not match the rest of the site: yesterday’s choices are gone.',
         technical: 'npm test failed: this repo uses pnpm and vitest, not jest.',
-        engineer: 'Imported DB client directly inside UI component—violated module boundary it forgot.',
+        engineer: 'UI component imports the database client directly: the module boundary it learned yesterday is gone.',
       }));
   await h.wait(450);
   ctx.say('model', o.rules
@@ -76,14 +93,6 @@ export const memory: Chapter = {
     gone: {
       scene: () => { const s = base(false); s.agents[0]!.blocks = worked(12); return s; },
       enter: (ctx) => {
-        ctx.model(
-          'Fresh windows forget.',
-          byLevel(ctx.level, {
-            plain: 'Starting a fresh thread avoids context rot, which means every rule you only said in chat disappears unless it is saved in a file.',
-            technical: 'Because stateless threads reset between jobs, repo-wide commands (package manager, typecheck, unit tests) have to live on disk, not in chat history.',
-            engineer: 'Fresh contexts eliminate rot only if persistent invariants live in version-controlled project files loaded deterministically at session boot.',
-          }),
-        );
         void ctx.scene.run(async (h) => {
           ctx.say(null, 'Yesterday’s session. It learned how this project works the slow way.');
           await h.wait(1400);
@@ -94,14 +103,6 @@ export const memory: Chapter = {
     file: {
       scene: () => base(true),
       enter: (ctx) => {
-        ctx.model(
-          'AGENTS.md (persistent project memory).',
-          byLevel(ctx.level, {
-            plain: 'A short plain-English note in your project folder that loads automatically before your first message—write down your preferences once so every new thread obeys them.',
-            technical: 'Put your exact stack, folder map, `tsc --noEmit`, lint and unit-test commands in AGENTS.md so every fresh thread verifies identically from turn one.',
-            engineer: 'Keep AGENTS.md to high-signal architecture decisions, module boundaries, stack constraints and verification commands—versioned in git alongside the code.',
-          }),
-        );
         play(ctx, { rules: true });
       },
     },
@@ -109,29 +110,13 @@ export const memory: Chapter = {
       scene: () => base(true),
       enter: (ctx) => {
         ctx.mem.size = 4;
-        ctx.model(
-          'Keep it short or it rots every window.',
-          byLevel(ctx.level, {
-            plain: 'Every line in AGENTS.md is loaded on EVERY job. Keep only the rules that matter everywhere—delete old notes once they stop being useful.',
-            technical: 'Bloated instruction files tax every turn’s tokens and dilute attention. Add a rule only when an agent repeats a real mistake; prune aggressively.',
-            engineer: 'Instruction files sit at the top of every prompt prefix—keep them terse, concrete and non-contradictory; push task-specific playbooks into on-demand skills.',
-          }),
-        );
-        ctx.say(null, 'Each rule you add is read at the start of every session from then on.');
-        ctx.stat([['taken by AGENTS.md every session', '7% of the window']]);
+        ctx.say(null, 'Each rule you add is read at the start of every session from then on. Press the button three times.');
+        ctx.stat([['AGENTS.md', `${lines(4)} lines, read every session`], ['the job', 'not run yet']]);
       },
     },
     skills: {
       scene: () => { const s = base(true, 4, 4); s.agents[0]!.blocks = [{ t: 'rules', h: 4 }, { t: 'rules', h: 1.3 }]; return s; },
       enter: (ctx) => {
-        ctx.model(
-          'Skills (on-demand playbooks).',
-          byLevel(ctx.level, {
-            plain: 'Skills sit on a shelf with just a one-line label. The agent only opens a skill (like “build a PDF” or “audit security”) on the job that actually needs it.',
-            technical: 'Skills use progressive disclosure: only name + one-line trigger enter every prompt, keeping baseline context lean until a matching task loads the full checklist.',
-            engineer: 'Separate always-on invariants (AGENTS.md) from conditional procedures (Skills) so specialized workflows (audits, migrations, UI polish) add zero token overhead when unused.',
-          }),
-        );
         ctx.say(null, 'Four skills on the shelf. Only their names and one line each are in the window.');
       },
     },
@@ -139,7 +124,7 @@ export const memory: Chapter = {
   actions: {
     session: (ctx, val) => play(ctx, { rules: val === 'with' }),
     teach: (ctx) => void ctx.scene.run(async (h) => {
-      const size = Math.min(28, (ctx.mem.size ?? 4) + 4);
+      const size = Math.min(28, (ctx.mem.size ?? 4) + 6);
       ctx.mem.size = size;
       ctx.say('you', 'That was wrong. Add the rule to AGENTS.md so it does not happen again.');
       await h.send(route.youToAgent(), 'you');
@@ -148,8 +133,9 @@ export const memory: Chapter = {
       await h.send(to, 'model');
       h.set((s) => { s.project!.rules = 'lit'; });
       await h.wait(450);
-      await session(ctx, h, { rules: true, size, ask: false });
-      ctx.say(null, size >= 28 ? 'A long file is read in full every session, whether today’s job needs it or not—and starts rotting every new thread.' : 'One more rule, loaded every session from now on.');
+      await session(ctx, h, { rules: true, size });
+      if (size < 20) ctx.say(null, `One more rule: ${lines(size)} lines now, all read at the start of every session.`);
+      else ctx.say(null, `${lines(size)} lines, read in full every session. The rule that mattered today was one line in the middle, and it was missed.`);
     }),
     skill: (ctx) => void ctx.scene.run(async (h) => {
       const p = ctx.scene.state.project!;

@@ -5,10 +5,13 @@ import Next from '../../components/journey/Next.astro';
 import More from '../../components/journey/More.astro';
 import ForLevel from '../../components/level/ForLevel.astro';
 import Fact from '../../components/data/Fact.astro';
-import { url } from '../../lib/nav';
 import Verified from '../../components/data/Verified.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import { url } from '../../lib/nav';
 import { models } from '../../data/models';
+import { harnesses } from '../../data/harnesses';
 
+// The window sizes the reader can pick, from the models in use today.
 const sizes = new Map<number, string[]>();
 const ids: string[] = [];
 for (const [key, m] of Object.entries(models) as [string, any][]) {
@@ -16,80 +19,78 @@ for (const [key, m] of Object.entries(models) as [string, any][]) {
   for (const [field, f] of [['context', m.context], ['harnessContext', m.harnessContext]] as const) {
     if (!f) continue;
     const k = Math.round(f.value / 1000);
-    sizes.set(k, [...(sizes.get(k) ?? []), field === 'context' ? m.name : `${m.name} in its own harness`]);
+    sizes.set(k, [...(sizes.get(k) ?? []), field === 'context' ? m.name : `${m.name} in Codex`]);
     ids.push(`models.${key}.${field}`);
   }
 }
 const windows = [...sizes].sort((a, b) => b[0] - a[0]).map(([k, names]) => ({ k, label: `${k >= 1000 ? k / 1000 + 'M' : k + 'k'} tokens`, names }));
+const factIds = [...ids, 'harnesses.claudeCode.autoCompactAt', 'harnesses.claudeCode.compactionKeeps', 'claims.research.contextRot', 'harnesses.claudeCode.focusedContext', 'harnesses.claudeCode.clearAfterTwo'];
+const data = { autoCompactAt: harnesses.claudeCode.autoCompactAt.value };
 ---
-<Journey chapter="window" first="pile" title="The window fills (and rots)" description="Everything an agent reads stays in its window. Long before a big window hits 100%, unrelated files and old logs rot attention and produce worse output.">
+<Journey chapter="window" first="pile" title="The window fills" description="Everything an agent reads stays in its window and is read again every turn. Unrelated text in the window makes the answer worse long before the window is full." data={data}>
   <Step id="pile" title="Nothing leaves the window">
-    <p><a href={url('journey/loop/')}>The fix from step 6</a> is all still in the window: your message, every file it read, every command output. All of it is read again on every turn.</p>
+    <p>This is the window from <a href={url('journey/chat/')}>One chat</a>, holding the date fix from <a href={url('journey/loop/')}>It gets hands</a>. Watch a morning of work pile on top: every message, file and log stays, and is read again before every turn.</p>
   </Step>
 
-  <Step id="rot" title="Why bigger windows still get worse: context rot">
-    <p>A common myth is that a huge 1M-token window means you can dump everything into one endless chat. Switch the mix below—notice the window is nowhere near full, yet quality collapses:</p>
-    <div class="pick" role="group" aria-label="Window cleanliness">
-      <button type="button" data-do="rot" data-val="focused" data-default>Focused (12% full)</button>
-      <button type="button" data-do="rot" data-val="cluttered">Cluttered (45% full)</button>
-      <button type="button" data-do="rot" data-val="rotted">Rotted (70% full)</button>
+  <Step id="rot" title="More in the window, worse answers">
+    <p>Same model, same request: fix the date on the member card. Pick what else is in the window, then look at which file it edits and whether it keeps your first rule.</p>
+    <div class="pick" role="group" aria-label="What else is in the window">
+      <button type="button" data-do="mix" data-val="job" aria-pressed="false">Only this job</button>
+      <button type="button" data-do="mix" data-val="morning" aria-pressed="false">After a morning</button>
+      <button type="button" data-do="mix" data-val="log" data-default aria-pressed="true">Plus a pasted log</button>
     </div>
-    <ForLevel is="plain">
-      <p>Behind the scenes, the model weighs every word in the window when picking its next answer. Fill a big window with three old tasks, failed attempts and unrelated files, and your real instructions get drowned out—the answers get lazier, miss rules you gave earlier, and repeat old mistakes.</p>
-    </ForLevel>
-    <ForLevel is="technical">
-      <p>Behind the scenes, transformer attention has to spread across every token in the window. Stale debugging logs, dead-end diffs and unrelated files act as distractors (<strong>context rot</strong>): long before hitting the token limit, the model misses type constraints, forgets earlier rules and invents workarounds.</p>
-    </ForLevel>
-    <ForLevel is="engineer">
-      <p>Nominal context capacity (200k–1M tokens) is an upper bound on input length, not on reasoning reliability. Attention dilution, lost-in-the-middle recall drop, and conflicting prior tool traces cause measurable degradation as unrelated token mass grows—keep each thread scoped to one clean task.</p>
-    </ForLevel>
+    <More title="Is this real?">
+      <p>The three runs are drawn, not measured. The effect has a name: <Fact id="claims.research.contextRot" show="claim" /></p>
+      <p><Fact id="harnesses.claudeCode.focusedContext" show="claim" /></p>
+    </More>
   </Step>
 
-  <Step id="long" title="Keep working: scale vs cap">
-    <p>Drag to run the session longer. Pick a smaller window and the same work hits the rot zone—and then the hard wall—much sooner.</p>
+  <Step id="long" title="Past full">
+    <p>The window has a hard size. Drag past 100%: the model cannot read more than fits, so the next turn cannot go until something is dropped.</p>
     <div class="controls">
-      <label class="control"><span>In the window <output>150k</output></span>
-        <input type="range" min="0" max="1000" step="25" value="150" data-bind="used" data-unit="k" />
+      <label class="control"><span>In the window <output>1020k</output></span>
+        <input type="range" min="0" max="1100" step="10" value="1020" data-bind="used" data-unit="k" aria-label="Tokens in the window, in thousands" />
       </label>
-      <label class="control"><span>Window</span>
-        <select data-bind="cap">
-          {windows.map((w) => <option value={w.k}>{w.label}</option>)}
+      <label class="control"><span>Window size</span>
+        <select data-bind="cap" aria-label="Window size">
+          {windows.map((w) => <option value={w.k}>{w.label}: {w.names.join(', ')}</option>)}
         </select>
       </label>
     </div>
   </Step>
 
-  <Step id="compact" title="Two ways to clear the fog">
-    <ForLevel is="plain">
-      <p><strong>Compact</strong> replaces the messy history with a short summary so you can keep going on the same task. <strong>New thread</strong> wipes the slate completely clean—almost always better when you finish one job and start the next.</p>
-    </ForLevel>
-    <ForLevel is="technical">
-      <p>Use <strong>Compact</strong> only mid-task when you cannot restart yet (every compaction loses subtle detail). When switching tasks or after a long debugging spiral, commit your working code and open a <strong>New thread</strong> with a crisp 3-line brief.</p>
-    </ForLevel>
-    <ForLevel is="engineer">
-      <p>Compaction trades hard overflow for lossy summary compression. For repeatable quality, treat git commits + concise handoff specs as explicit state checkpoints and spin up fresh windows at task boundaries.</p>
-    </ForLevel>
-    <div class="row">
-      <button class="btn" type="button" data-do="compact">Compact</button>
-      <button class="btn ghost" type="button" data-do="fresh">New thread</button>
-      <button class="btn ghost" type="button" data-do="reset">Undo</button>
+  <Step id="compact" title="What survives">
+    <p>A full window gets cleared one of two ways. Pick one, then ask for one more change and watch what happens to your first rule.</p>
+    <div class="pick" role="group" aria-label="How the window is cleared">
+      <button type="button" data-do="clear" data-val="compact" data-default aria-pressed="true">The tool compacts it</button>
+      <button type="button" data-do="clear" data-val="fresh" aria-pressed="false">New thread, short brief</button>
     </div>
-    <More title="What Claude Code keeps">
-      <p>After compaction: <Fact id="harnesses.claudeCode.compactionKeeps" />. <Fact id="harnesses.claudeCode.compactionReread" show="claim" /></p>
+    <More title="What Claude Code keeps" level="technical">
+      <p><Fact id="harnesses.claudeCode.compactionKeeps" show="claim" /></p>
       <p><Fact id="harnesses.claudeCode.autoCompactAt" show="claim" /></p>
     </More>
   </Step>
 
-  <Step id="paste" title="One giant paste">
-    <p>Paste one unfiltered 200k-token log file and watch it crowd the window—and rot attention—on every turn that follows.</p>
-    <div class="row">
-      <button class="btn" type="button" data-do="paste">Paste a long log</button>
-      <button class="btn ghost" type="button" data-do="reset">Undo</button>
+  <Step id="paste" title="Paste the lines, not the log">
+    <p>Whatever you paste stays and is read again on every turn after it.</p>
+    <div class="pick" role="group" aria-label="What you paste">
+      <button type="button" data-do="paste" data-val="log" data-default aria-pressed="true">The whole log</button>
+      <button type="button" data-do="paste" data-val="lines" aria-pressed="false">The failing lines</button>
     </div>
-    <Next from="window" more={[{ href: 'wiki/compaction/', text: 'How compaction works', side: true }, { href: 'journey/meter/#cache', text: 'How window size affects cost' }]} />
+    <More title="Habits to copy">
+      <ForLevel is="plain">
+        <CopyPrompt compact title="Start a new thread with a brief">{`Summarise where we are in five lines: what works, what is left, which files matter, and any rule I gave you.\nI will paste that into a new chat.`}</CopyPrompt>
+      </ForLevel>
+      <ForLevel is="technical engineer">
+        <pre class="j-code"><code>{`npm test 2>&1 | tail -40     # paste the failure, not the run
+/clear                      # Claude Code: new thread, same project`}</code></pre>
+      </ForLevel>
+      <p><Fact id="harnesses.claudeCode.clearAfterTwo" show="claim" /></p>
+    </More>
+    <Next from="window" more={[{ href: 'wiki/compaction/', text: 'How compaction works', side: true }, { href: 'journey/meter/', text: 'What re-reading costs: What it costs' }]} />
   </Step>
   <Fragment slot="foot">
-    <p>Window sizes: {windows.map((w) => `${w.label} (${w.names.join(', ')})`).join('; ')}. The stack is drawn to scale against the window you pick; each block represents 25k tokens.</p>
-    <Verified ids={ids} />
+    <p>Window sizes: {windows.map((w) => `${w.label} (${w.names.join(', ')})`).join('; ')}. The pile, the jobs and what goes wrong in them are made up.</p>
+    <Verified ids={factIds} />
   </Fragment>
 </Journey>

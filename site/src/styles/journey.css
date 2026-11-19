@@ -306,3 +306,7 @@ html[data-embed] .j-stage { max-height: 36svh; }
 .j-ent[data-busy=''] [data-part='head'] .k-top, .j-ent[data-busy=''] [data-part='head'] .k-fill { fill: color-mix(in oklab, var(--accent) 34%, var(--card)); }
 .j-ent[data-busy=''] [data-part='head'] .k-left { fill: color-mix(in oklab, var(--accent) 44%, var(--card)); }
 .j-ent[data-busy=''] [data-part='head'] .k-right, .j-ent[data-busy=''] [data-part='head'] .k-shadow { fill: color-mix(in oklab, var(--accent) 54%, var(--card)); }
+
+/* Lesson 7: what does not fit the window, drawn on top of the cap (Agent.spill in picture.ts). */
+.j-svg .k-solid[data-over] { opacity: 0.8; }
+.j-svg .k-solid[data-over] .k-edge { stroke: var(--accent); stroke-width: 1.6px; stroke-dasharray: 3 2; }
