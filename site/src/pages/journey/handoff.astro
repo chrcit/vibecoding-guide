@@ -8,15 +8,15 @@ import { url } from '../../lib/nav';
 ---
 <Journey chapter="handoff" first="alone" title="A second agent" description="An agent can hand part of a job to a helper with an empty window. Only the brief goes in and only a report comes back.">
   <Step id="alone" title="Searching fills its window">
-    <p>A made-up search: the agent reads seven files to find three, and all seven stay in <a href={url('journey/window/')}>its window from step 3</a>.</p>
+    <p>Say the agent needs to find three relevant files and reads seven along the way. All seven stay in <a href={url('journey/window/')}>its context window from step 3</a>.</p>
     <div class="row"><button class="btn ghost" type="button" data-do="alone">Play it again</button></div>
   </Step>
   <Step id="hand" title="Hand the search to a helper">
-    <p>The second station is a helper. It starts with an empty window, gets a brief, and sends back a short report. Then its window is thrown away.</p>
+    <p>Instead, hand the search to a second agent. It starts with an empty window, gets a brief, sends back a short report, and then its window is discarded.</p>
     <div class="row"><button class="btn ghost" type="button" data-do="hand" data-val="full">Play it again</button></div>
   </Step>
   <Step id="brief" title="The helper knows only the brief">
-    <p>You told the agent not to change anything. The helper never heard you.</p>
+    <p>You told the main agent not to change any files. The helper never heard you—it only sees what is in its brief.</p>
     <div class="pick">
       <button type="button" data-do="hand" data-val="short" data-default aria-pressed="true">A short brief</button>
       <button type="button" data-do="hand" data-val="full" aria-pressed="false">A full brief</button>
@@ -32,4 +32,7 @@ Send back: the file names, one line each on what it does with dates. Nothing els
     </More>
     <Next from="handoff" more={[{ href: 'explain/orchestration/', text: 'Ways to split work' }]} />
   </Step>
+  <Fragment slot="foot">
+    <p>The file counts and example search above are illustrative.</p>
+  </Fragment>
 </Journey>

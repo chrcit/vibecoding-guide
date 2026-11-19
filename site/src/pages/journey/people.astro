@@ -6,9 +6,9 @@ import Next from '../../components/journey/Next.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
 import { url } from '../../lib/nav';
 ---
-<Journey chapter="people" first="pr" title="Other people" description="A pull request, a colleague’s review, a client and users: the people around the main branch, and how what they say becomes the next job.">
-  <Step id="pr" title="A pull request is a change that waits">
-    <p>The agent’s change runs along the bus to the <a href={url('journey/parallel/')}>check before main from step 7</a> and waits there with a blue lamp, while its proof lands on the <a href={url('journey/proof/')}>tray from step 12</a>. Nothing reaches main until a person has read it.</p>
+<Journey chapter="people" first="pr" title="Other people" description="Pull requests, a colleague’s review, clients, and users: the people around your main branch, and how what they say becomes the next job.">
+  <Step id="pr" title="A pull request waits for a person">
+    <p>Instead of merging straight into main, the agent opens a pull request: its branch pauses at <a href={url('journey/parallel/')}>the gate before main from step 7</a> while its evidence lands on <a href={url('journey/proof/')}>your review tray from step 12</a>. Nothing merges until a human approves it.</p>
     <More title="A prompt for this">
       <CopyPrompt compact title="Write the pull request for a person">Open a pull request for this change, written for someone who has not seen this thread:
 1. What changed and why, in three lines.
@@ -17,36 +17,39 @@ import { url } from '../../lib/nav';
 4. What you did not check.</CopyPrompt>
     </More>
   </Step>
-  <Step id="peer" title="A colleague reads it">
-    <p>Ten agents send changes; each waits in the queue on the bus until the colleague at the check has read it, and a comment goes back to its agent as a dark puck. One reader cannot keep up with big changes and no proof; the rates are made up.</p>
+  <Step id="peer" title="A colleague has to read it">
+    <p>Ten agents can open pull requests faster than one human teammate can review them. Huge changes with no proof stall the queue; small, well-evidenced pull requests fly through—and any review comment routes straight back to the agent that wrote it.</p>
     <div class="pick" role="group" aria-label="What reaches the colleague">
       <button type="button" data-do="size" data-val="big" data-default aria-pressed="true">Big, no proof</button>
       <button type="button" data-do="size" data-val="proof" aria-pressed="false">Big, with proof</button>
       <button type="button" data-do="size" data-val="small" aria-pressed="false">Small, with proof</button>
     </div>
   </Step>
-  <Step id="client" title="A client looks at the thing, not the code">
-    <p>The client in front of main gets a link, and what they ask for travels back to you and into the agent’s window as the next job. A client judges what they can try.</p>
+  <Step id="client" title="A client tries the product, not the code">
+    <p>Send a client a live preview link they can actually click through, not a diff. Whatever they ask to change comes back to you and becomes the agent’s next brief.</p>
     <div class="pick" role="group" aria-label="What the client gets">
       <button type="button" data-do="link" data-val="link" data-default aria-pressed="true">A link to try</button>
       <button type="button" data-do="link" data-val="code" aria-pressed="false">The code</button>
     </div>
     <More title="What to send">
-      <p>Send a link to a running copy of the change (often called a preview) and one line on what to try. A client cannot judge a diff.</p>
+      <p>Send a link to a running copy of the change (often called a preview) plus one sentence on what to try. A client cannot judge a diff.</p>
     </More>
   </Step>
   <Step id="users" title="Users find what nobody tested">
-    <p>A user’s report comes back as a red puck, and you hand it to the agent as the brief. A fix that comes with a test turns the check red when the same mistake returns.</p>
+    <p>Real users will uncover bugs your tests never anticipated. When a bug report comes in, hand it to the agent—and ask for a regression test alongside the fix, so the check catches the same mistake if it ever returns.</p>
     <div class="pick" role="group" aria-label="How the fix lands">
       <button type="button" data-do="test" data-val="with" data-default aria-pressed="true">Fix with a test</button>
       <button type="button" data-do="test" data-val="without" aria-pressed="false">Fix without</button>
     </div>
   </Step>
   <Step id="loop" title="The widest loop">
-    <p>After the first job, every brief that lands in the agent’s window came from the client or from users. The widest loop in the picture runs through people.</p>
+    <p>After the first release, almost every new brief starts with feedback from a colleague, a client, or a user. The widest loop in software runs through people.</p>
     <div class="row">
       <button class="btn ghost" type="button" data-do="again">Run it again</button>
     </div>
     <Next from="people" more={[{ href: 'wiki/pull-request/', text: 'Pull requests', side: true }, { href: 'wiki/review/', text: 'Reviewing a change', side: true }]} />
   </Step>
+  <Fragment slot="foot">
+    <p>The review queue, throughput rates, and example feedback above are illustrative.</p>
+  </Fragment>
 </Journey>

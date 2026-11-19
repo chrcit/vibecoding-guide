@@ -64,7 +64,7 @@ const windows = [...sizes].sort((a, b) => b[0] - a[0]).map(([k, names]) => ({ k,
     <Next from="window" more={[{ href: 'explain/context/', text: 'Push the window further' }]} />
   </Step>
   <Fragment slot="foot">
-    <p>Window sizes: {windows.map((w) => `${w.label} (${w.names.join(', ')})`).join('; ')}. The pile is drawn to scale against the window you pick; a slab is 25k tokens.</p>
+    <p>Window sizes: {windows.map((w) => `${w.label} (${w.names.join(', ')})`).join('; ')}. The stack is drawn to scale against the window you pick; each block represents 25k tokens.</p>
     <Verified ids={ids} />
   </Fragment>
 </Journey>

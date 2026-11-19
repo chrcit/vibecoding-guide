@@ -22,11 +22,19 @@ const data = {
   handoffCap: t3code.handoffCap.value,
 };
 ---
-<Journey chapter="week" first="meter" data={data} title="From one job to a working week" description="The second half of the journey, in the same picture: what agents cost, a second model that reviews, proof you can read, where your input goes, several jobs at once, a project that grows, other people, other machines.">
-  {rungs.filter((r) => r.part === 2).map((r) => (
+<Journey chapter="week" first="meter" data={data} title="From one job to a working week" description="The second half of the journey: what agents cost, a second model that reviews, proof you can read, where your input goes, running several jobs at once, managing a growing project, working with other people, and running on other machines.">
+  <p class="j-lead">Part one grew the agents. Part two covers the work around them: cost, review, proof, your input, and where they run.</p>
+  {rungs.filter((r) => r.part === 2).map((r, i, all) => (
     <Step id={r.id} title={`${r.n}. ${r.title}`}>
       <p>{r.line}</p>
       <a class="j-open" href={url(`journey/${r.id}/`)} aria-label={`Try it: ${r.title}`}>Try it <span aria-hidden="true">→</span></a>
+      {i === all.length - 1 && (
+        <a class="j-next" href={url('start/')}>
+          <span>That is the whole picture</span>
+          <b>Build something in an hour</b>
+          <span>Set up the tools and go round the loop yourself.</span>
+        </a>
+      )}
     </Step>
   ))}
 </Journey>

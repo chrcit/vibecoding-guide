@@ -229,8 +229,8 @@ function playMany(ctx: Ctx) {
   const DOLLAR = 1;
   const hour = n * fleetSums(p, cw).perAgentHour;
   ctx.say(null, mode === 'plan'
-    ? `${n} ${n === 1 ? 'agent draws' : 'agents draw'} from one allowance. On the API the same made-up hour would cost ${usd(hour)}.`
-    : `${n} ${n === 1 ? 'agent' : 'agents'} on one bill: ${usd(hour)} for a made-up hour at ${p.name}’s prices.`);
+    ? `${n} ${n === 1 ? 'agent draws' : 'agents draw'} from one allowance. On the API this sample hour would cost ${usd(hour)}.`
+    : `${n} ${n === 1 ? 'agent' : 'agents'} on one bill: ${usd(hour)} for a sample hour at ${p.name}’s prices.`);
   void ctx.scene.run(async (h) => {
     h.set((s) => { Object.assign(s, fleet(n, mode)); });
     const t = zero();
@@ -266,12 +266,12 @@ function playMany(ctx: Ctx) {
       t.used = 1;
       show(ctx, t, mode);
       const min = Math.max(1, Math.round((tick / TICKS_PER_HOUR) * 60));
-      ctx.say(null, `The allowance ran out after ${min} minutes of a made-up hour. All ${n} stopped mid-job; ${jobs} ${jobs === 1 ? 'job' : 'jobs'} finished. On the API they would have carried on, for ${usd(hour)} the hour.`);
+      ctx.say(null, `The allowance ran out after ${min} minutes. All ${n} stopped mid-job; ${jobs} ${jobs === 1 ? 'job' : 'jobs'} finished. On the API they would have kept going, at ${usd(hour)} an hour.`);
     } else {
       h.set((s) => { for (const a of s.agents.slice(1)) a.busy = false; });
       ctx.say(null, mode === 'api'
-        ? `${n} ${n === 1 ? 'agent' : 'agents'}, ${jobs} jobs in a made-up hour: ${usd(t.usd)}. Eight hours like it: ${usd(t.usd * 8)}. The tokens are made up; ${p.name}’s prices are real.`
-        : `${jobs} jobs in a made-up hour, ${Math.round((1 - t.used) * 100)}% of the allowance left.`);
+        ? `${n} ${n === 1 ? 'agent' : 'agents'}, ${jobs} jobs in an hour: ${usd(t.usd)}. An eight-hour day at that pace: ${usd(t.usd * 8)} (${p.name}’s real prices on illustrative token counts).`
+        : `${jobs} jobs in an hour, ${Math.round((1 - t.used) * 100)}% of the allowance left.`);
     }
   });
 }

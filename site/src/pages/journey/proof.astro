@@ -16,39 +16,36 @@ const prompt = `When you finish, hand back proof I can judge in a minute, before
 - a short list of what you did not check, and why
 If something could not be checked, say so instead of guessing.`;
 ---
-<Journey chapter="proof" first="word" title="Proof you can read" description="An agent can hand back more than the word done: a summary, a test run, a screenshot, a link to try. Each shows you one kind of wrong at a glance.">
-  <Step id="word" title="“Done” is one word">
-    <p>The <a href={url('journey/check/')}>check from step 5</a> answers yes or no, and here it says yes: one pale puck reaches you with “Done.” and the tray beside you stays empty.</p>
-    <p>To know whether the job is what you asked for, you would read every changed line, 212 in this made-up job.</p>
+<Journey chapter="proof" first="word" title="Proof you can read" description="An agent can hand back more than the word done: a summary, a test run, a screenshot, and a link to try. Each catches a different kind of miss at a glance.">
+  <Step id="word" title="“Done” is only one word">
+    <p><a href={url('journey/check/')}>The check from step 5</a> only says pass or fail. When it passes, all you get back is “Done.”—leaving you to read 212 changed lines yourself to verify the agent actually built what you asked for.</p>
   </Step>
-  <Step id="cards" title="Ask for proof with the work">
-    <p>Four cards land on the tray one by one: a summary, a test run, a screenshot and a link to try.</p>
-    <p>A check says yes or no; a card is something you look at, and each answers one question at a glance.</p>
+  <Step id="cards" title="Ask for proof alongside the work">
+    <p>Ask the agent to place four proof cards on your tray: a short summary, the test output, a screenshot, and a link to try it.</p>
+    <p>Automated checks tell you pass or fail; proof cards let you judge the result at a glance.</p>
     <More title="Where this comes from">
       <p><Fact id="harnesses.claudeCode.askForEvidence" show="claim" /></p>
     </More>
   </Step>
-  <Step id="catch" title="Each card shows one kind of wrong">
-    <p>Six made-up jobs pass the check, four of them not what you asked for, and the card that shows it turns red.</p>
-    <p>Switch a card off and its kind of wrong reaches you as “done”.</p>
-    <div class="pick">
-      <button type="button" data-do="toggle" data-val="sum" aria-pressed="true">Summary</button>
-      <button type="button" data-do="toggle" data-val="tests" aria-pressed="true">Test run</button>
-      <button type="button" data-do="toggle" data-val="shot" aria-pressed="true">Screenshot</button>
-      <button type="button" data-do="toggle" data-val="link" aria-pressed="true">Link</button>
+  <Step id="catch" title="Each card catches a different kind of miss">
+    <p>All six example tasks pass the automated check, yet four miss what you actually wanted. Each proof card flags a different miss in orange—turn any card off and watch that kind of mistake slip through as “done”.</p>
+    <div class="pick" data-multi role="group" aria-label="Proof cards that are switched on">
+      <button type="button" data-do="toggle" data-val="sum" data-default aria-pressed="true">Summary</button>
+      <button type="button" data-do="toggle" data-val="tests" data-default aria-pressed="true">Test run</button>
+      <button type="button" data-do="toggle" data-val="shot" data-default aria-pressed="true">Screenshot</button>
+      <button type="button" data-do="toggle" data-val="link" data-default aria-pressed="true">Link</button>
     </div>
     <More title="A worked check for a number">
       <dl>
-        <dt>Reference</dt><dd>Fees paid last season, from the club’s own spreadsheet: €14,880 (made-up).</dd>
-        <dt>Tolerance</dt><dd>Money: exactly equal. For a measured value, write down how far off is fine before the run.</dd>
-        <dt>Rerun</dt><dd>The agent runs it again on a fresh copy of the data and gets the same number.</dd>
+        <dt>Reference</dt><dd>Fees paid last season, from the club’s spreadsheet: €14,880 (illustrative).</dd>
+        <dt>Tolerance</dt><dd>For money, exact match. For a measured value, write down the allowed margin before the run.</dd>
+        <dt>Rerun</dt><dd>The agent runs the calculation again on a fresh copy of the data and gets the same result.</dd>
         <dt>The card</dt><dd>“Total €14,880.00. Reference €14,880.00. Rerun €14,880.00. Match.”</dd>
       </dl>
     </More>
   </Step>
-  <Step id="during" title="Proof while it runs">
-    <p>The progress card on the tray grows with each step of a long job, and turns red at step 4, where the agent does something you did not ask for.</p>
-    <p>You see it while it works, without stopping it to ask.</p>
+  <Step id="during" title="See progress while it runs">
+    <p>On a longer task, ask the agent to update a live progress card on your tray as it goes. When it veers off-script at step 4 into work you never asked for, you spot it immediately without interrupting the run.</p>
     <div class="pick">
       <button type="button" data-do="progress" data-val="on" data-default aria-pressed="true">A progress file</button>
       <button type="button" data-do="progress" data-val="off" aria-pressed="false">Nothing until the end</button>
@@ -57,9 +54,8 @@ If something could not be checked, say so instead of guessing.`;
       <p><Fact id="t3code.htmlRenders" show="claim" /> <Fact id="t3code.browser" show="claim" /></p>
     </More>
   </Step>
-  <Step id="ask" title="Say what you want back">
-    <p>The cards on the tray change with the work: two screenshots for a page, rows before and after for a script, a failing test that then passes for a fix, with made-up counts.</p>
-    <p>Say in the brief which proof you want.</p>
+  <Step id="ask" title="Match the proof to the job">
+    <p>Tell the agent upfront what evidence fits the task: phone and desktop screenshots for a page, sample rows before and after for a script, or a failing test turned passing for a bug fix.</p>
     <div class="pick">
       <button type="button" data-do="kind" data-val="page" data-default aria-pressed="true">A page</button>
       <button type="button" data-do="kind" data-val="script" aria-pressed="false">A script</button>
@@ -71,7 +67,7 @@ If something could not be checked, say so instead of guessing.`;
     <Next from="proof" more={[{ href: 'explain/verification/', text: 'Checking the work' }]} />
   </Step>
   <Fragment slot="foot">
-    <p>The jobs, the 212 changed lines, the counts and which jobs went wrong are made up.</p>
+    <p>The example tasks, the 212 changed lines, the sample counts, and the planted misses are illustrative.</p>
     <Verified ids={ids} />
   </Fragment>
 </Journey>

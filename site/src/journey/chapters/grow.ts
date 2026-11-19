@@ -117,7 +117,7 @@ async function adds(ctx: Ctx, h: Script) {
   stats(ctx, r);
   let first = 0;
   for (let k = 0; k < 6; k++) { await job(ctx, h, r, k, false); if (!k) first = r.last; }
-  ctx.say(null, `Six made-up jobs, six commits on main. The first read ${first}% of its window before its first edit, the sixth ${r.last}%.`);
+  ctx.say(null, `Six jobs, six commits on main. The first read ${first}% of its window before its first edit, the sixth ${r.last}%.`);
 }
 
 async function leaves(ctx: Ctx, h: Script) {
@@ -182,15 +182,15 @@ async function refactor(ctx: Ctx, h: Script, tests: boolean) {
   } else {
     await land(ctx, h, true, false);
     h.set((s) => { proj(s).files![broken] = 'bad'; });
-    ctx.say(null, 'One tile broke on the way. Nothing ran a test, so nothing noticed.');
+    ctx.say(null, 'One module broke along the way. Nothing ran a test, so nothing caught it.');
     await h.wait(900);
   }
   h.set((s) => { proj(s).files![broken] = tests ? '' : 'bad'; });
   await job(ctx, h, r, 15, false, 0);
   if (!tests) h.set((s) => { proj(s).files![broken] = 'bad'; });
   ctx.say(null, tests
-    ? `Same code, new shape. A feature on the same part read ${before}% of its window before; ${r.last}% after. The tests caught one break on the way.`
-    : `A feature on the same part read ${before}% before and ${r.last}% after. The broken export went to main with it.`);
+    ? `Same behaviour, cleaner structure. A feature here read ${before}% of its window before, and ${r.last}% after. Tests caught one breakage along the way.`
+    : `A feature here read ${before}% before and ${r.last}% after—and the broken export merged into main.`);
 }
 
 const NEVER = 11;
@@ -224,13 +224,13 @@ export const grow: Chapter = {
     junk: { scene: () => floor(ADDS), enter: (ctx) => go(ctx, (h) => leaves(ctx, h)) },
     clean: { scene: () => floor(JUNK), enter: (ctx) => go(ctx, (h) => clean(ctx, h, false)) },
     refactor: { scene: () => floor(UNEVEN), enter: (ctx) => go(ctx, (h) => refactor(ctx, h, true)) },
-    rhythm: { scene: () => floor(fresh()), enter: (ctx) => { ctx.say(null, 'A clean-up every 5 jobs, over twenty made-up jobs.'); go(ctx, (h) => rhythm(ctx, h, 5), 2.6); } },
+    rhythm: { scene: () => floor(fresh()), enter: (ctx) => { ctx.say(null, 'Twenty jobs with a clean-up every 5.'); go(ctx, (h) => rhythm(ctx, h, 5), 2.6); } },
   },
   actions: {
-    clean: (ctx) => { ctx.say(null, 'A clean-up: remove what nothing uses, change nothing else.'); go(ctx, (h) => clean(ctx, h, true)); },
+    clean: (ctx) => { ctx.say(null, 'A clean-up: remove unused code, change nothing else.'); go(ctx, (h) => clean(ctx, h, true)); },
     tests: (ctx, val) => {
       const on = val === 'on';
-      ctx.say(null, on ? 'With tests: the check runs them on the new shape.' : 'Without tests: the check has nothing to run.');
+      ctx.say(null, on ? 'With tests: the check verifies behaviour stayed the same.' : 'Without tests: the check has nothing to run.');
       go(ctx, (h) => refactor(ctx, h, on));
     },
   },
@@ -241,7 +241,7 @@ export const grow: Chapter = {
       const text = n >= NEVER ? 'never' : `${n} jobs`;
       if (out) out.textContent = text;
       el.setAttribute('aria-valuetext', text);
-      ctx.say(null, n >= NEVER ? 'No clean-ups, over twenty made-up jobs.' : `A clean-up every ${n} jobs, over twenty made-up jobs.`);
+      ctx.say(null, n >= NEVER ? 'Twenty jobs with no clean-ups.' : `Twenty jobs with a clean-up every ${n}.`);
       go(ctx, (h) => rhythm(ctx, h, n), 2.6);
     },
   },

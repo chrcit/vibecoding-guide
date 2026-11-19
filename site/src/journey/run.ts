@@ -4,7 +4,7 @@ import { chapters } from './chapters';
 import type { Ctx } from './chapter';
 import type { Kind } from './picture';
 
-const KIND_NAMES: Record<Kind, string> = { rules: 'instructions', you: 'you', model: 'the model', tool: 'tool results', sum: 'a summary', bad: 'gone wrong' };
+const KIND_NAMES: Record<Kind, string> = { rules: 'instructions', you: 'you', model: 'the model', tool: 'tool results', sum: 'summary', bad: 'problem' };
 const KIND_ORDER: Kind[] = ['rules', 'you', 'model', 'tool', 'sum', 'bad'];
 
 export function boot(root: HTMLElement) {

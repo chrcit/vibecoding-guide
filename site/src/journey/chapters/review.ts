@@ -67,7 +67,7 @@ const show = (ctx: Ctx, t: Tally) => ctx.stat([['rounds of review', t.rounds], [
 async function build(ctx: Ctx, h: Script, t: Tally) {
   const n = names(ctx);
   show(ctx, t);
-  ctx.say('you', ASK + ' A made-up job.');
+  ctx.say('you', ASK);
   await h.send(route.youToAgent(), 'you', { ms: 420 });
   h.set((s) => { const a = s.agents[0]!; a.blocks = [{ t: 'you', h: 2.4 }]; a.lamp = 'work'; });
   const steps: [string, number, Kind, number][] = [['read', 1, 'tool', 6], ['edit', 1, 'tool', 2], ['edit', 3, 'tool', 2], ['run', -1, 'tool', 3]];

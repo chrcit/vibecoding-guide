@@ -25,18 +25,18 @@ const ids = [
   't3code.handoff', 't3code.handoffCap', 'harnesses.codex.sandbox',
 ];
 ---
-<Journey chapter="review" first="self" data={data} title="A second model" description="One model builds, a different one reviews with an empty window, and the work goes round until the reviewer finds nothing.">
-  <Step id="self" title="Asked to check itself, it reads what it wrote">
-    <p>{data.builder} reads its own full window again, the pile it built from, and the check from <a href={url('journey/check/')}>step 5</a> lets the work through. It finds one of three flaws planted in a made-up job; two reach you.</p>
+<Journey chapter="review" first="self" data={data} title="A second model" description="One model builds, a different model reviews with a fresh window, and they loop until the real bugs are gone.">
+  <Step id="self" title="Asked to check itself, it trusts its own work">
+    <p>When {data.builder} reviews its own code, it reads back through the same context window it just built in, carrying the same assumptions. Out of three planted bugs in this example, it catches one—the other two slip past <a href={url('journey/check/')}>the check from step 5</a> and reach you.</p>
   </Step>
-  <Step id="second" title="A different model, an empty window">
-    <p>The work goes to the check and across to {data.reviewer}, whose window starts empty and holds only your brief and the change. Findings travel back as “gone wrong” pucks until a round finds nothing.</p>
+  <Step id="second" title="A different model starts with fresh eyes">
+    <p>Send the diff across to {data.reviewer} instead, in an empty window holding only your brief and the change. Without the builder’s assumptions, it catches the flaws and sends them back to be fixed until a round comes back clean.</p>
     <More title="Where this comes from">
       <p><Fact id="harnesses.claudeCode.codeReview" show="claim" /></p>
     </More>
   </Step>
-  <Step id="attack" title="Tell it to break the thing">
-    <p>Asked politely, {data.reviewer} sends back one remark about a name and the flawed work goes on to you. Ask it to break the thing and the flaws come back.</p>
+  <Step id="attack" title="Tell it to try to break it">
+    <p>A polite “Review this” usually earns a rubber stamp and a minor naming suggestion. Tell {data.reviewer} to hunt for bugs and try to break the code, and the real flaws surface.</p>
     <div class="pick">
       <button type="button" data-do="brief" data-val="polite" data-default aria-pressed="true">“Review this.”</button>
       <button type="button" data-do="brief" data-val="attack" aria-pressed="false">“Find what is wrong. Try to break it.”</button>
@@ -51,8 +51,8 @@ Task: <paste the task you gave the first model>
 Diff: <paste the output of git diff>`}</CopyPrompt>
     </More>
   </Step>
-  <Step id="rounds" title="Say when to stop">
-    <p>Two tanks, one per provider’s plan, drain every round at a made-up rate. With no rule the reviewer never says “nothing”: after the real flaws, pale pucks of taste keep coming.</p>
+  <Step id="rounds" title="Set a stop rule">
+    <p>Each round drains both providers’ allowances. Without a stop rule, a reviewer will always find something to complain about—once the real bugs are gone, it keeps sending back style nitpicks forever.</p>
     <div class="pick">
       <button type="button" data-do="rule" data-val="none" data-default aria-pressed="true">No limit</button>
       <button type="button" data-do="rule" data-val="rule" aria-pressed="false">Only what breaks, three rounds at most</button>
@@ -61,8 +61,8 @@ Diff: <paste the output of git diff>`}</CopyPrompt>
       <p><Fact id="harnesses.claudeCode.reviewerAlwaysFinds" show="claim" /></p>
     </More>
   </Step>
-  <Step id="how" title="Running it">
-    <p>By hand you carry each finding across; with the lead from <a href={url('journey/lead/')}>step 8</a> the two pass it between them and you get one report. Either model can build or review.</p>
+  <Step id="how" title="How to run the loop">
+    <p>You can paste findings between two threads by hand, hand off one thread to another model, or let <a href={url('journey/lead/')}>the lead from step 8</a> run the back-and-forth and bring you one summary. Either model can build or review.</p>
     <div class="pick">
       <button type="button" data-do="how" data-val="hand" data-default aria-pressed="true">By hand</button>
       <button type="button" data-do="how" data-val="handoff" aria-pressed="false">One thread, handed off</button>
@@ -74,7 +74,7 @@ Diff: <paste the output of git diff>`}</CopyPrompt>
     <Next from="review" more={[{ href: 'explain/verification/', text: 'Checking the work' }, { href: 'models/', text: 'The models' }]} />
   </Step>
   <Fragment slot="foot">
-    <p>The job, its flaws, the findings and how fast each round drains a plan are made up. Which model builds and which reviews can be swapped; the two only need to differ. <Fact id="plans.claude.pro.claudeCode" show="claim" /> <Fact id="plans.chatgpt.limits.codexOnEveryPlan" show="claim" /></p>
+    <p>The example feature, its three bugs, the review comments, and the plan drain rates are illustrative. Which model builds and which reviews can be swapped—the point is that they are different. <Fact id="plans.claude.pro.claudeCode" show="claim" /> <Fact id="plans.chatgpt.limits.codexOnEveryPlan" show="claim" /></p>
     <Verified ids={ids} />
   </Fragment>
 </Journey>

@@ -18,14 +18,12 @@ const reviewPrompt = `Build me a review page for this project, for development o
 - Save each note to notes/review.md, with the screen it belongs to and the date.
 - At the start of every turn, read notes/review.md, fix what is open, and mark each note done.`;
 ---
-<Journey chapter="turn" first="once" title="Your turn" description="Places for your input before, during and after an agent builds, and how to have the agent build a better one.">
-  <Step id="once" title="You speak once">
-    <p>In this made-up job the model meets a fork (hide a paused member, or grey it out?), guesses, and builds twelve turns on the guess while the <a href={url('journey/proof/')}>tray from step 12</a> stays empty.</p>
-    <p>You meant greyed out, and you only spoke once, before the fork came up.</p>
+<Journey chapter="turn" first="once" title="Your turn" description="Ways to step in before, during, and after an agent builds—and how to have it build a better review tool for you.">
+  <Step id="once" title="If you only speak at the start">
+    <p>Halfway through a task, the agent hits an ambiguity—should paused members be hidden or greyed out? It guesses, spends twelve turns building on that guess, and leaves <a href={url('journey/proof/')}>the review tray from step 12</a> empty until it is too late.</p>
   </Step>
-  <Step id="plan" title="A door before the build">
-    <p>The plan stops at the check with a blue lamp, and nothing moves until you press a button.</p>
-    <p>Read step 3 before you let it through.</p>
+  <Step id="plan" title="Approve the plan first">
+    <p>Ask for a short plan before any files are edited. The agent pauses at the check and waits for your go-ahead—read step 3 before you approve it.</p>
     <div class="pick">
       <button type="button" data-do="plan" data-val="go" aria-pressed="false">Go ahead</button>
       <button type="button" data-do="plan" data-val="change" aria-pressed="false">Change step 3</button>
@@ -35,9 +33,8 @@ const reviewPrompt = `Build me a review page for this project, for development o
       <p>Claude Code also has a plan mode among its permission modes: <Fact id="harnesses.claudeCode.permissionModes" />.</p>
     </More>
   </Step>
-  <Step id="ask" title="A door during">
-    <p>A question card lands on the tray with a blue edge, and the model carries on with the rest.</p>
-    <p>Until you answer, that part of the job stays open.</p>
+  <Step id="ask" title="Answer questions mid-run">
+    <p>Instead of guessing—or stalling the whole job—the agent drops a question on your tray and keeps working on everything else. That one decision stays open until you answer.</p>
     <div class="row">
       <button class="btn" type="button" data-do="answer">Answer it: greyed out</button>
     </div>
@@ -45,9 +42,8 @@ const reviewPrompt = `Build me a review page for this project, for development o
       <p><Fact id="t3code.queueSteer" show="claim" /></p>
     </More>
   </Step>
-  <Step id="pin" title="A door on the result">
-    <p>A screenshot card lands on the tray, with two badges in the picture and one of them off.</p>
-    <p>Typed, “the badge looks off” leaves the model to guess which; a note pinned on the picture carries its place back with it.</p>
+  <Step id="pin" title="Point right at the result">
+    <p>Typing “the badge looks off” leaves the model guessing which of the two badges you mean. Pinning a note directly on the screenshot attaches the exact location, so the fix hits the right element on the first try.</p>
     <div class="pick">
       <button type="button" data-do="pin" data-val="type" aria-pressed="false">Type “the badge looks off”</button>
       <button type="button" data-do="pin" data-val="pin" aria-pressed="false">Pin a note on it</button>
@@ -56,17 +52,16 @@ const reviewPrompt = `Build me a review page for this project, for development o
       <p><Fact id="t3code.browser" show="claim" /></p>
     </More>
   </Step>
-  <Step id="build" title="Have it build the door">
-    <p>A review page card stands on the tray for good, and your notes travel from it into a notes file in the project.</p>
-    <p>The model reads that file at the start of its next turn, so it acts on what you wrote without being asked.</p>
+  <Step id="build" title="Have it build your review tool">
+    <p>When you review the same kind of output repeatedly, ask the agent to build a small review page for you. Your comments save straight to a notes file that the agent reads at the start of its next turn.</p>
     <More title="A prompt for this">
       <CopyPrompt title="A review page" compact>{reviewPrompt}</CopyPrompt>
-      <p>This guide has one (<code>site/integrations/comments/</code>): in its dev server you select text on any page and comment, each comment is saved as a file, and <code>pnpm comments</code> lists the open ones for the agent.</p>
+      <p>This guide uses one itself (<code>site/integrations/comments/</code>): in the dev server you highlight text on any page to leave a note, each note saves to a file, and <code>pnpm comments</code> lists open notes for the agent.</p>
     </More>
     <Next from="turn" more={[{ href: 'wiki/giving-feedback/', text: 'Giving feedback' }]} />
   </Step>
   <Fragment slot="foot">
-    <p>The job, its fork and the turn counts are made up.</p>
+    <p>The example feature, ambiguity, and turn counts are illustrative.</p>
     <Verified ids={ids} />
   </Fragment>
 </Journey>

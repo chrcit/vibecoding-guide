@@ -8,16 +8,16 @@ import { url } from '../../lib/nav';
 ---
 <Journey chapter="parallel" first="three" title="Side by side" description="Several agents can work at once if each has its own copy of the project. Their finished work is merged into the main branch one piece at a time.">
   <Step id="three" title="Three at once, one folder">
-    <p><a href={url('journey/handoff/')}>The helper from step 6</a>, three of them at once, all in one folder. In this made-up run they overwrite each other’s files.</p>
+    <p>Run three <a href={url('journey/handoff/')}>helpers from step 6</a> in the same folder and they step on each other’s edits, overwriting files as they go.</p>
   </Step>
   <Step id="copies" title="Give each its own copy">
-    <p>Each helper now stands on its own copy of the project. Finished work is merged into main one piece at a time.</p>
+    <p>Give every helper its own working copy of the project instead. Finished branches merge back into main one at a time.</p>
     <div class="pick">
       <button type="button" data-do="own" data-val="own" data-default aria-pressed="true">A copy each</button>
       <button type="button" data-do="own" data-val="shared" aria-pressed="false">One shared folder</button>
     </div>
     <More title="The commands">
-      <p>Git calls such a copy a worktree. For a made-up task called search:</p>
+      <p>Git calls a separate working copy a worktree. For a task called <code>search</code>:</p>
       <pre class="j-code"><code>{`git worktree add ../club-search -b search
 # the helper works in ../club-search
 git merge search
@@ -26,7 +26,7 @@ git worktree remove ../club-search`}</code></pre>
     </More>
   </Step>
   <Step id="more" title="How many?">
-    <p>More helpers finish more tasks. Main still takes one merge at a time, and every report lands in the agent’s window.</p>
+    <p>More helpers finish more tasks, but main still takes one merge at a time—and every report still lands in the main agent’s window.</p>
     <div class="controls">
       <label class="control"><span>Helpers <output>5</output></span>
         <input type="range" min="1" max="5" step="1" value="5" data-bind="n" />
@@ -34,4 +34,7 @@ git worktree remove ../club-search`}</code></pre>
     </div>
     <Next from="parallel" more={[{ href: 'explain/orchestration/', text: 'Ways to split work' }]} />
   </Step>
+  <Fragment slot="foot">
+    <p>The parallel tasks and conflict counts above are illustrative examples.</p>
+  </Fragment>
 </Journey>

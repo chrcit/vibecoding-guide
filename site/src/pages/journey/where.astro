@@ -13,38 +13,38 @@ const ids = [
   'harnesses.claudeCode.bestPractice', 't3code.permissionModes', 't3code.defaultMode',
 ];
 ---
-<Journey chapter="where" first="laptop" title="Other machines" description="Where an agent runs: on your laptop, on another computer that stays on, or on a machine in the cloud.">
+<Journey chapter="where" first="laptop" title="Other machines" description="Where an agent runs: on your laptop, on an always-on computer, or on a machine in the cloud.">
   <Step id="laptop" title="So far it all ran on your laptop">
-    <p>The job from <a href={url('journey/jobs/')}>step 14</a> now stands on a slab, your laptop, and lands on main along the bus. It works with your files and your logins.</p>
+    <p>Up to now, every <a href={url('journey/jobs/')}>job from step 14</a> has run right on your laptop, using your local files and your existing logins.</p>
     <More title="In T3 Code">
       <p><Fact id="t3code.ownLogins" show="claim" /></p>
     </More>
   </Step>
   <Step id="lid" title="Close the lid and it stops">
-    <p>With the lid closed, the slab and its job go faint and the card on the tray stops where it was. A job on your laptop runs only while the laptop is awake.</p>
+    <p>Close your laptop lid and the machine sleeps—every running agent pauses where it is. Local jobs only move while your laptop is awake.</p>
     <div class="pick" role="group" aria-label="The laptop’s lid">
       <button type="button" data-do="lid" data-val="open" data-default aria-pressed="true">Lid open</button>
       <button type="button" data-do="lid" data-val="closed" aria-pressed="false">Lid closed</button>
     </div>
   </Step>
   <Step id="box" title="A computer that stays on">
-    <p>The second slab, always on, keeps its job running while the laptop’s lid is shut, and you follow its card on your phone. A long job belongs on a computer that stays on.</p>
+    <p>Run long jobs on a desktop or small home server that stays awake. Even after you shut your laptop, the agent keeps working and you can check its progress from your phone.</p>
     <div class="pick" role="group" aria-label="The laptop’s lid">
       <button type="button" data-do="lid" data-val="open" aria-pressed="false">Lid open</button>
       <button type="button" data-do="lid" data-val="closed" data-default aria-pressed="true">Lid closed</button>
     </div>
     <More title="How, in T3 Code">
       <ol>
-        <li>Run T3 Code on a box at home that stays on.</li>
+        <li>Run T3 Code on a machine at home that stays on.</li>
         <li>Reach it from your laptop over <Fact id="t3code.remote" />.</li>
         <li>A free T3 Connect account links up to <Fact id="t3code.connectMachines" /> machines.</li>
         <li>Follow it from your phone. <Fact id="t3code.phoneIsRemote" show="claim" /></li>
-        <li>From a thread on the laptop, an agent hands the box a task with <Fact id="t3code.delegate" />.</li>
+        <li>From a thread on the laptop, an agent can hand the box a task with <Fact id="t3code.delegate" />.</li>
       </ol>
     </More>
   </Step>
   <Step id="cloud" title="A machine in the cloud">
-    <p>The floating slab is a cloud machine; in this made-up case it was not given the test database, so the check’s lamp turns red and its job stops. Give a cloud machine what its check needs.</p>
+    <p>Cloud runners spin up on demand, with no hardware to maintain—but they start clean. Without the test database or environment setup your checks depend on, the run stalls before it can verify anything.</p>
     <div class="pick" role="group" aria-label="What the cloud machine is given">
       <button type="button" data-do="setup" data-val="without" data-default aria-pressed="true">Without the setup</button>
       <button type="button" data-do="setup" data-val="with" aria-pressed="false">With it</button>
@@ -57,8 +57,8 @@ const ids = [
       </ol>
     </More>
   </Step>
-  <Step id="mix" title="Which job where">
-    <p>Halfway through the hour the lid closes: the laptop’s job stops, and the jobs on the always-on box and in the cloud keep landing on main. Now <a href={url('start/')}>start your own</a>, on your laptop first.</p>
+  <Step id="mix" title="Which job goes where">
+    <p>Most setups mix all three: quick interactive work on your laptop, long runs on an always-on machine, and isolated tasks in the cloud. Close the lid halfway through and the remote jobs keep landing on main. Ready to try it? <a href={url('start/')}>Build your first project</a>, starting right on your laptop.</p>
     <div class="pick" role="group" aria-label="The laptop’s lid">
       <button type="button" data-do="lid" data-val="open" data-default aria-pressed="true">Lid open</button>
       <button type="button" data-do="lid" data-val="closed" aria-pressed="false">Lid closed</button>
@@ -70,6 +70,7 @@ const ids = [
     <Next from="where" more={[{ href: 'wiki/always-on-machine/', text: 'A computer that stays on', side: true }, { href: 'wiki/secrets/', text: 'Secrets a machine needs', side: true }, { href: 'wiki/permission-mode/', text: 'Permission modes', side: true }]} />
   </Step>
   <Fragment slot="foot">
+    <p>The example jobs, missing test database, and one-hour timeline above are illustrative.</p>
     <Verified ids={ids} />
   </Fragment>
 </Journey>

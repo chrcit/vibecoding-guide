@@ -8,7 +8,7 @@ import { url } from '../../lib/nav';
 ---
 <Journey chapter="fleet" first="twenty" title="Twenty in a loop" description="A lead, a queue of tasks, up to twenty builders and a check in front of the main branch. You read what gets through the check.">
   <Step id="twenty" title="Twenty agents, one loop">
-    <p>Everything so far in one loop: <a href={url('journey/lead/')}>the lead</a>, <a href={url('journey/parallel/')}>a copy each</a>, <a href={url('journey/check/')}>the check</a> before main. Each builder fills its own window, sends its result to the check and starts the next task with an empty one.</p>
+    <p>Put everything together: <a href={url('journey/lead/')}>a lead</a>, <a href={url('journey/parallel/')}>a separate copy for each builder</a>, and <a href={url('journey/check/')}>a check</a> before main. Each builder fills its own window, sends its finished branch to the check, and starts the next task fresh.</p>
     <div class="controls">
       <label class="control"><span>Builders <output>20</output></span>
         <input type="range" min="1" max="20" step="1" value="20" data-bind="n" />
@@ -22,14 +22,17 @@ Keep one line per task in status.md. Stop and ask me when two tasks need the sam
     </More>
   </Step>
   <Step id="nogate" title="Take the check away">
-    <p>In this made-up fleet one task in four comes back wrong. Without the check, those land on main.</p>
+    <p>Suppose one task in four comes back with a bug. Without the check in front of main, every one of those ships straight to your main branch.</p>
     <div class="pick">
       <button type="button" data-do="gate" data-val="off" data-default aria-pressed="true">No check</button>
       <button type="button" data-do="gate" data-val="on" aria-pressed="false">With the check</button>
     </div>
   </Step>
   <Step id="yours" title="What is left for you">
-    <p>Deciding what gets built, and reading what the check lets through. The twenty windows are not yours to read.</p>
+    <p>Deciding what gets built, and reviewing what makes it through the check. You are not supposed to read twenty agent windows.</p>
     <Next from="fleet" more={[{ href: 'models/', text: 'Which model where' }, { href: 'journey/meter/#many', text: 'What a fleet costs' }]} />
   </Step>
+  <Fragment slot="foot">
+    <p>The fleet simulation and its 1-in-4 defect rate are illustrative examples.</p>
+  </Fragment>
 </Journey>

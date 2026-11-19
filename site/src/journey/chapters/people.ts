@@ -128,7 +128,7 @@ async function backAndOn(ctx: Ctx, h: Script, from: XY, kind: Kind, line: string
 async function pr(ctx: Ctx, h: Script) {
   h.set((s) => { Object.assign(s, scene([])); });
   stats(ctx);
-  await brief(ctx, h, 'you', 'you', 'Let members pay their fee online. A made-up job.');
+  await brief(ctx, h, 'you', 'you', 'Let members pay their fee online.');
   await build(h, 4);
   ctx.say('the agent', 'Done. Opened a pull request: a summary, the test run and a screenshot.');
   await open(ctx, h, undefined, true);
@@ -211,7 +211,7 @@ async function loop(ctx: Ctx, h: Script) {
   stats(ctx);
   for (const [i, job] of LOOP.entries()) {
     const next = LOOP[i + 1]?.brief ?? '';
-    if (i === 0) await brief(ctx, h, 'you', 'you', job.brief + ' A made-up job.');
+    if (i === 0) await brief(ctx, h, 'you', 'you', job.brief);
     await build(h, 3);
     await open(ctx, h);
     if (job.back) {
@@ -337,7 +337,7 @@ async function day(ctx: Ctx, h: Script, size: Size) {
   }
   await h.wait(500);
   h.set((s) => { for (const a of s.agents) a.busy = false; s.gates!.find((g) => g.id === 'mgate')!.lamp = queue.length ? 'wait' : 'off'; });
-  ctx.say(null, `A made-up day with ${N} agents and one colleague: ${plural(t.landed, size === 'small' ? 'small change' : 'big change', size === 'small' ? 'small changes' : 'big changes')} landed, ${t.back} sent back, ${plural(queue.length, 'change', 'changes')} still waiting for the colleague.`);
+  ctx.say(null, `Over a sample day with ${N} agents and one colleague: ${plural(t.landed, size === 'small' ? 'small change' : 'big change', size === 'small' ? 'small changes' : 'big changes')} landed, ${t.back} sent back, ${plural(queue.length, 'change', 'changes')} still waiting for review.`);
 }
 
 const play = (ctx: Ctx, fn: (ctx: Ctx, h: Script) => Promise<void>) => { ctx.mem.t = undefined; void ctx.scene.run((h) => fn(ctx, h)); };

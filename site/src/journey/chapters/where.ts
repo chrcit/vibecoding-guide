@@ -123,7 +123,7 @@ async function hour(ctx: Ctx, h: Script, n: number, o: { gate?: boolean; phone?:
   const changes = (k: number) => `${k} ${k === 1 ? 'change' : 'changes'}`;
   const parts = ALL.slice(0, n).map((k, i) => `${NAMES[k]} ${landed[i]}`);
   const stopped = ctx.scene.state.agents.filter((a) => a.off || a.lamp === 'bad').length;
-  const head = n === 1 ? `In a made-up hour your laptop landed ${changes(landed[0]!)} on main.` : `In a made-up hour, changes on main from ${parts.join(', ')}.`;
+  const head = n === 1 ? `In one hour your laptop landed ${changes(landed[0]!)} on main.` : `In one hour, changes on main from ${parts.join(', ')}.`;
   ctx.say(null, `${head}${stopped ? ` ${stopped === 1 ? 'One job is' : `${stopped} jobs are`} stopped where ${stopped === 1 ? 'it was' : 'they were'}.` : ''}`);
 }
 
@@ -149,10 +149,10 @@ export async function demo(ctx: Ctx, h: Script) {
 
 export const where: Chapter = {
   steps: {
-    laptop: { scene: () => scene(1), enter: (ctx) => start(ctx, 1, { lid: 'open', setup: true }, {}, 'One job, on your laptop, with your files and your logins.') },
+    laptop: { scene: () => scene(1), enter: (ctx) => start(ctx, 1, { lid: 'open', setup: true }, {}, 'One job, running on your laptop.') },
     lid: { scene: () => scene(1), enter: (ctx) => start(ctx, 1, { lid: 'open', setup: true }, {}, 'Lid open. The job runs.') },
     box: { scene: () => scene(2, { phone: true }), enter: (ctx) => start(ctx, 2, { lid: 'closed', setup: true }, { phone: true }, 'Lid closed. The laptop’s job waits; the other computer’s job runs, and you follow it on your phone.') },
-    cloud: { scene: () => scene(3, { gate: true }), enter: (ctx) => start(ctx, 3, { lid: 'open', setup: false }, { gate: true }, 'A made-up case: the cloud machine was not given the test database the check needs.') },
+    cloud: { scene: () => scene(3, { gate: true }), enter: (ctx) => start(ctx, 3, { lid: 'open', setup: false }, { gate: true }, 'Without setup: the cloud machine is missing the test database the check needs.') },
     mix: { scene: () => scene(3, { gate: true }), enter: (ctx) => start(ctx, 3, { lid: 'open', setup: true }, { gate: true, leave: true }, 'Three jobs on three machines, all landing on one main. Halfway through the hour you close the lid.') },
   },
   actions: {
@@ -166,7 +166,7 @@ export const where: Chapter = {
     },
     setup: (ctx, val) => {
       const setup = val === 'with';
-      ctx.say(null, setup ? 'The cloud machine is given the test database the check needs.' : 'A made-up case: the cloud machine was not given the test database the check needs.');
+      ctx.say(null, setup ? 'The cloud machine is given the test database the check needs.' : 'Without setup: the cloud machine is missing the test database the check needs.');
       start(ctx, 3, { lid: 'open', setup }, { gate: true });
     },
   },

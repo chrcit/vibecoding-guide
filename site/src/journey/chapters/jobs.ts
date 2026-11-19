@@ -69,7 +69,7 @@ async function hour(ctx: Ctx, h: Script, o: Opts) {
   const run = desk({ jobs: n, stop: stopOf(o), minutes: T });
   h.set((s) => { Object.assign(s, floor(o)); });
   let finished = 0, waited = 0, idle = 0;
-  const stats = (t: number) => ctx.stat([['made-up minute', `${t} of ${T}`], ['jobs finished so far', finished], ['agents waiting for you, so far', fmtMin(waited)], ['you waiting for them, so far', fmtMin(idle)]]);
+  const stats = (t: number) => ctx.stat([['minute', `${t} of ${T}`], ['jobs finished so far', finished], ['agents waiting for you, so far', fmtMin(waited)], ['you waiting for them, so far', fmtMin(idle)]]);
   stats(0);
   let merging: Promise<void> = Promise.resolve();
   const okUntil: number[] = Array(n).fill(-1);
@@ -129,7 +129,7 @@ async function hour(ctx: Ctx, h: Script, o: Opts) {
   await merging;
   h.check();
   h.set((s) => { for (const a of s.agents) a.busy = false; });
-  ctx.say(null, `In the made-up hour ${finished === 1 ? 'one job' : `${finished} jobs`} finished, ${n === 1 ? 'one' : n} at a time. Agents waited ${fmtMin(waited)} for you; you waited ${fmtMin(idle)} for them.`);
+  ctx.say(null, `In one hour, ${finished === 1 ? 'one job' : `${finished} jobs`} finished, ${n === 1 ? 'one' : n} at a time. Agents waited ${fmtMin(waited)} for you; you waited ${fmtMin(idle)} for them.`);
 }
 
 function setLabel(s: SceneState, j: number, l: Label) {
@@ -156,24 +156,24 @@ export async function demo(ctx: Ctx, h: Script) {
 
 export const jobsCh: Chapter = {
   steps: {
-    one: { scene: () => floor(O.one), enter: (ctx) => start(ctx, O.one, 'One made-up job. It works, then needs you.') },
+    one: { scene: () => floor(O.one), enter: (ctx) => start(ctx, O.one, 'One job running. It works, then pauses when it needs you.') },
     three: { scene: () => floor(O.three), enter: (ctx) => start(ctx, O.three, 'Three jobs, each in its own copy of the project.') },
-    many: { scene: () => floor(O.many), enter: (ctx) => start(ctx, O.many, `Five jobs, and each says only “Done.”: ${STOP.long} made-up minutes at each stop.`) },
+    many: { scene: () => floor(O.many), enter: (ctx) => start(ctx, O.many, `Five jobs, each saying only “Done.” — about ${STOP.long} minutes at each stop.`) },
     projects: { scene: () => floor(O.projects), enter: (ctx) => start(ctx, O.projects, 'One project: every job merges into main, one at a time.') },
-    board: { scene: () => floor(O.board), enter: (ctx) => start(ctx, O.board, `The board says “fix”. At every stop you open the thread first: ${OPEN_THREAD} made-up minutes more.`) },
+    board: { scene: () => floor(O.board), enter: (ctx) => start(ctx, O.board, `Every card says “fix”. Opening the thread first adds ${OPEN_THREAD} minutes at each stop.`) },
   },
   inputs: {
     n: (ctx, val) => { const n = Number(val); change(ctx, { n }, `${n === 1 ? 'One job' : `${n} jobs`}, one of you.`); },
   },
   actions: {
     stop: (ctx, val) => change(ctx, { stop: val as Stop }, val === 'long'
-      ? `Each job says only “Done.”: you read the work to know. ${STOP.long} made-up minutes at each stop.`
-      : `Each job sends proof or a short question: ${STOP.short} made-up minutes at each stop.`),
+      ? `Each job says only “Done.” — you read the work yourself (${STOP.long} minutes a stop).`
+      : `Each job sends proof or a short question (${STOP.short} minutes a stop).`),
     projects: (ctx, val) => change(ctx, { projects: val as Opts['projects'] }, val === 'one'
       ? 'One project: every job merges into main, one at a time.'
       : 'Several projects: each job has its own, with its own instruction file.'),
     board: (ctx, val) => change(ctx, { board: val as Board }, val === 'vague'
-      ? `The board says “fix”. At every stop you open the thread first: ${OPEN_THREAD} made-up minutes more.`
+      ? `Every card says “fix”. Opening the thread first adds ${OPEN_THREAD} minutes at each stop.`
       : 'Each card says what the job is and what it needs from you.'),
   },
 };
