@@ -26,18 +26,17 @@ const data = {
   first="meter"
   data={data}
   title="Part 3 · From one job to a working week"
-  description="Part three of the interactive guide: token cost and caching, second-model review, proof you can read, stepping in, parallel jobs, keeping a growing codebase healthy, teams and remote machines."
+  description="Part three of the guide: cost, a second model's review, proof you can read, your turn, several jobs, a growing project, other people and other machines."
 >
-  <p class="j-lead">Part two built the agents. Part three builds the real working week around them—cost, review, proof, steering, codebase health, teammates and other machines.</p>
+  <p class="j-lead">Part two built the agents. Part three builds the working week around them: what it costs, who checks it, where you come in, several jobs, a growing project, other people and other machines. Each loop below is the lesson’s own, with the same numbers.</p>
   <PartSwitch active={3} />
 
   {rungs.filter((r) => r.part === 3).map((r, i, all) => (
     <OverviewStep rung={r}>
       {i === all.length - 1 && (
         <a class="j-next" href={url('library/')}>
-          <span>All 21 lessons &amp; 67 concepts</span>
-          <b>Open the Concept &amp; Lesson Library</b>
-          <span>Filter lessons by topic, jump straight to any sub-step, or open any concept side-by-side.</span>
+          <span>All 21 lessons and their concepts</span>
+          <b>Open the library</b>
         </a>
       )}
     </OverviewStep>

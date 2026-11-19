@@ -1,10 +1,11 @@
-// Chapter 16: other people. A change waits at the gate in front of main as a pull request; a
+// Lesson 20: other people. A change waits at the gate in front of main as a pull request; a
 // colleague reads it, a client looks at the result, users find what nobody tested. What each of
 // them says comes back as a puck and ends as a slab in the agent's window: the next job's brief.
 // The jobs, the people's lines and every rate in the day are made up and fixed, not random.
 import type { Chapter, Ctx } from '../chapter';
 import type { Script } from '../scene';
 import { ship, lab } from '../presets';
+import { termLabel } from '../terms';
 import { route, reverse, SPOT, BUS_Y, USERS, type SceneState, type XY, type Kind } from '../picture';
 
 type Who = 'peer' | 'client' | 'users';
@@ -21,18 +22,19 @@ const scene = (people: Who[], n = 0): SceneState => {
     lead: [],
     labels: [
       lab('you', 'you', 'left'),
-      ...(n ? [] : [lab('a0', 'the agent', 'top', 'wiki/agent/')]),
-      lab('mgate', 'pull request', 'top', 'wiki/pull-request/'),
-      lab('main', 'main', 'bottom', 'wiki/branch/'),
+      ...(n ? [] : [termLabel('a0', 'agent', 'top', 'the agent')]),
+      termLabel('mgate', 'check'),
+      termLabel([GATE_X - 62, BUS_Y, 0], 'pull-request', 'bottom', 'pull requests'),
+      termLabel('main', 'main', 'bottom'),
       ...(people.includes('peer') ? [lab('peer', 'a colleague', 'right', 'wiki/review/')] : []),
       ...(people.includes('client') ? [lab('client', 'a client', 'left', 'wiki/preview-deployment/')] : []),
       ...(people.includes('users') ? [lab('user0', 'users', 'top')] : []),
       ...(n ? [lab([-88, -98 + 4, 40], `${n} agents`, 'left')] : []),
     ],
   });
-  // The tray from chapter 12 stands beside you: a pull request's proof stands on it.
+  // The tray from the Proof lesson stands beside you: a pull request's proof stands on it.
   s.tray = { at: SPOT.tray, cards: [] };
-  s.labels!.push(lab('tray', 'proof', 'bottom'));
+  s.labels!.push(termLabel('tray', 'tray', 'bottom', 'proof on the tray'));
   s.focus = n ? ['you', 'tray', 'a0', 'project', [-100, -150 - 16, 34], [96, -150 - 16, 34], ...WIDE] : ['tray', ...WIDE!];
   return s;
 };
@@ -43,7 +45,7 @@ interface Tally { landed: number; back: number; asked: number; reported: number 
 const tally = (ctx: Ctx): Tally => (ctx.mem.t ??= { landed: 0, back: 0, asked: 0, reported: 0 });
 const stats = (ctx: Ctx) => {
   const t = tally(ctx);
-  ctx.stat([['landed on main so far', t.landed], ['sent back so far', t.back], ['asked for by the client so far', t.asked], ['reported by users so far', t.reported]]);
+  ctx.stat([['changes landed on main, this run', t.landed, 'made-up'], ['sent back by a colleague, this run', t.back], ['asked for by the client, this run', t.asked], ['reported by users, this run', t.reported]]);
 };
 const plural = (n: number, one: string, many: string) => `${n === 0 ? 'none' : n === 1 ? 'one' : n} ${n === 1 ? one : many}`;
 
@@ -72,7 +74,7 @@ async function open(ctx: Ctx, h: Script, failing?: string, slow = false) {
   if (slow) {
     for (const c of PROOF) {
       await h.send(route.agentToTray(ctx.scene.state.tray!), c.b, { ms: 420 });
-      h.set((s) => { s.tray!.cards.push({ ...c, mark: 'new' }); });
+      h.set((s) => { s.tray!.cards.push({ ...c }); });
     }
   } else h.set((s) => { s.tray!.cards = PROOF.map((c) => ({ ...c })); });
   h.set((s) => { s.rest = [{ id: 'pr', at: queueAt(0), b: 'model' }]; });
@@ -80,7 +82,7 @@ async function open(ctx: Ctx, h: Script, failing?: string, slow = false) {
   await h.wait(700);
   if (failing) {
     gateLamp(h, 'bad');
-    ctx.say('check', failing);
+    ctx.say('the check', failing);
     h.set((s) => { s.rest = []; });
     await h.send(reverse(route.agentToMgate()), 'bad');
     h.set((s) => { s.agents[0]!.blocks!.push({ t: 'bad', h: 2.4 }); });
@@ -132,9 +134,11 @@ async function pr(ctx: Ctx, h: Script) {
   await build(h, 4);
   ctx.say('the agent', 'Done. Opened a pull request: a summary, the test run and a screenshot.');
   await open(ctx, h, undefined, true);
-  ctx.say('check', 'Tests pass. Waiting for someone to read it.');
-  await h.wait(900);
-  ctx.say(null, 'One change, checked and waiting in front of main. Nothing has reached main.');
+  ctx.say('the check', ctx.level === 'plain'
+    ? 'The automatic tests ran on it and pass. Now it waits for a person.'
+    : 'CI ran on the branch: tsc --noEmit clean, 31 tests pass. Waiting for a reviewer.');
+  await h.wait(1400);
+  ctx.say(null, 'A pull request: the agent’s branch, stopped in front of main with its proof beside it until a person says yes. Nothing has reached main.');
 }
 
 async function client(ctx: Ctx, h: Script, link: boolean) {
@@ -188,7 +192,7 @@ async function users(ctx: Ctx, h: Script, test: boolean) {
     ctx.say(null, 'The same mistake came back a week later. The test caught it at the check; no user saw it twice.');
   } else {
     await open(ctx, h);
-    ctx.say('check', 'All tests pass.');
+    ctx.say('the check', 'All tests pass.');
     await merge(ctx, h, true);
     await toUsers(h, 'bad');
     ctx.say('a user', 'My receipt is wrong again.');
@@ -300,7 +304,7 @@ function timetable(size: Size) {
 async function day(ctx: Ctx, h: Script, size: Size) {
   const r = RATES[size];
   h.set((s) => { Object.assign(s, scene(['peer'], N)); s.rest = []; if (size !== 'big') s.tray!.cards = PROOF.map((c) => ({ ...c })); });
-  ctx.say('a colleague', r.words);
+  ctx.say('a colleague', `${r.words} (A made-up day: ${N} agents, one colleague.)`);
   stats(ctx);
   const t = tally(ctx);
   const plan = timetable(size);
@@ -337,7 +341,7 @@ async function day(ctx: Ctx, h: Script, size: Size) {
   }
   await h.wait(500);
   h.set((s) => { for (const a of s.agents) a.busy = false; s.gates!.find((g) => g.id === 'mgate')!.lamp = queue.length ? 'wait' : 'off'; });
-  ctx.say(null, `Over a sample day with ${N} agents and one colleague: ${plural(t.landed, size === 'small' ? 'small change' : 'big change', size === 'small' ? 'small changes' : 'big changes')} landed, ${t.back} sent back, ${plural(queue.length, 'change', 'changes')} still waiting for review.`);
+  ctx.say(null, `Over a made-up day with ${N} agents and one colleague: ${plural(t.landed, size === 'small' ? 'small change' : 'big change', size === 'small' ? 'small changes' : 'big changes')} landed, ${t.back} sent back, ${plural(queue.length, 'change', 'changes')} still waiting for review.`);
 }
 
 const play = (ctx: Ctx, fn: (ctx: Ctx, h: Script) => Promise<void>) => { ctx.mem.t = undefined; void ctx.scene.run((h) => fn(ctx, h)); };
