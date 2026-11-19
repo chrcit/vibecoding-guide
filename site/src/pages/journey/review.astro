@@ -1,11 +1,80 @@
 ---
 import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
+import More from '../../components/journey/More.astro';
 import Next from '../../components/journey/Next.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import { models } from '../../data/models';
+import { t3code } from '../../data/t3code';
+import { url } from '../../lib/nav';
+
+// Who builds and who reviews. Swap the two keys and the chapter swaps the names; nothing else in
+// the script depends on which model is which.
+const builder = models['claude-opus-5-5'];
+const reviewer = models['gpt-6-2-sol'];
+const short = (name: string) => name.replace(/^Claude /, '');
+const data = {
+  builder: short(builder.name), reviewer: short(reviewer.name),
+  builderLab: builder.lab, reviewerLab: reviewer.lab,
+  handoffCap: t3code.handoffCap.value,
+};
+const ids = [
+  'harnesses.claudeCode.codeReview', 'harnesses.claudeCode.reviewerAlwaysFinds', 'plans.claude.pro.claudeCode', 'plans.chatgpt.limits.codexOnEveryPlan',
+  't3code.handoff', 't3code.handoffCap', 'harnesses.codex.sandbox',
+];
 ---
-<Journey chapter="review" first="first" title="A second model" description="One model builds and a different one looks for what is wrong. The work goes back and forth until the reviewer finds nothing.">
-  <Step id="first" title="A second model">
-    <p>This chapter is being built.</p>
-    <Next from="review" />
+<Journey chapter="review" first="self" data={data} title="A second model" description="One model builds, a different one reviews with an empty window, and the work goes round until the reviewer finds nothing.">
+  <Step id="self" title="Asked to check itself, it reads what it wrote">
+    <p>{data.builder} reads its own full window again, the pile it built from, and the check from <a href={url('journey/check/')}>step 5</a> lets the work through. It finds one of three flaws planted in a made-up job; two reach you.</p>
   </Step>
+  <Step id="second" title="A different model, an empty window">
+    <p>The work goes to the check and across to {data.reviewer}, whose window starts empty and holds only your brief and the change. Findings travel back as “gone wrong” pucks until a round finds nothing.</p>
+    <More title="Where this comes from">
+      <p><Fact id="harnesses.claudeCode.codeReview" show="claim" /></p>
+    </More>
+  </Step>
+  <Step id="attack" title="Tell it to break the thing">
+    <p>Asked politely, {data.reviewer} sends back one remark about a name and the flawed work goes on to you. Ask it to break the thing and the flaws come back.</p>
+    <div class="pick">
+      <button type="button" data-do="brief" data-val="polite" data-default aria-pressed="true">“Review this.”</button>
+      <button type="button" data-do="brief" data-val="attack" aria-pressed="false">“Find what is wrong. Try to break it.”</button>
+    </div>
+    <More title="A prompt for this">
+      <CopyPrompt title="Ask a second model for an adversarial review" compact>{`You are reviewing a change you did not write. You get the task and the diff below, and nothing else: do not ask for the author's explanation.
+
+Find the three most likely ways this change is wrong: a case it mishandles, someone it lets do too much, data it breaks. For each, give a way to check it: a command, a test to write, or steps to follow in the app. Skip style and naming. If you find fewer than three real problems, say so.
+
+Task: <paste the task you gave the first model>
+
+Diff: <paste the output of git diff>`}</CopyPrompt>
+    </More>
+  </Step>
+  <Step id="rounds" title="Say when to stop">
+    <p>Two tanks, one per provider’s plan, drain every round at a made-up rate. With no rule the reviewer never says “nothing”: after the real flaws, pale pucks of taste keep coming.</p>
+    <div class="pick">
+      <button type="button" data-do="rule" data-val="none" data-default aria-pressed="true">No limit</button>
+      <button type="button" data-do="rule" data-val="rule" aria-pressed="false">Only what breaks, three rounds at most</button>
+    </div>
+    <More title="Where this comes from">
+      <p><Fact id="harnesses.claudeCode.reviewerAlwaysFinds" show="claim" /></p>
+    </More>
+  </Step>
+  <Step id="how" title="Running it">
+    <p>By hand you carry each finding across; with the lead from <a href={url('journey/lead/')}>step 8</a> the two pass it between them and you get one report. Either model can build or review.</p>
+    <div class="pick">
+      <button type="button" data-do="how" data-val="hand" data-default aria-pressed="true">By hand</button>
+      <button type="button" data-do="how" data-val="handoff" aria-pressed="false">One thread, handed off</button>
+      <button type="button" data-do="how" data-val="lead" aria-pressed="false">A lead runs the loop</button>
+    </div>
+    <More title="In T3 Code and Codex">
+      <p><Fact id="t3code.handoff" show="claim" /> The selection holds <Fact id="t3code.handoffCap" /> by default. <Fact id="harnesses.codex.sandbox" show="claim" /></p>
+    </More>
+    <Next from="review" more={[{ href: 'explain/verification/', text: 'Checking the work' }, { href: 'models/', text: 'The models' }]} />
+  </Step>
+  <Fragment slot="foot">
+    <p>The job, its flaws, the findings and how fast each round drains a plan are made up. Which model builds and which reviews can be swapped; the two only need to differ. <Fact id="plans.claude.pro.claudeCode" show="claim" /> <Fact id="plans.chatgpt.limits.codexOnEveryPlan" show="claim" /></p>
+    <Verified ids={ids} />
+  </Fragment>
 </Journey>
