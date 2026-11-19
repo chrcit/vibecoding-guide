@@ -2,6 +2,15 @@
   The journey: one picture that stays in view while short steps scroll past it
   (layouts/Journey.astro, src/journey/). Global on purpose: the picture is built
   by a script. Tones come from fig.css and the site tokens.
+
+  One meaning per colour, inside the picture, its readout and its legend:
+    accent (--accent)  something went wrong: a failed check, a wrong file, a bad commit. Nothing else.
+    working (--j-work) busy right now: a model thinking, a tool in use, a file being edited, a lamp
+                       on a job that runs. Amber, so it never reads as a problem.
+    blue               waits for you, or a tool's result.
+    green              passed, or instructions.
+  A dotted underline marks a label that opens something (its wiki page in the side view, or a
+  definition). A plain label has no underline.
 */
 
 .j-root {
@@ -11,9 +20,19 @@
   font-variant-numeric: lining-nums tabular-nums;
   /* The colour a slab's sides fall away to. */
   --j-shade: var(--ink);
+  /* Working: amber, a hue of its own (see the top of this file). */
+  --j-work: #c58f0c;
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) .j-root { --j-shade: var(--paper-2); } }
-:root[data-theme='dark'] .j-root { --j-shade: var(--paper-2); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) .j-root { --j-shade: var(--paper-2); --j-work: #e7bd45; } }
+:root[data-theme='dark'] .j-root { --j-shade: var(--paper-2); --j-work: #e7bd45; }
+/* fig.css lights a part in the accent; in the journey a lit part is a working part. */
+.j-svg {
+  --fig-lit: var(--j-work);
+  --fig-lit-top: color-mix(in oklab, var(--j-work) 58%, var(--card));
+  --fig-lit-left: color-mix(in oklab, var(--j-work) 74%, var(--card));
+  --fig-lit-right: color-mix(in oklab, var(--j-work) 82%, var(--j-shade));
+  --fig-lit-shadow: color-mix(in oklab, var(--j-work) 66%, var(--j-shade));
+}
 
 /* ---------- layout ---------- */
 
@@ -100,6 +119,12 @@ main:has(> .j-root) { container: journey / inline-size; }
 .j-stats div { display: flex; align-items: baseline; gap: 0.4rem; }
 .j-stats dt { font-size: var(--text-xs); color: var(--muted); }
 .j-stats dd { margin: 0; font-family: var(--mono); font-size: var(--text-s); font-weight: 600; color: var(--ink); }
+/* The assumption behind a number ("made-up", "cache on"), beside it. */
+.j-tag { display: inline-block; margin-left: 0.15rem; padding: 0 0.35rem; border: 1px solid var(--rule-strong); border-radius: var(--radius-pill); font-family: var(--sans); font-size: var(--text-xs); font-weight: 500; line-height: 1.35; color: var(--muted); vertical-align: 0.05em; }
+/* A control restarted the run: the counters went back to 0. */
+@keyframes j-reset { from { background: color-mix(in oklab, var(--ink) 12%, transparent); } }
+.j-stats[data-reset] { border-radius: var(--radius-s); animation: j-reset 700ms var(--ease-out); }
+@media (prefers-reduced-motion: reduce) { .j-stats[data-reset] { animation-duration: 1ms; } }
 .j-model { margin: 0; padding-top: 0.45rem; border-top: 1px solid var(--rule); max-width: none; font-size: var(--text-xs); line-height: 1.5; color: var(--ink-2); }
 .j-model b { color: var(--ink); font-weight: 600; margin-right: 0.25rem; }
 .j-key { display: flex; flex-wrap: wrap; gap: 0.125rem 0.875rem; margin: 0; padding: 0; list-style: none; font-size: var(--text-xs); color: var(--muted); }
@@ -132,21 +157,17 @@ main:has(> .j-root) { container: journey / inline-size; }
 .j-svg .k-solid[data-b] .k-right, .j-svg .k-solid[data-b] .k-shadow { fill: color-mix(in oklab, var(--t) 70%, var(--j-shade)); }
 .j-svg .k-solid[data-b] .k-edge { stroke: color-mix(in oklab, var(--t) 42%, var(--j-shade)); stroke-width: 1px; }
 .j-svg .k-solid[data-b='sum'] .k-edge { stroke-dasharray: 3 2; }
-.j-svg .k-solid[data-b][data-lit] .k-edge { stroke: var(--accent); stroke-width: 2px; }
+.j-svg .k-solid[data-b][data-lit] .k-edge { stroke: var(--j-work); stroke-width: 2px; }
 
 /* The model on top of a window: lit while it is working. A second kind of model is tinted. */
 .j-ent[data-model='b'] [data-part='head'] .k-top, .j-ent[data-model='b'] [data-part='head'] .k-fill { fill: color-mix(in oklab, var(--blue) 22%, var(--card)); }
-.j-ent[data-busy=''] [data-part='head'] .k-top, .j-ent[data-busy=''] [data-part='head'] .k-fill { fill: var(--fig-lit-top); }
-.j-ent[data-busy=''] [data-part='head'] .k-left { fill: var(--fig-lit-left); }
-.j-ent[data-busy=''] [data-part='head'] .k-right, .j-ent[data-busy=''] [data-part='head'] .k-shadow { fill: var(--fig-lit-right); }
-.j-ent[data-busy=''] [data-part='head'] .k-edge, .j-ent[data-busy=''] [data-part='head'] .k-crease { stroke: var(--fig-lit); }
 .j-ent [data-part='head'] path { transition: fill 200ms; }
-.j-ent[data-busy=''] [data-part='lens'] { fill: var(--accent-ink); stroke: var(--fig-lit); }
+.j-ent[data-busy=''] [data-part='lens'] { fill: var(--card); stroke: var(--j-work); }
 
 /* Lamps: on a station's base and on top of a gate. */
 .j-ent [data-part='lamp'] path { transition: fill 200ms; }
 .j-ent [data-part='lamp'] .k-top, .j-ent [data-part='lamp'] .k-fill { fill: var(--fig-faint); }
-.j-ent[data-lamp='work'] [data-part='lamp'] .k-top, .j-ent[data-lamp='work'] [data-part='lamp'] .k-fill { fill: color-mix(in oklab, var(--accent) 55%, var(--card)); }
+.j-ent[data-lamp='work'] [data-part='lamp'] .k-top, .j-ent[data-lamp='work'] [data-part='lamp'] .k-fill { fill: var(--j-work); }
 .j-ent[data-lamp='wait'] [data-part='lamp'] .k-top, .j-ent[data-lamp='wait'] [data-part='lamp'] .k-fill { fill: var(--blue); }
 .j-ent[data-lamp='ok'] [data-part='lamp'] .k-top, .j-ent[data-lamp='ok'] [data-part='lamp'] .k-fill { fill: var(--green); }
 .j-ent[data-lamp='bad'] [data-part='lamp'] .k-top, .j-ent[data-lamp='bad'] [data-part='lamp'] .k-fill { fill: var(--accent); }
@@ -212,9 +233,18 @@ main:has(> .j-root) { container: journey / inline-size; }
 .j-label[data-place='left'] { transform: translate(calc(-100% - 8px), -50%); }
 .j-label[data-place='right'] { transform: translate(8px, -50%); }
 .j-label[data-place='bottom'] { transform: translate(-50%, 8px); }
-a.j-label { text-decoration: underline dotted var(--accent); text-underline-offset: 0.2em; cursor: pointer; }
+/* Only a label that opens something is underlined; the colour is not the accent, which means a problem. */
+a.j-label { text-decoration: underline dotted var(--muted); text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; cursor: pointer; }
 a.j-label::after { content: ''; position: absolute; inset: -0.6rem -0.4rem; }
-a.j-label:hover { color: var(--accent); text-decoration-style: solid; }
+a.j-label:hover, a.j-label:focus-visible { text-decoration-style: solid; text-decoration-color: var(--ink); }
+span.j-label { text-decoration: none; }
+/* The definition of a term label, on hover and focus (scene.ts showTip). */
+.j-tip {
+  position: absolute; z-index: 3; max-width: min(19rem, calc(100% - 8px)); padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-s); background: var(--ink); color: var(--paper); box-shadow: var(--shadow-pop);
+  font-family: var(--sans); font-size: var(--text-xs); font-weight: 400; line-height: 1.4; pointer-events: none;
+}
+.j-tip[hidden] { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .j-ent, .j-cam, .j-label, .j-step { transition: none; }
@@ -245,8 +275,8 @@ html[data-embed] .j-stage { max-height: 36svh; }
   border: 1.5px solid var(--rule-strong); background: var(--card);
 }
 .pick[data-multi] button[aria-pressed='true']::before {
-  border-color: var(--accent);
-  background: var(--accent) linear-gradient(var(--accent), var(--accent));
+  border-color: var(--ink);
+  background: var(--ink) linear-gradient(var(--ink), var(--ink));
   box-shadow: inset 0 0 0 2px var(--card);
 }
 .pick[data-multi] button[aria-pressed='false'] { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in oklab, var(--muted) 60%, transparent); }
@@ -267,7 +297,7 @@ html[data-embed] .j-stage { max-height: 36svh; }
 
 .j-adds {
   margin: 0.5rem 0 0.75rem; padding: 0.55rem 0.75rem;
-  border-left: 2px solid var(--accent); background: color-mix(in oklab, var(--accent) 5%, var(--card));
+  border-left: 2px solid var(--rule-strong); background: var(--card);
   border-radius: 0 var(--radius-s) var(--radius-s) 0;
 }
 .j-adds p { margin: 0; font-size: var(--text-s); line-height: 1.5; color: var(--ink-2); }
@@ -301,11 +331,12 @@ html[data-embed] .j-stage { max-height: 36svh; }
 .j-lead a { color: var(--accent); font-weight: 600; text-underline-offset: 0.2em; }
 .j-more-body a.fact { text-decoration-color: color-mix(in oklab, var(--muted) 40%, transparent); }
 
-/* A model that is working is tinted, paler than the solid tone of something gone wrong. */
-[data-b='busy'] { --t: color-mix(in oklab, var(--accent) 34%, var(--card)); }
-.j-ent[data-busy=''] [data-part='head'] .k-top, .j-ent[data-busy=''] [data-part='head'] .k-fill { fill: color-mix(in oklab, var(--accent) 34%, var(--card)); }
-.j-ent[data-busy=''] [data-part='head'] .k-left { fill: color-mix(in oklab, var(--accent) 44%, var(--card)); }
-.j-ent[data-busy=''] [data-part='head'] .k-right, .j-ent[data-busy=''] [data-part='head'] .k-shadow { fill: color-mix(in oklab, var(--accent) 54%, var(--card)); }
+/* A model that is working: its head turns amber (--j-work), as does the legend's "working" swatch. */
+[data-b='busy'] { --t: color-mix(in oklab, var(--j-work) 62%, var(--card)); }
+.j-ent[data-busy=''] [data-part='head'] .k-top, .j-ent[data-busy=''] [data-part='head'] .k-fill { fill: color-mix(in oklab, var(--j-work) 62%, var(--card)); }
+.j-ent[data-busy=''] [data-part='head'] .k-left { fill: color-mix(in oklab, var(--j-work) 74%, var(--card)); }
+.j-ent[data-busy=''] [data-part='head'] .k-right, .j-ent[data-busy=''] [data-part='head'] .k-shadow { fill: color-mix(in oklab, var(--j-work) 80%, var(--j-shade)); }
+.j-ent[data-busy=''] [data-part='head'] .k-edge, .j-ent[data-busy=''] [data-part='head'] .k-crease { stroke: color-mix(in oklab, var(--j-work) 70%, var(--j-shade)); }
 
 /* Lesson 7: what does not fit the window, drawn on top of the cap (Agent.spill in picture.ts). */
 .j-svg .k-solid[data-over] { opacity: 0.8; }

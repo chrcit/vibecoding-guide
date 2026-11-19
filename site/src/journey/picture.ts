@@ -16,6 +16,8 @@
  * machine a station runs on. Several jobs stand in a row along y = 0.
  * Coordinates are world units on the floor: +x runs down to the right, +y down to the left.
  */
+import { resolveTerm, type TermId } from './terms';
+import type { Level } from '../lib/levels';
 import * as k from '../components/fig/kit/iso';
 
 export type XY = [number, number];
@@ -96,10 +98,16 @@ export interface Label {
   /** An anchor name ("you", "a0", "tank:a0", "tools", "tool:run", "project", "rules", "skills", "main", a gate id,
    *  "meter:<id>", "tray", "card:<id>", a person id, "zone:<id>", "p:<id>") or a world point. */
   at: string | P3;
-  text: string;
+  /** The words on the label. May be left out when `term` is set. */
+  text?: string;
   place?: 'top' | 'left' | 'right' | 'bottom';
   /** A site path to open in the side view. */
   side?: string;
+  /** One sentence shown on hover and focus, and read by screen readers. Set by `term`. */
+  def?: string;
+  /** A glossary term (terms.ts). The picture fills in the word for the reader's level, the wiki
+   *  link and the definition; `text` then replaces the plain word only ("its window"). */
+  term?: TermId;
 }
 export interface SceneState {
   you?: XY | null;
@@ -368,7 +376,7 @@ export interface Ent {
   x: number; y: number; scale: number;
   attrs: Record<string, string>;
 }
-export interface PlacedLabel { key: string; text: string; x: number; y: number; place: 'top' | 'left' | 'right' | 'bottom'; side?: string }
+export interface PlacedLabel { key: string; text: string; x: number; y: number; place: 'top' | 'left' | 'right' | 'bottom'; side?: string; def?: string }
 export interface Camera { s: number; tx: number; ty: number }
 export interface Picture { ents: Ent[]; labels: PlacedLabel[]; cam: Camera; kinds: Kind[] }
 
@@ -425,7 +433,7 @@ function extent(s: SceneState, key: string): P3[] {
   return [];
 }
 
-export interface Frame { w: number; h: number }
+export interface Frame { w: number; h: number; /** The reader's level, for labels that name a term. Default plain. */ level?: Level }
 
 /**
  * Turn a scene state into parts, labels and a camera for a drawing of the given size. `prev` is
@@ -521,9 +529,10 @@ export function picture(s: SceneState, frame: Frame, prev?: SceneState): Picture
     const p = typeof lab.at === 'string' ? anchorOf(s, lab.at) : lab.at;
     if (!p) continue;
     const [x, y] = k.iso(p, P);
+    const t = lab.term ? resolveTerm(lab.term, frame.level ?? 'plain', lab.text) : lab;
     labels.push({
-      key: (typeof lab.at === 'string' ? lab.at : lab.at.join(',')) + '|' + (lab.side ? 'a' : 's'),
-      text: lab.text, place: lab.place ?? 'top', side: lab.side,
+      key: (typeof lab.at === 'string' ? lab.at : lab.at.join(',')) + '|' + (t.side ? 'a' : 's'),
+      text: t.text ?? '', place: lab.place ?? 'top', side: t.side, def: t.def,
       x: x * cam.s + cam.tx, y: y * cam.s + cam.ty,
     });
   }

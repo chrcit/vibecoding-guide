@@ -5,6 +5,7 @@ import { fleet, type FleetOpts } from '../sim';
 import { closing } from './team';
 import { route, reverse, BUS_Y } from '../picture';
 import { rung } from '../rungs';
+import { termLabel } from '../terms';
 import { LINES } from './chat';
 import { job } from './loop';
 import { session } from './memory';
@@ -12,6 +13,8 @@ import { jobs } from './check';
 import { handed } from './handoff';
 
 const you = lab('you', 'you', 'left');
+// Labels that name a glossary term follow the reader's level: the check in the lead step reads
+// "check", "typecheck · tests" or "tsc --noEmit · npm test" (terms.ts).
 const team9 = (ctx: Ctx, o: FleetOpts, opening: string) => void ctx.scene.run(async (h) => { ctx.say(null, opening); ctx.say(null, closing(await fleet(ctx, h, o), o)); });
 const again = (ctx: Ctx, fn: Parameters<Ctx['scene']['run']>[0], pause = 1400) => void ctx.scene.run(async (h) => { for (;;) { await fn(h); await h.wait(pause); } });
 const note = (ctx: Ctx, id: string) => { const r = rung(id); ctx.model(`${r.n}. ${r.title}.`, r.adds[ctx.level]); };
@@ -61,7 +64,7 @@ export const whole: Chapter = {
       enter: (ctx) => { note(ctx, 'memory'); again(ctx, (h) => session(ctx, h, { rules: true }), 1800); },
     },
     check: {
-      scene: () => solo({ tools: true, project: true, gate: true, labels: [you, lab('gate', 'check', 'top', 'wiki/verification/')] }),
+      scene: () => solo({ tools: true, project: true, gate: true, labels: [you, termLabel('gate', 'check')] }),
       enter: (ctx) => { note(ctx, 'check'); ctx.scene.speed = 1.6; again(ctx, (h) => jobs(ctx, h, ['tests', 'look', 'review'], 4)); },
     },
     handoff: {
@@ -73,7 +76,7 @@ export const whole: Chapter = {
       enter: (ctx) => { note(ctx, 'parallel'); team9(ctx, { until: 6, name: 'the agent', clashes: true, flaws: false }, 'Three helpers at once, each in its own worktree.'); },
     },
     lead: {
-      scene: () => team(5, { trees: true, mgate: true, mixed: true, lead: [{ t: 'rules', h: 4 }], labels: [you, lab('a0', 'the lead', 'top', 'wiki/orchestration/'), lab('mgate', 'check', 'top', 'wiki/verification/'), lab('project', 'main', 'top', 'wiki/branch/')] }),
+      scene: () => team(5, { trees: true, mgate: true, mixed: true, lead: [{ t: 'rules', h: 4 }], labels: [you, lab('a0', 'the lead', 'top', 'wiki/orchestration/'), termLabel('mgate', 'check'), termLabel('project', 'main')] }),
       enter: (ctx) => { note(ctx, 'lead'); team9(ctx, { gate: true, until: 10 }, 'The lead hands out tasks, checks results, and reports back cleanly.'); },
     },
     fleet: {
