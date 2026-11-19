@@ -15,7 +15,7 @@ export function closing(t: Tally, o: FleetOpts) {
   if (o.gate) parts.push(t.sentBack ? `The check sent ${t.sentBack} back first.` : 'The check sent none back.');
   if (o.clashes) parts.push(t.clashes ? `${t.clashes} overwrote another helper’s edit.` : 'None overwrote another.');
   parts.push(t.wrong ? `${t.wrong} of them ${t.wrong === 1 ? 'is' : 'are'} wrong, and nothing stopped ${t.wrong === 1 ? 'it' : 'them'}.` : 'None of them is wrong.');
-  if (t.compactions) parts.push(`${who[0]!.toUpperCase() + who.slice(1)}’s window filled and was compacted ${t.compactions === 1 ? 'once' : t.compactions + ' times'}.`);
+  if (t.compactions) parts.push(`${who[0]!.toUpperCase() + who.slice(1)}’s window filled and was compacted ${t.compactions === 1 ? 'once' : t.compactions === 2 ? 'twice' : t.compactions + ' times'}.`);
   return parts.join(' ');
 }
 
