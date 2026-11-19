@@ -45,7 +45,7 @@ const first = compare(cat, modelId, 'effort');
 </div>
 
 <style is:global>
-  .st { display: grid; gap: 0.75rem; }
+  .st { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
   .st .pick { justify-self: start; }
   .st-rows { display: grid; gap: 0.625rem; }
   .st-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'name total' 'bar bar'; gap: 0.25rem 0.75rem; align-items: baseline; }

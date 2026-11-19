@@ -41,7 +41,7 @@ const say = (times: number, cost: string, k: number, model: string) =>
 </div>
 
 <style is:global>
-  .sm { display: grid; gap: 0.5rem; }
+  .sm { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
   .sm-chart { position: relative; padding-bottom: 3.25rem; }
   .sm-bar { display: flex; gap: 2px; height: 2.25rem; transition: width 450ms var(--fig-ease, ease); }
   .sm-bar i { display: block; height: 100%; min-width: 2px; background: var(--accent); border-radius: 2px; }

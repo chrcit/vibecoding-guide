@@ -88,7 +88,7 @@ const groups: [string, string][] = [['claude', 'Claude'], ['chatgpt', 'ChatGPT']
 </div>
 
 <style is:global>
-  .pw { display: grid; gap: 0.75rem; }
+  .pw { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
   .pw-presets { justify-self: start; }
   .pw-controls .control { flex: 1 1 8.5rem; }
   .pw-controls .pw-wide { flex: 1 1 12rem; }

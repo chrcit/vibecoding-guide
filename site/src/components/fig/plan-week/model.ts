@@ -337,7 +337,7 @@ export function week(c: Catalogue, s: LabState): Week {
   return {
     span, workHours, threadHours, mix,
     segments: blocked ? [] : segmentsOf(lo.states, hi.states, hours, credits),
-    windows: blocked || isApi ? [] : windows,
+    windows: blocked || isApi || credits ? [] : windows,
     firstStop: isApi ? [null, null] : range ? [lo.firstStop, hi.firstStop] : null,
     stops: isApi ? [0, 0] : range ? [hi.stops, lo.stops] : null,
     planWeek, apiWeek, apiHour, blocked, access, plan, model,
@@ -378,7 +378,7 @@ export function hrs(h: number): string {
 /** A range of hours: "4–32 min", "2.9–8 h". */
 export function hrsRange(a: number, b: number): string {
   if (Math.abs(a - b) < 1 / 60) return hrs(a);
-  if (a >= 1 / 60 && b < 1) return `${Math.round(a * 60)}–${Math.round(b * 60)} min`;
+  if (b < 1) return `${a < 1 / 60 ? '<1' : Math.round(a * 60)}–${Math.round(b * 60)} min`;
   if (a >= 1 && b >= 1) return `${hrs(a).replace(' h', '')}–${hrs(b)}`;
   return `${hrs(a)}–${hrs(b)}`;
 }

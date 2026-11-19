@@ -55,7 +55,7 @@ const factIds = [
 const src = (id: string) => `sources/#${anchor(id)}`;
 // One row per paid price point, cheapest first; plans at the same price share a row.
 const evenPlans = [...new Map(cat.plans.filter((p) => p.provider !== 'api' && p.price > 0).sort((a, b) => a.price - b.price).map((p) => [p.price, p] as const)).values()]
-  .map((p) => ({ id: p.id, name: `${usd(p.price)} a month`, price: p.price }));
+  .map((p) => ({ id: p.id, name: `$${p.price} a month`, price: p.price }));
 ---
 <Board
   title="Plans against the API"
@@ -192,6 +192,7 @@ const evenPlans = [...new Map(cat.plans.filter((p) => p.provider !== 'api' && p.
     }
     if (w.access?.kind === 'credits' || w.blocked) {
       bar.hidden = true;
+      from.textContent = '';
       text.textContent = `${w.model.name} is outside ${w.plan.name}'s limits, so his figure does not apply here.`;
       return;
     }

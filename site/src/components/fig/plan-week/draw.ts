@@ -124,7 +124,10 @@ export function drawWeek(w: Week, width: number, uid: string, sides: Sides): str
       met.push(`<path class="pw-plan" d="M0 ${n1(y(plan[0]))}H${W}"/>`);
       // The plan's label sits at the left, under its line if there is room, clear of the meter's rise.
       const py = y(plan[0]);
-      met.push(text(4, py + 18 < metBase - 2 ? py + 18 : py - 8, `Plan ${usd(plan[0])} a week`, 'pw-t pw-ink'));
+      const label = `Plan ${usd(plan[0])} a week`;
+      // At the right end when the meter has climbed well clear of the line there, else at the left.
+      if (y(w.apiWeek[0]) < py - 28) met.push(text(W, py - 8, label, 'pw-t pw-ink', 'end'));
+      else met.push(text(4, py + 18 < metBase - 2 ? py + 18 : py - 8, label, 'pw-t pw-ink'));
     }
     const xo = crossover(w);
     if (xo) {
