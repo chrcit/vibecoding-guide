@@ -52,6 +52,8 @@ main:has(> .j-root) { container: journey / inline-size; }
 .j-count { margin: 0 0 0.5rem; font-family: var(--mono); font-size: var(--text-s); color: var(--muted); }
 .j-step h2 { margin: 0 0 0.5rem; font-family: var(--serif); font-size: var(--text-2xl); font-weight: 520; line-height: 1.1; letter-spacing: -0.02em; color: var(--ink); text-wrap: balance; }
 .j-step p { margin: 0 0 0.875rem; max-width: 34ch; font-size: var(--text-m); }
+/* A link to one step (journey/meter/#many) lands with the step in reading position, clear of the header and the sticky picture. */
+.j-step [id] { scroll-margin-top: 48svh; }
 .j-step .controls, .j-step .pick { margin-top: 0.25rem; }
 .j-step .btn { min-height: 2.75rem; }
 .j-step .row { display: flex; flex-wrap: wrap; gap: 0.5rem; }

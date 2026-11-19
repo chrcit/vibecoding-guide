@@ -8,7 +8,7 @@ import { url } from '../../lib/nav';
 ---
 <Journey chapter="people" first="pr" title="Other people" description="A pull request, a colleague’s review, a client and users: the people around the main branch, and how what they say becomes the next job.">
   <Step id="pr" title="A pull request is a change that waits">
-    <p>The agent’s change runs along the bus to the <a href={url('journey/parallel/')}>gate before main from step 7</a> and waits there with a blue lamp, while its proof lands on the <a href={url('journey/proof/')}>tray from step 12</a>. Nothing reaches main until a person has read it.</p>
+    <p>The agent’s change runs along the bus to the <a href={url('journey/parallel/')}>check before main from step 7</a> and waits there with a blue lamp, while its proof lands on the <a href={url('journey/proof/')}>tray from step 12</a>. Nothing reaches main until a person has read it.</p>
     <More title="A prompt for this">
       <CopyPrompt compact title="Write the pull request for a person">Open a pull request for this change, written for someone who has not seen this thread:
 1. What changed and why, in three lines.
@@ -18,7 +18,7 @@ import { url } from '../../lib/nav';
     </More>
   </Step>
   <Step id="peer" title="A colleague reads it">
-    <p>Ten agents send changes; each waits in the queue on the bus until the colleague at the gate has read it, and a comment goes back to its agent as a dark puck. One reader cannot keep up with big changes and no proof; the rates are made up.</p>
+    <p>Ten agents send changes; each waits in the queue on the bus until the colleague at the check has read it, and a comment goes back to its agent as a dark puck. One reader cannot keep up with big changes and no proof; the rates are made up.</p>
     <div class="pick" role="group" aria-label="What reaches the colleague">
       <button type="button" data-do="size" data-val="big" data-default aria-pressed="true">Big, no proof</button>
       <button type="button" data-do="size" data-val="proof" aria-pressed="false">Big, with proof</button>
@@ -36,7 +36,7 @@ import { url } from '../../lib/nav';
     </More>
   </Step>
   <Step id="users" title="Users find what nobody tested">
-    <p>A user’s report comes back as a red puck, and you hand it to the agent as the brief. A fix that comes with a test turns the gate red when the same mistake returns.</p>
+    <p>A user’s report comes back as a red puck, and you hand it to the agent as the brief. A fix that comes with a test turns the check red when the same mistake returns.</p>
     <div class="pick" role="group" aria-label="How the fix lands">
       <button type="button" data-do="test" data-val="with" data-default aria-pressed="true">Fix with a test</button>
       <button type="button" data-do="test" data-val="without" aria-pressed="false">Fix without</button>

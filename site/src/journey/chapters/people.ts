@@ -134,7 +134,7 @@ async function pr(ctx: Ctx, h: Script) {
   await open(ctx, h, undefined, true);
   ctx.say('check', 'Tests pass. Waiting for someone to read it.');
   await h.wait(900);
-  ctx.say(null, 'One change, checked and waiting at the gate. Nothing has reached main.');
+  ctx.say(null, 'One change, checked and waiting in front of main. Nothing has reached main.');
 }
 
 async function client(ctx: Ctx, h: Script, link: boolean) {
@@ -185,7 +185,7 @@ async function users(ctx: Ctx, h: Script, test: boolean) {
       await open(ctx, h);
     }
     await merge(ctx, h);
-    ctx.say(null, 'The same mistake came back a week later. The test caught it at the gate; no user saw it twice.');
+    ctx.say(null, 'The same mistake came back a week later. The test caught it at the check; no user saw it twice.');
   } else {
     await open(ctx, h);
     ctx.say('check', 'All tests pass.');
@@ -337,7 +337,7 @@ async function day(ctx: Ctx, h: Script, size: Size) {
   }
   await h.wait(500);
   h.set((s) => { for (const a of s.agents) a.busy = false; s.gates!.find((g) => g.id === 'mgate')!.lamp = queue.length ? 'wait' : 'off'; });
-  ctx.say(null, `A made-up day with ${N} agents and one colleague: ${plural(t.landed, size === 'small' ? 'small change' : 'big change', size === 'small' ? 'small changes' : 'big changes')} landed, ${t.back} sent back, ${plural(queue.length, 'change', 'changes')} still waiting at the gate.`);
+  ctx.say(null, `A made-up day with ${N} agents and one colleague: ${plural(t.landed, size === 'small' ? 'small change' : 'big change', size === 'small' ? 'small changes' : 'big changes')} landed, ${t.back} sent back, ${plural(queue.length, 'change', 'changes')} still waiting for the colleague.`);
 }
 
 const play = (ctx: Ctx, fn: (ctx: Ctx, h: Script) => Promise<void>) => { ctx.mem.t = undefined; void ctx.scene.run((h) => fn(ctx, h)); };
