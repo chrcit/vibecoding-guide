@@ -12,6 +12,13 @@ Three rules follow from that, and they outrank habits you bring from writing art
 2. We tell people how; we do not explain everything. The guide teaches the reader to use a machine that can explain things at their own level. Give the move and the prompt. The long explanation is one click away in the side view, never in the way.
 3. "Cut taglines, helper text and secondary labels. If a screen needs them to make sense, fix the layout." No line under a title, no hint under a control ("drag the slider"), no caption that repeats the picture, no label on top of a label.
 
+## The journey
+
+The home page and `/journey/<id>/` are the spine of the site: one drawn scene that grows through
+nine steps, from one chat to twenty agents in a loop. Read `JOURNEY.md` before touching it. Boards
+(below) are where a reader pushes one idea further; wiki pages are what the labels on the picture
+open. A new idea goes into the journey's picture first, and only then into a board.
+
 ## Boards
 
 The start page, the explainers, the model pages and the home page are boards: `src/layouts/Board.astro`, a title and a 12-column grid of tiles.
