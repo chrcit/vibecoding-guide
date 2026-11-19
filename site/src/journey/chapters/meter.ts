@@ -1,21 +1,28 @@
-// Chapter 10: what it draws from. A made-up job (the date fix from chapter 2) is counted turn by
+// Lesson 14: what it costs. One made-up job, the date fix from "It gets hands", is counted turn by
 // turn: every turn reads the whole window again and writes a little. On the API those tokens are
 // multiplied by the real prices the page hands over; on a plan they drain an allowance at a made-up
 // rate, because the provider publishes no figure for it.
+//
+// Every number on the page comes out of `bill()`, and the token counts are chosen so that the job's
+// price with the cache on is a whole tenth of a cent: a reader can redo each sum by hand and get the
+// figure on screen.
 import { byLevel, type Chapter, type Ctx, type Level } from '../chapter';
 import type { Script } from '../scene';
 import { solo, team, lab } from '../presets';
 import { route, reverse, SPOT, BUS_Y, type Kind, type SceneState, type Meter } from '../picture';
+import { STEP_NOTES } from '../notes';
 
 /** Prices per million tokens, from src/data/models.ts via the page. */
-interface Price { name: string; input: number; output: number; cacheRead?: number }
+export interface Price { name: string; input: number; output: number; cacheRead?: number }
 const MODEL_IDS = ['claude-opus-5-5', 'claude-fable-5-2', 'gpt-6-2-sol'] as const;
-const price = (ctx: Ctx, id?: string): Price => ctx.data.models?.[id ?? ctx.mem.model ?? MODEL_IDS[0]] ?? ctx.data.models?.[MODEL_IDS[0]];
-/** The model the cache step and the fleet run on: the one picked, if the data has a cached price for it. */
-const cached = (ctx: Ctx): Price => { const p = price(ctx); return p?.cacheRead != null ? p : price(ctx, MODEL_IDS[0]); };
+const FALLBACK: Price = { name: 'the model', input: 0, output: 0 };
+const price = (ctx: Ctx, id?: string): Price => ctx.data.models?.[id ?? ctx.mem.model ?? MODEL_IDS[0]] ?? ctx.data.models?.[MODEL_IDS[0]] ?? FALLBACK;
+/** The cache step, the plan and the fleet all run on the first model, which has a cached price. */
+const opus = (ctx: Ctx): Price => price(ctx, MODEL_IDS[0]);
 
 // ---------- the made-up job, in thousands of tokens ----------
 
+export const JOB = 'the date fix';
 const START = 18; // instructions and tool definitions, in the window before you say anything
 const ASK = 0.3;
 interface Turn { says: Record<Level, string>; tool?: string; file?: number; w: number; r: number; kind?: Kind; result?: Record<Level, string> }
@@ -23,164 +30,179 @@ const TURNS: Turn[] = [
   {
     says: {
       plain: 'Find where the member list formats dates.',
-      technical: 'Search the repo for date formatting helpers.',
-      engineer: 'Locate date parsing and formatting module boundaries.',
+      technical: 'Search the repo for date formatting.',
+      engineer: 'Find where dates are parsed and where they are rendered.',
     },
     tool: 'search', file: 1, w: 0.3, r: 2,
     result: {
-      plain: 'Found 2 files handling dates',
+      plain: 'Found 2 files that handle dates',
       technical: '2 matches: members.ts, dates.test.ts',
-      engineer: '2 files: members.ts (UI + parser coupled), dates.test.ts',
+      engineer: '2 files: members.ts (parsing and rendering in one function), dates.test.ts',
     },
   },
   {
     says: {
       plain: 'Open the member list file.',
       technical: 'Read members.ts and its date parser.',
-      engineer: 'Inspect members.ts to verify input format and type contract.',
+      engineer: 'Read members.ts to see the input format and the types.',
     },
     tool: 'read', file: 1, w: 0.2, r: 6,
     result: {
       plain: 'Read 84 lines of the member list',
-      technical: '84 lines of members.ts (6,000 tokens added to window)',
-      engineer: '84 lines read; inline string split instead of ISO parser',
+      technical: '84 lines of members.ts, 6,000 tokens into the window',
+      engineer: '84 lines; the date is split by hand instead of parsed as ISO',
     },
   },
   {
     says: {
       plain: 'Fix how the date is shown.',
-      technical: 'Update parseDate() in members.ts.',
-      engineer: 'Extract typed parseMemberDate(iso: string) helper in members.ts.',
+      technical: 'Change parseDate() in members.ts.',
+      engineer: 'Move parsing into a typed parseMemberDate(iso: string) in members.ts.',
     },
     tool: 'edit', file: 1, w: 0.9, r: 0.5,
     result: {
-      plain: 'Updated the member list',
-      technical: 'members.ts updated',
-      engineer: 'members.ts updated (pure parser separated from render)',
+      plain: 'Changed the member list',
+      technical: 'members.ts changed',
+      engineer: 'members.ts changed: parser separated from rendering',
     },
   },
   {
     says: {
       plain: 'Check whether the dates look right now.',
-      technical: 'Run tsc --noEmit and vitest on dates.test.ts.',
-      engineer: 'Run strict typecheck and unit test suite across date edge cases.',
+      technical: 'Run tsc --noEmit and the date tests.',
+      engineer: 'Run tsc --noEmit and the unit tests on the date edge cases.',
     },
     tool: 'run', w: 0.15, r: 4, kind: 'bad',
     result: {
-      plain: 'Check failed: 3 March still showed as 03/03 swapped',
-      technical: 'tsc passed; 1 of 12 unit tests fails (day/month swapped)',
-      engineer: 'tsc clean; 1/12 unit test fails on DD/MM vs MM/DD boundary',
+      plain: 'Check failed: 3 March still shows the wrong way round',
+      technical: 'tsc passes; 1 of 12 tests fails: day and month swapped',
+      engineer: 'tsc clean; 1 of 12 tests fails on the DD/MM against MM/DD case',
     },
   },
   {
     says: {
       plain: 'Swap the day and month into the right order.',
-      technical: 'Fix the day/month capture order in parseDate().',
-      engineer: 'Fix day/month destructuring and add explicit ISO guard.',
+      technical: 'Fix the day and month order in parseDate().',
+      engineer: 'Fix the day and month order and reject anything that is not ISO.',
     },
-    tool: 'edit', file: 1, w: 0.6, r: 0.5,
+    tool: 'edit', file: 1, w: 0.6, r: 0.8,
     result: {
-      plain: 'Updated the member list again',
-      technical: 'members.ts updated',
-      engineer: 'members.ts updated',
+      plain: 'Changed the member list again',
+      technical: 'members.ts changed',
+      engineer: 'members.ts changed',
     },
   },
   {
     says: {
       plain: 'Check the dates again.',
-      technical: 'Re-run tsc --noEmit and all 12 unit tests.',
-      engineer: 'Re-run typecheck and full unit suite to verify no regressions.',
+      technical: 'Run tsc --noEmit and all 12 tests again.',
+      engineer: 'Run the type check and the whole unit suite again.',
     },
     tool: 'run', w: 0.15, r: 2.5,
     result: {
-      plain: 'All dates match (12 of 12 checks pass)',
-      technical: 'tsc clean; 12 of 12 unit tests pass',
-      engineer: 'tsc clean; 12/12 unit tests pass in 140 ms',
+      plain: 'All dates right: 12 of 12 checks pass',
+      technical: 'tsc clean; 12 of 12 tests pass',
+      engineer: 'tsc clean; 12 of 12 tests pass in 140 ms',
     },
   },
   {
     says: {
-      plain: 'Fixed. The member list now shows day then month, and all 12 checks pass.',
-      technical: 'Fixed. Swapped day/month in parseDate(); tsc clean and 12 of 12 unit tests pass.',
-      engineer: 'Fixed. Extracted typed date parser, resolved DD/MM bug, tsc + 12/12 unit tests green.',
+      plain: 'Fixed. The member list shows day then month, and all 12 checks pass.',
+      technical: 'Fixed. Day and month swapped back in parseDate(); tsc clean, 12 of 12 tests pass.',
+      engineer: 'Fixed. Typed date parser, DD/MM bug gone, tsc and 12 of 12 tests green.',
     },
     w: 0.4, r: 0,
   },
 ];
+/** "Change effort halfway": the turn whose request misses the cache. */
+const MISS_AT = 3;
 
-const MODEL_NOTES: Record<'turn' | 'api' | 'cache' | 'plan' | 'many', Record<Level, [string, string]>> = {
-  turn: {
-    plain: ['Added to the model · The token counter:', 'Sits on the context window from step 3. Every back-and-forth step re-reads the entire conversation so far, which is why reading piles up much faster than writing.'],
-    technical: ['Added to the model · Token accounting:', 'Attaches to the context window from step 3. Every tool call—file reads, tsc output, unit test logs—stays in the window and is re-read as input tokens on every subsequent turn.'],
-    engineer: ['Added to the model · Quadratic input growth:', 'Each turn pays O(window) input tokens. Keeping modules focused and test logs concise directly shrinks the read footprint on every turn of the loop.'],
-  },
-  api: {
-    plain: ['Added to the model · The API meter:', 'Sits beside the model and prices every token directly. Switching models changes the bill per feature, even when the job takes the exact same steps.'],
-    technical: ['Added to the model · Pay-per-token API:', 'Multiplies every input read (files, typecheck + test logs) and output write by the model’s list price. Cheaper models lower cost per test-fix loop if they still pass verification.'],
-    engineer: ['Added to the model · API unit economics:', 'Maps token volume to real $/PR. Because input tokens dominate (80%+ of cost), model choice and context discipline matter far more than reply verbosity.'],
-  },
-  cache: {
-    plain: ['Added to the model · Prompt cache:', 'Remembers the part of the conversation the model already read on the previous turn, so repeat reads cost a fraction—unless you change settings mid-job.'],
-    technical: ['Added to the model · Prefix caching:', 'Reuses the unchanged top of the window (instructions, tool schemas, earlier file reads) at ~10% of input cost. Toggling effort or editing top-level instructions busts the cache.'],
-    engineer: ['Added to the model · Cache prefix stability:', 'Determines whether long verification loops stay cheap. Keep AGENTS.md, tool schemas, and effort level stable mid-thread so cache hits stay near 90% across test cycles.'],
-  },
-  plan: {
-    plain: ['Added to the model · The plan tank:', 'Replaces the coin stack with a fixed-price allowance that drains as features run and refills on a timer—so heavy bursts pause instead of running up a surprise bill.'],
-    technical: ['Added to the model · Subscription quota:', 'Draws every read, edit, typecheck, and test turn from a rolling five-hour and weekly cap. Predictable monthly cost, but long retry loops consume quota fast.'],
-    engineer: ['Added to the model · Fixed-cap vs metered runtime:', 'Plans trade burst throughput for cost predictability. Good for interactive single-thread engineering; metered API or hybrid routing is needed when quota pauses block CI or fleets.'],
-  },
-  many: {
-    plain: ['Added to the model · Shared fleet meter:', 'Connects every agent in the step 9 fleet to one tank or one bill. Twenty agents finishing features at once multiply how fast your allowance empties.'],
-    technical: ['Added to the model · Parallel token burn:', 'Each parallel worker carries its own context window, file reads, and unit-test runs—all billed to the same plan or API key. Concurrency scales cost linearly.'],
-    engineer: ['Added to the model · Fleet cost architecture:', 'Twenty concurrent worktrees amplify both throughput and token spend. Route routine typecheck/test loops to lighter models and reserve frontier models for architecture and review.'],
-  },
-};
-
-type Cache = 'off' | 'on' | 'break';
-/** What turn i reads and writes, and what it costs at a price. `break` misses the cache at turn 4. */
-function bill(p: Price, cache: Cache, cacheWrite: number) {
-  let window = START + ASK, prefix = 0;
+export type Cache = 'off' | 'on' | 'break';
+export interface TurnBill { read: number; cached: number; stored: number; written: number; usd: number }
+/**
+ * What each turn reads and writes, in thousands of tokens, and what it costs at a price.
+ * Cache off: every token read is billed at the input price.
+ * Cache on: what the previous request read comes from the cache (cache read); the rest is new and
+ * is stored in the cache as it is read (cache write, `cacheWrite` times the input price).
+ * Break: the request at MISS_AT finds nothing in the cache and stores its whole window again.
+ */
+export function bill(p: Price, cache: Cache, cacheWrite: number): TurnBill[] {
+  let window = START + ASK, prev = 0;
+  const priced = cache !== 'off' && p.cacheRead != null;
   return TURNS.map((t, i) => {
     const read = window;
-    const hit = cache === 'off' || p.cacheRead == null || (cache === 'break' && i === 3) ? 0 : prefix;
-    const fresh = read - hit;
-    const usd = cache === 'off' || p.cacheRead == null
-      ? (read * p.input + t.w * p.output) / 1000
-      : (hit * p.cacheRead! + fresh * p.input * cacheWrite + t.w * p.output) / 1000;
-    prefix = read + t.w;
+    const cached = priced && !(cache === 'break' && i === MISS_AT) ? prev : 0;
+    const stored = priced ? read - cached : 0;
+    const usd = priced
+      ? (cached * p.cacheRead! + stored * p.input * cacheWrite + t.w * p.output) / 1000
+      : (read * p.input + t.w * p.output) / 1000;
+    prev = read;
     window = read + t.w + t.r;
-    return { read, hit, written: t.w, usd };
+    return { read, cached, stored, written: t.w, usd };
   });
 }
-const jobCost = (p: Price, cache: Cache, cw: number) => bill(p, cache, cw).reduce((n, t) => n + t.usd, 0);
+export const JOB_TURNS = TURNS.length;
 /** Made-up: how many times each agent runs the job in an hour. */
 export const JOBS_PER_HOUR = 4;
-/** The fleet's sum, for the page to state so a reader can redo it: one job, with the cache. */
-export function fleetSums(p: Price, cacheWrite: number) {
-  const b = bill(p, 'on', cacheWrite);
-  return {
-    cached: Math.round(b.reduce((n, t) => n + t.hit, 0) * 1000),
-    read: Math.round(b.reduce((n, t) => n + t.read, 0) * 1000),
-    written: Math.round(b.reduce((n, t) => n + t.written, 0) * 1000),
-    perJob: jobCost(p, 'on', cacheWrite),
-    perAgentHour: jobCost(p, 'on', cacheWrite) * JOBS_PER_HOUR,
-  };
+/** The sums for one job, in whole tokens and dollars, for the page to state so a reader can redo them. */
+export function sums(p: Price, cache: Cache, cacheWrite: number) {
+  const b = bill(p, cache, cacheWrite);
+  const add = (f: (t: TurnBill) => number) => Math.round(b.reduce((n, t) => n + f(t), 0) * 1000);
+  const usd = b.reduce((n, t) => n + t.usd, 0);
+  return { read: add((t) => t.read), cached: add((t) => t.cached), stored: add((t) => t.stored), written: add((t) => t.written), usd, perAgentHour: usd * JOBS_PER_HOUR };
 }
 
 // ---------- the readout ----------
 
 const tok = (k: number) => Math.round(k * 1000).toLocaleString('en-GB');
-const usd = (n: number) => n >= 100 ? `$${Math.round(n).toLocaleString('en-GB')}` : `$${n.toFixed(2)}`;
-interface Tally { turns: number; read: number; written: number; usd: number; used: number }
-const zero = (): Tally => ({ turns: 0, read: 0, written: 0, usd: 0, used: 0 });
+/** A job's price to a tenth of a cent, so sums can be redone; an hour's to the cent. */
+export const usd3 = (n: number) => `$${n.toFixed(3)}`;
+export const usd2 = (n: number) => `$${n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+interface Tally { turns: number; read: number; cached: number; stored: number; written: number; usd: number; used: number }
+const zero = (): Tally => ({ turns: 0, read: 0, cached: 0, stored: 0, written: 0, usd: 0, used: 0 });
 type Mode = 'none' | 'api' | 'plan';
-function show(ctx: Ctx, t: Tally, mode: Mode) {
-  ctx.stat([
-    ['turns', t.turns],
-    [ctx.level === 'plain' ? 'tokens read, all turns' : 'input tokens read', tok(t.read)],
-    [ctx.level === 'plain' ? 'tokens written' : 'output tokens', tok(t.written)],
-    ['what it cost', mode === 'none' ? 'no meter yet' : mode === 'api' ? usd(t.usd) : `${Math.round(t.used * 100)}% of the allowance`],
-  ]);
+interface ShowOpts { mode: Mode; cache: Cache | 'none'; turns?: string; hour?: boolean }
+/**
+ * One readout for the lesson, the same names in the same order on every step. Plain readers see
+ * what was read, how much of it came from the cache, what was written and the cost; technical
+ * readers see the four token counts a bill is made of.
+ */
+function show(ctx: Ctx, t: Tally, o: ShowOpts) {
+  const on = o.cache === 'on' || o.cache === 'break';
+  const cost = o.mode === 'none' ? 'no meter yet'
+    : o.mode === 'plan' ? `${Math.round(t.used * 100)}% of the allowance`
+    : `${o.hour ? usd2(t.usd) : usd3(t.usd)} · cache ${on ? 'on' : 'off'}`;
+  const share = t.read ? Math.round((t.cached / t.read) * 100) : 0;
+  const turns = o.turns ?? `${t.turns} of ${TURNS.length}`;
+  if (ctx.level === 'plain') {
+    ctx.stat([
+      ['turns', turns],
+      ['tokens read', tok(t.read)],
+      ['of those, from the cache', o.cache === 'none' ? 'no cache yet' : on ? `${tok(t.cached)} (${share}%)` : '0 · cache off'],
+      ['tokens written', tok(t.written)],
+      ['cost', cost],
+    ]);
+  } else {
+    ctx.stat([
+      ['turns', turns],
+      ['input read', tok(t.read)],
+      ['cache reads', o.cache === 'none' ? '–' : tok(t.cached)],
+      ['cache writes', o.cache === 'none' ? '–' : tok(t.stored)],
+      ['output written', tok(t.written)],
+      ['cost', cost],
+    ]);
+  }
+}
+const add = (t: Tally, b: TurnBill, n = 1) => { t.turns += n; t.read += n * b.read; t.cached += n * b.cached; t.stored += n * b.stored; t.written += n * b.written; t.usd += n * b.usd; };
+
+/** The sum behind a price, written out so it can be redone: tokens times price per million. */
+function sumLine(p: Price, cache: Cache, cw: number, n = 1): string {
+  const s = sums(p, cache, cw);
+  const x = (k: number) => (k * n).toLocaleString('en-GB');
+  const m = (v: number) => `$${+v.toFixed(2)}`;
+  return cache === 'off' || p.cacheRead == null
+    ? `${x(s.read)} × ${m(p.input)} + ${x(s.written)} × ${m(p.output)}, per million tokens`
+    : `${x(s.cached)} × ${m(p.cacheRead)} + ${x(s.stored)} × ${m(p.input * cw)} + ${x(s.written)} × ${m(p.output)}, per million tokens`;
 }
 
 // ---------- the picture ----------
@@ -209,29 +231,31 @@ async function job(ctx: Ctx, h: Script, o: JobOpts): Promise<boolean> {
   const cw: number = ctx.data.cacheWrite ?? 1;
   const turns = bill(o.p, o.cache, cw);
   const readAll = turns.reduce((n, t) => n + t.read, 0);
-  const who = o.mode === 'none' ? 'model' : o.p.name;
+  const who = o.mode === 'none' ? 'the model' : o.p.name;
   const ms = o.ms ?? 1;
+  const view: ShowOpts = { mode: o.mode, cache: o.mode === 'none' ? 'none' : o.cache };
   h.set((s) => { const a = s.agents[0]!; a.blocks = [{ t: 'rules', h: START }]; a.lamp = 'off'; s.project!.files = ['', '', '', '', '', '']; });
-  if (o.intro) { ctx.say(null, o.intro); show(ctx, o.t, o.mode); await h.wait(1200 * ms); }
+  if (o.intro) { ctx.say(null, o.intro); show(ctx, o.t, view); await h.wait(1600 * ms); }
   ctx.say('you', byLevel(level, {
-    plain: 'The dates on the member list are in the wrong order.',
-    technical: 'Fix the swapped day/month dates in members.ts and make sure tsc and the date unit tests pass.',
-    engineer: 'Fix the DD/MM parsing bug in members.ts, separate the parser from rendering, and verify with strict tsc + unit tests.',
+    plain: 'The dates on the member list are the wrong way round.',
+    technical: 'Fix the swapped day and month in members.ts; tsc and the date tests must pass.',
+    engineer: 'Fix the DD/MM bug in members.ts, separate parsing from rendering, and prove it with tsc and the unit tests.',
   }));
-  show(ctx, o.t, o.mode);
+  show(ctx, o.t, view);
   await h.send(route.youToAgent(), 'you', { ms: 420 * ms });
   h.set((s) => { s.agents[0]!.blocks!.push({ t: 'you', h: ASK }); s.agents[0]!.lamp = 'work'; });
   for (const [i, turn] of TURNS.entries()) {
     const b = turns[i]!;
     // The model reads its whole window, from the bottom up.
     h.set((s) => { const a = s.agents[0]!; a.busy = true; a.scan = true; });
-    if (o.cache === 'break' && i === 3) {
+    if (o.cache === 'break' && i === MISS_AT) {
       ctx.say(null, byLevel(level, {
-        plain: 'Settings changed mid-job: the cache misses, so the whole conversation is billed at full price again.',
-        technical: 'Effort changed at turn 4: prefix cache misses, and the full window is re-billed as uncached input.',
-        engineer: 'Prefix invalidated at turn 4 (effort change): full window written back to cache at cache-write rate.',
+        plain: `Turn ${i + 1}: you changed the effort level, so the cache misses. All ${tok(b.read)} tokens are read new and stored again.`,
+        technical: `Turn ${i + 1}: effort changed, the cache misses. ${tok(b.read)} tokens are written to the cache at ${usd2(o.p.input * cw)} a million, not read from it at ${usd2(o.p.cacheRead ?? 0)}.`,
+        engineer: `Turn ${i + 1}: effort changed, so the prefix no longer matches. The whole ${tok(b.read)}-token window is a cache write at ${cw}× input; later turns hit the new entry.`,
       }));
       h.set((s) => { s.agents[0]!.lamp = 'bad'; });
+      await h.wait(900 * ms);
     }
     await h.wait(560 * ms);
     if (o.mode === 'plan') {
@@ -239,15 +263,15 @@ async function job(ctx: Ctx, h: Script, o: JobOpts): Promise<boolean> {
       if (left <= 0) {
         h.set((s) => { const a = s.agents[0]!; a.busy = false; a.scan = false; a.lamp = 'wait'; s.meters![0]!.level = 0; s.meters![0]!.lamp = 'wait'; });
         o.t.used = 1;
-        show(ctx, o.t, o.mode);
+        show(ctx, o.t, view);
         return false;
       }
       h.set((s) => { s.meters![0]!.level = left; });
       o.t.used = 1 - left;
     }
-    o.t.turns++; o.t.read += b.read; o.t.written += b.written; o.t.usd += b.usd;
+    add(o.t, b);
     if (o.mode === 'api') h.set((s) => { s.meters![0]!.level = o.t.usd / COIN; });
-    show(ctx, o.t, o.mode);
+    show(ctx, o.t, view);
     h.set((s) => { const a = s.agents[0]!; a.scan = false; a.busy = false; a.lamp = 'work'; a.blocks!.push({ t: 'model', h: turn.w }); });
     ctx.say(who, turn.says[level]);
     if (!turn.tool) break;
@@ -268,71 +292,87 @@ async function job(ctx: Ctx, h: Script, o: JobOpts): Promise<boolean> {
   return true;
 }
 
-const readShare = (p: Price) => { const b = bill(p, 'off', 1); const r = b.reduce((n, t) => n + (t.read * p.input) / 1000, 0); return Math.round((r / b.reduce((n, t) => n + t.usd, 0)) * 100); };
-
 // ---------- steps ----------
 
-function setModelNote(ctx: Ctx, key: keyof typeof MODEL_NOTES) {
-  const [part, text] = MODEL_NOTES[key][ctx.level];
-  ctx.model(part, text);
+function note(ctx: Ctx, step: string) {
+  const n = STEP_NOTES.meter?.[step];
+  if (n) ctx.model(n.part, n.text[ctx.level]);
 }
 
-function playTurn(ctx: Ctx) {
-  setModelNote(ctx, 'turn');
+function playCount(ctx: Ctx) {
+  note(ctx, 'count');
   void ctx.scene.run(async (h) => {
     const t = zero();
-    await job(ctx, h, { mode: 'none', cache: 'off', p: price(ctx), t });
-    ctx.say(null, `${t.turns} turns read ${tok(t.read)} input tokens between them and wrote ${tok(t.written)} output tokens.`);
+    await job(ctx, h, { mode: 'none', cache: 'off', p: opus(ctx), t });
+    ctx.say(null, byLevel(ctx.level, {
+      plain: `${JOB[0]!.toUpperCase() + JOB.slice(1)}: ${t.turns} turns read ${tok(t.read)} tokens between them and wrote ${tok(t.written)}. Reading is most of the work.`,
+      technical: `${t.turns} turns: ${tok(t.read)} input tokens read, ${tok(t.written)} output tokens written. The 18,000 tokens of instructions at the bottom were read ${t.turns} times.`,
+      engineer: `${t.turns} turns: ${tok(t.read)} in, ${tok(t.written)} out. Each turn's input is the whole window so far, so input grows with the square of the turn count.`,
+    }));
   });
 }
 
 function playApi(ctx: Ctx, intro?: string) {
-  setModelNote(ctx, 'api');
-  const p = price(ctx);
+  note(ctx, 'api');
+  const p = price(ctx), cw: number = ctx.data.cacheWrite ?? 1;
   void ctx.scene.run(async (h) => {
     h.set((s) => { Object.assign(s, base(ctx, 'api', p.name)); });
     const t = zero();
-    await job(ctx, h, { mode: 'api', cache: 'off', p, t, intro, ms: intro ? 0.85 : 1 });
-    ctx.say(null, `Same ${t.turns}-turn date fix at ${p.name}’s prices: ${usd(t.usd)} (${readShare(p)}% is input reading).`);
+    await job(ctx, h, { mode: 'api', cache: 'off', p, t, intro });
+    const readPart = Math.round(((t.read * p.input) / 1000 / t.usd) * 100);
+    ctx.say(null, ctx.level === 'plain'
+      ? `${JOB[0]!.toUpperCase() + JOB.slice(1)} at ${p.name}’s prices, cache off: ${usd3(t.usd)}. ${readPart}% of that is paying for reading. A coin is five cents.`
+      : `${p.name}, cache off: ${sumLine(p, 'off', cw)} = ${usd3(t.usd)}. Reading is ${readPart}% of it.`);
   });
 }
 
 function playCache(ctx: Ctx, intro?: string) {
-  setModelNote(ctx, 'cache');
-  const p = cached(ctx), cache: Cache = ctx.mem.cache ?? 'on', cw: number = ctx.data.cacheWrite ?? 1;
+  note(ctx, 'cache');
+  const p = opus(ctx), cache: Cache = ctx.mem.cache ?? 'on', cw: number = ctx.data.cacheWrite ?? 1;
   void ctx.scene.run(async (h) => {
     h.set((s) => { Object.assign(s, base(ctx, 'api', p.name)); });
     const t = zero();
     await job(ctx, h, { mode: 'api', cache, p, t, intro });
-    const off = usd(jobCost(p, 'off', cw)), on = usd(jobCost(p, 'on', cw));
-    ctx.say(null, cache === 'off' ? `No cache: ${off}. The same job with the cache: ${on}.`
-      : cache === 'on' ? `With the cache: ${on}. Without it: ${off}.`
-      : `One cache miss at turn 4: ${usd(t.usd)}, against ${on} with no miss and ${off} with no cache.`);
+    const on = sums(p, 'on', cw), off = sums(p, 'off', cw);
+    const share = Math.round((t.cached / t.read) * 100);
+    if (ctx.level === 'plain') {
+      ctx.say(null, cache === 'off' ? `Cache off: ${usd3(t.usd)}. The same job with the cache on: ${usd3(on.usd)}.`
+        : cache === 'on' ? `Cache on: ${usd3(t.usd)}, with ${share}% of what it read coming from the cache. Cache off: ${usd3(off.usd)}.`
+        : `One missed turn: ${usd3(t.usd)}, against ${usd3(on.usd)} with no miss. Still less than ${usd3(off.usd)} with the cache off.`);
+    } else {
+      ctx.say(null, `Cache ${cache === 'off' ? 'off' : 'on'}${cache === 'break' ? ', one miss' : ''}: ${sumLine(p, cache, cw)} = ${usd3(t.usd)}.${cache === 'on' ? ` ${share}% of reads hit the cache.` : ''}`);
+    }
   });
 }
 
 function playPlan(ctx: Ctx, again = false) {
-  setModelNote(ctx, 'plan');
-  const p = price(ctx, MODEL_IDS[0]);
+  note(ctx, 'plan');
+  const p = opus(ctx);
   const fee: number | undefined = ctx.data.proPrice;
+  const view: ShowOpts = { mode: 'plan', cache: 'on' };
   void ctx.scene.run(async (h) => {
-    if (!again) { h.set((s) => { Object.assign(s, base(ctx, 'plan', p.name)); }); ctx.mem.t = zero(); ctx.mem.jobs = 0; }
-    const t: Tally = ctx.mem.t;
+    if (!again || !ctx.mem.t) { h.set((s) => { Object.assign(s, base(ctx, 'plan', p.name)); }); ctx.mem.t = zero(); ctx.mem.jobs = 0; }
     if (ctx.scene.state.meters![0]!.level <= 0.001) {
       ctx.say(null, 'Five hours after the first message, the limit resets in full.');
       h.set((s) => { s.meters![0]!.level = 1; s.meters![0]!.lamp = 'off'; s.agents[0]!.lamp = 'off'; });
-      t.used = 0;
-      show(ctx, t, 'plan');
-      await h.wait(1300);
+      ctx.mem.t = zero();
+      ctx.mem.jobs = 0;
+      show(ctx, ctx.mem.t, view);
+      await h.wait(1500);
     }
-    const done = await job(ctx, h, { mode: 'plan', cache: 'on', p, t, ms: again ? 0.8 : 1 });
-    if (done) {
-      ctx.mem.jobs++;
-      ctx.say(null, `Job ${ctx.mem.jobs} done. ${Math.round((1 - t.used) * 100)}% of the allowance left.${fee != null ? ` On Pro the bill stays $${fee} a month.` : ''}`);
-    } else {
-      ctx.say(null, `The allowance is empty part-way through job ${ctx.mem.jobs + 1}. The model stops until the limit resets.`);
-    }
+    await playPlanRun(ctx, h, p, fee, view, again);
   });
+}
+async function playPlanRun(ctx: Ctx, h: Script, p: Price, fee: number | undefined, view: ShowOpts, again = false) {
+  const t: Tally = ctx.mem.t;
+  const done = await job(ctx, h, { mode: 'plan', cache: 'on', p, t, ms: again ? 0.8 : 1 });
+  if (done) {
+    ctx.mem.jobs++;
+    ctx.say(null, `Date fix ${ctx.mem.jobs} done: ${Math.round((1 - t.used) * 100)}% of the allowance left${fee != null ? `, and the bill is still $${fee} for the month` : ''}. The drain rate is made up.`);
+  } else {
+    ctx.say(null, `The allowance ran out part-way through date fix ${ctx.mem.jobs + 1}. The model stops until the limit resets.`);
+  }
+  show(ctx, t, view);
 }
 
 // ----- many: twenty agents, one meter -----
@@ -347,21 +387,23 @@ const fleet = (n: number, mode: 'plan' | 'api'): SceneState => {
   return s;
 };
 function playMany(ctx: Ctx) {
-  setModelNote(ctx, 'many');
+  note(ctx, 'many');
   const n: number = ctx.mem.n ?? 20, mode: 'plan' | 'api' = ctx.mem.mode ?? 'plan';
-  const p = cached(ctx), cw: number = ctx.data.cacheWrite ?? 1;
+  const p = opus(ctx), cw: number = ctx.data.cacheWrite ?? 1;
   const turns = bill(p, 'on', cw);
   const readAll = turns.reduce((x, b) => x + b.read, 0);
   const DOLLAR = 1;
-  const hour = n * fleetSums(p, cw).perAgentHour;
+  const hour = n * sums(p, 'on', cw).perAgentHour;
+  const agents = `${n} ${n === 1 ? 'agent' : 'agents'}`;
   ctx.say(null, mode === 'plan'
-    ? `${n} ${n === 1 ? 'agent draws' : 'agents draw'} from one allowance. On the API this sample hour would cost ${usd(hour)}.`
-    : `${n} ${n === 1 ? 'agent' : 'agents'} on one bill: ${usd(hour)} for a sample hour at ${p.name}’s prices.`);
+    ? `${agents} on one plan, each running ${JOB} ${JOBS_PER_HOUR} times an hour.`
+    : `${agents} on one API bill at ${p.name}’s prices, cache on, each running ${JOB} ${JOBS_PER_HOUR} times an hour. A coin is a dollar.`);
   void ctx.scene.run(async (h) => {
     h.set((s) => { Object.assign(s, fleet(n, mode)); });
     const t = zero();
     let jobs = 0, tick = 0, empty = false;
-    show(ctx, t, mode);
+    const view = (): ShowOpts => ({ mode, cache: 'on', turns: `${t.turns} (${jobs} jobs done)`, hour: true });
+    show(ctx, t, view());
     for (; tick < TICKS_PER_HOUR; tick++) {
       const i = tick % TURNS.length;
       const b = turns[i]!;
@@ -371,7 +413,7 @@ function playMany(ctx: Ctx) {
         h.set((s) => { s.meters![0]!.level = left; });
         t.used = 1 - left;
       }
-      t.turns += n; t.read += n * b.read; t.written += n * b.written; t.usd += n * b.usd;
+      add(t, b, n);
       h.set((s) => {
         if (mode === 'api') s.meters![0]!.level = t.usd / DOLLAR;
         for (const a of s.agents.slice(1)) {
@@ -384,59 +426,64 @@ function playMany(ctx: Ctx) {
         jobs += n;
         h.set((s) => { for (const a of s.agents.slice(1)) a.lamp = 'ok'; (s.project!.commits ??= []).push('ok'); });
       }
-      show(ctx, t, mode);
+      show(ctx, t, view());
       await h.wait(mode === 'plan' ? 420 : 260);
     }
     if (empty) {
       h.set((s) => { s.meters![0]!.level = 0; s.meters![0]!.lamp = 'wait'; for (const a of s.agents) { a.busy = false; a.lamp = 'wait'; } });
       t.used = 1;
-      show(ctx, t, mode);
+      show(ctx, t, view());
       const min = Math.max(1, Math.round((tick / TICKS_PER_HOUR) * 60));
-      ctx.say(null, `The allowance ran out after ${min} minutes. All ${n} stopped mid-job; ${jobs} ${jobs === 1 ? 'job' : 'jobs'} finished. On the API they would have kept going, at ${usd(hour)} an hour.`);
+      ctx.say(null, `The allowance ran out after ${min} ${min === 1 ? 'minute' : 'minutes'}, ${tick} turns each. All ${n} stopped mid-job; ${jobs} ${jobs === 1 ? 'job' : 'jobs'} finished. On the API they would have kept going, at ${usd2(hour)} an hour.`);
     } else {
       h.set((s) => { for (const a of s.agents.slice(1)) a.busy = false; });
       ctx.say(null, mode === 'api'
-        ? `${n} ${n === 1 ? 'agent' : 'agents'}, ${jobs} jobs in an hour: ${usd(t.usd)}. An eight-hour day at that pace: ${usd(t.usd * 8)} (${p.name}’s real prices on illustrative token counts).`
+        ? (ctx.level === 'plain'
+          ? `${agents}, ${jobs} date fixes in an hour: ${usd2(t.usd)}. An eight-hour day at that pace: ${usd2(t.usd * 8)}.`
+          : `${jobs} jobs: ${sumLine(p, 'on', cw, jobs)} = ${usd2(t.usd)} for the hour; ${usd2(t.usd * 8)} for eight.`)
         : `${jobs} jobs in an hour, ${Math.round((1 - t.used) * 100)}% of the allowance left.`);
     }
   });
 }
 
-/** One short loop of this chapter, for the part-two overview: a job drains the last of a plan. */
+/** One short loop of this lesson, for the part 3 overview: a job drains the last of a plan. */
 export async function demo(ctx: Ctx, h: Script) {
-  setModelNote(ctx, 'plan');
-  const p: Price = price(ctx, MODEL_IDS[0]) ?? { name: 'the model', input: 0, output: 0 };
+  note(ctx, 'plan');
+  const p = opus(ctx);
   h.set((s) => { Object.assign(s, base(ctx, 'plan', p.name)); s.meters![0]!.level = 0.42; });
   const t = zero();
   t.used = 0.58;
   const done = await job(ctx, h, { mode: 'plan', cache: 'on', p, t, ms: 0.5 });
-  ctx.say(null, done ? 'Job done.' : 'The allowance is empty. The model stops until the limit resets.');
+  ctx.say(null, done ? 'Date fix done.' : 'The allowance is empty part-way through the date fix. The model stops until the limit resets.');
   await h.wait(1600);
 }
 
 export const meter: Chapter = {
   steps: {
-    turn: { scene: (ctx) => base(ctx, 'none'), enter: (ctx) => playTurn(ctx) },
-    api: { scene: (ctx) => base(ctx, 'api', price(ctx)?.name), enter: (ctx) => playApi(ctx) },
-    cache: { scene: (ctx) => base(ctx, 'api', cached(ctx)?.name), enter: (ctx) => { ctx.mem.cache = 'on'; playCache(ctx); } },
-    plan: { scene: (ctx) => base(ctx, 'plan', price(ctx, MODEL_IDS[0])?.name), enter: (ctx) => playPlan(ctx) },
+    count: { scene: (ctx) => base(ctx, 'none'), enter: (ctx) => playCount(ctx) },
+    api: { scene: (ctx) => base(ctx, 'api', price(ctx).name), enter: (ctx) => playApi(ctx) },
+    cache: { scene: (ctx) => base(ctx, 'api', opus(ctx).name), enter: (ctx) => { ctx.mem.cache = 'on'; playCache(ctx); } },
+    plan: { scene: (ctx) => base(ctx, 'plan', opus(ctx).name), enter: (ctx) => playPlan(ctx) },
     many: { scene: () => fleet(20, 'plan'), enter: (ctx) => { ctx.mem.n = 20; ctx.mem.mode = 'plan'; playMany(ctx); } },
   },
   actions: {
     model: (ctx, val) => {
       ctx.mem.model = val;
       const p = price(ctx);
-      playApi(ctx, `${p.name}: $${p.input} per million input tokens, $${p.output} per million output tokens.`);
+      const line = `${p.name}: $${p.input} per million tokens read, $${p.output} per million written. The same date fix, cache off.`;
+      ctx.say(null, line);
+      playApi(ctx, line);
     },
     cache: (ctx, val) => {
       ctx.mem.cache = val as Cache;
-      const p = cached(ctx);
-      playCache(ctx, val === 'off' ? `No cache: every input token costs $${p.input} a million.` : val === 'on' ? `With the cache: repeated input costs $${p.cacheRead} a million.` : 'This time you change the effort level halfway through.');
+      const p = opus(ctx), cw: number = ctx.data.cacheWrite ?? 1;
+      const line = val === 'off' ? `Cache off: every token read costs $${p.input} a million.`
+        : val === 'on' ? `Cache on: what was read last turn costs $${p.cacheRead} a million; new tokens cost $${+(p.input * cw).toFixed(2)} a million to store.`
+        : `Cache on, and you change the effort level before turn ${MISS_AT + 1}.`;
+      ctx.say(null, line);
+      playCache(ctx, line);
     },
-    another: (ctx) => {
-      if (!ctx.mem.t) { playPlan(ctx); return; }
-      playPlan(ctx, true);
-    },
+    another: (ctx) => playPlan(ctx, true),
     mode: (ctx, val) => { ctx.mem.mode = val; playMany(ctx); },
   },
   inputs: {

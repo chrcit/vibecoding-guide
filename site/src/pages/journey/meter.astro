@@ -8,7 +8,7 @@ import Verified from '../../components/data/Verified.astro';
 import ForLevel from '../../components/level/ForLevel.astro';
 import { models, lineup } from '../../data/models';
 import { plans } from '../../data/plans';
-import { fleetSums, JOBS_PER_HOUR } from '../../journey/chapters/meter';
+import { sums, usd2, usd3, JOBS_PER_HOUR, JOB_TURNS } from '../../journey/chapters/meter';
 import { url } from '../../lib/nav';
 
 // The three models the reader can pick, with their list prices per million tokens. The job and its
@@ -22,87 +22,83 @@ const priced = Object.fromEntries(picks.map((id) => {
 const data = { models: priced, cacheWrite: lineup.cacheWrite5m.value, proPrice: plans.claude.pro.price.value };
 const priceIds = picks.flatMap((id) => ['input', 'output', ...('cacheRead' in models[id].price ? ['cacheRead'] : [])].map((f) => `models.${id}.price.${f}`));
 const ids = [
-  ...priceIds, 'lineup.cacheWrite5m', 'lineup.cacheBreakers', 'lineup.claudeCodeCacheTtl', 'plans.claude.pro.price',
+  ...priceIds, 'lineup.cacheWrite5m', 'lineup.opusCacheWrite5m', 'lineup.cacheReadOpusSonnet', 'lineup.cacheBreakers', 'lineup.claudeCodeCacheTtl', 'plans.claude.pro.price',
   'plans.claude.limits.wholeConversation', 'plans.claude.limits.whatUsageMeans', 'plans.claude.limits.fiveHour', 'plans.claude.limits.weekly',
-  'plans.claude.limits.sharedAcrossModels', 'plans.claude.limits.usageCredits', 'plans.claude.limits.subagentsDraw',
+  'plans.claude.limits.sharedAcrossModels', 'plans.claude.limits.usageCredits', 'plans.claude.limits.subagentsDraw', 'plans.claude.limits.whereToSee',
 ];
-// The fleet's sum, worked out by the same code the picture runs, so the reader can redo it.
+// The sums, worked out by the same code the picture runs, so the reader can redo them.
 const opus = priced['claude-opus-5-5']!;
-const sum = fleetSums(opus, data.cacheWrite);
+const off = sums(opus, 'off', data.cacheWrite);
+const on = sums(opus, 'on', data.cacheWrite);
 const n = (x: number) => x.toLocaleString('en-GB');
-const usd = (x: number) => `$${x.toFixed(2)}`;
+const agents = 20;
+const runs = agents * JOBS_PER_HOUR;
+const d = (v: number) => `$${+v.toFixed(2)}`;
+const pr = { read: d(opus.input), write: d(opus.output), hit: d(opus.cacheRead ?? 0), store: d(opus.input * data.cacheWrite) };
 ---
-<Journey chapter="meter" first="turn" data={data} title="What it costs" description="Every turn an agent takes is counted in tokens. A plan gives you an allowance that drains and refills; the API sends a bill per token.">
-  <Step id="turn" title="Every turn is counted">
+<Journey chapter="meter" first="count" data={data} title="What it costs" description="Every turn an agent takes is counted in tokens. On the API each token is on a bill; on a plan they drain an allowance that refills.">
+  <Step id="count" title="Every turn is counted">
     <ForLevel is="plain">
-      <p>Every time the agent takes a step on the date fix from <a href={url('journey/loop/')}>step 2</a>, it re-reads the entire conversation from <a href={url('journey/window/')}>step 3</a> before replying. Seven short steps to fix one date bug already mean reading nearly 190,000 tokens—far more than the few lines it writes.</p>
+      <p>The twenty agents in <a href={url('journey/fleet/')}>Twenty in a loop</a> each work in turns, and on every turn the model reads its whole window again. Here is one made-up job, the date fix from <a href={url('journey/loop/')}>It gets hands</a>, counted turn by turn.</p>
     </ForLevel>
     <ForLevel is="technical">
-      <p>On every turn—reading <code>members.ts</code>, running <code>tsc --noEmit</code>, reading a failing unit test, patching, and re-running—the model re-reads the entire context window from <a href={url('journey/window/')}>step 3</a>. Verbose test logs and repeated file reads drive input tokens far past output tokens.</p>
+      <p>Each agent in <a href={url('journey/fleet/')}>Twenty in a loop</a> works in turns, and every turn sends the whole window as input. The made-up date fix from <a href={url('journey/loop/')}>It gets hands</a>: the <code>tsc</code> and test output it reads stays in the window and is read again on every later turn.</p>
     </ForLevel>
     <ForLevel is="engineer">
-      <p>Input volume scales with the square of turn count because every tool call appends to the prefix that the next turn re-reads. On a seven-turn fix in <code>members.ts</code>, tight module boundaries and concise test runners matter far more to token spend than how terse the model’s replies are.</p>
+      <p>Each agent in <a href={url('journey/fleet/')}>Twenty in a loop</a> sends its whole window as input on every turn. On the made-up date fix from <a href={url('journey/loop/')}>It gets hands</a>, input per turn grows with the window, so a job's input grows with the square of its turns.</p>
     </ForLevel>
   </Step>
-  <Step id="api" title="On the API, every token goes on a bill">
-    <ForLevel is="plain">
-      <p>On pay-as-you-go API pricing, each turn adds five-cent coins beside the model. Pick a model below to watch the exact same seven-step date fix priced at real list rates.</p>
-    </ForLevel>
-    <ForLevel is={['technical', 'engineer']}>
-      <p>On the API, every input read (code, typecheck, and test output) and every output token goes straight onto a bill. Compare the exact same seven-turn fix across models below—input tokens make up roughly 80% of the total cost.</p>
-    </ForLevel>
+  <Step id="api" title="On the API, every token is on a bill">
+    <p>On the API you pay a price per million tokens read and a higher one per million written. Pick a model: the same {JOB_TURNS}-turn date fix runs with the cache off, so the three prices compare like for like.</p>
     <div class="pick">
       {picks.map((id, i) => (
         <button type="button" data-do="model" data-val={id} data-default={i === 0 ? '' : undefined} aria-pressed={i === 0 ? 'true' : 'false'}>{priced[id]!.name}</button>
       ))}
     </div>
-    <More title="The prices">
-      <dl>
+    <More title="The prices and the sum">
+      <ul>
         {picks.map((id) => (
-          <div><dt>{priced[id]!.name}</dt><dd><Fact id={`models.${id}.price.input`} /> input, <Fact id={`models.${id}.price.output`} /> output, per million tokens</dd></div>
+          <li>{priced[id]!.name}: <Fact id={`models.${id}.price.input`} /> per million read, <Fact id={`models.${id}.price.output`} /> per million written.</li>
         ))}
-      </dl>
+      </ul>
+      <p>The bill for {opus.name}, cache off: {n(off.read)} tokens read × {pr.read} + {n(off.written)} written × {pr.write}, per million = {usd3(off.usd)}.</p>
     </More>
   </Step>
-  <Step id="cache" title="Cached context costs a fraction" level="technical">
-    <ForLevel is="technical">
-      <p>Prompt caching lets the provider reuse everything the model already read on the previous turn—your instructions, tool schemas, and earlier file reads—at a fraction of the price. Change effort or edit the top of the thread mid-run and the cache misses.</p>
+  <Step id="cache" title="Reading the same thing again costs less">
+    <ForLevel is="plain">
+      <p>Claude Code keeps what the model read last turn in a cache, and on {opus.name} reading it from there costs <Fact id="lineup.cacheReadOpusSonnet" /> the normal price, a twentieth. Turn the cache off, or change the effort level halfway and watch one turn miss it.</p>
     </ForLevel>
-    <ForLevel is="engineer">
-      <p>Prefix caching turns O(n²) verification loops into O(n) cost—as long as the prefix stays byte-identical. Keep <code>AGENTS.md</code>, MCP tool definitions, and effort settings fixed mid-thread so multi-turn typecheck/test cycles stay on cache hits.</p>
+    <ForLevel is={['technical', 'engineer']}>
+      <p>With prompt caching, the part of the window the last request already sent is billed as a cache read; only the new part is a cache write. Anything that changes the top of the request makes the next turn miss.</p>
     </ForLevel>
     <div class="pick">
       <button type="button" data-do="cache" data-val="on" data-default aria-pressed="true">Cache on</button>
       <button type="button" data-do="cache" data-val="off" aria-pressed="false">Cache off</button>
       <button type="button" data-do="cache" data-val="break" aria-pressed="false">Change effort halfway</button>
     </div>
-    <More title="What breaks it" level="technical">
-      <p>A cached read on {opus.name} costs <Fact id="models.claude-opus-5-5.price.cacheRead" /> per million tokens; storing a fresh input token in the cache (a cache write) costs <Fact id="lineup.cacheWrite5m" /> the input price. <Fact id="lineup.cacheBreakers" show="claim" /></p>
+    <More title="The sum, and what breaks the cache">
+      <p>On {opus.name} a cache read costs <Fact id="models.claude-opus-5-5.price.cacheRead" /> per million and a cache write <Fact id="lineup.opusCacheWrite5m" /> (<Fact id="lineup.cacheWrite5m" /> the <Fact id="models.claude-opus-5-5.price.input" /> input price). With the cache on: {n(on.cached)} from the cache × {pr.hit} + {n(on.stored)} stored × {pr.store} + {n(on.written)} written × {pr.write}, per million = {usd3(on.usd)}. {Math.round((on.cached / on.read) * 100)}% of the {n(on.read)} tokens read came from the cache.</p>
+      <p><Fact id="lineup.cacheBreakers" show="claim" /> <ForLevel is={['technical', 'engineer']} inline><Fact id="lineup.claudeCodeCacheTtl" show="claim" /></ForLevel></p>
     </More>
   </Step>
-  <Step id="plan" title="A plan gives a fixed price, not a fixed amount of work">
-    <ForLevel is="plain">
-      <p>On a monthly subscription, each finished job drains a shared allowance tank instead of growing a bill. When the tank hits zero, the agent pauses until your window resets. The drain speed here is illustrative—the real figure is <Fact id="plans.claude.limits.whatUsageMeans" />.</p>
-    </ForLevel>
-    <ForLevel is={['technical', 'engineer']}>
-      <p>A subscription caps your monthly bill by trading metered spend for a rolling allowance. Long retry loops—fixing cascading type errors or noisy integration tests—drain the tank quickly and pause work until the reset window. The drain rate here is illustrative—the real figure is <Fact id="plans.claude.limits.whatUsageMeans" />.</p>
-    </ForLevel>
+  <Step id="plan" title="On a plan the price is fixed and the amount is not">
+    <p>Claude Pro costs <Fact id="plans.claude.pro.price" /> a month. Anthropic publishes no figure for how much work that buys, so this page cannot say: the tank here drains at a made-up rate, and refills five hours after your first message.</p>
     <div class="row">
-      <button class="btn" type="button" data-do="another">Run another job</button>
+      <button class="btn" type="button" data-do="another">Run another date fix</button>
     </div>
     <More title="The limits">
-      <p><Fact id="plans.claude.limits.fiveHour" show="claim" /> <Fact id="plans.claude.limits.weekly" show="claim" /> <Fact id="plans.claude.limits.usageCredits" show="claim" /></p>
+      <p><Fact id="plans.claude.limits.whatUsageMeans" show="claim" /> <Fact id="plans.claude.limits.fiveHour" show="claim" /> <Fact id="plans.claude.limits.weekly" show="claim" /> <Fact id="plans.claude.limits.whereToSee" show="claim" /> <Fact id="plans.claude.limits.usageCredits" show="claim" /></p>
     </More>
   </Step>
-  <Step id="many" title="Twenty agents drain one tank">
+  <Step id="many" title="Twenty agents draw from one meter">
     <ForLevel is="plain">
-      <p id="many">Bring back the fleet from <a href={url('journey/fleet/')}>step 9</a>: every worker draws from the same plan tank, or stacks coins on the same API bill. Slide the agent count to see how fast twenty parallel jobs empty a plan versus what an hour costs on the API.</p>
+      <p>Back to the fleet. On a plan the agents share one allowance and stop together when it is empty; on the API they keep going and the bill grows with every agent.</p>
     </ForLevel>
     <ForLevel is="technical">
-      <p id="many">With the fleet from <a href={url('journey/fleet/')}>step 9</a>, every parallel agent runs its own reads, typechecks, and unit tests against the same quota or API key. Concurrency speeds up delivery—and scales token burn linearly.</p>
+      <p>Back to the fleet. <Fact id="plans.claude.limits.subagentsDraw" show="claim" /> On the API every agent adds its own turns to the same bill.</p>
     </ForLevel>
     <ForLevel is="engineer">
-      <p id="many">At twenty concurrent worktrees, cost architecture becomes a first-class stack decision: route repetitive test/lint fixes to smaller models, cap retry turns, and save frontier models for architecture and cross-model review.</p>
+      <p>At twenty agents cost is a design input: cap the turns a job may take, keep model and effort fixed within a thread so the cache keeps hitting, and give routine jobs a model with a lower price.</p>
     </ForLevel>
     <div class="controls">
       <label class="control"><span>Agents <output>20</output></span>
@@ -113,13 +109,13 @@ const usd = (x: number) => `$${x.toFixed(2)}`;
       <button type="button" data-do="mode" data-val="plan" data-default aria-pressed="true">A plan</button>
       <button type="button" data-do="mode" data-val="api" aria-pressed="false">The API</button>
     </div>
-    <More title="How the math works">
-      <p>Illustrative workload: each agent runs the date fix {JOBS_PER_HOUR} times an hour, reading {n(sum.read)} input tokens and generating {n(sum.written)} output tokens per run. Real prices ({opus.name}): with caching, {n(sum.cached)} of the input tokens cost <Fact id="models.claude-opus-5-5.price.cacheRead" /> per million, the remaining {n(sum.read - sum.cached)} cost <Fact id="lineup.cacheWrite5m" /> × <Fact id="models.claude-opus-5-5.price.input" /> (cache write), and output tokens cost <Fact id="models.claude-opus-5-5.price.output" />. That comes to {usd(sum.perJob)} per run, or {usd(sum.perAgentHour)} per agent per hour—multiply by your agents and hours.</p>
+    <More title="The sum for an hour">
+      <p>Made-up workload: each agent runs the date fix {JOBS_PER_HOUR} times an hour, with the cache on, at {opus.name}’s real prices. One run is {usd3(on.usd)} (the sum is under “Reading the same thing again costs less”), so one agent costs {JOBS_PER_HOUR} × {usd3(on.usd)} = {usd3(on.perAgentHour)} an hour, and {agents} agents {usd2(on.perAgentHour * agents)} an hour: {n(on.cached * runs)} × {pr.hit} + {n(on.stored * runs)} × {pr.store} + {n(on.written * runs)} × {pr.write}, per million. Eight hours: {usd2(on.perAgentHour * agents * 8)}.</p>
     </More>
     <Next from="meter" more={[{ href: 'explain/plans-and-api/', text: 'Plans against the API' }, { href: 'models/', text: 'The models and their prices' }]} />
   </Step>
   <Fragment slot="foot">
-    <p>The example task, its token counts, the rate of {JOBS_PER_HOUR} runs per hour, and how quickly a plan drains are illustrative. All token prices and plan limits are real list figures from the sources below. Each coin represents five cents for a single job, or one dollar for the fleet.</p>
+    <p>The date fix, its token counts, the {JOBS_PER_HOUR} runs an hour and how fast a plan drains are made up. The prices and plan limits are real list figures from the sources below. A coin is five cents on one job and a dollar for the fleet.</p>
     <Verified ids={ids} />
   </Fragment>
 </Journey>
