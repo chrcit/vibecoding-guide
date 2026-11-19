@@ -3,48 +3,55 @@ import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
 import More from '../../components/journey/More.astro';
 import Next from '../../components/journey/Next.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
 import Fact from '../../components/data/Fact.astro';
 import Verified from '../../components/data/Verified.astro';
 import { url } from '../../lib/nav';
 
 const ids = [
-  't3code.ownLogins', 't3code.remote', 't3code.connectMachines', 't3code.phoneIsRemote', 't3code.delegate',
+  't3code.ownLogins', 't3code.install', 't3code.remote', 't3code.connectMachines', 't3code.phoneIsRemote', 't3code.delegate',
   'harnesses.claudeCode.web', 'harnesses.codex.sandbox', 'plans.chatgpt.limits.cloudTasks',
-  'harnesses.claudeCode.bestPractice', 't3code.permissionModes', 't3code.defaultMode',
+  'harnesses.claudeCode.bestPractice', 'harnesses.claudeCode.permissionModes', 't3code.permissionModes', 't3code.defaultMode',
 ];
 ---
 <Journey chapter="where" first="laptop" title="Other machines" description="Where an agent runs: on your laptop, on an always-on computer, or on a machine in the cloud.">
   <Step id="laptop" title="So far it all ran on your laptop">
-    <p>Up to now, every <a href={url('journey/jobs/')}>job from step 14</a> has run right on your laptop, using your local files and your existing logins.</p>
+    <p>Start here: one job on your laptop, with T3 Code installed and the agent signed in with your own account. Every <a href={url('journey/jobs/')}>job in Several jobs</a> ran like this, on your files and your logins.</p>
+    <ForLevel is="engineer"><p>On the laptop everything lives in one place: the repository, the threads, the logins and the app’s secrets in a local <code>.env</code> file.</p></ForLevel>
     <More title="In T3 Code">
+      <p><Fact id="t3code.install" show="claim" /></p>
       <p><Fact id="t3code.ownLogins" show="claim" /></p>
     </More>
   </Step>
   <Step id="lid" title="Close the lid and it stops">
-    <p>Close your laptop lid and the machine sleeps—every running agent pauses where it is. Local jobs only move while your laptop is awake.</p>
+    <p>The laptop sleeps and its job stops where it was. Open the lid and it carries on.</p>
     <div class="pick" role="group" aria-label="The laptop’s lid">
       <button type="button" data-do="lid" data-val="open" data-default aria-pressed="true">Lid open</button>
       <button type="button" data-do="lid" data-val="closed" aria-pressed="false">Lid closed</button>
     </div>
   </Step>
-  <Step id="box" title="A computer that stays on">
-    <p>Run long jobs on a desktop or small home server that stays awake. Even after you shut your laptop, the agent keeps working and you can check its progress from your phone.</p>
+  <Step id="box" title="An always-on computer">
+    <p>A desktop or a small home server that never sleeps keeps working with the lid closed, and you follow it from your phone. New T3 Code threads start in <Fact id="t3code.defaultMode" />, which edits and runs commands without asking, so pick the mode on purpose before you walk away.</p>
+    <ForLevel is="engineer"><p>The repository, the threads and the agent’s logins live on that computer; laptop and phone only show them. The app’s secrets go in that machine’s environment, never in the repository.</p></ForLevel>
     <div class="pick" role="group" aria-label="The laptop’s lid">
       <button type="button" data-do="lid" data-val="open" aria-pressed="false">Lid open</button>
       <button type="button" data-do="lid" data-val="closed" data-default aria-pressed="true">Lid closed</button>
     </div>
     <More title="How, in T3 Code">
       <ol>
-        <li>Run T3 Code on a machine at home that stays on.</li>
-        <li>Reach it from your laptop over <Fact id="t3code.remote" />.</li>
+        <li>Install T3 Code on the always-on computer too.</li>
+        <li>Reach it from the laptop through one of: <Fact id="t3code.remote" />. Tailscale is a private network between your own devices; an SSH environment is a terminal login to that computer; T3 Connect is T3 Code’s own account that links your machines.</li>
         <li>A free T3 Connect account links up to <Fact id="t3code.connectMachines" /> machines.</li>
         <li>Follow it from your phone. <Fact id="t3code.phoneIsRemote" show="claim" /></li>
-        <li>From a thread on the laptop, an agent can hand the box a task with <Fact id="t3code.delegate" />.</li>
+        <li>From a thread on the laptop, an agent can hand that computer a task with <Fact id="t3code.delegate" />.</li>
+        <li>The modes: <Fact id="t3code.permissionModes" show="claim" /> In Claude Code alone the names differ: <Fact id="harnesses.claudeCode.permissionModes" show="claim" /></li>
       </ol>
     </More>
   </Step>
   <Step id="cloud" title="A machine in the cloud">
-    <p>Cloud runners spin up on demand, with no hardware to maintain—but they start clean. Without the test database or environment setup your checks depend on, the run stalls before it can verify anything.</p>
+    <p>It starts empty for each task, with the repository and only what you set up, and the result comes back to the repository as a branch. Without the test database the tests need, the check cannot run.</p>
+    <ForLevel is={['technical', 'engineer']}><p>Give it a setup script that installs dependencies and starts the test database, so <code>npm test</code> runs there as it does on your laptop.</p></ForLevel>
+    <ForLevel is="engineer"><p>Nothing survives between tasks: state is the repository, the setup script and the secrets you store in the service. <Fact id="plans.chatgpt.limits.cloudTasks" show="claim" /></p></ForLevel>
     <div class="pick" role="group" aria-label="What the cloud machine is given">
       <button type="button" data-do="setup" data-val="without" data-default aria-pressed="true">Without the setup</button>
       <button type="button" data-do="setup" data-val="with" aria-pressed="false">With it</button>
@@ -58,19 +65,19 @@ const ids = [
     </More>
   </Step>
   <Step id="mix" title="Which job goes where">
-    <p>Most setups mix all three: quick interactive work on your laptop, long runs on an always-on machine, and isolated tasks in the cloud. Close the lid halfway through and the remote jobs keep landing on main. Ready to try it? <a href={url('start/')}>Build your first project</a>, starting right on your laptop.</p>
+    <p>Live work on the laptop, long runs on the always-on computer, separate tasks in the cloud, all landing on one main. Halfway through the hour the lid closes; watch which jobs keep landing.</p>
     <div class="pick" role="group" aria-label="The laptop’s lid">
       <button type="button" data-do="lid" data-val="open" data-default aria-pressed="true">Lid open</button>
       <button type="button" data-do="lid" data-val="closed" aria-pressed="false">Lid closed</button>
     </div>
     <More title="Before you walk away">
       <p><Fact id="harnesses.claudeCode.bestPractice" show="claim" /></p>
-      <p><Fact id="t3code.permissionModes" show="claim" /> <Fact id="t3code.defaultMode" show="claim" /></p>
     </More>
-    <Next from="where" more={[{ href: 'wiki/always-on-machine/', text: 'A computer that stays on', side: true }, { href: 'wiki/secrets/', text: 'Secrets a machine needs', side: true }, { href: 'wiki/permission-mode/', text: 'Permission modes', side: true }]} />
+    <p class="j-end">This is the last lesson. Next you leave the lessons and build something: <a href={url('start/')}>the first hour</a>, starting on your laptop.</p>
+    <Next from="where" more={[{ href: 'wiki/always-on-machine/', text: 'An always-on computer', side: true }, { href: 'wiki/secrets/', text: 'Secrets a machine needs', side: true }, { href: 'wiki/permission-mode/', text: 'Permission modes', side: true }]} />
   </Step>
   <Fragment slot="foot">
-    <p>The example jobs, missing test database, and one-hour timeline above are illustrative.</p>
+    <p>The jobs, the hour and the missing test database are made up to show the mechanism.</p>
     <Verified ids={ids} />
   </Fragment>
 </Journey>

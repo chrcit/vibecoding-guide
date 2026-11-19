@@ -9,7 +9,7 @@ import { BUS_Y, type SceneState, type XY, type Zone } from '../picture';
 type Kind = Zone['kind'];
 const ALL: Kind[] = ['laptop', 'box', 'cloud'];
 const GAP = 112;
-const NAMES: Record<Kind, string> = { laptop: 'your laptop', box: 'the computer that stays on', cloud: 'the cloud' };
+const NAMES: Record<Kind, string> = { laptop: 'your laptop', box: 'the always-on computer', cloud: 'the cloud' };
 
 const SLAB: [number, number, number, number] = [-31, -31, 62, 62];
 const scene = (n: number, o: { gate?: boolean; phone?: boolean; leave?: boolean } = {}): SceneState => {
@@ -21,9 +21,9 @@ const scene = (n: number, o: { gate?: boolean; phone?: boolean; leave?: boolean 
       lab('you', 'you', 'left'),
       // Each machine is named over the job standing on it: the space above the columns stays free.
       lab('j0', 'your laptop', 'top'),
-      ...(n > 1 ? [lab('j1', 'always on', 'top', 'wiki/always-on-machine/')] : []),
+      ...(n > 1 ? [lab('j1', 'always-on computer', 'top', 'wiki/always-on-machine/')] : []),
       ...(n > 2 ? [lab('j2', 'the cloud', 'top')] : []),
-      ...(o.gate ? [lab('mgate', 'check', 'right', 'wiki/verification/')] : []),
+      ...(o.gate ? [lab('mgate', 'the check', 'right', 'wiki/verification/')] : []),
       lab('main', 'main', 'bottom', 'wiki/branch/'),
       ...(o.phone ? [lab('tray', 'on your phone', 'bottom')] : []),
     ],
@@ -44,7 +44,7 @@ interface Run { lid: 'open' | 'closed'; setup: boolean }
 const stats = (ctx: Ctx) => {
   const s = ctx.scene.state;
   const stopped = s.agents.filter((a) => a.off || a.lamp === 'bad').length;
-  ctx.stat([['jobs running now', s.agents.length - stopped], ['jobs stopped now', stopped]]);
+  ctx.stat([['jobs running now', s.agents.length - stopped], ['jobs stopped now', stopped], ['changes landed on main this hour', ctx.mem.landed ?? 0]]);
 };
 const fly = (p: Promise<void>, then?: () => void) => void p.then(then).catch(() => {});
 
@@ -64,6 +64,7 @@ async function hour(ctx: Ctx, h: Script, n: number, o: { gate?: boolean; phone?:
   h.set((s) => { Object.assign(s, scene(n, o)); });
   applyLid(ctx, h, run.lid);
   const landed = Array.from({ length: n }, () => 0);
+  ctx.mem.landed = 0;
   // The cloud job starts first, so its check is the first thing that happens in that step.
   const work = Array.from({ length: n }, (_, i) => -(n - 1 - i) * 4);
   const failed = Array.from({ length: n }, () => false);
@@ -96,20 +97,20 @@ async function hour(ctx: Ctx, h: Script, n: number, o: { gate?: boolean; phone?:
           if (cantStart) {
             failed[i] = true;
             h.set((s) => { s.gates!.find((g) => g.id === 'mgate')!.lamp = 'bad'; const b = s.agents[i]!; b.lamp = 'bad'; b.blocks!.push({ t: 'bad', h: 3 }); s.tray!.cards[i]!.mark = 'bad'; });
-            ctx.say('check', 'Cannot start: there is no test database on this machine.');
+            ctx.say('the check', 'Cannot run the tests: there is no test database on the cloud machine. The other jobs carry on.');
             stats(ctx);
             fly(h.send([[gateX, BUS_Y], ...up.reverse()], 'bad', { ms: 640 }));
             return;
           }
           h.set((s) => { s.gates!.find((g) => g.id === 'mgate')!.lamp = 'ok'; });
           fly(h.send([[gateX + 24, BUS_Y], [project().at[0] - 46, BUS_Y]], 'model', { ms: 360 }), () => {
-            landed[i]!++;
+            landed[i]!++; ctx.mem.landed++; stats(ctx);
             h.set((s) => { (s.project!.commits ??= []).push('ok'); s.agents[i]!.lamp = 'ok'; s.tray!.cards[i]!.mark = 'ok'; });
           });
         });
       } else {
         fly(h.send([...up, [project().at[0] - 46, BUS_Y]], 'model', { ms: 760 }), () => {
-          landed[i]!++;
+          landed[i]!++; ctx.mem.landed++; stats(ctx);
           h.set((s) => { (s.project!.commits ??= []).push('ok'); s.agents[i]!.lamp = 'ok'; s.tray!.cards[i]!.mark = 'ok'; });
         });
       }
@@ -123,7 +124,7 @@ async function hour(ctx: Ctx, h: Script, n: number, o: { gate?: boolean; phone?:
   const changes = (k: number) => `${k} ${k === 1 ? 'change' : 'changes'}`;
   const parts = ALL.slice(0, n).map((k, i) => `${NAMES[k]} ${landed[i]}`);
   const stopped = ctx.scene.state.agents.filter((a) => a.off || a.lamp === 'bad').length;
-  const head = n === 1 ? `In one hour your laptop landed ${changes(landed[0]!)} on main.` : `In one hour, changes on main from ${parts.join(', ')}.`;
+  const head = n === 1 ? `In the made-up hour your laptop landed ${changes(landed[0]!)} on main.` : `In the made-up hour, changes landed on main from ${parts.join(', ')}.`;
   ctx.say(null, `${head}${stopped ? ` ${stopped === 1 ? 'One job is' : `${stopped} jobs are`} stopped where ${stopped === 1 ? 'it was' : 'they were'}.` : ''}`);
 }
 
@@ -150,9 +151,9 @@ export async function demo(ctx: Ctx, h: Script) {
 export const where: Chapter = {
   steps: {
     laptop: { scene: () => scene(1), enter: (ctx) => start(ctx, 1, { lid: 'open', setup: true }, {}, 'One job, running on your laptop.') },
-    lid: { scene: () => scene(1), enter: (ctx) => start(ctx, 1, { lid: 'open', setup: true }, {}, 'Lid open. The job runs.') },
-    box: { scene: () => scene(2, { phone: true }), enter: (ctx) => start(ctx, 2, { lid: 'closed', setup: true }, { phone: true }, 'Lid closed. The laptop’s job waits; the other computer’s job runs, and you follow it on your phone.') },
-    cloud: { scene: () => scene(3, { gate: true }), enter: (ctx) => start(ctx, 3, { lid: 'open', setup: false }, { gate: true }, 'Without setup: the cloud machine is missing the test database the check needs.') },
+    lid: { scene: () => scene(1), enter: (ctx) => start(ctx, 1, { lid: 'open', setup: true }, {}, 'Lid open. The job runs. Close the lid and watch it stop.') },
+    box: { scene: () => scene(2, { phone: true }), enter: (ctx) => start(ctx, 2, { lid: 'closed', setup: true }, { phone: true }, 'Lid closed. The laptop’s job has stopped; the job on the always-on computer keeps going, and you follow it on your phone.') },
+    cloud: { scene: () => scene(3, { gate: true }), enter: (ctx) => start(ctx, 3, { lid: 'open', setup: false }, { gate: true }, 'The cloud machine starts empty. Without setup it has no test database, so the check cannot run.') },
     mix: { scene: () => scene(3, { gate: true }), enter: (ctx) => start(ctx, 3, { lid: 'open', setup: true }, { gate: true, leave: true }, 'Three jobs on three machines, all landing on one main. Halfway through the hour you close the lid.') },
   },
   actions: {
@@ -160,13 +161,13 @@ export const where: Chapter = {
     lid: (ctx, val) => {
       const lid = val === 'closed' ? 'closed' : 'open';
       ctx.mem.run = { ...ctx.mem.run, lid };
-      ctx.say(null, lid === 'closed' ? 'Lid closed. The laptop sleeps, and its job stops where it was.' : 'Lid open. The laptop’s job carries on from where it stopped.');
+      ctx.say(null, lid === 'closed' ? 'Lid closed. The laptop sleeps, and its job stops where it was.' : 'Lid open. The laptop wakes, and its job carries on from where it stopped.');
       applyLid(ctx, null, lid);
       if (ctx.mem.done) play(ctx, ctx.mem.n, ctx.mem.o);
     },
     setup: (ctx, val) => {
       const setup = val === 'with';
-      ctx.say(null, setup ? 'The cloud machine is given the test database the check needs.' : 'Without setup: the cloud machine is missing the test database the check needs.');
+      ctx.say(null, setup ? 'With setup: a script gives the cloud machine the test database the check needs.' : 'The cloud machine starts empty. Without setup it has no test database, so the check cannot run.');
       start(ctx, 3, { lid: 'open', setup }, { gate: true });
     },
   },
