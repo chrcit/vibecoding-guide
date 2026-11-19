@@ -85,7 +85,7 @@ const OUTCOME: Record<Mix, { file: number; date: string; says: string }> = {
   log: { file: EXPORT, date: 'still wrong', says: 'Fixed the date in export.ts.' },
 };
 function rotLabels(mix: Mix, blocks: Block[], cap: number): Label[] {
-  const out = [at(blocks, cap, 0, 'your rule')];
+  const out = [{ ...at(blocks, cap, 0, 'your rule: day.month.year'), at: [-14, 14, slabZ(blocks, cap, 0)] as [number, number, number], place: 'left' as const }];
   if (mix !== 'job') out.push(at(blocks, cap, RULE.length + FIX.length + 1, 'the CSV job'));
   if (mix === 'log') out.push(at(blocks, cap, blocks.length - 1, 'a pasted log'));
   return out;
@@ -122,7 +122,7 @@ export async function ask(ctx: Ctx, h: Script, mix: Mix) {
   });
   ctx.say('model', o.says);
   await h.send(reverse(route.youToAgent()), ok ? 'model' : 'bad');
-  stat(o.file === MEMBERS ? 'members.ts, the right one' : 'export.ts, the CSV job’s file', ok ? `${o.date}, as your rule says` : mix === 'morning' ? `${o.date}: your rule was lost` : 'the same wrong date');
+  stat(o.file === MEMBERS ? 'members.ts, the right one' : 'export.ts, the CSV job’s file', ok ? `${o.date}, day.month.year as your rule says` : mix === 'morning' ? `${o.date}: your rule was lost` : 'the same wrong date');
   ctx.say(null, byLevel(ctx.level, {
     plain: ok ? 'Little in the window, and all of it about this job. Right file, rule kept.' : mix === 'morning' ? 'Right file, but the rule from your first message was buried under 300k tokens of other work.' : 'Wrong file: the pasted log and the CSV job pulled it towards export.ts. The card is still wrong.',
     technical: ok ? 'Right file, rule kept. Nothing else in the window competes for attention.' : mix === 'morning' ? 'Right file, rule lost. A type check and the tests would still pass: nothing asserts the date format.' : 'It edited export.ts. The member card is untouched, yet the agent reports “fixed”.',
@@ -224,7 +224,7 @@ export const windowView = () => view(MIX.log(), 1000, [], true);
 export const windowCh: Chapter = {
   steps: {
     pile: { scene: () => view([...RULE], 1000), enter: (ctx) => void ctx.scene.run((h) => pileUp(ctx, h)) },
-    rot: { scene: () => view(MIX.log(), 1000, [], true), enter: (ctx) => { ctx.mem.mix = 'log'; void ctx.scene.run((h) => ask(ctx, h, 'log')); } },
+    rot: { scene: () => view(MIX.job(), 1000, [], true), enter: (ctx) => { ctx.mem.mix = 'job'; void ctx.scene.run((h) => ask(ctx, h, 'job')); } },
     long: { scene: (ctx) => view([...RULE], ctx.keep.cap ?? 1000), enter: (ctx) => { ctx.mem.used = 1020; fill(ctx); } },
     compact: { scene: () => view([...morning(), ...LOG, ...CSV, ...FORM, ...FORM, ...CSV, ...FORM], 1000), enter: (ctx) => void ctx.scene.run((h) => clear(ctx, h, 'compact')) },
     paste: { scene: () => view([...RULE, ...FIX], 1000), enter: (ctx) => paste(ctx, 'log') },

@@ -35,11 +35,11 @@ const data = { autoCompactAt: harnesses.claudeCode.autoCompactAt.value };
   </Step>
 
   <Step id="rot" title="More in the window, worse answers">
-    <p>Same <Term id="model" />, same request: fix the date on the member card. Pick what else is in the window, and watch <Term id="context-rot" /> happen: which file it edits, and whether it keeps your first rule.</p>
+    <p>Same <Term id="model" />, same request: fix the date on the member card. Pick what else is in the window, and watch <Term id="context-rot" /> happen: which file it edits, and whether it keeps the rule from your first message: dates as day.month.year.</p>
     <div class="pick" role="group" aria-label="What else is in the window">
-      <button type="button" data-do="mix" data-val="job" aria-pressed="false">Only this job</button>
+      <button type="button" data-do="mix" data-val="job" data-default aria-pressed="true">Only this job</button>
       <button type="button" data-do="mix" data-val="morning" aria-pressed="false">After a morning</button>
-      <button type="button" data-do="mix" data-val="log" data-default aria-pressed="true">Plus a pasted log</button>
+      <button type="button" data-do="mix" data-val="log" aria-pressed="false">Plus a pasted log</button>
     </div>
     <More title="Is this real?">
       <p>The three runs are drawn, not measured. <Fact id="claims.research.contextRot" show="claim" /></p>
@@ -48,7 +48,7 @@ const data = { autoCompactAt: harnesses.claudeCode.autoCompactAt.value };
   </Step>
 
   <Step id="long" title="Past full">
-    <p>The window has a hard size. Drag past 100%: the model cannot read more than fits, so the next turn cannot go until something is dropped.</p>
+    <p>The window has a hard size, counted in <Term id="token">tokens</Term>. Drag past 100%: the model cannot read more than fits, so the next turn cannot go until something is dropped.</p>
     <div class="controls">
       <label class="control"><span>In the window <output>1020k</output></span>
         <input type="range" min="0" max="1100" step="10" value="1020" data-bind="used" data-unit="k" aria-label="Tokens in the window, in thousands" />
