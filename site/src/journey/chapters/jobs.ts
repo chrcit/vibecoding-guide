@@ -1,9 +1,10 @@
-// Chapter 14: several jobs. Each job works, then needs you; there is one of you, so jobs queue.
+// Lesson 18: several jobs. Each job works, then needs you; there is one of you, so jobs queue.
 // The hour, the jobs and every rate are made up. What happens is worked out first by desk() in
 // sim.ts, then drawn minute by minute, and the readout is counted from the same minutes.
 import type { Chapter, Ctx } from '../chapter';
 import type { Script } from '../scene';
 import { jobs, lab } from '../presets';
+import { termLabel } from '../terms';
 import { desk, type Need } from '../sim';
 import { attendSpot, jobSpot, BUS_Y, SPOT, type SceneState, type Label, type P3, type XY } from '../picture';
 
@@ -18,19 +19,25 @@ const OPEN_THREAD = 3;
 /** One made-up minute on screen, in ms. */
 const MINUTE = 280;
 
-const NAMES = ['Search box', 'CSV export', 'Phone layout', 'Paid filter', 'Reminders'];
+/** Five jobs on the club's member list, when they share one project. */
+const TASKS = ['search', 'CSV export', 'phone layout', 'paid filter', 'reminders'];
+/** Five separate projects, when each job has its own: the guide's running examples. */
+const PROJECTS = ['club list', 'bakery hours', 'contact tidy', 'club emails', 'bakery menu'];
 const VAGUE = ['fix', 'fix 2', 'new thread', 'fix', 'untitled'];
 const QUESTIONS = ['Hide paused members, or grey them out?', 'Dates as 3 March or 03/03?', 'Stack the table, or scroll it sideways?', 'Count part-payers as paid?', 'Send at 9:00 or at 18:00?'];
-const line = (j: number, need: Need, stop: Stop) =>
+const OTHER_QUESTIONS = ['Hide paused members, or grey them out?', 'Show holiday hours on the home page too?', 'Merge two rows with the same email?', 'Send the reminder at 9:00 or at 18:00?', 'Show prices with or without tax?'];
+const line = (o: Opts, j: number, need: Need) =>
   need === 'question'
-    ? stop === 'short' ? QUESTIONS[j % QUESTIONS.length]! : 'Can you take a look?'
-    : stop === 'short' ? 'Done. Tests pass; screenshot on the board.' : 'Done.';
-const STATE = { work: 'working', question: 'asks a question', result: 'ready to look at' } as const;
+    ? o.stop === 'short' ? (o.projects === 'one' ? QUESTIONS : OTHER_QUESTIONS)[j % 5]! : 'Can you take a look?'
+    : o.stop === 'short' ? 'Done. Tests pass; screenshot on the tray.' : 'Done.';
+const STATE = { work: 'working', question: 'question for you', result: 'ready to check' } as const;
 
 const stopOf = (o: Opts) => STOP[o.stop] + (o.board === 'vague' ? OPEN_THREAD : 0);
-const nameOf = (o: Opts, j: number) => (o.board === 'vague' ? VAGUE[j % VAGUE.length]! : NAMES[j % NAMES.length]!);
+const taskOf = (o: Opts, j: number) => (o.projects === 'one' ? TASKS : PROJECTS)[j % 5]!;
+/** What the job is called under the picture: its thread's name. */
+const nameOf = (o: Opts, j: number) => (o.board === 'vague' ? `thread “${VAGUE[j % 5]}”` : `job ${j + 1}, ${taskOf(o, j)}`);
 const boardLabel = (o: Opts, j: number, state: keyof typeof STATE): Label =>
-  lab(`j${j}`, o.board === 'vague' ? VAGUE[j % VAGUE.length]! : `${NAMES[j % NAMES.length]}: ${STATE[state]}`, 'right');
+  lab(`j${j}`, o.board === 'vague' ? `“${VAGUE[j % 5]}”` : `${taskOf(o, j)}: ${STATE[state]}`, 'top');
 
 /** The whole floor of five jobs, so moving the slider does not move the camera. */
 const frameFive = (projects: Opts['projects']): P3[] => {
@@ -46,14 +53,14 @@ const frameFive = (projects: Opts['projects']): P3[] => {
 
 function floor(o: Opts): SceneState {
   const n = o.n;
-  const labels: Label[] = [lab('you', 'you', 'left'), lab('tray', 'the board', 'bottom')];
+  const labels: Label[] = [lab('you', 'you', 'left'), termLabel('tray', 'tray', 'bottom', 'the tray')];
   if (o.board) for (let j = 0; j < n; j++) labels.push(boardLabel(o, j, 'work'));
-  else labels.push(lab('j0', 'a job', 'top', 'wiki/thread/'));
+  else labels.push(termLabel('j0', 'job', 'top', n > 1 ? 'job 1' : 'a job'));
   if (o.projects === 'one') {
-    labels.push(lab('main', 'main', 'bottom', 'wiki/branch/'));
-    if (n > 1 && !o.board) labels.push(lab([jobSpot(n - 1, n)[0] + 30, 12, 2], 'its own copy', 'right', 'wiki/worktree/'));
+    labels.push(termLabel('main', 'main', 'bottom'));
+    if (n > 1 && !o.board) labels.push(termLabel([jobSpot(n - 1, n)[0] + 30, 12, 2], 'worktree', 'right'));
   } else {
-    labels.push(lab(`p:${n - 1}`, 'its own project', 'top'), lab([jobSpot(0, n)[0] - 14, -88, 2], 'instruction file', 'left', 'wiki/instruction-file/'));
+    for (let j = 0; j < n; j++) labels.push(lab(`p:${j}`, PROJECTS[j]!, 'top'));
   }
   const s = jobs(n, { projects: o.projects, labels });
   for (const a of s.agents) { a.busy = true; a.lamp = 'work'; a.blocks = [{ t: 'you', h: 2 }]; }
@@ -61,15 +68,22 @@ function floor(o: Opts): SceneState {
   return s;
 }
 
-const fmtMin = (m: number) => `${m} min`;
+const min = (m: number) => `${m} min`;
 
 /** One made-up hour at the desk, drawn minute by minute. */
 async function hour(ctx: Ctx, h: Script, o: Opts) {
   const n = o.n, T = o.minutes ?? 60;
   const run = desk({ jobs: n, stop: stopOf(o), minutes: T });
+  const tech = ctx.level !== 'plain';
   h.set((s) => { Object.assign(s, floor(o)); });
-  let finished = 0, waited = 0, idle = 0;
-  const stats = (t: number) => ctx.stat([['minute', `${t} of ${T}`], ['jobs finished so far', finished], ['agents waiting for you, so far', fmtMin(waited)], ['you waiting for them, so far', fmtMin(idle)]]);
+  let finished = 0, waited = 0, idle = 0, sentBack = 0, merges = 0;
+  const stats = (t: number) => ctx.stat([
+    ['minute', `${t} of ${T}`, 'made-up hour'],
+    ['jobs finished, this hour', finished],
+    ['agents waiting for you, summed over all jobs', min(waited)],
+    ['you waiting for an agent, this hour', min(idle)],
+    ['merges sent back to update, this hour', o.projects === 'one' ? sentBack : 'none: own projects'],
+  ]);
   stats(0);
   let merging: Promise<void> = Promise.resolve();
   const okUntil: number[] = Array(n).fill(-1);
@@ -90,7 +104,7 @@ async function hour(ctx: Ctx, h: Script, o: Opts) {
           a.busy = false; a.lamp = 'wait'; a.blocks!.push({ t: 'model', h: 1.6 });
           card.mark = 'wait'; card.b = e.need === 'result' ? 'tool' : 'model';
           if (o.board === 'clear') setLabel(s, e.job, boardLabel(o, e.job, e.need));
-          spoke.v = [nameOf(o, e.job), line(e.job, e.need, o.stop)];
+          spoke.v = [nameOf(o, e.job), line(o, e.job, e.need)];
         } else if (e.what === 'go') {
           s.you = attendSpot(e.job, n);
         } else if (e.what === 'arrive') {
@@ -115,8 +129,25 @@ async function hour(ctx: Ctx, h: Script, o: Opts) {
       if (e.what !== 'leave' || e.need !== 'result') continue;
       finished++;
       const j = e.job;
+      // In one project the second job to finish finds main changed under it: the first job
+      // touched the same list page. It is sent back, updates its copy, and tries again.
+      const collide = o.projects === 'one' && n > 1 && ++merges === 2;
       merging = merging
-        .then(() => h.send(mergePath(ctx.scene.state, j), 'model', { ms: 520 }))
+        .then(async () => {
+          await h.send(mergePath(ctx.scene.state, j), 'model', { ms: 520 });
+          if (collide) {
+            sentBack++;
+            stats(Math.min(T, t + 1));
+            ctx.say(nameOf(o, j), tech
+              ? 'Merge conflict in the list page: main changed since I branched. Rebasing on main, re-running tsc and the tests, then merging.'
+              : 'Main changed while I worked: another job edited the same page. Updating my copy, then trying again.');
+            await h.send([...mergePath(ctx.scene.state, j)].reverse(), 'bad', { ms: 520 });
+            await h.wait(900);
+            await h.send(mergePath(ctx.scene.state, j), 'model', { ms: 520 });
+          } else if (tech && o.projects === 'one' && finished === 1) {
+            ctx.say(nameOf(o, j), 'Branch merged into main after the type check and 14 tests passed.');
+          }
+        })
         .then(() => h.set((s) => { (project(s, j).commits ??= []).push('ok'); }))
         .catch(() => {});
     }
@@ -129,7 +160,7 @@ async function hour(ctx: Ctx, h: Script, o: Opts) {
   await merging;
   h.check();
   h.set((s) => { for (const a of s.agents) a.busy = false; });
-  ctx.say(null, `In one hour, ${finished === 1 ? 'one job' : `${finished} jobs`} finished, ${n === 1 ? 'one' : n} at a time. Agents waited ${fmtMin(waited)} for you; you waited ${fmtMin(idle)} for them.`);
+  ctx.say(null, `End of the made-up hour: ${finished === 1 ? 'one job' : `${finished} jobs`} finished, ${n === 1 ? 'one' : n} running at a time. Agents waited ${min(waited)} for you, all jobs added up; you waited ${min(idle)} for them.`);
 }
 
 function setLabel(s: SceneState, j: number, l: Label) {
@@ -138,7 +169,7 @@ function setLabel(s: SceneState, j: number, l: Label) {
 }
 
 const play = (ctx: Ctx) => void ctx.scene.run((h) => hour(ctx, h, ctx.mem.o));
-const start = (ctx: Ctx, o: Opts, note?: string) => { ctx.mem.o = o; if (note) ctx.say(null, note); play(ctx); };
+const start = (ctx: Ctx, o: Opts, note?: string) => { ctx.mem.o = o; play(ctx); if (note) ctx.say(null, note); };
 const change = (ctx: Ctx, part: Partial<Opts>, note: string) => start(ctx, { ...ctx.mem.o, ...part }, note);
 
 const O = {
@@ -149,31 +180,34 @@ const O = {
   board: { n: 3, stop: 'short', projects: 'one', board: 'vague' } as Opts,
 };
 
-/** One short loop of this chapter, for the part-two overview. */
+/** One short loop of this chapter, for the part-three overview: the lesson's "Start another" hour. */
 export async function demo(ctx: Ctx, h: Script) {
-  await hour(ctx, h, { n: 3, stop: 'short', projects: 'one', minutes: 28 });
+  ctx.scene.speed = 2;
+  await hour(ctx, h, O.three);
+  // Hold the end of the hour, so its totals can be read and compared with the lesson's.
+  await h.wait(6000);
 }
 
 export const jobsCh: Chapter = {
   steps: {
-    one: { scene: () => floor(O.one), enter: (ctx) => start(ctx, O.one, 'One job running. It works, then pauses when it needs you.') },
-    three: { scene: () => floor(O.three), enter: (ctx) => start(ctx, O.three, 'Three jobs, each in its own copy of the project.') },
-    many: { scene: () => floor(O.many), enter: (ctx) => start(ctx, O.many, `Five jobs, each saying only “Done.” — about ${STOP.long} minutes at each stop.`) },
-    projects: { scene: () => floor(O.projects), enter: (ctx) => start(ctx, O.projects, 'One project: every job merges into main, one at a time.') },
-    board: { scene: () => floor(O.board), enter: (ctx) => start(ctx, O.board, `Every card says “fix”. Opening the thread first adds ${OPEN_THREAD} minutes at each stop.`) },
+    one: { scene: () => floor(O.one), enter: (ctx) => start(ctx, O.one, 'One job on the club list. It works, then stops when it needs you.') },
+    three: { scene: () => floor(O.three), enter: (ctx) => start(ctx, O.three, 'Three jobs on the club list, each in its own copy. You go to whichever needs you.') },
+    many: { scene: () => floor(O.many), enter: (ctx) => start(ctx, O.many, `Five jobs, each saying only “Done.”: about ${STOP.long} made-up minutes at each stop.`) },
+    projects: { scene: () => floor(O.projects), enter: (ctx) => start(ctx, O.projects, 'One project: three jobs share one main and merge into it one after another.') },
+    board: { scene: () => floor(O.board), enter: (ctx) => start(ctx, O.board, `Every card says “fix”. Opening the thread to find out which job it is adds ${OPEN_THREAD} minutes at each stop.`) },
   },
   inputs: {
-    n: (ctx, val) => { const n = Number(val); change(ctx, { n }, `${n === 1 ? 'One job' : `${n} jobs`}, one of you.`); },
+    n: (ctx, val) => { const n = Number(val); change(ctx, { n }, `${n === 1 ? 'One job' : `${n} jobs`} at once, one of you.`); },
   },
   actions: {
     stop: (ctx, val) => change(ctx, { stop: val as Stop }, val === 'long'
-      ? `Each job says only “Done.” — you read the work yourself (${STOP.long} minutes a stop).`
-      : `Each job sends proof or a short question (${STOP.short} minutes a stop).`),
+      ? `Each job says only “Done.”: you read the work yourself (${STOP.long} made-up minutes a stop).`
+      : `Each job sends proof or one short question (${STOP.short} made-up minutes a stop).`),
     projects: (ctx, val) => change(ctx, { projects: val as Opts['projects'] }, val === 'one'
-      ? 'One project: every job merges into main, one at a time.'
-      : 'Several projects: each job has its own, with its own instruction file.'),
+      ? 'One project: three jobs share one main and merge into it one after another.'
+      : 'Three projects: the club list, the bakery’s hours, the contact tidy. Each job has its own main and its own instruction file.'),
     board: (ctx, val) => change(ctx, { board: val as Board }, val === 'vague'
-      ? `Every card says “fix”. Opening the thread first adds ${OPEN_THREAD} minutes at each stop.`
-      : 'Each card says what the job is and what it needs from you.'),
+      ? `Every card says “fix”. Opening the thread to find out which job it is adds ${OPEN_THREAD} minutes at each stop.`
+      : 'Each card says which job it is and what it needs from you.'),
   },
 };

@@ -16,7 +16,7 @@ Sources to draw on:
 
 An agent is a model with tools, working in a loop: it reads files, runs commands and looks at the results until the job is done.
 
-A chat model answers once and stops. An agent keeps going: you send one message and it takes many turns of its own. Each turn the [model](./model.md) picks a [tool](./tool-call.md), the result lands in its [window](./context-window.md), and it decides what to do next. That is [the loop](./agent-loop.md); the program that runs it is the [harness](./harness.md). Claude Code and Codex are agents in this sense, and [web builders](./web-builders.md) run one in a browser tab. You can watch it happen in [Loop, lesson 6](/journey/loop/).
+A chat model answers once and stops. An agent keeps going: you send one message and it takes many turns of its own. Each turn the [model](./model.md) picks a [tool](./tool-call.md), the result lands in its [window](./context-window.md), and it decides what to do next. That is [the loop](./agent-loop.md); the program that runs it is the [harness](./harness.md). Claude Code and Codex are agents in this sense, and [web builders](./web-builders.md) run one in a browser tab. You can watch it happen in [the loop lesson](/journey/loop/).
 
 Because it can act, give it a job with an end it can check:
 

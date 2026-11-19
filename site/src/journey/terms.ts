@@ -83,8 +83,7 @@ export const TERMS = {
   project: {
     word: 'your project',
     def: 'The folder with your app in it: its code, its files and its instruction file. Under Git it is a repository.',
-    wiki: 'version-control',
-    own: false,
+    wiki: 'your-project',
     retire: ['the codebase', 'the repo (plain level)', 'the files'],
     label: { technical: 'your repository' },
   },
@@ -116,8 +115,7 @@ export const TERMS = {
   commit: {
     word: 'commit',
     def: 'A saved step in your project’s history, with a message saying what changed. Any commit can be gone back to.',
-    wiki: 'version-control',
-    own: false,
+    wiki: 'commit',
     retire: ['save point', 'snapshot'],
   },
   worktree: {
@@ -142,8 +140,7 @@ export const TERMS = {
   brief: {
     word: 'brief',
     def: 'The message that starts a helper: what to do, what to leave alone, and what to send back. It is all the helper knows.',
-    wiki: 'subagent',
-    own: false,
+    wiki: 'brief',
     retire: ['instructions (for a brief)', 'the prompt (for a brief)', 'handoff note'],
   },
   helper: {
@@ -161,8 +158,7 @@ export const TERMS = {
   fleet: {
     word: 'fleet',
     def: 'Many helpers run by a lead in a loop, from a queue of tasks, with a check in front of main.',
-    wiki: 'orchestration',
-    own: false,
+    wiki: 'fleet',
     retire: ['swarm', 'team (for a fleet)'],
   },
   job: {
@@ -205,15 +201,13 @@ export const TERMS = {
   tray: {
     word: 'tray',
     def: 'The place beside you where an agent leaves what you need to look at: proof, a question, a plan. One card per thing.',
-    wiki: 'verification',
-    own: false,
+    wiki: 'tray',
     retire: ['the board', 'inbox', 'dashboard'],
   },
   'proof-card': {
     word: 'proof card',
     def: 'One piece of evidence that arrives with the work: a short summary, a test run, a screenshot or a link to try it.',
-    wiki: 'definition-of-done',
-    own: false,
+    wiki: 'proof-card',
     retire: ['artifact', 'review artifact', 'receipt'],
   },
   review: {

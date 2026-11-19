@@ -16,7 +16,7 @@ Sources to draw on:
 
 A subagent is a helper the agent starts for one piece of the job: it begins with an empty window, gets a brief, and sends back a short report.
 
-Searching fills a [window](./context-window.md) with files that turn out not to matter ([Handoff, lesson 10](/journey/handoff/)). Hand the search to a helper and only its report comes back. The helper's window is thrown away, and the [agent](./agent.md)'s stays clear for the work.
+Searching fills a [window](./context-window.md) with files that turn out not to matter ([the handoff lesson](/journey/handoff/)). Hand the search to a helper and only its report comes back. The helper's window is thrown away, and the [agent](./agent.md)'s stays clear for the work.
 
 The helper knows only the brief. Anything you told the agent, such as "change nothing", has to be written into it. So when you ask for a helper, say what goes in the brief:
 

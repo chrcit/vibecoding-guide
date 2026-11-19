@@ -155,7 +155,11 @@ export class Scene {
         el.style.top = `${(l.y / this.frame.h) * 100}%`;
         void el.offsetWidth;
       } else {
-        if (el.dataset.text !== l.text || (el.dataset.def ?? '') !== (l.def ?? '')) fillLabel(el, l.text, l.def);
+        if (el.dataset.text !== l.text || (el.dataset.def ?? '') !== (l.def ?? '')) {
+          // A label that takes a new word (a change of level, a script) flashes once.
+          if (el.dataset.text !== l.text) { el.removeAttribute('data-level-new'); void el.offsetWidth; el.setAttribute('data-level-new', ''); setTimeout(() => el.removeAttribute('data-level-new'), 1600); }
+          fillLabel(el, l.text, l.def);
+        }
         if (l.side) (el as HTMLAnchorElement).href = this.base + l.side;
       }
       el.dataset.place = l.place;
@@ -169,8 +173,51 @@ export class Scene {
       this.labelEls.delete(key);
       setTimeout(() => el.remove(), 300);
     }
+    this.spread(pic.labels);
     this.onKinds?.(pic.kinds);
     if (instant || reduced.matches) requestAnimationFrame(() => requestAnimationFrame(() => this.root.removeAttribute('data-instant')));
+  }
+
+  /**
+   * Keep labels apart and inside the frame. Works from where each label is going (not where it is
+   * mid-glide): labels that would overlap are pushed apart vertically, away from their anchor's
+   * side, and a label that would cross the frame's edge is pulled back in. The nudge is --dx/--dy.
+   */
+  private spread(labels: { key: string; x: number; y: number; place: string }[]) {
+    const W = this.root.clientWidth, H = this.root.clientHeight;
+    if (!W || !H) return;
+    const boxes: { el: HTMLElement; l: number; t: number; w: number; h: number; place: string }[] = [];
+    for (const lab of labels) {
+      const el = this.labelEls.get(lab.key);
+      if (!el) continue;
+      const w = el.offsetWidth, h = el.offsetHeight, x = (lab.x / this.frame.w) * W, y = (lab.y / this.frame.h) * H;
+      const l = lab.place === 'left' ? x - w - 8 : lab.place === 'right' ? x + 8 : x - w / 2;
+      const t = lab.place === 'top' ? y - h - 6 : lab.place === 'bottom' ? y + 8 : y - h / 2;
+      boxes.push({ el, l, t, w, h, place: lab.place });
+    }
+    const pad = 4, gap = 2;
+    const hit = (a: typeof boxes[0], b: typeof boxes[0]) => a.l < b.l + b.w + gap && b.l < a.l + a.w + gap && a.t < b.t + b.h + gap && b.t < a.t + a.h + gap;
+    const placed: typeof boxes = [];
+    for (const b of [...boxes].sort((a, c) => a.t - c.t)) {
+      const t0 = b.t;
+      b.l = Math.max(pad, Math.min(W - pad - b.w, b.l));
+      b.t = Math.max(pad, Math.min(H - pad - b.h, b.t));
+      for (let i = 0; i < 6; i++) {
+        const other = placed.find((o) => hit(o, b));
+        if (!other) break;
+        // Move away from the label it hits: above it for a label that sits on top of its part,
+        // below it otherwise, and the other way when that would leave the frame.
+        const up = other.t - b.h - gap, down = other.t + other.h + gap;
+        b.t = b.place === 'top' && up >= pad ? up : down + b.h <= H - pad ? down : Math.max(pad, up);
+      }
+      placed.push(b);
+      b.el.style.setProperty('--dy', `${Math.round(b.t - t0)}px`);
+    }
+    for (const b of boxes) {
+      const x = (parseFloat(b.el.style.left) / 100) * W;
+      const l0 = b.place === 'left' ? x - b.w - 8 : b.place === 'right' ? x + 8 : x - b.w / 2;
+      b.el.style.setProperty('--dx', `${Math.round(b.l - l0)}px`);
+    }
   }
 
   private showTip(el: HTMLElement) {

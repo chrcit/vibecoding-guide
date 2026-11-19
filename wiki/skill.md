@@ -16,7 +16,7 @@ Sources to draw on:
 
 A skill is a folder of written know-how, a SKILL.md and anything it needs, that the agent reads only when a job matches its description.
 
-In the picture, skills stand on a shelf beside the project ([Memory, lesson 8](/journey/memory/)). Only each skill's name and one-line description sit in the [window](./context-window.md); the rest is read when a job calls for it. [AGENTS.md](./instruction-file.md), by contrast, is loaded whole every session.
+In the picture, skills stand on a shelf beside the project ([the memory lesson](/journey/memory/)). Only each skill's name and one-line description sit in the [window](./context-window.md); the rest is read when a job calls for it. [AGENTS.md](./instruction-file.md), by contrast, is loaded whole every session.
 
 Use one for know-how that only some jobs need: how you write release notes, how to check a page for accessibility, the steps of a deploy. The description decides when it loads, so write it as "Use when…". After a job you will do again, ask:
 
