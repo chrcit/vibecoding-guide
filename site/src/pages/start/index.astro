@@ -43,15 +43,15 @@ const factIds = [
       <li>Get one plan: Claude Pro (<Fact id="plans.claude.pro.price" /> a month), or ChatGPT, where Codex is on every plan from Free.</li>
       <li>Download <a href={links.t3codeDownload.url}>T3 Code</a> and open it. It is <Fact id="t3code.price" />.</li>
       <li>On its Welcome page, connect your agent. Codex: <b>Set up</b>, then <b>Continue with ChatGPT</b>. Claude Code: <b>Install</b>, then <b>Sign in</b>.</li>
-      <li><kbd>Cmd</kbd>+<kbd>K</kbd> (<kbd>Ctrl</kbd>+<kbd>K</kbd> on Windows), <b>New project</b>, call it <code>club-list</code>.</li>
-      <li>Under the message box, change <b><Fact id="t3code.defaultMode" /></b> to <b>Supervised</b>.</li>
+      <li><kbd>Cmd</kbd>+<kbd>K</kbd> (<kbd>Ctrl</kbd>+<kbd>K</kbd> on Windows), <b>New project</b>, call it <code>club-list</code>. The folder goes in <code><Fact id="t3code.newProject" /></code>.</li>
+      <li>Under the message box, change <b>Full access</b> to <b>Supervised</b>.</li>
     </ol>
-    <p class="then">You see an empty thread with a message box.</p>
+    <p class="then">You see an empty thread: one conversation with the agent, and a box to type in.</p>
   </Tile>
 
   <Tile title="2 · First message: who you are" span={6} id="who">
     <div class="who">
-      <label class="who-field"><span>I am</span><input type="text" data-who-input placeholder={p.who.placeholder} autocomplete="off" spellcheck="true" /></label>
+      <label class="who-field"><span>I am</span><input type="text" data-who-input placeholder={`for example, ${p.who.placeholder}`} autocomplete="off" spellcheck="true" /></label>
       <div class="pick" role="group" aria-label="How much you know">
         {LEVELS.map((id) => <button type="button" data-who-level={id} aria-pressed={id === 'plain' ? 'true' : 'false'}>{levelInfo[id].label}</button>)}
       </div>
@@ -62,12 +62,12 @@ const factIds = [
 
   <Tile title="3 · Second message: the member list" span={6} id="describe">
     <CopyPrompt title="Message 2" id="prompt-describe" compact>{p.describe.app}</CopyPrompt>
-    <p class="then">It asks a question or two, then builds. It asks before each command. When you do not follow one: <button type="button" class="say" data-say>{p.say.approval}</button></p>
+    <p class="then">It is the club from the lessons; swap in your own list if you have one. It asks a question or two, builds, and tells you how to open it. It asks before each command. When you do not follow one: <button type="button" class="say" data-say>{p.say.approval}</button></p>
   </Tile>
 
   <Tile title="4 · Try it" span={6} id="try" side="t3-code/">
     <CopyPrompt title="Open it" id="prompt-try" compact>{p.look}</CopyPrompt>
-    <p class="then">The page opens in the browser panel beside the thread. Add a member and tick them as paid.</p>
+    <p class="then">In the thread's details, select the local server it started: the page opens in a browser panel beside the thread. Add a member and tick them as paid.</p>
   </Tile>
 
   <Tile title="5 · Change it" span={6} id="change">
@@ -82,7 +82,7 @@ const factIds = [
 
   <Tile title="7 · Have it checked" span={6} id="check" side="wiki/verification/">
     <CopyPrompt title="Check it" id="prompt-check" compact>{p.check}</CopyPrompt>
-    <p class="then">It adds tests that run on their own. Try its three things by hand. When it says done: <button type="button" class="say" data-say>{p.say.proof}</button></p>
+    <p class="then">It adds tests: small programs that try the app and say pass or fail. Try its three things by hand. When it says done: <button type="button" class="say" data-say>{p.say.proof}</button></p>
   </Tile>
 
   <Tile title="8 · Save it" span={6} id="save" side="wiki/version-control/">
