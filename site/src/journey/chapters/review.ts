@@ -1,4 +1,4 @@
-// Chapter 11: a second model. One model builds, a different one reviews, and the work goes round
+// Lesson 15: a second model. One model builds, a different one reviews, and the work goes round
 // until the reviewer finds nothing. The reviewer gets the change and the brief, never the builder's
 // window. The job and its three flaws are made up and fixed here; which model builds and which
 // reviews is only a matter of which name the page hands over.
@@ -6,11 +6,13 @@ import type { Chapter, Ctx } from '../chapter';
 import type { Script } from '../scene';
 import { solo, team, lab } from '../presets';
 import { route, reverse, SPOT, BUS_Y, type XY, type Kind, type SceneState, type Meter } from '../picture';
+import { STEP_NOTES } from '../notes';
 
 const names = (ctx: Ctx) => ({
   b: (ctx.data.builder as string | undefined) ?? 'the builder',
   r: (ctx.data.reviewer as string | undefined) ?? 'the reviewer',
 });
+const note = (ctx: Ctx, step: string) => { const n = STEP_NOTES.review?.[step]; if (n) ctx.model(n.part, n.text[ctx.level]); };
 
 // ---------- the made-up job ----------
 
@@ -20,11 +22,22 @@ const FLAWS = [
   'Any member can mark anyone as paid, not only the treasurer.',
   'The export still shows last season’s payments.',
 ];
+/** What an adversarial brief adds to each finding: a way to see it fail. */
+const CHECKS = [
+  'To see it: press “Mark paid” twice; the payments table gets two rows.',
+  'To see it: sign in as an ordinary member and mark someone else paid; it saves.',
+  'To see it: export after marking one member paid; the file still has last season’s rows.',
+];
 const FIXED = ['Fixed: a second mark is ignored.', 'Fixed: only the treasurer can mark.', 'Fixed: the export reads this season.'];
 /** Which flaws each round of a real review finds. Round three finds nothing. */
 const ROUNDS = [[0, 1], [2], []];
 /** What a reviewer with no rule to stop finds once the real flaws are gone. */
-const TASTE = ['paidAt could be called paidOn.', 'This function could be split in two.', 'The button label could be shorter.', 'A comment here would help.'];
+const TASTE = [
+  'paidAt could be called paidOn.', 'This function could be split in two.', 'The button label could be shorter.', 'A comment here would help.',
+  'The test names could be more specific.', 'This could use a constant.', 'The import order is inconsistent.', 'Consider an enum for the status.',
+];
+export const ATTACK = 'You did not write this change. Find the three most likely ways it is wrong, and for each one say how to see it fail. Skip style.';
+export const STOP = 'Report only what breaks. Three rounds at most.';
 
 // ---------- the picture ----------
 
@@ -45,8 +58,8 @@ const base = (ctx: Ctx, o: Look = {}): SceneState => {
       ...(o.reviewer ? [lab('r0', n.r, 'top', 'wiki/review/')] : []),
       ...(o.meters ? [
         // Short names, one above and one below, so the four labels on the left fit at 390 wide.
-        lab([M_BUILDER[0] + 3, M_BUILDER[1] - 5, 40], ctx.data.builderLab ?? 'a plan', 'top', 'wiki/subscription-plan/'),
-        lab([M_REVIEWER[0] + 13, M_REVIEWER[1] + 13, 0], ctx.data.reviewerLab ?? 'a plan', 'bottom', 'wiki/subscription-plan/'),
+        lab([M_BUILDER[0] + 3, M_BUILDER[1] - 5, 40], `${ctx.data.builderLab ?? 'a'} plan`, 'top', 'wiki/subscription-plan/'),
+        lab([M_REVIEWER[0] + 13, M_REVIEWER[1] + 13, 0], `${ctx.data.reviewerLab ?? 'a'} plan`, 'bottom', 'wiki/subscription-plan/'),
       ] : []),
     ],
   });
@@ -58,8 +71,16 @@ const base = (ctx: Ctx, o: Look = {}): SceneState => {
 
 // ---------- the readout ----------
 
-interface Tally { rounds: number; fixed: number; wrong: number }
-const show = (ctx: Ctx, t: Tally) => ctx.stat([['rounds of review', t.rounds], ['found and fixed', t.fixed], ['wrong when it reached you', t.wrong]]);
+/** One readout for the lesson; every count only goes up within a run. */
+interface Tally { rounds: number; found: number; fixed: number; taste: number; wrong: number | string }
+const tally = (): Tally => ({ rounds: 0, found: 0, fixed: 0, taste: 0, wrong: '–' });
+const show = (ctx: Ctx, t: Tally) => ctx.stat([
+  ['rounds of review', t.rounds],
+  ['flaws found, of 3', t.found],
+  ['fixed', t.fixed],
+  ['matters of taste', t.taste],
+  ['flaws that reached you', t.wrong],
+]);
 
 // ---------- pieces of a run ----------
 
@@ -77,7 +98,7 @@ async function build(ctx: Ctx, h: Script, t: Tally) {
     h.set((s) => { s.agents[0]!.busy = false; s.tools!.on = null; s.agents[0]!.blocks!.push({ t: kind, h: size }); });
     await h.wait(160);
   }
-  ctx.say(n.b, 'Built. 14 of 14 tests pass.');
+  ctx.say(n.b, ctx.level === 'plain' ? 'Built. All 14 tests pass.' : 'Built. tsc clean, 14 of 14 tests pass.');
   await h.wait(700);
 }
 
@@ -87,10 +108,10 @@ async function fix(ctx: Ctx, h: Script, found: number[], t: Tally, drain = 0, ta
   h.set((s) => { const a = s.agents[0]!; a.busy = true; for (const _ of found) a.blocks!.push({ t: taste ? 'model' : 'bad', h: 1.6 }); if (drain) s.meters!.find((m) => m.id === 'b')!.level -= drain; });
   await h.wait(520);
   h.set((s) => { const a = s.agents[0]!; a.busy = false; a.blocks!.push({ t: 'tool', h: 2 }); s.tools!.on = null; });
-  t.fixed += found.filter((i) => i < FLAWS.length).length;
+  if (!taste) t.fixed += found.length;
   show(ctx, t);
-  ctx.say(n.b, found.length === 1 ? (FIXED[found[0]!] ?? 'Changed it.') : found.map((i) => FIXED[i]).join(' '));
-  await h.wait(800);
+  ctx.say(n.b, taste ? 'Changed it.' : found.map((i) => FIXED[i]).join(' '));
+  await h.wait(taste ? 500 : 800);
 }
 
 /** Send the change across to the reviewer: its window starts empty and gets the brief and the change. */
@@ -103,15 +124,17 @@ async function sendAcross(ctx: Ctx, h: Script, extra: Kind[] = []) {
   h.set((s) => { const r = s.agents.find((a) => a.id === 'r0')!; r.blocks!.push({ t: 'model', h: 6 }); for (const k of extra) r.blocks!.push({ t: k, h: 4 }); });
 }
 
-/** The reviewer reads what it was sent and says what it found. Returns the findings. */
-async function look(ctx: Ctx, h: Script, found: number[] | string[], drain = 0) {
+/** The reviewer reads what it was sent and says what it found. */
+async function look(ctx: Ctx, h: Script, found: number[] | string[], t: Tally, o: { drain?: number; attack?: boolean } = {}) {
   const n = names(ctx);
-  h.set((s) => { const r = s.agents.find((a) => a.id === 'r0')!; r.busy = true; r.scan = true; r.lamp = 'work'; if (drain) s.meters!.find((m) => m.id === 'r')!.level -= drain; });
+  h.set((s) => { const r = s.agents.find((a) => a.id === 'r0')!; r.busy = true; r.scan = true; r.lamp = 'work'; if (o.drain) s.meters!.find((m) => m.id === 'r')!.level -= o.drain; });
   await h.wait(1000);
-  h.set((s) => { const r = s.agents.find((a) => a.id === 'r0')!; r.busy = false; r.scan = false; const real = found.length > 0 && typeof found[0] === 'number'; r.lamp = real ? 'bad' : found.length ? 'off' : 'ok'; r.blocks!.push({ t: real ? 'bad' : 'model', h: 1.6 }); });
-  const lines = found.map((f) => (typeof f === 'number' ? FLAWS[f] : f));
-  const real = typeof found[0] === 'number';
-  ctx.say(n.r, !found.length ? 'Nothing found.' : !real ? lines.join(' ') : (found.length === 1 ? 'One problem. ' : `${found.length} problems. `) + lines.join(' '));
+  const real = found.length > 0 && typeof found[0] === 'number';
+  h.set((s) => { const r = s.agents.find((a) => a.id === 'r0')!; r.busy = false; r.scan = false; r.lamp = real ? 'bad' : found.length ? 'off' : 'ok'; r.blocks!.push({ t: real ? 'bad' : 'model', h: 1.6 }); });
+  if (real) t.found += found.length; else t.taste += found.length;
+  show(ctx, t);
+  const lines = found.map((f) => (typeof f === 'number' ? FLAWS[f] + (o.attack ? ' ' + CHECKS[f] : '') : f));
+  ctx.say(n.r, !found.length ? 'Nothing found that breaks.' : !real ? lines.join(' ') : (found.length === 1 ? 'One problem. ' : `${found.length} problems. `) + lines.join(' '));
 }
 
 /** Findings travel back to the builder, the way the reader picked. A matter of taste travels pale. */
@@ -127,7 +150,7 @@ async function back(ctx: Ctx, h: Script, count: number, by: 'gate' | 'you', tast
     }
   }
   if (by === 'you') {
-    ctx.say('you', 'Pasting the findings into the other thread.');
+    ctx.say('you', 'Pasting the findings into the builder’s thread.');
     await h.wait(700);
     await h.send(route.youToAgent(), kind, { ms: 420 });
   }
@@ -146,65 +169,77 @@ async function arrive(ctx: Ctx, h: Script, wrong: number, t: Tally) {
 async function selfCheck(ctx: Ctx, h: Script) {
   const n = names(ctx);
   h.set((s) => { Object.assign(s, base(ctx)); });
-  const t: Tally = { rounds: 0, fixed: 0, wrong: 0 };
+  const t = tally();
   await build(ctx, h, t);
   ctx.say('you', 'Check your own work.');
   await h.wait(600);
   h.set((s) => { const a = s.agents[0]!; a.busy = true; a.scan = true; a.lamp = 'work'; });
-  ctx.say(n.b, 'Reading what I wrote.');
+  ctx.say(n.b, 'Reading back through what I wrote.');
   await h.wait(1600);
   h.set((s) => { const a = s.agents[0]!; a.scan = false; a.busy = false; });
   t.rounds = 1;
+  t.found = 1;
+  show(ctx, t);
   ctx.say(n.b, 'One problem. ' + FLAWS[0]);
   await h.wait(900);
   await fix(ctx, h, [0], t);
   ctx.say(n.b, 'The rest looks right.');
   await h.send(route.agentToGate(), 'bad', { ms: 340 });
+  h.set((s) => { s.gates![0]!.lamp = 'ok'; });
+  await h.wait(300);
   await arrive(ctx, h, 2, t);
-  ctx.say(null, `It found 1 of the 3 flaws. The other 2 reached you as “done”.`);
+  ctx.say(null, `It found 1 of the 3 flaws. The check passed, because the tests it wrote pass, and the other 2 reached you as “done”.`);
 }
 
-interface RoundOpts { polite?: boolean; rule?: boolean; meters?: boolean; by?: 'gate' | 'you'; handoff?: boolean }
+interface RoundOpts { polite?: boolean; attack?: boolean; rule?: boolean; meters?: boolean; by?: 'gate' | 'you'; handoff?: boolean }
 async function rounds(ctx: Ctx, h: Script, o: RoundOpts = {}) {
   const n = names(ctx);
   h.set((s) => { Object.assign(s, base(ctx, { reviewer: true, meters: o.meters })); });
-  const t: Tally = { rounds: 0, fixed: 0, wrong: 0 };
+  const t = tally();
   if (o.meters) h.set((s) => { s.meters!.find((m) => m.id === 'b')!.level -= 0.12; });
   await build(ctx, h, t);
-  const plan: (number[] | string[])[] = o.polite ? [['Looks good. One small thing: markPaid could be called setPaid.']] : o.rule === false ? [...ROUNDS.slice(0, 2), ...TASTE.map((x) => ['One more thing: ' + x])] : ROUNDS;
-  let taste = 0;
+  if (o.polite || o.attack) {
+    ctx.say('you', o.polite ? 'Review this.' : ATTACK);
+    await h.wait(o.attack ? 2200 : 900);
+  } else if (o.rule !== undefined) {
+    ctx.say('you', o.rule ? `Find what is wrong. ${STOP}` : 'Find what is wrong. Keep going until you are happy.');
+    await h.wait(1600);
+  }
+  const plan: (number[] | string[])[] = o.polite ? [['Looks good. One small thing: markPaid could be called setPaid.']]
+    : o.rule === false ? [...ROUNDS.slice(0, 2), ...TASTE.map((x) => ['One more thing: ' + x])]
+    : ROUNDS;
   for (const found of plan) {
     const isTaste = typeof found[0] === 'string';
     // Once only taste is left, the rounds run faster: the point is that they do not stop.
-    if (isTaste && !o.polite) ctx.scene.speed = 1.7;
+    if (isTaste && !o.polite) ctx.scene.speed = 1.8;
     await sendAcross(ctx, h, o.handoff ? ['model', 'tool', 'model'] : []);
     t.rounds++;
     show(ctx, t);
-    await look(ctx, h, found, o.meters ? 0.07 : 0);
-    await h.wait(700);
-    if (o.polite || !found.length) break;
-    if (isTaste) taste++;
+    await look(ctx, h, found, t, { drain: o.meters ? 0.07 : 0, attack: o.attack });
+    await h.wait(o.attack ? 1600 : 700);
+    if (o.polite) { t.taste = 1; show(ctx, t); break; }
+    if (!found.length) break;
+    if (o.rule && t.rounds >= 3) break;
     await back(ctx, h, found.length, o.by ?? 'gate', isTaste);
     await fix(ctx, h, isTaste ? [99] : (found as number[]), t, o.meters ? 0.06 : 0, isTaste);
   }
   ctx.scene.speed = 1;
   const wrong = FLAWS.length - t.fixed;
+  const used = (id: string) => Math.round((1 - ctx.scene.state.meters!.find((m) => m.id === id)!.level) * 100);
   if (o.rule === false) {
     h.set((s) => { s.gates![0]!.lamp = 'bad'; });
-    const left = (id: string) => Math.round((1 - ctx.scene.state.meters!.find((m) => m.id === id)!.level) * 100);
-    ctx.say(null, `${t.rounds} rounds and it is still finding things: the last ${taste} were matters of taste. ${n.b} used ${left('b')}% of its plan, ${n.r} ${left('r')}%.`);
+    ctx.say(null, `Round ${t.rounds} and it is still finding things: the last ${t.taste} were matters of taste, not flaws. ${n.b} has used ${used('b')}% of its allowance, ${n.r} ${used('r')}%, and nothing has reached you.`);
     return t;
   }
   await arrive(ctx, h, wrong, t);
-  if (o.polite) ctx.say(null, `“Looks good.” All ${wrong} flaws reached you.`);
-  else if (o.meters) {
-    const left = (id: string) => Math.round((1 - ctx.scene.state.meters!.find((m) => m.id === id)!.level) * 100);
-    ctx.say(null, `${t.rounds} rounds, then it stopped. ${n.b} used ${left('b')}% of its plan, ${n.r} ${left('r')}%.`);
-  } else ctx.say(null, `${t.rounds} rounds. All ${FLAWS.length} flaws were found and fixed before the work reached you.`);
+  if (o.polite) ctx.say(null, `“Looks good”, and a remark about a name. All ${wrong} flaws reached you.`);
+  else if (o.meters) ctx.say(null, `${t.rounds} rounds, then it stopped: round ${t.rounds} found nothing that breaks. ${n.b} used ${used('b')}% of its allowance, ${n.r} ${used('r')}%.`);
+  else if (o.attack) ctx.say(null, `All ${FLAWS.length} flaws found, each with a way to see it fail, and fixed before the work reached you.`);
+  else ctx.say(null, `${t.rounds} rounds. All ${FLAWS.length} flaws were found and fixed before the work reached you.`);
   return t;
 }
 
-// ----- how: the lead from chapter 8 runs the rounds -----
+// ----- how: the lead from "A lead" runs the rounds -----
 
 const ledScene = (ctx: Ctx): SceneState => {
   const n = names(ctx);
@@ -217,11 +252,11 @@ const between = (a: XY, b: XY): XY[] => [[a[0], a[1] + 14], [a[0], BUS_Y], [b[0]
 async function led(ctx: Ctx, h: Script) {
   const n = names(ctx);
   h.set((s) => { Object.assign(s, ledScene(ctx)); });
-  const t: Tally = { rounds: 0, fixed: 0, wrong: 0 };
+  const t = tally();
   const at = (id: string) => ctx.scene.agent(id).at;
   const agent = (s: SceneState, id: string) => s.agents.find((a) => a.id === id)!;
   show(ctx, t);
-  ctx.say('you', ASK + ' Have it reviewed until nothing is found.');
+  ctx.say('you', ASK + ' Have it reviewed until nothing that breaks is found.');
   await h.send(route.youToAgent(), 'you', { ms: 420 });
   h.set((s) => { agent(s, 'a0').blocks!.push({ t: 'you', h: 2.4 }); });
   await h.send(route.agentToWorker(at('w0')), 'model');
@@ -237,7 +272,9 @@ async function led(ctx: Ctx, h: Script) {
     h.set((s) => { const r = agent(s, 'w1'); r.blocks = [{ t: 'you', h: 2.4 }, { t: 'model', h: 6 }]; r.busy = true; r.scan = true; r.lamp = 'work'; });
     await h.wait(900);
     h.set((s) => { const r = agent(s, 'w1'); r.busy = false; r.scan = false; r.lamp = found.length ? 'bad' : 'ok'; });
-    ctx.say(n.r, found.length ? found.map((i) => FLAWS[i]).join(' ') : 'Nothing found.');
+    t.found += found.length;
+    show(ctx, t);
+    ctx.say(n.r, found.length ? found.map((i) => FLAWS[i]).join(' ') : 'Nothing found that breaks.');
     await h.wait(700);
     if (!found.length) break;
     await h.send(between(at('w1'), at('w0')), 'bad', { ms: 520 });
@@ -269,52 +306,51 @@ function playHow(ctx: Ctx, how: How) {
     const t = await rounds(ctx, h, { by: how === 'hand' ? 'you' : 'gate', handoff: how === 'handoff' });
     const cap = ctx.data.handoffCap as number | undefined;
     if (how === 'hand') ctx.say(null, `${t.rounds} rounds. You carried the findings across ${t.rounds - 1} times.`);
-    else ctx.say(null, `${t.rounds} rounds in one thread. ${n.r} saw a selection of ${n.b}’s thread${cap ? `, up to ${cap.toLocaleString('en-GB')} tokens by default` : ''}, as well as the change.`);
+    else ctx.say(null, `${t.rounds} rounds in one thread. ${n.r} saw a selection of ${n.b}’s thread${cap ? `, up to ${cap.toLocaleString('en-GB')} tokens by default` : ''}, as well as the change: a less empty window than by hand.`);
   });
 }
 const HOW_SAY: Record<How, string> = {
   hand: 'Two threads, one per model. You carry what the reviewer finds back to the builder.',
   handoff: 'One thread. It is handed to the other model to review, then handed back.',
-  lead: 'The lead from chapter 8 sends the work across and the findings back, and stops when nothing is found.',
+  lead: 'The lead sends the work across and the findings back, and stops when nothing that breaks is found.',
 };
 
 const play = (ctx: Ctx, o: RoundOpts) => void ctx.scene.run((h) => rounds(ctx, h, o).then(() => undefined));
 
-/** One short loop of this chapter, for the part-two overview. */
+/** One short loop of this lesson, for the part 3 overview. */
 export async function demo(ctx: Ctx, h: Script) {
   h.set((s) => { Object.assign(s, base(ctx, { reviewer: true })); });
-  const t: Tally = { rounds: 0, fixed: 0, wrong: 0 };
+  const t = tally();
   ctx.say('you', ASK);
   h.set((s) => { s.agents[0]!.blocks = [{ t: 'you', h: 2.4 }, { t: 'tool', h: 6 }, { t: 'model', h: 3 }]; });
   for (const found of ROUNDS.slice(0, 2)) {
     await sendAcross(ctx, h);
     t.rounds++;
-    await look(ctx, h, found);
+    await look(ctx, h, found, t);
     await back(ctx, h, 1, 'gate');
     await fix(ctx, h, found, t);
   }
   await sendAcross(ctx, h);
-  await look(ctx, h, []);
+  await look(ctx, h, [], t);
   await arrive(ctx, h, 0, t);
 }
 
 export const review: Chapter = {
   steps: {
-    self: { scene: (ctx) => base(ctx), enter: (ctx) => void ctx.scene.run((h) => selfCheck(ctx, h)) },
-    second: { scene: (ctx) => base(ctx, { reviewer: true }), enter: (ctx) => play(ctx, {}) },
-    attack: { scene: (ctx) => base(ctx, { reviewer: true }), enter: (ctx) => play(ctx, { polite: true }) },
-    rounds: { scene: (ctx) => base(ctx, { reviewer: true, meters: true }), enter: (ctx) => play(ctx, { meters: true, rule: false }) },
-    how: { scene: (ctx) => base(ctx, { reviewer: true }), enter: (ctx) => { ctx.say(null, HOW_SAY.hand); playHow(ctx, 'hand'); } },
+    self: { scene: (ctx) => base(ctx), enter: (ctx) => { note(ctx, 'self'); void ctx.scene.run((h) => selfCheck(ctx, h)); } },
+    second: { scene: (ctx) => base(ctx, { reviewer: true }), enter: (ctx) => { note(ctx, 'second'); play(ctx, {}); } },
+    attack: { scene: (ctx) => base(ctx, { reviewer: true }), enter: (ctx) => { note(ctx, 'attack'); play(ctx, { polite: true }); } },
+    rounds: { scene: (ctx) => base(ctx, { reviewer: true, meters: true }), enter: (ctx) => { note(ctx, 'rounds'); play(ctx, { meters: true, rule: false }); } },
+    how: { scene: (ctx) => base(ctx, { reviewer: true }), enter: (ctx) => { note(ctx, 'how'); playHow(ctx, 'hand'); } },
   },
   actions: {
     brief: (ctx, val) => {
-      ctx.say('you', val === 'polite' ? 'Review this.' : 'Find what is wrong. Try to break it.');
-      ctx.mem.polite = val === 'polite';
-      void ctx.scene.run(async (h) => { await h.wait(1200); await rounds(ctx, h, { polite: val === 'polite' }); });
+      ctx.say('you', val === 'polite' ? 'Review this.' : ATTACK);
+      play(ctx, val === 'polite' ? { polite: true } : { attack: true });
     },
     rule: (ctx, val) => {
-      ctx.say('you', val === 'none' ? 'Review it until you are happy.' : 'Only what breaks. Three rounds at most.');
-      void ctx.scene.run(async (h) => { await h.wait(1200); await rounds(ctx, h, { meters: true, rule: val !== 'none' }); });
+      ctx.say('you', val === 'none' ? 'Find what is wrong. Keep going until you are happy.' : `Find what is wrong. ${STOP}`);
+      play(ctx, { meters: true, rule: val !== 'none' });
     },
     how: (ctx, val) => { ctx.say(null, HOW_SAY[val as How]); playHow(ctx, val as How); },
   },

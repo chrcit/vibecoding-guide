@@ -5,12 +5,14 @@ import More from '../../components/journey/More.astro';
 import Next from '../../components/journey/Next.astro';
 import Fact from '../../components/data/Fact.astro';
 import Verified from '../../components/data/Verified.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
 import { models } from '../../data/models';
 import { t3code } from '../../data/t3code';
+import { ATTACK, STOP } from '../../journey/chapters/review';
 import { url } from '../../lib/nav';
 
-// Who builds and who reviews. Swap the two keys and the chapter swaps the names; nothing else in
+// Who builds and who reviews. Swap the two keys and the lesson swaps the names; nothing else in
 // the script depends on which model is which.
 const builder = models['claude-opus-5-5'];
 const reviewer = models['gpt-6-2-sol'];
@@ -21,48 +23,57 @@ const data = {
   handoffCap: t3code.handoffCap.value,
 };
 const ids = [
-  'harnesses.claudeCode.codeReview', 'harnesses.claudeCode.reviewerAlwaysFinds', 'plans.claude.pro.claudeCode', 'plans.chatgpt.limits.codexOnEveryPlan',
+  'harnesses.claudeCode.codeReview', 'harnesses.claudeCode.sameModelReviewer', 'harnesses.claudeCode.reviewerAlwaysFinds', 'plans.claude.pro.claudeCode', 'plans.chatgpt.limits.codexOnEveryPlan',
   't3code.handoff', 't3code.handoffCap', 'harnesses.codex.sandbox',
 ];
 ---
-<Journey chapter="review" first="self" data={data} title="A second model" description="One model builds, a different model reviews with a fresh window, and they loop until the real bugs are gone.">
+<Journey chapter="review" first="self" data={data} title="A second model" description="One model builds, a different model reviews in a fresh window, and they go round until the real flaws are gone.">
   <Step id="self" title="Asked to check itself, it trusts its own work">
-    <p>When {data.builder} reviews its own code, it reads back through the same context window it just built in, carrying the same assumptions. Out of three planted bugs in this example, it catches one—the other two slip past <a href={url('journey/check/')}>the check from step 5</a> and reach you.</p>
+    <p>{data.builder} builds a made-up feature with three planted flaws, and the tests it wrote pass <a href={url('journey/check/')}>the check from Make it prove it</a>. Asked to review its own work, it reads back through the same window, with the same assumptions, and finds one.</p>
   </Step>
-  <Step id="second" title="A different model starts with fresh eyes">
-    <p>Send the diff across to {data.reviewer} instead, in an empty window holding only your brief and the change. Without the builder’s assumptions, it catches the flaws and sends them back to be fixed until a round comes back clean.</p>
+  <Step id="second" title="A different model, an empty window">
+    <p>Now {data.reviewer}, a model from {data.reviewerLab}, reviews it in a fresh window that holds only your request and the change. Nothing of the builder’s reasoning comes with it, and it is a different model with different habits: findings go back, get fixed, and the rounds stop when one comes back clean.</p>
     <More title="Where this comes from">
-      <p><Fact id="harnesses.claudeCode.codeReview" show="claim" /></p>
+      <p><Fact id="harnesses.claudeCode.sameModelReviewer" show="claim" /> <Fact id="harnesses.claudeCode.codeReview" show="claim" /></p>
     </More>
   </Step>
   <Step id="attack" title="Tell it to try to break it">
-    <p>A polite “Review this” usually earns a rubber stamp and a minor naming suggestion. Tell {data.reviewer} to hunt for bugs and try to break the code, and the real flaws surface.</p>
+    <p>What you ask for is what you get. Compare a polite request with one that asks for the ways it fails and how to see each one.</p>
     <div class="pick">
       <button type="button" data-do="brief" data-val="polite" data-default aria-pressed="true">“Review this.”</button>
-      <button type="button" data-do="brief" data-val="attack" aria-pressed="false">“Find what is wrong. Try to break it.”</button>
+      <button type="button" data-do="brief" data-val="attack" aria-pressed="false">“Find the three ways it is wrong”</button>
     </div>
-    <More title="A prompt for this">
+    <p>“{ATTACK}”</p>
+    <More title="The whole prompt, to copy">
       <CopyPrompt title="Ask a second model for an adversarial review" compact>{`You are reviewing a change you did not write. You get the task and the diff below, and nothing else: do not ask for the author's explanation.
 
-Find the three most likely ways this change is wrong: a case it mishandles, someone it lets do too much, data it breaks. For each, give a way to check it: a command, a test to write, or steps to follow in the app. Skip style and naming. If you find fewer than three real problems, say so.
+Find the three most likely ways this change is wrong: a case it mishandles, someone it lets do too much, data it breaks. For each, give a way to see it fail: a command, a test to write, or steps to follow in the app. Skip style and naming. If you find fewer than three real problems, say so.
 
 Task: <paste the task you gave the first model>
 
 Diff: <paste the output of git diff>`}</CopyPrompt>
     </More>
   </Step>
-  <Step id="rounds" title="Set a stop rule">
-    <p>Each round drains both providers’ allowances. Without a stop rule, a reviewer will always find something to complain about—once the real bugs are gone, it keeps sending back style nitpicks forever.</p>
+  <Step id="rounds" title="Say when to stop">
+    <p>Each model runs on its own plan, and every round uses some of that plan’s allowance: the share of use you get before it pauses (see <a href={url('journey/meter/')}>What it costs</a>). Without a rule the reviewer always finds something more; with one, it stops.</p>
     <div class="pick">
       <button type="button" data-do="rule" data-val="none" data-default aria-pressed="true">No limit</button>
-      <button type="button" data-do="rule" data-val="rule" aria-pressed="false">Only what breaks, three rounds at most</button>
+      <button type="button" data-do="rule" data-val="rule" aria-pressed="false">“{STOP}”</button>
     </div>
     <More title="Where this comes from">
       <p><Fact id="harnesses.claudeCode.reviewerAlwaysFinds" show="claim" /></p>
     </More>
   </Step>
-  <Step id="how" title="How to run the loop">
-    <p>You can paste findings between two threads by hand, hand off one thread to another model, or let <a href={url('journey/lead/')}>the lead from step 8</a> run the back-and-forth and bring you one summary. Either model can build or review.</p>
+  <Step id="how" title="Three ways to run the loop">
+    <ForLevel is="plain">
+      <p>Paste the findings between two threads yourself, hand one thread from one model to the other, or let <a href={url('journey/lead/')}>the lead from A lead</a> run the rounds and bring you one report.</p>
+    </ForLevel>
+    <ForLevel is="technical">
+      <p>By hand, the reviewer gets exactly what you paste: the task and <code>git diff</code>, plus the test output if you want it checked. A handoff passes a selection of the thread; a lead runs the rounds and reports once.</p>
+    </ForLevel>
+    <ForLevel is="engineer">
+      <p>In a team this loop runs before a pull request is opened, so a colleague reads a change that has already been attacked. By hand keeps the reviewer’s window cleanest; a handoff is faster but less independent; a lead costs a third window but none of your attention.</p>
+    </ForLevel>
     <div class="pick">
       <button type="button" data-do="how" data-val="hand" data-default aria-pressed="true">By hand</button>
       <button type="button" data-do="how" data-val="handoff" aria-pressed="false">One thread, handed off</button>
@@ -74,7 +85,7 @@ Diff: <paste the output of git diff>`}</CopyPrompt>
     <Next from="review" more={[{ href: 'explain/verification/', text: 'Checking the work' }, { href: 'models/', text: 'The models' }]} />
   </Step>
   <Fragment slot="foot">
-    <p>The example feature, its three bugs, the review comments, and the plan drain rates are illustrative. Which model builds and which reviews can be swapped—the point is that they are different. <Fact id="plans.claude.pro.claudeCode" show="claim" /> <Fact id="plans.chatgpt.limits.codexOnEveryPlan" show="claim" /></p>
+    <p>The feature, its three flaws, the review comments and how fast the allowances drain are made up. Which model builds and which reviews can be swapped; what matters is that they are different. <Fact id="plans.claude.pro.claudeCode" show="claim" /> <Fact id="plans.chatgpt.limits.codexOnEveryPlan" show="claim" /></p>
     <Verified ids={ids} />
   </Fragment>
 </Journey>
