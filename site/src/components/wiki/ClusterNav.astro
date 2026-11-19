@@ -1,0 +1,53 @@
+---
+/*
+  The article's cluster and every article in it, the current one marked.
+  Goes in the Article layout's sidebar slot: a left column on wide screens,
+  after the article on narrow ones.
+  Props: article (Article), wiki (Wiki).
+*/
+import { clusterOf, type Article, type Wiki } from '../../lib/wiki';
+import { url } from '../../lib/nav';
+import ClusterMark from './ClusterMark.astro';
+
+interface Props { article: Article; wiki: Wiki }
+const { article, wiki } = Astro.props;
+const c = clusterOf(article.cluster);
+const siblings = wiki.articles.filter((a) => a.cluster === c.id);
+---
+<nav class="cn" aria-label={c.label}>
+  <a class="cn-head" href={url(`wiki/#c-${c.id}`)}><ClusterMark cluster={c.id} size={14} />{c.label}</a>
+  <ul>
+    {siblings.map((a) => (
+      <li><a href={url(`wiki/${a.slug}/`)} aria-current={a.slug === article.slug ? 'page' : undefined}>{a.title}</a></li>
+    ))}
+  </ul>
+</nav>
+
+<style>
+  .cn { font-size: var(--text-s); line-height: 1.35; }
+  /* In the side view the article is a quick look: no list of its neighbours in the cluster. */
+  :global(html[data-embed]) .cn { display: none; }
+  .cn-head {
+    display: flex; align-items: center; gap: 0.55rem;
+    min-height: 2.5rem;
+    margin-bottom: var(--space-1);
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .cn-head:hover { color: var(--accent); }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li a {
+    display: block;
+    padding: 0.35rem 0;
+    color: var(--muted);
+    text-decoration: none;
+  }
+  li a:hover { color: var(--ink); }
+  li a[aria-current='page'] { color: var(--accent); font-weight: 560; }
+  @media (max-width: 79.99rem) {
+    .cn { border-top: 1px solid var(--rule); padding-top: var(--space-5); }
+    ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr)); column-gap: var(--space-6); }
+    li a { padding: 0.5rem 0; min-height: 2.5rem; box-sizing: border-box; }
+  }
+</style>
