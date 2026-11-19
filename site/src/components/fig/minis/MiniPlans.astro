@@ -1,0 +1,54 @@
+---
+// Miniature for the Plans and the API board: hours of steady work drain a plan's allowance, which
+// refills each window; the API meter keeps counting.
+import MiniFrame from './MiniFrame.astro';
+import { PLAN_MAX_HOURS, planAfter } from './model';
+import { fact, formatValue } from '../../../lib/facts';
+const windowName = formatValue(fact('plans.claude.limits.fiveHour'));
+const first = 4;
+const s = planAfter(first);
+const TX = 40, TY = 22, TW = 70, TH = 92;
+const MX = 190, MW = 70;
+---
+<MiniFrame id="plans" href="explain/plans-and-api/" name="Plans against the API" alt="Two gauges side by side: a plan's tank, partly drained by hours of work, and an API meter whose stack grows with every hour.">
+  <svg viewBox="0 0 300 140" aria-hidden="true" data-cfg={JSON.stringify({ TH, MAX: PLAN_MAX_HOURS })}>
+    <rect class="m-frame" x={TX} y={TY} width={TW} height={TH} rx="6" />
+    <g clip-path="url(#plan-clip)">
+      <rect class="m-blue m-move" x={TX} y={TY} width={TW} height={TH} data-plan-level style={`transform:translateY(${(1 - s.left) * TH}px)`} />
+    </g>
+    <clipPath id="plan-clip"><rect x={TX + 1.5} y={TY + 1.5} width={TW - 3} height={TH - 3} rx="5" /></clipPath>
+    <text x={TX + TW / 2} y="134" text-anchor="middle">plan</text>
+    <text x={TX + TW + 8} y={TY + 12} data-plan-wait class="m-wait">{s.waited ? `waits ${s.waited} h` : ''}</text>
+    <rect class="m-well" x={MX} y={TY} width={MW} height={TH} rx="6" />
+    {Array.from({ length: PLAN_MAX_HOURS }, (_, n) => (
+      <rect class="m-lit-soft m-move" x={MX + 8} y={TY + TH - 4 - (n + 1) * 7.2} width={MW - 16} height="5.6" rx="1.5" data-plan-coin={n} style={n < first ? '' : 'opacity:0'} />
+    ))}
+    <text x={MX + MW / 2} y="134" text-anchor="middle">API</text>
+  </svg>
+  <label slot="control" class="mini-range">Hours<input type="range" min="0" max={PLAN_MAX_HOURS} value={first} data-plan-hours aria-label={`Hours of steady work. The plan refills every ${windowName}.`} /><output class="mini-out" data-plan-out>{first}</output></label>
+</MiniFrame>
+<style>
+  .m-wait { fill: var(--accent) !important; }
+</style>
+
+<script>
+  import { planAfter } from './model';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-mini="plans"]')) {
+    const { TH } = JSON.parse(root.querySelector('svg')!.dataset.cfg!);
+    const input = root.querySelector<HTMLInputElement>('[data-plan-hours]')!;
+    const out = root.querySelector<HTMLOutputElement>('[data-plan-out]')!;
+    const level = root.querySelector<SVGRectElement>('[data-plan-level]')!;
+    const wait = root.querySelector<SVGTextElement>('[data-plan-wait]')!;
+    const coins = [...root.querySelectorAll<SVGRectElement>('[data-plan-coin]')];
+    const draw = () => {
+      const h = Number(input.value);
+      const s = planAfter(h);
+      level.style.transform = `translateY(${((1 - s.left) * TH).toFixed(1)}px)`;
+      wait.textContent = s.waited ? `waits ${s.waited} h` : '';
+      coins.forEach((c, i) => (c.style.opacity = i < h ? '1' : '0'));
+      out.textContent = String(h);
+    };
+    input.addEventListener('input', draw);
+    draw();
+  }
+</script>

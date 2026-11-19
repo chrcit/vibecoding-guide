@@ -1,0 +1,41 @@
+---
+// Miniature for the Models board: METR's time horizons. Ask for success four times in five instead
+// of half the time, and the same models manage far shorter tasks. Data from src/data/benchmarks.ts.
+import MiniFrame from './MiniFrame.astro';
+import { horizonInputs } from '../../home/horizon-data';
+import { year } from '../horizon/model';
+import { linear, log } from '../kit/chart';
+
+const pairs = horizonInputs.p80.map((p) => ({ name: p.name, t: year(p.released), p80: p.minutes, p50: horizonInputs.p50.find((q) => q.name === p.name)!.minutes }));
+const all = pairs.flatMap((p) => [p.p50, p.p80]);
+const x = linear([Math.min(...pairs.map((p) => p.t)) - 0.1, Math.max(...pairs.map((p) => p.t)) + 0.1], [70, 286]);
+const y = log([Math.min(...all) / 1.5, Math.max(...all) * 1.5], [120, 14]);
+const ticks = [1, 60, 60 * 8].filter((m) => m >= y.domain[0] && m <= y.domain[1]);
+const tickName = (m: number) => (m < 60 ? `${m} min` : `${m / 60} h`);
+const pts = pairs.map((p) => ({ ...p, cx: x(p.t), y50: y(p.p50), y80: y(p.p80) }));
+---
+<MiniFrame id="models" href="models/" name="Models" alt="Dots for each model by release date, on a log scale of task length: the length of task each finishes half the time, rising year by year.">
+  <svg viewBox="0 0 300 140" aria-hidden="true">
+    {ticks.map((m) => <g><path class="m-dash" d={`M70 ${y(m).toFixed(1)}H290`} /><text x="62" y={(y(m) + 5).toFixed(1)} text-anchor="end">{tickName(m)}</text></g>)}
+    <path class="m-line m-move" data-h-line d={'M' + pts.map((p) => `${p.cx.toFixed(1)} ${p.y50.toFixed(1)}`).join('L')} />
+    {pts.map((p) => <circle class="m-lit m-move" cx={p.cx.toFixed(1)} cy={p.y50.toFixed(1)} r="5" data-h-pt data-d={(p.y80 - p.y50).toFixed(1)} />)}
+  </svg>
+  <div slot="control" class="pick" role="group" aria-label="How often the model must succeed">
+    <button type="button" data-h="50" aria-pressed="true">Half the time</button>
+    <button type="button" data-h="80" aria-pressed="false">Four in five</button>
+  </div>
+</MiniFrame>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-mini="models"]')) {
+    const pts = [...root.querySelectorAll<SVGCircleElement>('[data-h-pt]')];
+    const line = root.querySelector<SVGPathElement>('[data-h-line]')!;
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-h]')];
+    buttons.forEach((b) => b.addEventListener('click', () => {
+      const strict = b.dataset.h === '80';
+      buttons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      pts.forEach((p) => (p.style.transform = strict ? `translateY(${p.dataset.d}px)` : ''));
+      line.style.opacity = strict ? '0' : '1';
+    }));
+  }
+</script>

@@ -1,0 +1,43 @@
+---
+// Miniature for the Verification board: the holiday hours fix has three mistakes, and each judge
+// sees a different set of them.
+import MiniFrame from './MiniFrame.astro';
+import { JUDGES, MISTAKES, type Judge } from './model';
+const first: Judge = 'test';
+---
+<MiniFrame id="judges" href="explain/verification/" name="Verification" alt="Three mistakes in the bakery's holiday hours fix, each with a light: green where the chosen judge catches it, orange where it slips through.">
+  <svg viewBox="0 0 300 140" aria-hidden="true">
+    {MISTAKES.map((m, i) => {
+      const caught = m.caughtBy.includes(first);
+      return (
+        <g data-j-row={i} data-caught={caught ? 'yes' : 'no'}>
+          <rect class="m-frame" x="10" y={12 + i * 42} width="280" height="34" rx="6" />
+          <circle class="j-dot" cx="30" cy={29 + i * 42} r="7" />
+          <text x="46" y={34 + i * 42}>{m.name}</text>
+        </g>
+      );
+    })}
+  </svg>
+  <div slot="control" class="pick" role="group" aria-label="Who checks">
+    {JUDGES.map((j) => <button type="button" data-judge={j.id} aria-pressed={j.id === first ? 'true' : 'false'}>{j.name}</button>)}
+  </div>
+</MiniFrame>
+<style is:global>
+  [data-mini='judges'] .j-dot { transition: fill 200ms ease, stroke 200ms ease; stroke-width: 1.5; }
+  [data-mini='judges'] [data-caught='yes'] .j-dot { fill: var(--green); stroke: var(--green); }
+  [data-mini='judges'] [data-caught='no'] .j-dot { fill: var(--card); stroke: var(--accent); stroke-dasharray: 3 2.5; }
+  [data-mini='judges'] [data-caught='no'] text { fill: var(--muted); }
+</style>
+
+<script>
+  import { MISTAKES, type Judge } from './model';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-mini="judges"]')) {
+    const rows = [...root.querySelectorAll<SVGGElement>('[data-j-row]')];
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-judge]')];
+    buttons.forEach((b) => b.addEventListener('click', () => {
+      const j = b.dataset.judge as Judge;
+      buttons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      rows.forEach((r, i) => (r.dataset.caught = MISTAKES[i]!.caughtBy.includes(j) ? 'yes' : 'no'));
+    }));
+  }
+</script>

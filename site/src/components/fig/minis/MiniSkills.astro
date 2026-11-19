@@ -1,0 +1,45 @@
+---
+// Miniature for the Skills board: a shelf of skills shows only their names; the one whose
+// description matches the task comes off the shelf.
+import MiniFrame from './MiniFrame.astro';
+import { SKILLS, TASKS, type Task } from './model';
+const first: Task = 'bakery';
+---
+<MiniFrame id="skills" href="explain/skills/" name="Skills" alt="Four skill cards stand on a shelf showing only their names. The card that matches the task has risen off the shelf and opened.">
+  <svg viewBox="0 0 300 140" aria-hidden="true">
+    <rect class="m-well" x="6" y="118" width="288" height="10" rx="2" />
+    {SKILLS.map((s, i) => {
+      const x = 14 + i * 71;
+      const on = s.for === first;
+      return (
+        <g class="m-move" data-skill={s.for ?? ''} style={on ? 'transform:translateY(-34px)' : ''}>
+          <rect class={on ? 'm-lit-soft' : 'm-part'} x={x} y="62" width="62" height="56" rx="4" data-skill-card />
+          <text x={x + 31} y="84" text-anchor="middle">{s.name}</text>
+          <g class="m-move" data-skill-body style={on ? '' : 'opacity:0'}>
+            <rect class="m-ink" x={x + 10} y="94" width="42" height="3" rx="1.5" />
+            <rect class="m-ink" x={x + 10} y="102" width="30" height="3" rx="1.5" />
+          </g>
+        </g>
+      );
+    })}
+  </svg>
+  <div slot="control" class="pick" role="group" aria-label="Task">
+    {TASKS.map((t) => <button type="button" data-task={t.id} aria-pressed={t.id === first ? 'true' : 'false'}>{t.name}</button>)}
+  </div>
+</MiniFrame>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-mini="skills"]')) {
+    const cards = [...root.querySelectorAll<SVGGElement>('[data-skill]')];
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-task]')];
+    buttons.forEach((b) => b.addEventListener('click', () => {
+      buttons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      cards.forEach((c) => {
+        const on = c.dataset.skill === b.dataset.task;
+        c.style.transform = on ? 'translateY(-34px)' : '';
+        c.querySelector('[data-skill-card]')!.setAttribute('class', on ? 'm-lit-soft' : 'm-part');
+        (c.querySelector('[data-skill-body]') as SVGGElement).style.opacity = on ? '1' : '0';
+      });
+    }));
+  }
+</script>

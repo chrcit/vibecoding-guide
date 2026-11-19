@@ -1,0 +1,58 @@
+---
+// Miniature for the Connectors board: each connector you plug in adds tools the agent can call.
+import MiniFrame from './MiniFrame.astro';
+import { CONNECTORS, BUILT_IN_TOOLS } from './model';
+const on0 = new Set(['issues']);
+const total = CONNECTORS.reduce((n, c) => n + c.tools, 0) + BUILT_IN_TOOLS;
+let t = 0;
+const tools = [
+  ...Array.from({ length: BUILT_IN_TOOLS }, () => ({ owner: '' })),
+  ...CONNECTORS.flatMap((c) => Array.from({ length: c.tools }, () => ({ owner: c.id }))),
+].map((x) => ({ ...x, i: t++ }));
+const toolX = (i: number) => 150 + (i % 6) * 23;
+const toolY = (i: number) => 28 + Math.floor(i / 6) * 32;
+---
+<MiniFrame id="connectors" href="explain/connectors/" name="Connectors and MCP" alt="Three sockets on the left, one with a plug in it. On the right, a rack of tools the agent can call: the built-in ones and those the plugged-in connector adds.">
+  <svg viewBox="0 0 300 140" aria-hidden="true">
+    {CONNECTORS.map((c, i) => (
+      <g data-c={c.id} data-on={on0.has(c.id) ? 'yes' : 'no'}>
+        <rect class="m-frame" x="12" y={14 + i * 40} width="100" height="32" rx="6" />
+        <circle class="m-well" cx="30" cy={30 + i * 40} r="8" />
+        <circle class="c-plug m-move" cx="30" cy={30 + i * 40} r="5" />
+        <text x="46" y={35 + i * 40}>{c.name}</text>
+      </g>
+    ))}
+    {tools.map((x) => (
+      <rect class={x.owner ? 'm-lit-soft m-move' : 'm-ink'} x={toolX(x.i)} y={toolY(x.i)} width="17" height="22" rx="3" data-tool={x.owner} style={x.owner && !on0.has(x.owner) ? 'opacity:0' : ''} />
+    ))}
+    <text x="150" y="134">tools</text>
+    <text class="m-big" x="288" y="134" text-anchor="end" data-c-count>{BUILT_IN_TOOLS + CONNECTORS.filter((c) => on0.has(c.id)).reduce((n, c) => n + c.tools, 0)}</text>
+  </svg>
+  <div slot="control" class="pick" role="group" aria-label="Connectors plugged in" data-total={total}>
+    {CONNECTORS.map((c) => <button type="button" data-plug={c.id} aria-pressed={on0.has(c.id) ? 'true' : 'false'}>{c.name}</button>)}
+  </div>
+</MiniFrame>
+<style is:global>
+  [data-mini='connectors'] .c-plug { fill: var(--accent); transition: opacity 200ms ease; }
+  [data-mini='connectors'] [data-on='no'] .c-plug { opacity: 0; }
+</style>
+
+<script>
+  import { CONNECTORS, BUILT_IN_TOOLS } from './model';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-mini="connectors"]')) {
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-plug]')];
+    const count = root.querySelector<SVGTextElement>('[data-c-count]')!;
+    const draw = () => {
+      const on = new Set(buttons.filter((b) => b.getAttribute('aria-pressed') === 'true').map((b) => b.dataset.plug!));
+      root.querySelectorAll<SVGGElement>('[data-c]').forEach((g) => (g.dataset.on = on.has(g.dataset.c!) ? 'yes' : 'no'));
+      root.querySelectorAll<SVGRectElement>('[data-tool]').forEach((r) => {
+        if (r.dataset.tool) r.style.opacity = on.has(r.dataset.tool) ? '1' : '0';
+      });
+      count.textContent = String(BUILT_IN_TOOLS + CONNECTORS.filter((c) => on.has(c.id)).reduce((n, c) => n + c.tools, 0));
+    };
+    buttons.forEach((b) => b.addEventListener('click', () => {
+      b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true'));
+      draw();
+    }));
+  }
+</script>
