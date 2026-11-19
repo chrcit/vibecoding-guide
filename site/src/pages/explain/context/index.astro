@@ -55,6 +55,8 @@ const facts: Facts = {
   lineAdvice: v('harnesses.claudeCode.claudeMdLines'),
 };
 
+// TODO wiki: context-window, instruction-file, connector, skill, compaction. Point these at
+// wiki/<slug>/ once the wiki is merged; until then they open the long read and the explainers.
 const labSide = {
   harness: url(READ + '#what-the-agent-can-see'),
   file: url(READ + '#standing-instructions'),
@@ -116,6 +118,7 @@ const factIds = [
 
   <Tile title="What it is not told, it guesses" span={8} side={READ + '#context-is-capability'}>
     <SameRequest window={facts.models[0]!.window} />
+    <Fragment slot="foot"><Explain to={READ + '#how-the-model-works'}>Written examples, not recorded runs</Explain></Fragment>
   </Tile>
 
   <Tile title="Each harness reads its own file" span={4} side={READ + '#standing-instructions'}>
@@ -126,7 +129,7 @@ const factIds = [
     <FileSort advice={facts.lineAdvice} tokensPerLine={TOKENS_PER_LINE} />
   </Tile>
 
-  <Tile title="Add a line each time you correct it" span={5}>
+  <Tile title="Add a line each time you correct it" span={5} side={READ + '#standing-instructions'}>
     <div class="cx-prompts" data-cx-prompts>
       <div class="pick" role="group" aria-label="Prompt">
         {prompts.map((p, i) => <button type="button" data-prompt={p.id} aria-pressed={i === 0 ? 'true' : 'false'}>{p.name}</button>)}
@@ -145,15 +148,20 @@ const factIds = [
   </Tile>
 
   <Tile title="The cache is a prefix: change the front, pay again" span={4} level="engineer" side={READ + '#prompt-caching'}>
+    {/* TODO wiki: prompt-caching */}
     <CacheOrder read={opus.cacheRead!} write={v('lineup.opusCacheWrite5m')} input={opus.input!} modelName={opus.name} />
+    <Fragment slot="foot"><Explain to={READ + '#how-the-model-works'}>Token sizes are modelled</Explain></Fragment>
   </Tile>
 
   <Tile title="Compaction turns a test log into one line" span={4} level="engineer" side={READ + '#compaction'}>
     <CompactionResults cap={v('connectors.claudeCodeMcp.outputLimit')} reread={facts.reread} />
+    <Fragment slot="foot"><Explain to={READ + '#how-the-model-works'}>Result sizes are illustrative</Explain></Fragment>
   </Tile>
 
-  <Tile title="A subagent reads so the main thread does not" span={4} level="engineer" side={url('explain/orchestration/')}>
+  {/* TODO wiki: subagent */}
+  <Tile title="A subagent reads so the main thread does not" span={4} level="engineer" side={READ + '#subagents'}>
     <SubagentWindow window={opus.window} compactAt={opus.compactAt} />
+    <Fragment slot="foot"><Explain to="explain/orchestration/">Subagents</Explain> · <Explain to={READ + '#how-the-model-works'}>sizes modelled</Explain></Fragment>
   </Tile>
 
   <Verified slot="foot" ids={factIds} />
@@ -162,6 +170,11 @@ const factIds = [
 <style>
   .cx-prompts { display: grid; gap: 0.75rem; }
   .cx-prompt[hidden] { display: none; }
+</style>
+
+<style is:global>
+  /* The figures on this board carry no readout of their own: the finding sits beside them. */
+  :is(.lab, .sr, .fs, .ft, .co, .cr, .sw) .fig[data-bare] > .fig-foot:has(> .fig-readout:empty:only-child) { display: none; }
 </style>
 
 <script>
