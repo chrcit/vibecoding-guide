@@ -1,0 +1,92 @@
+---
+/*
+ * Fig. 36, a new thread is cheaper than a long one.
+ *
+ * Idea: every turn re-sends the window, so a thread that carries old tasks pays for them again on
+ * every turn. Chart of the window's size per turn across a run of tasks: one long thread (accent)
+ * against a fresh thread per task (green). The area under each line is what was sent.
+ * Controls: tasks in a row (1 to 12), turns per task (10 to 120).
+ * Data: the compaction point and the cache-read price arrive as props; sizes are the lab's.
+ */
+import Figure from '../Figure.astro';
+import Stat from '../../board/Stat.astro';
+import { series, chart, finding, k, LIMITS } from './model';
+
+interface Props { compactAt: number; cacheRead: number; modelName: string }
+const { compactAt, cacheRead, modelName } = Astro.props;
+const tasks = 5, turns = 40;
+const s = series(tasks, turns, compactAt);
+const usd = (tok: number) => { const v = (tok * cacheRead) / 1e6; return v < 10 ? `$${v.toFixed(2)}` : `$${Math.round(v)}`; };
+---
+<div class="ft" data-ft data-compact={compactAt} data-price={cacheRead}>
+  <div class="ft-grid-layout">
+    <div class="ft-main">
+      <Figure n={36} title="A new thread is cheaper than a long one" alt="A rising line for one long thread across five tasks, and a sawtooth for a fresh thread per task, far below it." bare>
+        <div class="ft-chart" data-ft-chart set:html={chart(s, 640, turns)} />
+      </Figure>
+      <p class="ft-key"><span class="ft-sw ft-sw-long"></span>One long thread <span class="ft-sw ft-sw-fresh"></span>A new thread per task</p>
+    </div>
+    <div class="ft-side">
+      <div class="controls">
+        <label class="control"><span>Tasks in a row <output data-o="tasks">{tasks}</output></span><input type="range" data-i="tasks" min={LIMITS.tasks[0]} max={LIMITS.tasks[1]} value={tasks} /></label>
+        <label class="control"><span>Turns per task <output data-o="turns">{turns}</output></span><input type="range" data-i="turns" min={LIMITS.turns[0]} max={LIMITS.turns[1]} step="5" value={turns} /></label>
+      </div>
+      <dl class="stats">
+        <Stat name="Sent, one long thread" id="ft-long" tone="accent">{k(s.totalLong)}</Stat>
+        <Stat name="Sent, a thread per task" id="ft-fresh" tone="green">{k(s.totalFresh)}</Stat>
+        <Stat name={`At ${modelName} cache price`} id="ft-usd">{`${usd(s.totalLong)} vs ${usd(s.totalFresh)}`}</Stat>
+      </dl>
+    </div>
+  </div>
+  <p class="finding" aria-live="polite" data-ft-finding set:html={finding(s, tasks)} />
+</div>
+
+<style is:global>
+  .ft { display: grid; gap: 0.75rem; }
+  .ft-grid-layout { display: grid; gap: 1rem 1.25rem; grid-template-columns: minmax(0, 1fr); }
+  @container (min-width: 820px) { .ft-grid-layout { grid-template-columns: minmax(0, 1fr) 17rem; } }
+  .ft-side { display: grid; gap: 0.75rem; align-content: start; }
+  .ft-side .stats { grid-template-columns: 1fr 1fr; }
+  .ft-side .stat:last-child { grid-column: 1 / -1; }
+  .ft-chart svg { display: block; width: 100%; height: auto; }
+  .ft-chart text { font-family: var(--mono); font-size: 13px; fill: var(--muted); }
+  .ft-chart .ft-grid { stroke: var(--rule); stroke-width: 1; }
+  .ft-chart .ft-task { stroke: var(--rule); stroke-dasharray: 3 4; }
+  .ft-chart .ft-long { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+  .ft-chart .ft-fresh { fill: none; stroke: var(--green); stroke-width: 2; stroke-linejoin: round; }
+  .ft-chart .ft-area-long { fill: var(--accent-soft); opacity: 0.8; }
+  .ft-chart .ft-area-fresh { fill: var(--green-soft); }
+  .ft-key { margin: 0.375rem 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem; font-size: var(--text-xs); color: var(--ink-2); }
+  .ft-sw { display: inline-block; width: 1rem; height: 3px; border-radius: 2px; margin-left: 0.5rem; }
+  .ft-sw:first-child { margin-left: 0; }
+  .ft-sw-long { background: var(--accent); }
+  .ft-sw-fresh { background: var(--green); }
+</style>
+
+<script>
+  import { series, chart, finding, k } from './model';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-ft]')) {
+    const compactAt = Number(root.dataset.compact);
+    const price = Number(root.dataset.price);
+    const box = root.querySelector<HTMLElement>('[data-ft-chart]')!;
+    const ins = [...root.querySelectorAll<HTMLInputElement>('[data-i]')];
+    const stat = (id: string) => root.querySelector<HTMLElement>(`[data-stat="${id}"]`)!;
+    const usd = (tok: number) => { const v = (tok * price) / 1e6; return v < 10 ? `$${v.toFixed(2)}` : `$${Math.round(v)}`; };
+    const val = (n: string) => Number(ins.find((i) => i.dataset.i === n)!.value);
+    let lastW = 0;
+    function update() {
+      const tasks = val('tasks'), turns = val('turns');
+      for (const i of ins) root.querySelector(`[data-o="${i.dataset.i}"]`)!.textContent = i.value;
+      const s = series(tasks, turns, compactAt);
+      lastW = Math.round(box.clientWidth) || 640;
+      box.innerHTML = chart(s, lastW, turns);
+      stat('ft-long').textContent = k(s.totalLong);
+      stat('ft-fresh').textContent = k(s.totalFresh);
+      stat('ft-usd').textContent = `${usd(s.totalLong)} vs ${usd(s.totalFresh)}`;
+      root.querySelector('[data-ft-finding]')!.innerHTML = finding(s, tasks);
+    }
+    for (const i of ins) i.addEventListener('input', update);
+    new ResizeObserver(() => { if (Math.round(box.clientWidth) !== lastW) update(); }).observe(box);
+    update();
+  }
+</script>

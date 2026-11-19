@@ -1,0 +1,247 @@
+---
+/*
+ * Fig. 3, the context lab: a window the reader fills.
+ *
+ * Idea: what an agent holds before the task starts, what fills it while it works, and what a
+ * compaction throws away. Two bars at one scale: the window now, and what falls out.
+ * Controls: model (window size), instruction file lines, connectors, tool definitions up front or
+ * on demand, skills installed and loaded, files read, minutes of conversation, how tool results come
+ * back. Four presets. Every control redraws the bars and the numbers at once.
+ * Data: window sizes, compaction point, prices, skill sizes come in as `facts` from src/data/;
+ * everything else is a named assumption in model.ts.
+ * Sits inside a board Tile, which carries the title.
+ */
+import Figure from '../Figure.astro';
+import Stat from '../../board/Stat.astro';
+import { PRESETS, LIMITS, ALT, run, finding, k, pct, usd, turnCost, type Facts, type LabState } from './model';
+import { layout, render, type SideMap } from './draw';
+
+interface Props {
+  facts: Facts;
+  side: SideMap & { model?: string };
+  /** The id of the preset to start on. */
+  start?: string;
+  startModel?: string;
+}
+const { facts, side, start = 'afternoon', startModel = facts.models[0]!.id } = Astro.props;
+const preset = PRESETS.find((p) => p.id === start) ?? PRESETS[0]!;
+const state: LabState = { model: startModel, ...preset.state };
+const lab = run(facts, state);
+const svg = render(layout(lab, 760), side);
+const cost = turnCost(lab);
+const data = JSON.stringify({ facts, side, state, presets: PRESETS });
+const ranges = [
+  { key: 'lines', name: 'Instruction file', unit: 'lines', step: 10 },
+  { key: 'connectors', name: 'Connectors', unit: '', step: 1 },
+  { key: 'skills', name: 'Skills installed', unit: '', step: 1 },
+  { key: 'loaded', name: 'Skills loaded', unit: '', step: 1 },
+  { key: 'files', name: 'Files read', unit: '', step: 1 },
+  { key: 'minutes', name: 'Conversation', unit: 'min', step: 5 },
+] as const;
+const show = (key: (typeof ranges)[number]['key'], v: number) => (key === 'minutes' ? (v >= 60 ? `${Math.floor(v / 60)} h ${v % 60 ? `${v % 60} min` : ''}`.trim() : `${v} min`) : key === 'lines' ? `${v} lines` : String(v));
+---
+<div class="lab" data-lab data-lab-data={data}>
+  <div class="lab-top">
+    <div class="pick" role="group" aria-label="Presets" data-presets>
+      {PRESETS.map((p) => <button type="button" data-preset={p.id} aria-pressed={p.id === preset.id ? 'true' : 'false'}>{p.name}</button>)}
+    </div>
+    <label class="control lab-model">
+      <span>Model and window</span>
+      <select data-in="model">
+        {facts.models.map((m) => <option value={m.id} selected={m.id === state.model}>{m.name} · {k(m.window)}</option>)}
+      </select>
+    </label>
+  </div>
+
+  <div class="lab-ctl controls">
+    {ranges.map((r) => (
+      <label class="control">
+        <span>{r.name} <output data-out={r.key}>{show(r.key, state[r.key])}</output></span>
+        <input type="range" data-in={r.key} min={LIMITS[r.key][0]} max={LIMITS[r.key][1]} step={r.step} value={state[r.key]} />
+      </label>
+    ))}
+    <div class="control">
+      <span id="lab-tools-name">Tool definitions</span>
+      <div class="pick" role="radiogroup" aria-labelledby="lab-tools-name">
+        <label><input type="radio" name="lab-upfront" value="0" data-in="upfront" checked={!state.upfront} />On demand</label>
+        <label><input type="radio" name="lab-upfront" value="1" data-in="upfront" checked={state.upfront} />Up front</label>
+      </div>
+    </div>
+    <div class="control">
+      <span id="lab-results-name">Tool results</span>
+      <div class="pick" role="radiogroup" aria-labelledby="lab-results-name">
+        <label><input type="radio" name="lab-results" value="trimmed" data-in="results" checked={state.results === 'trimmed'} />Trimmed</label>
+        <label><input type="radio" name="lab-results" value="typical" data-in="results" checked={state.results === 'typical'} />Typical</label>
+        <label><input type="radio" name="lab-results" value="whole" data-in="results" checked={state.results === 'whole'} />Whole logs</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="lab-fig">
+    <Figure n={3} title="The window fills up" alt={ALT} bare>
+      <div class="lab-draw" data-lab-draw set:html={svg} />
+    </Figure>
+    <p class="finding" aria-live="polite" data-finding set:html={finding(lab)} />
+  </div>
+
+  <dl class="stats lab-num">
+    <Stat name="Gone before your first word" id="before" tone="accent">{pct(lab.fixed / lab.m.window)}</Stat>
+    <Stat name="Room left to work" id="room">{k(Math.max(0, lab.m.compactAt - lab.total))}</Stat>
+    <Stat name="Turns until it compacts" id="togo">{String(lab.toGo)}</Stat>
+    <Stat name="Compactions so far" id="count">{String(lab.compactions)}</Stat>
+    <Stat name="Sent again every turn" id="sent">{k(lab.total)}</Stat>
+    <Stat name="Each turn, cached" id="cached" tone="green">{cost.cached !== undefined ? usd(cost.cached) : '–'}</Stat>
+    <Stat name="Each turn, not cached" id="full">{cost.full !== undefined ? usd(cost.full) : '–'}</Stat>
+  </dl>
+</div>
+
+<style is:global>
+  .lab { display: grid; gap: 0.875rem 1.25rem; grid-template-columns: minmax(0, 1fr); grid-template-areas: 'top' 'fig' 'num' 'ctl'; }
+  .lab-top { grid-area: top; display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 0.625rem 1rem; }
+  .lab-top .pick { flex: 0 1 auto; }
+  .lab-model { flex: 0 1 17rem; }
+  .lab-ctl { grid-area: ctl; align-content: start; }
+  .lab-ctl .control { flex-basis: 13rem; }
+  .lab-ctl .pick { width: 100%; }
+  .lab-ctl .pick label { flex: 1 1 auto; padding: 0 0.5rem; }
+  .lab-fig { grid-area: fig; min-width: 0; display: grid; gap: 0.625rem; align-content: start; }
+  .lab-num { grid-area: num; align-content: start; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); }
+  @container (min-width: 760px) {
+    .lab { grid-template-columns: minmax(0, 1fr) minmax(13rem, 16rem); grid-template-areas: 'top top' 'fig num' 'ctl ctl'; }
+    .lab-num { grid-template-columns: minmax(0, 1fr); }
+  }
+  @container (min-width: 1100px) {
+    .lab { grid-template-columns: 16.5rem minmax(0, 1fr) 15rem; grid-template-areas: 'top top top' 'ctl fig num'; }
+    .lab-ctl { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 0.375rem; }
+    .lab-ctl .control { flex: none; }
+  }
+  .lab-draw { width: 100%; }
+  .lab-draw svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .lab-svg text { font-family: var(--sans); font-size: 14px; fill: var(--ink-2); }
+  .lab-svg .lab-head { font-size: 14px; font-weight: 600; fill: var(--ink); }
+  .lab-svg .lab-num { font-family: var(--mono); font-size: 13.5px; fill: var(--muted); }
+  .lab-svg .lab-frame { fill: var(--paper); stroke: var(--rule-strong); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .lab-svg .lab-leader { fill: none; stroke: var(--rule-strong); stroke-width: 1; }
+  .lab-svg .lab-seg { transition: transform 480ms var(--ease-out); }
+  .lab-svg [data-pane='lost'] .lab-seg { opacity: 0.55; }
+  .lab-svg .lab-cline { stroke: var(--ink); stroke-width: 1.5; fill: none; }
+  .lab-svg .lab-ctext { font-size: 13px; fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
+  .lab-svg .lab-label:hover .lab-name, .lab-svg .lab-compact:hover .lab-ctext { fill: var(--accent); }
+  .lab-svg [data-side] .lab-name { text-decoration: underline dotted; text-decoration-color: var(--accent); }
+  .lab-svg [data-part='harness'] { fill: color-mix(in oklab, var(--ink) 34%, var(--card)); }
+  .lab-svg [data-part='tools'] { fill: var(--blue); }
+  .lab-svg [data-part='file'] { fill: var(--accent); }
+  .lab-svg [data-part='skills'] { fill: color-mix(in oklab, var(--blue) 50%, var(--card)); }
+  .lab-svg [data-part='summary'] { fill: var(--green); }
+  .lab-svg [data-part='files'] { fill: color-mix(in oklab, var(--ink) 13%, var(--card)); }
+  .lab-svg [data-part='loaded'] { fill: color-mix(in oklab, var(--blue) 24%, var(--card)); }
+  .lab-svg [data-part='talk'] { fill: color-mix(in oklab, var(--ink) 48%, var(--card)); }
+  .lab-svg [data-part='results'] { fill: color-mix(in oklab, var(--ink) 25%, var(--card)); }
+  .lab .stat-value { font-size: 1.25rem; }
+  @media (prefers-reduced-motion: reduce) { .lab-svg .lab-seg { transition: none; } }
+</style>
+
+<script>
+  import { run, finding, k, pct, usd, turnCost, type Facts, type LabState } from './model';
+  import { layout, render, segTransform, leader, type SideMap } from './draw';
+
+  type Data = { facts: Facts; side: SideMap; state: LabState; presets: { id: string; state: Omit<LabState, 'model'> }[] };
+
+  const showVal = (key: string, v: number) =>
+    key === 'minutes' ? (v >= 60 ? `${Math.floor(v / 60)} h ${v % 60 ? `${v % 60} min` : ''}`.trim() : `${v} min`) : key === 'lines' ? `${v} lines` : String(v);
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-lab]')) {
+    const d: Data = JSON.parse(root.dataset.labData!);
+    const s: LabState = { ...d.state };
+    const draw = root.querySelector<HTMLElement>('[data-lab-draw]')!;
+    const findingEl = root.querySelector<HTMLElement>('[data-finding]')!;
+    const stat = (id: string) => root.querySelector<HTMLElement>(`[data-stat="${id}"]`)!;
+    const inputs = [...root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-in]')];
+    const presetBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-preset]')];
+    let width = 0;
+
+    const sync = () => {
+      for (const el of inputs) {
+        const key = el.dataset.in as keyof LabState;
+        if (el instanceof HTMLInputElement && el.type === 'radio') el.checked = key === 'upfront' ? (el.value === '1') === s.upfront : el.value === String(s[key]);
+        else el.value = String(s[key]);
+        const out = root.querySelector<HTMLOutputElement>(`[data-out="${key}"]`);
+        if (out) out.textContent = showVal(key, Number(s[key]));
+      }
+    };
+    const markPreset = () => {
+      const match = d.presets.find((p) => Object.entries(p.state).every(([key, v]) => s[key as keyof LabState] === v));
+      for (const b of presetBtns) b.setAttribute('aria-pressed', String(b.dataset.preset === match?.id));
+    };
+
+    function update(full: boolean) {
+      const lab = run(d.facts, s);
+      const w = Math.round(draw.clientWidth) || 760;
+      const L = layout(lab, w);
+      if (full || w !== width) {
+        draw.innerHTML = render(L, d.side);
+        width = w;
+      } else {
+        const svg = draw.querySelector('svg')!;
+        svg.setAttribute('viewBox', `0 0 ${L.W} ${L.H}`);
+        svg.setAttribute('height', String(L.H));
+        for (const p of L.panes) {
+          svg.querySelector(`[data-pane="${p.id}"] [data-head]`)!.textContent = p.head;
+          for (const sg of p.segs) (svg.querySelector(`[data-seg="${p.id}:${sg.part}"]`) as SVGElement).style.transform = segTransform(sg);
+          for (const l of p.labels) {
+            const g = svg.querySelector<SVGGElement>(`[data-lbl="${p.id}:${l.part}"]`)!;
+            g.style.display = l.on ? '' : 'none';
+            g.querySelector('path')!.setAttribute('d', leader(l));
+            const t = g.querySelector('text')!;
+            t.setAttribute('x', l.x.toFixed(1));
+            t.setAttribute('y', (l.y + 14 * 0.36).toFixed(1));
+            t.querySelector('.lab-name')!.textContent = l.name;
+            t.querySelector('[data-num]')!.textContent = l.value;
+          }
+        }
+        const c = svg.querySelector('[data-compact]')!;
+        const a = L.panes[0];
+        c.querySelector('path')!.setAttribute('d', `M${(a.x - 4).toFixed(1)} ${L.compactY.toFixed(1)}H${(a.x + a.w + 4).toFixed(1)}`);
+        const ct = c.querySelector('text')!;
+        ct.setAttribute('y', (L.compactY + 17).toFixed(1));
+        ct.textContent = L.compactText;
+      }
+      findingEl.innerHTML = finding(lab);
+      const cost = turnCost(lab);
+      stat('before').textContent = pct(lab.fixed / lab.m.window);
+      stat('room').textContent = k(Math.max(0, lab.m.compactAt - lab.total));
+      stat('togo').textContent = lab.fullAtStart ? 'none' : lab.thrash ? 'every turn' : String(lab.toGo);
+      stat('count').textContent = lab.thrash && lab.compactions > 0 ? `${lab.compactions}+` : String(lab.compactions);
+      stat('sent').textContent = k(lab.total);
+      stat('cached').textContent = cost.cached !== undefined ? usd(cost.cached) : '–';
+      stat('full').textContent = cost.full !== undefined ? usd(cost.full) : '–';
+      markPreset();
+    }
+
+    for (const el of inputs) {
+      el.addEventListener('input', () => {
+        const key = el.dataset.in as keyof LabState;
+        if (el instanceof HTMLInputElement && el.type === 'radio') {
+          if (!el.checked) return;
+          if (key === 'upfront') s.upfront = el.value === '1';
+          else (s as Record<string, unknown>)[key] = el.value;
+        } else if (key === 'model') s.model = el.value;
+        else (s as Record<string, unknown>)[key] = Number(el.value);
+        sync();
+        update(false);
+      });
+    }
+    for (const b of presetBtns) {
+      b.addEventListener('click', () => {
+        const p = d.presets.find((x) => x.id === b.dataset.preset)!;
+        Object.assign(s, p.state);
+        sync();
+        update(false);
+      });
+    }
+    new ResizeObserver(() => {
+      if (Math.round(draw.clientWidth) !== width) update(true);
+    }).observe(draw);
+    update(true);
+  }
+</script>

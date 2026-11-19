@@ -1,0 +1,189 @@
+---
+// The context board: a window the reader fills (Fig. 3), the same request with and without
+// context (Fig. 4), and tiles on instruction files, fresh threads, caching, compaction and
+// subagents. The long read is at explain/context/read/.
+import Board from '../../../layouts/Board.astro';
+import Tile from '../../../components/board/Tile.astro';
+import Explain from '../../../components/board/Explain.astro';
+import Verified from '../../../components/data/Verified.astro';
+import ContextLab from '../../../components/fig/context-lab/ContextLab.astro';
+import SameRequest from '../../../components/fig/same-request/SameRequest.astro';
+import HarnessFiles from '../../../components/fig/harness-files/HarnessFiles.astro';
+import FileSort from '../../../components/fig/file-sort/FileSort.astro';
+import FreshThread from '../../../components/fig/fresh-thread/FreshThread.astro';
+import CacheOrder from '../../../components/fig/cache-order/CacheOrder.astro';
+import CompactionResults from '../../../components/fig/compaction-results/CompactionResults.astro';
+import SubagentWindow from '../../../components/fig/subagent-window/SubagentWindow.astro';
+import CopyPrompt from '../../../components/site/CopyPrompt.astro';
+import { DEFAULT_COMPACT_SHARE, TOKENS_PER_LINE, type Facts, type ModelInfo } from '../../../components/fig/context-lab/model';
+import { fact } from '../../../lib/facts';
+import { url } from '../../../lib/nav';
+
+const READ = 'explain/context/read/';
+const v = (id: string) => fact(id).value as number;
+
+const compactAt = v('harnesses.claudeCode.autoCompactAt');
+const claude = (id: string, name: string): ModelInfo => ({
+  id,
+  name,
+  window: v(`models.${id}.context`),
+  compactAt,
+  claudeCode: true,
+  input: v(`models.${id}.price.input`),
+  cacheRead: v(`models.${id}.price.cacheRead`),
+});
+const codex = (id: string, name: string): ModelInfo => {
+  const window = v(`models.${id}.harnessContext`);
+  return { id, name, window, compactAt: Math.round(window * DEFAULT_COMPACT_SHARE), claudeCode: false, input: v(`models.${id}.price.input`) };
+};
+const haiku = claude('claude-haiku-5-5', 'Haiku 5.5');
+haiku.longAbove = v('models.claude-haiku-5-5.price.longPrompt.threshold');
+haiku.longInput = v('models.claude-haiku-5-5.price.longPrompt.input');
+
+const facts: Facts = {
+  models: [
+    claude('claude-opus-5-5', 'Opus 5.5'),
+    claude('claude-sonnet-5-5', 'Sonnet 5.5'),
+    haiku,
+    claude('claude-fable-5-2', 'Fable 5.2'),
+    codex('gpt-6-2-sol', 'GPT-6.2 Sol in Codex'),
+    codex('gpt-6-2-astra', 'GPT-6.2 Astra in Codex'),
+  ],
+  skillMeta: v('skillFacts.specMetadataTokens'),
+  skillBudget: v('skillFacts.claudeCodeListing') / 100,
+  reread: v('harnesses.claudeCode.compactionReread'),
+  lineAdvice: v('harnesses.claudeCode.claudeMdLines'),
+};
+
+// TODO wiki: context-window, instruction-file, connector, skill, compaction. Point these at
+// wiki/<slug>/ once the wiki is merged; until then they open the long read and the explainers.
+const labSide = {
+  harness: url(READ + '#what-the-agent-can-see'),
+  file: url(READ + '#standing-instructions'),
+  tools: url('explain/connectors/'),
+  skills: url('explain/skills/'),
+  loaded: url('explain/skills/'),
+  summary: url(READ + '#compaction'),
+  results: url(READ + '#the-window-fills-up'),
+  compact: url(READ + '#compaction'),
+};
+
+const opus = facts.models[0]!;
+const claudeFile = fact('harnesses.claudeCode.contextFile').value as string;
+const codexFile = fact('harnesses.codex.contextFile').value as string;
+
+// Prompts that grow and prune the instruction file. The line limit is the sourced advice.
+const prompts = [
+  {
+    id: 'write',
+    name: 'Write it',
+    text: `Read this project and write ${codexFile} (${claudeFile} if you are Claude Code). Keep it under ${facts.lineAdvice / 2} lines and put in only what you could not work out from the code: the exact commands to install, test, type-check and run a single test file; anything that looks unused but is not; decisions that are not written down anywhere else; what must never be touched without asking. Leave out a tour of the folders, general coding advice and anything the linter already enforces. Show me the file before you save it.`,
+  },
+  {
+    id: 'lesson',
+    name: 'Add a lesson',
+    text: `I have had to correct you on this twice: [what you corrected]. Add one line to ${codexFile} that would have stopped it, in the section where it belongs. One line only. Show me the diff before you save it.`,
+  },
+  {
+    id: 'prune',
+    name: 'Prune it',
+    text: `Go through ${codexFile} line by line. Remove every line that the code, the linter or the tests already make true, that applied to one past task only, or that repeats another line, and merge lines that overlap. Keep it under ${facts.lineAdvice} lines. Before you save, list what you removed and why, one line each.`,
+  },
+];
+
+const factIds = [
+  'harnesses.claudeCode.contextFile',
+  'harnesses.codex.contextFile',
+  'harnesses.claudeCode.claudeMdNesting',
+  'lineup.cacheExactPrefix',
+  'lineup.cacheBreakers',
+  'lineup.opusCacheWrite5m',
+  'connectors.claudeCodeMcp.outputLimit',
+  'harnesses.claudeCode.subagentFreshContext',
+  'harnesses.claudeCode.subagentUsage',
+  'harnesses.claudeCode.autoCompactAt',
+  'harnesses.claudeCode.compactionReread',
+  'harnesses.claudeCode.claudeMdLines',
+  'skillFacts.specMetadataTokens',
+  'skillFacts.claudeCodeListing',
+  ...facts.models.flatMap((m) => [m.claudeCode ? `models.${m.id}.context` : `models.${m.id}.harnessContext`, `models.${m.id}.price.input`]),
+  ...facts.models.filter((m) => m.cacheRead !== undefined).map((m) => `models.${m.id}.price.cacheRead`),
+];
+---
+<Board title="Context" description="What an AI coding agent can see: fill a context window, watch it compact, and see what the agent guesses when it is not told." section="explain">
+  <Tile title="Everything the agent knows sits in one window" span={12} side={READ}>
+    <ContextLab facts={facts} side={labSide} />
+    <Fragment slot="foot"><Explain to={READ + '#how-the-model-works'}>Token sizes are modelled</Explain></Fragment>
+  </Tile>
+
+  <Tile title="What it is not told, it guesses" span={8} side={READ + '#context-is-capability'}>
+    <SameRequest window={facts.models[0]!.window} />
+    <Fragment slot="foot"><Explain to={READ + '#how-the-model-works'}>Written examples, not recorded runs</Explain></Fragment>
+  </Tile>
+
+  <Tile title="Each harness reads its own file" span={4} side={READ + '#standing-instructions'}>
+    <HarnessFiles claudeFile={claudeFile} codexFile={codexFile} />
+  </Tile>
+
+  <Tile title="Every line is read on every turn" span={7} side={READ + '#standing-instructions'}>
+    <FileSort advice={facts.lineAdvice} tokensPerLine={TOKENS_PER_LINE} />
+  </Tile>
+
+  <Tile title="Add a line each time you correct it" span={5} side={READ + '#standing-instructions'}>
+    <div class="cx-prompts" data-cx-prompts>
+      <div class="pick" role="group" aria-label="Prompt">
+        {prompts.map((p, i) => <button type="button" data-prompt={p.id} aria-pressed={i === 0 ? 'true' : 'false'}>{p.name}</button>)}
+      </div>
+      {prompts.map((p, i) => (
+        <div class="cx-prompt" data-prompt-body={p.id} hidden={i !== 0}>
+          <CopyPrompt title={p.name} id={`prompt-${p.id}`}>{p.text}</CopyPrompt>
+        </div>
+      ))}
+    </div>
+  </Tile>
+
+  <Tile title="A new thread is cheaper than a long one" span={12} side={READ + '#habits'}>
+    <FreshThread compactAt={opus.compactAt} cacheRead={opus.cacheRead!} modelName={opus.name} />
+    <Fragment slot="foot"><Explain to={READ + '#how-the-model-works'}>Token sizes are modelled</Explain></Fragment>
+  </Tile>
+
+  <Tile title="The cache is a prefix: change the front, pay again" span={4} level="engineer" side={READ + '#prompt-caching'}>
+    {/* TODO wiki: prompt-caching */}
+    <CacheOrder read={opus.cacheRead!} write={v('lineup.opusCacheWrite5m')} input={opus.input!} modelName={opus.name} />
+    <Fragment slot="foot"><Explain to={READ + '#how-the-model-works'}>Token sizes are modelled</Explain></Fragment>
+  </Tile>
+
+  <Tile title="Compaction turns a test log into one line" span={4} level="engineer" side={READ + '#compaction'}>
+    <CompactionResults cap={v('connectors.claudeCodeMcp.outputLimit')} reread={facts.reread} />
+    <Fragment slot="foot"><Explain to={READ + '#how-the-model-works'}>Result sizes are illustrative</Explain></Fragment>
+  </Tile>
+
+  {/* TODO wiki: subagent */}
+  <Tile title="A subagent reads so the main thread does not" span={4} level="engineer" side={READ + '#subagents'}>
+    <SubagentWindow window={opus.window} compactAt={opus.compactAt} />
+    <Fragment slot="foot"><Explain to="explain/orchestration/">Subagents</Explain> · <Explain to={READ + '#how-the-model-works'}>sizes modelled</Explain></Fragment>
+  </Tile>
+
+  <Verified slot="foot" ids={factIds} />
+</Board>
+
+<style>
+  .cx-prompts { display: grid; gap: 0.75rem; }
+  .cx-prompt[hidden] { display: none; }
+</style>
+
+<style is:global>
+  /* The figures on this board carry no readout of their own: the finding sits beside them. */
+  :is(.lab, .sr, .fs, .ft, .co, .cr, .sw) .fig[data-bare] > .fig-foot:has(> .fig-readout:empty:only-child) { display: none; }
+</style>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-cx-prompts]')) {
+    const btns = [...root.querySelectorAll<HTMLButtonElement>('[data-prompt]')];
+    for (const b of btns)
+      b.addEventListener('click', () => {
+        for (const x of btns) x.setAttribute('aria-pressed', String(x === b));
+        for (const body of root.querySelectorAll<HTMLElement>('[data-prompt-body]')) body.hidden = body.dataset.promptBody !== b.dataset.prompt;
+      });
+  }
+</script>

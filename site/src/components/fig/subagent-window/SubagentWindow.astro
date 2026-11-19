@@ -1,0 +1,95 @@
+---
+/*
+ * Fig. 39, a subagent reads so the main thread does not.
+ *
+ * Idea: a search done in the main thread leaves every file it read in the main window; handed to a
+ * subagent, the reading happens in the subagent's own fresh window and only the answer comes back.
+ * The total spent is about the same (subagents count toward the same limits). Three window bars at
+ * one scale: main thread doing it itself, main thread with a subagent, the subagent.
+ * Control: files the search reads (5 to 200).
+ * Data: window size and compaction point as props; sizes reuse the lab's assumptions.
+ */
+import Figure from '../Figure.astro';
+import Stat from '../../board/Stat.astro';
+import { HARNESS_TOKENS, FILE_TOKENS, MESSAGE_TOKENS } from '../context-lab/model';
+
+interface Props { window: number; compactAt: number }
+const { window, compactAt } = Astro.props;
+/** The main thread's work so far, before the search. */
+const MAIN_SO_FAR = 80_000;
+/** The answer a subagent sends back. */
+const ANSWER = 1_500;
+const data = JSON.stringify({ window, compactAt, main: MAIN_SO_FAR, answer: ANSWER, file: FILE_TOKENS, harness: HARNESS_TOKENS, brief: MESSAGE_TOKENS });
+const BARS = [
+  { id: 'self', name: 'Main thread, searching itself' },
+  { id: 'main', name: 'Main thread, with a subagent' },
+  { id: 'sub', name: 'The subagent' },
+];
+---
+<div class="sw" data-sw data-sw-data={data}>
+  <label class="control"><span>Files the search reads <output data-sw-out>40</output></span><input type="range" min="5" max="250" step="5" value="40" data-sw-in /></label>
+  <Figure n={39} title="A subagent reads so the main thread does not" alt="Three horizontal window bars at one scale: the main thread that searched itself is far fuller than the main thread that used a subagent." bare>
+    <div class="sw-bars">
+      {BARS.map((b) => (
+        <div class="sw-row" data-row={b.id}>
+          <span class="sw-name">{b.name}</span>
+          <span class="sw-n" data-n>–</span>
+          <span class="sw-bar">
+            <span class="sw-add" data-add></span>
+            <span class="sw-base" data-base></span>
+            <span class="sw-line" style={`left:${(compactAt / window) * 100}%`}></span>
+          </span>
+        </div>
+      ))}
+    </div>
+  </Figure>
+  <dl class="stats">
+    <Stat name="Main window saved" id="sw-saved" tone="green">–</Stat>
+    <Stat name="All windows: alone vs with subagent" id="sw-total">–</Stat>
+  </dl>
+</div>
+
+<style is:global>
+  .sw { display: grid; gap: 0.75rem; }
+  .sw-bars { display: grid; gap: 0.625rem; }
+  .sw-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'name n' 'bar bar'; gap: 0.125rem 0.75rem; }
+  .sw-row[data-row='sub'] { margin-left: 1.25rem; }
+  .sw-name { grid-area: name; font-size: var(--text-xs); color: var(--ink-2); }
+  .sw-n { grid-area: n; font-family: var(--mono); font-size: var(--text-xs); color: var(--ink); }
+  .sw-bar { grid-area: bar; position: relative; height: 1.25rem; border-radius: 3px; background: var(--paper-2); border: 1px solid var(--rule); overflow: hidden; }
+  .sw-base, .sw-add { position: absolute; top: 0; bottom: 0; left: 0; width: 100%; transform-origin: 0 50%; transition: transform 500ms var(--ease-out); }
+  .sw-base { background: color-mix(in oklab, var(--ink) 30%, var(--card)); }
+  .sw-add { background: var(--accent); }
+  .sw-row[data-row='main'] .sw-add { background: var(--green); }
+  .sw-line { position: absolute; top: -2px; bottom: -2px; border-left: 2px dashed var(--ink); }
+  @media (prefers-reduced-motion: reduce) { .sw-base, .sw-add { transition: none; } }
+</style>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-sw]')) {
+    const d = JSON.parse(root.dataset.swData!) as { window: number; compactAt: number; main: number; answer: number; file: number; harness: number; brief: number };
+    const input = root.querySelector<HTMLInputElement>('[data-sw-in]')!;
+    const out = root.querySelector<HTMLElement>('[data-sw-out]')!;
+    const k = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : `${Math.round(n / 1000)}K`);
+    const set = (id: string, base: number, add: number) => {
+      const row = root.querySelector<HTMLElement>(`[data-row="${id}"]`)!;
+      const total = Math.min(base + add, d.window);
+      row.querySelector<HTMLElement>('[data-base]')!.style.transform = `scaleX(${base / d.window})`;
+      // The added part is drawn from 0 and sits under the base, so scale it to the total.
+      row.querySelector<HTMLElement>('[data-add]')!.style.transform = `scaleX(${total / d.window})`;
+      row.querySelector<HTMLElement>('[data-n]')!.textContent = base + add >= d.compactAt ? `${k(base + add)}, compacts` : k(base + add);
+    };
+    function show() {
+      const files = Number(input.value);
+      out.textContent = String(files);
+      const reading = files * d.file;
+      set('self', d.main, reading);
+      set('main', d.main, d.answer);
+      set('sub', d.harness + d.brief, reading);
+      root.querySelector('[data-stat="sw-saved"]')!.textContent = k(reading - d.answer);
+      root.querySelector('[data-stat="sw-total"]')!.textContent = `${k(d.main + reading)} vs ${k(d.main + d.answer + d.harness + d.brief + reading)}`;
+    }
+    input.addEventListener('input', show);
+    show();
+  }
+</script>
