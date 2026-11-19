@@ -12,20 +12,18 @@ const GAP = 112;
 const NAMES: Record<Kind, string> = { laptop: 'your laptop', box: 'the computer that stays on', cloud: 'the cloud' };
 
 const SLAB: [number, number, number, number] = [-31, -31, 62, 62];
-/** The front corner of machine i's slab, as a world point. */
-const front = (i: number, n: number): [number, number, number] => [(i - (n - 1) / 2) * GAP + SLAB[0] + SLAB[2], SLAB[1] + SLAB[3], 0];
-const scene = (n: number, o: { gate?: boolean; phone?: boolean } = {}): SceneState => {
+const scene = (n: number, o: { gate?: boolean; phone?: boolean; leave?: boolean } = {}): SceneState => {
   const machines = ALL.slice(0, n);
   const s = jobs(n, {
     gap: GAP, machines, trees: false, mgate: o.gate,
     slab: SLAB,
     labels: [
       lab('you', 'you', 'left'),
-      // Each machine is named under its front corner, where nothing else stands.
-      lab(front(0, n), 'your laptop', 'bottom'),
-      ...(n > 1 ? [lab(front(1, n), 'always on', 'bottom', 'wiki/always-on-machine/')] : []),
-      ...(n > 2 ? [lab(front(2, n), 'the cloud', 'bottom')] : []),
-      ...(o.gate ? [lab('mgate', 'check', 'top', 'wiki/verification/')] : []),
+      // Each machine is named over the job standing on it: the space above the columns stays free.
+      lab('j0', 'your laptop', 'top'),
+      ...(n > 1 ? [lab('j1', 'always on', 'top', 'wiki/always-on-machine/')] : []),
+      ...(n > 2 ? [lab('j2', 'the cloud', 'top')] : []),
+      ...(o.gate ? [lab('mgate', 'check', 'right', 'wiki/verification/')] : []),
       lab('main', 'main', 'bottom', 'wiki/branch/'),
       ...(o.phone ? [lab('tray', 'on your phone', 'bottom')] : []),
     ],
@@ -46,7 +44,7 @@ interface Run { lid: 'open' | 'closed'; setup: boolean }
 const stats = (ctx: Ctx) => {
   const s = ctx.scene.state;
   const stopped = s.agents.filter((a) => a.off || a.lamp === 'bad').length;
-  ctx.stat([['running', s.agents.length - stopped], ['stopped', stopped]]);
+  ctx.stat([['jobs running now', s.agents.length - stopped], ['jobs stopped now', stopped]]);
 };
 const fly = (p: Promise<void>, then?: () => void) => void p.then(then).catch(() => {});
 
@@ -61,12 +59,13 @@ function applyLid(ctx: Ctx, h: Script | null, lid: Run['lid']) {
   stats(ctx);
 }
 
-async function hour(ctx: Ctx, h: Script, n: number, o: { gate?: boolean; phone?: boolean } = {}) {
+async function hour(ctx: Ctx, h: Script, n: number, o: { gate?: boolean; phone?: boolean; leave?: boolean } = {}) {
   const run: Run = ctx.mem.run;
   h.set((s) => { Object.assign(s, scene(n, o)); });
   applyLid(ctx, h, run.lid);
   const landed = Array.from({ length: n }, () => 0);
-  const work = Array.from({ length: n }, (_, i) => -i * 4);
+  // The cloud job starts first, so its check is the first thing that happens in that step.
+  const work = Array.from({ length: n }, (_, i) => -(n - 1 - i) * 4);
   const failed = Array.from({ length: n }, () => false);
   const project = () => ctx.scene.state.project!;
   const gateX = (ctx.scene.state.gates?.find((g) => g.id === 'mgate')?.at[0] ?? 0) - 12;
@@ -74,6 +73,13 @@ async function hour(ctx: Ctx, h: Script, n: number, o: { gate?: boolean; phone?:
   const card = (i: number, mark: 'work' | 'ok' | 'bad') => h.set((s) => { s.tray!.cards[i]!.mark = mark; });
 
   for (let tick = 0; tick < HOUR; tick++) {
+    if (o.leave && tick === HOUR / 2 && ctx.mem.run.lid === 'open') {
+      ctx.mem.run = { ...ctx.mem.run, lid: 'closed' };
+      ctx.say('you', 'Lid closed. Off home.');
+      applyLid(ctx, h, 'closed');
+      // The lid buttons follow what just happened in the picture.
+      for (const b of document.querySelectorAll<HTMLElement>('[data-step="mix"] [data-do="lid"]')) b.setAttribute('aria-pressed', String(b.dataset.val === 'closed'));
+    }
     for (let i = 0; i < n; i++) {
       const a = ctx.scene.state.agents[i]!;
       if (a.off || failed[i]) continue;
@@ -121,11 +127,11 @@ async function hour(ctx: Ctx, h: Script, n: number, o: { gate?: boolean; phone?:
   ctx.say(null, `${head}${stopped ? ` ${stopped === 1 ? 'One job is' : `${stopped} jobs are`} stopped where ${stopped === 1 ? 'it was' : 'they were'}.` : ''}`);
 }
 
-const play = (ctx: Ctx, n: number, o: { gate?: boolean; phone?: boolean } = {}) => {
+const play = (ctx: Ctx, n: number, o: { gate?: boolean; phone?: boolean; leave?: boolean } = {}) => {
   ctx.mem.n = n; ctx.mem.o = o; ctx.mem.done = false;
   void ctx.scene.run((h) => hour(ctx, h, n, o));
 };
-const start = (ctx: Ctx, n: number, run: Run, o: { gate?: boolean; phone?: boolean } = {}, line?: string) => { ctx.mem.run = run; play(ctx, n, o); if (line) ctx.say(null, line); };
+const start = (ctx: Ctx, n: number, run: Run, o: { gate?: boolean; phone?: boolean; leave?: boolean } = {}, line?: string) => { ctx.mem.run = run; play(ctx, n, o); if (line) ctx.say(null, line); };
 
 /** One short loop of this chapter, for the part-two overview. */
 export async function demo(ctx: Ctx, h: Script) {
@@ -146,8 +152,8 @@ export const where: Chapter = {
     laptop: { scene: () => scene(1), enter: (ctx) => start(ctx, 1, { lid: 'open', setup: true }, {}, 'One job, on your laptop, with your files and your logins.') },
     lid: { scene: () => scene(1), enter: (ctx) => start(ctx, 1, { lid: 'open', setup: true }, {}, 'Lid open. The job runs.') },
     box: { scene: () => scene(2, { phone: true }), enter: (ctx) => start(ctx, 2, { lid: 'closed', setup: true }, { phone: true }, 'Lid closed. The laptop’s job waits; the other computer’s job runs, and you follow it on your phone.') },
-    cloud: { scene: () => scene(3, { gate: true }), enter: (ctx) => start(ctx, 3, { lid: 'open', setup: true }, { gate: true }, 'The cloud machine is given the test database the check needs.') },
-    mix: { scene: () => scene(3, { gate: true }), enter: (ctx) => start(ctx, 3, { lid: 'open', setup: true }, { gate: true }, 'Three jobs on three machines, all landing on one main.') },
+    cloud: { scene: () => scene(3, { gate: true }), enter: (ctx) => start(ctx, 3, { lid: 'open', setup: false }, { gate: true }, 'A made-up case: the cloud machine was not given the test database the check needs.') },
+    mix: { scene: () => scene(3, { gate: true }), enter: (ctx) => start(ctx, 3, { lid: 'open', setup: true }, { gate: true, leave: true }, 'Three jobs on three machines, all landing on one main. Halfway through the hour you close the lid.') },
   },
   actions: {
     // The lid answers at once; the hour carries on. After the hour has ended, it starts another.

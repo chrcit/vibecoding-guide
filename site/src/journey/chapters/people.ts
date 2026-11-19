@@ -30,7 +30,10 @@ const scene = (people: Who[], n = 0): SceneState => {
       ...(n ? [lab([-88, -98 + 4, 40], `${n} agents`, 'left')] : []),
     ],
   });
-  s.focus = n ? ['you', 'a0', 'project', [-100, -150 - 16, 34], [96, -150 - 16, 34], ...WIDE] : WIDE;
+  // The tray from chapter 12 stands beside you: a pull request's proof stands on it.
+  s.tray = { at: SPOT.tray, cards: [] };
+  s.labels!.push(lab('tray', 'proof', 'bottom'));
+  s.focus = n ? ['you', 'tray', 'a0', 'project', [-100, -150 - 16, 34], [96, -150 - 16, 34], ...WIDE] : ['tray', ...WIDE!];
   return s;
 };
 
@@ -40,7 +43,7 @@ interface Tally { landed: number; back: number; asked: number; reported: number 
 const tally = (ctx: Ctx): Tally => (ctx.mem.t ??= { landed: 0, back: 0, asked: 0, reported: 0 });
 const stats = (ctx: Ctx) => {
   const t = tally(ctx);
-  ctx.stat([['landed on main', t.landed], ['sent back by a colleague', t.back], ['asked for by the client', t.asked], ['reported by users', t.reported]]);
+  ctx.stat([['landed on main so far', t.landed], ['sent back so far', t.back], ['asked for by the client so far', t.asked], ['reported by users so far', t.reported]]);
 };
 const plural = (n: number, one: string, many: string) => `${n === 0 ? 'none' : n === 1 ? 'one' : n} ${n === 1 ? one : many}`;
 
@@ -62,9 +65,16 @@ async function build(h: Script, turns = 3) {
   }
   h.set((s) => { const a = s.agents[0]!; a.busy = false; a.lamp = 'off'; });
 }
-/** The change travels the bus and waits at the gate; the automatic checks run there. */
-async function open(ctx: Ctx, h: Script, failing?: string) {
+const PROOF = [{ id: 'sum', b: 'model' as const }, { id: 'tests', b: 'tool' as const }, { id: 'shot', b: 'tool' as const }];
+/** The change travels the bus and waits at the gate; the automatic checks run there. Its proof stands on the tray. */
+async function open(ctx: Ctx, h: Script, failing?: string, slow = false) {
   await h.send(route.agentToMgate(), 'model');
+  if (slow) {
+    for (const c of PROOF) {
+      await h.send(route.agentToTray(ctx.scene.state.tray!), c.b, { ms: 420 });
+      h.set((s) => { s.tray!.cards.push({ ...c, mark: 'new' }); });
+    }
+  } else h.set((s) => { s.tray!.cards = PROOF.map((c) => ({ ...c })); });
   h.set((s) => { s.rest = [{ id: 'pr', at: queueAt(0), b: 'model' }]; });
   gateLamp(h, 'work');
   await h.wait(700);
@@ -91,7 +101,7 @@ async function comment(ctx: Ctx, h: Script, line: string) {
 }
 async function merge(ctx: Ctx, h: Script, bad = false) {
   gateLamp(h, 'ok');
-  h.set((s) => { s.rest = []; });
+  h.set((s) => { s.rest = []; s.tray!.cards = []; });
   await h.send(route.mgateToMain(ctx.scene.state.project!), bad ? 'bad' : 'model', { ms: 420 });
   h.set((s) => { (s.project!.commits ??= []).push(bad ? 'bad' : 'ok'); });
   tally(ctx).landed++;
@@ -120,8 +130,8 @@ async function pr(ctx: Ctx, h: Script) {
   stats(ctx);
   await brief(ctx, h, 'you', 'you', 'Let members pay their fee online. A made-up job.');
   await build(h, 4);
-  ctx.say('the agent', 'Done. Opened a pull request.');
-  await open(ctx, h);
+  ctx.say('the agent', 'Done. Opened a pull request: a summary, the test run and a screenshot.');
+  await open(ctx, h, undefined, true);
   ctx.say('check', 'Tests pass. Waiting for someone to read it.');
   await h.wait(900);
   ctx.say(null, 'One change, checked and waiting at the gate. Nothing has reached main.');
@@ -161,26 +171,24 @@ async function users(ctx: Ctx, h: Script, test: boolean) {
   tally(ctx).reported++;
   stats(ctx);
   await backAndOn(ctx, h, USERS[0]!, 'bad', 'Fix this. Here is what the user saw.');
-  await build(h, test ? 4 : 3);
+  await build(h, 2);
   ctx.say('the agent', test ? 'Fixed. A test now checks the fee on the receipt.' : 'Fixed.');
   await open(ctx, h);
-  ctx.say('a colleague', 'Looks right.');
   await merge(ctx, h);
   // A later, unrelated job brings the same mistake back.
-  await brief(ctx, h, 'you', 'you', 'Tidy the payment page.');
-  await build(h, 3);
+  await brief(ctx, h, 'you', 'you', 'A week later: tidy the payment page.');
+  await build(h, 2);
   if (test) {
     const ok = await open(ctx, h, 'The receipt test fails: it shows last season’s fee.');
     if (!ok) {
       await build(h, 2);
       await open(ctx, h);
     }
-    ctx.say('a colleague', 'Fine.');
     await merge(ctx, h);
     ctx.say(null, 'The same mistake came back a week later. The test caught it at the gate; no user saw it twice.');
   } else {
     await open(ctx, h);
-    ctx.say('a colleague', 'Fine.');
+    ctx.say('check', 'All tests pass.');
     await merge(ctx, h, true);
     await toUsers(h, 'bad');
     ctx.say('a user', 'My receipt is wrong again.');
@@ -196,7 +204,7 @@ const LOOP: { brief: string; back?: string; then?: { who: 'client' | 'users'; li
   { brief: 'Let members pay their fee online.', back: 'Name the payment states, not 1, 2, 3.', then: { who: 'client', line: 'Can it send a receipt?' } },
   { brief: 'Send a receipt.', then: { who: 'users', line: 'My receipt shows last season’s fee.' } },
   { brief: 'Fix the fee on the receipt.', then: { who: 'client', line: 'Can the list show who hasn’t paid?' } },
-  { brief: 'Show who hasn’t paid.', back: 'Split this: the list and the reminder email are two changes.' },
+  { brief: 'Show who hasn’t paid.' },
 ];
 async function loop(ctx: Ctx, h: Script) {
   h.set((s) => { Object.assign(s, scene(['peer', 'client', 'users'])); });
@@ -219,13 +227,13 @@ async function loop(ctx: Ctx, h: Script) {
       ctx.say('a client', job.then.line);
       tally(ctx).asked++;
       stats(ctx);
-      await backAndOn(ctx, h, SPOT.client, 'you', next);
+      await backAndOn(ctx, h, SPOT.client, 'you', `Next job, from the client: ${next.toLowerCase()}`);
     } else {
       await toUsers(h);
       ctx.say('a user', job.then.line);
       tally(ctx).reported++;
       stats(ctx);
-      await backAndOn(ctx, h, USERS[0]!, 'bad', next);
+      await backAndOn(ctx, h, USERS[0]!, 'bad', `Next job, from a user’s report: ${next.toLowerCase()}`);
     }
   }
   const t = tally(ctx);
@@ -291,7 +299,7 @@ function timetable(size: Size) {
 
 async function day(ctx: Ctx, h: Script, size: Size) {
   const r = RATES[size];
-  h.set((s) => { Object.assign(s, scene(['peer'], N)); s.rest = []; });
+  h.set((s) => { Object.assign(s, scene(['peer'], N)); s.rest = []; if (size !== 'big') s.tray!.cards = PROOF.map((c) => ({ ...c })); });
   ctx.say('a colleague', r.words);
   stats(ctx);
   const t = tally(ctx);
@@ -302,9 +310,11 @@ async function day(ctx: Ctx, h: Script, size: Size) {
   const setW = (i: number, fn: (a: SceneState['agents'][number]) => void) => h.set((s) => fn(s.agents[i + 1]!));
   // Pucks travel while the day goes on; a stopped script leaves them to be cleared.
   const fly = (p: Promise<void>, then?: () => void) => void p.then(then).catch(() => {});
+  // With reduced motion the day is applied at once: nothing travels, and the tally is the same.
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let now = 0;
   for (const e of plan.evs) {
-    if (e.t > now) { await h.wait(e.t - now); now = e.t; }
+    if (e.t > now) { if (!still) await h.wait(e.t - now); else h.check(); now = e.t; }
     const i = e.i;
     switch (e.do) {
       case 'start': setW(i, (a) => { a.blocks = [{ t: 'model', h: 4 }]; a.busy = true; a.lamp = 'work'; }); break;
@@ -351,7 +361,7 @@ export const people: Chapter = {
     pr: { scene: () => scene([]), enter: (ctx) => play(ctx, pr) },
     peer: { scene: () => scene(['peer'], N), enter: (ctx) => { ctx.scene.speed = 1; play(ctx, (c, h) => day(c, h, 'big')); } },
     client: { scene: () => scene(['peer', 'client']), enter: (ctx) => play(ctx, (c, h) => client(c, h, true)) },
-    users: { scene: () => scene(['peer', 'client', 'users']), enter: (ctx) => play(ctx, (c, h) => users(c, h, true)) },
+    users: { scene: () => scene(['peer', 'client', 'users']), enter: (ctx) => { ctx.scene.speed = 1.2; play(ctx, (c, h) => users(c, h, true)); } },
     loop: { scene: () => scene(['peer', 'client', 'users']), enter: (ctx) => { ctx.scene.speed = 1.2; play(ctx, loop); } },
   },
   actions: {
