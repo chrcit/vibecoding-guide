@@ -20,26 +20,25 @@ import { describe, type EffortInputs } from './model';
 
 interface Props extends EffortInputs {
   n?: number | string;
-  source: { label: string; href?: string };
+  source?: { label: string; href?: string };
+  /** Inside a board tile: no frame, no caption, a .pick for the dial. */
+  bare?: boolean;
 }
-const { n = 11, source, ...inputs } = Astro.props;
+const { n = 11, source, bare = false, ...inputs } = Astro.props;
 const first = Math.max(0, inputs.levels.indexOf(inputs.start));
 const names = inputs.models.map((m) => m.name);
 const alt = `Two charts over the effort levels ${inputs.levels.join(', ')}. Above, Intelligence Index scores for ${names.join(' and ')} rise from left to right and flatten towards the top levels. Below, bars of the output tokens ${inputs.tokens.name} wrote over the whole test run grow much faster, with the tallest bar at ${inputs.levels.at(-1)}. The ${inputs.start} column is highlighted.`;
 ---
 <div class="fig-effort-dial" data-fig-effort-dial data-inputs={JSON.stringify(inputs)} data-start={first}>
-  <Figure n={n} title="The effort dial" hint="Turn the dial to compare what each effort level scores and what it writes." alt={alt} source={source}>
+  <Figure n={n} title="The effort dial" alt={alt} source={bare ? undefined : source} bare={bare}>
     <ul class="ed-key">
       {inputs.models.map((m, i) => <li><span class="ed-swatch" data-tone={i % 2 ? 'blue' : 'ink'} aria-hidden="true"></span>{m.name}</li>)}
     </ul>
     <div data-chart set:html={draw(inputs, 640, first)} />
-    <div slot="control" class="seg" role="group" aria-label="Effort level">
+    <div slot="control" class={bare ? 'pick' : 'seg'} role="group" aria-label="Effort level">
       {inputs.levels.map((l, i) => <button type="button" aria-pressed={String(i === first)} data-level={i}>{l}</button>)}
     </div>
     <Fragment slot="readout">{describe(first, inputs)}</Fragment>
-    <Fragment slot="caption">
-      Effort sets how hard the model may work on a request, and it applies to every output token: thinking, tool calls and the reply. A higher level lets the model spend more where the task calls for it, so an easy task may cost little at any level. On this test set every step up wrote more tokens, and the top levels wrote far more for a few more points. Neither lab publishes how much of a plan's usage window a level takes.
-    </Fragment>
   </Figure>
 </div>
 

@@ -1,16 +1,17 @@
 ---
-// One card per model in src/data/models.ts, all with the same layout. Every value is a sourced fact
-// or shown as a gap; nothing on this page is written for one model in particular, so a new entry in
-// models.ts gets a card with no page edit. See UPDATE.md.
-import Article from '../../layouts/Article.astro';
+// One card per model in src/data/models.ts, all with the same layout: a compact board that reads in
+// the side view (about 400 to 540px) and at full width. Every value is a sourced fact or a gap that
+// says why; nothing here is written for one model in particular, so a new entry in models.ts gets a
+// card with no page edit. See UPDATE.md.
+import Board from '../../layouts/Board.astro';
+import Tile from '../../components/board/Tile.astro';
+import Stat from '../../components/board/Stat.astro';
 import Fact from '../../components/data/Fact.astro';
 import Verified from '../../components/data/Verified.astro';
-import Deeper from '../../components/level/Deeper.astro';
-import Note from '../../components/site/Note.astro';
 import Val from '../../components/models/Val.astro';
-import {
-  modelIds, getModel, fid, shown, entry, indexScore, familyPosition, ordinal, countWord, modelFactIds, effortData, type ModelId,
-} from '../../components/models/view';
+import ModelRank from '../../components/fig/model-rank/ModelRank.astro';
+import { modelIds, getModel, fid, shown, state, indexScore, modelFactIds, effortData, type ModelId } from '../../components/models/view';
+import { labModels, sourcePath } from '../../components/models/lab-data';
 import { formatDate } from '../../lib/facts.ts';
 import { url } from '../../lib/nav';
 
@@ -21,157 +22,145 @@ export function getStaticPaths() {
 const id = Astro.params.id as ModelId;
 const m = getModel(id);
 const f = (path: string) => fid(id, path);
-const pos = familyPosition(id);
+const rows = labModels((x) => url(`models/${x}/`));
 const score = indexScore(id);
-const scoreEntry = score && entry(score.factId)!;
-const harness = m.harness === 'claudeCode' ? { name: 'Claude Code', models: 'harnesses.claudeCode.models', effort: 'harnesses.claudeCode.effort' }
-  : m.harness === 'codex' ? { name: 'Codex', models: 'harnesses.codex.models', effort: 'harnesses.codex.effort' } : undefined;
+const HARNESS = { claudeCode: 'Claude Code', codex: 'Codex' } as const;
+
+// Plans: each fact id names a plan (plans.<provider>.<plan>.…); its price sits beside it.
+const PROVIDER: Record<string, string> = { claude: 'Claude', chatgpt: 'ChatGPT' };
+const plans = (m.plans ?? []).map((pid) => {
+  const [, provider, plan] = pid.split('.');
+  const price = `plans.${provider}.${plan}.price`;
+  return { id: pid, name: `${PROVIDER[provider!] ?? provider} ${plan![0]!.toUpperCase()}${plan!.slice(1)}`, price: state(price) === 'shown' ? price : undefined };
+});
 
 // Per-effort scores where the data has them (today: Opus 5.5 and Fable 5.2).
 const ed = effortData();
 const perEffort = id === 'claude-opus-5-5'
-  ? ed.levels.map((l, i) => ({ level: l, score: ed.opus[i] != null ? `benchmarks.aa.opusByEffort.${l}.score` : null, tokens: ed.opusTokens[i] != null ? `benchmarks.aa.opusByEffort.${l}.totalTokens` : null }))
+  ? ed.levels.map((l, i) => ({ level: l, score: ed.opus[i], id: `benchmarks.aa.opusByEffort.${l}.score` }))
   : id === 'claude-fable-5-2'
-    ? ed.levels.map((l, i) => ({ level: l, score: ed.fable[i] != null ? `benchmarks.aa.fableByEffort.${l}` : null, tokens: null }))
+    ? ed.levels.map((l, i) => ({ level: l, score: ed.fable[i], id: `benchmarks.aa.fableByEffort.${l}` }))
     : [];
-const hasEffortRows = perEffort.some((r) => r.score);
-const ids = [...modelFactIds(id), ...perEffort.flatMap((r) => [r.score, r.tokens]).filter((x): x is string => !!x && shown(x))];
+const effortRows = perEffort.filter((r) => r.score != null && shown(r.id));
+const top = Math.max(...effortRows.map((r) => r.score!), 1);
 
-const description = `${m.name}: what it costs, which plans include it, its context window, effort levels, benchmark scores and the lab's own pages, each with a source and a date.`;
-const headings = [
-  { depth: 2, slug: 'price', text: 'What it costs through the API' },
-  { depth: 2, slug: 'plans', text: 'On the subscription plans' },
-  { depth: 2, slug: 'specs', text: 'Context, effort and input' },
-  { depth: 2, slug: 'runs', text: 'Where it runs' },
-  { depth: 2, slug: 'benchmarks', text: 'Benchmark numbers' },
-  { depth: 2, slug: 'lab-pages', text: "The lab's own pages" },
-];
+const ids = [...modelFactIds(id), ...effortRows.map((r) => r.id), ...plans.flatMap((p) => [p.id, p.price]).filter((x): x is string => !!x && shown(x))];
+const description = `${m.name}: price, context window, effort levels, benchmark score, the plans that include it and the tools it runs in, each with a source and a date.`;
 ---
-<Article title={m.name} description={description} section="models" headings={headings}
-  prev={{ href: 'models/', title: 'All models' }}>
-  <Fragment slot="lede">
-    {shown(f('purpose'))
-      ? <p>{m.lab} describes it in one line: “<Fact id={f('purpose')} />”</p>
-      : <p>A model from {m.lab}. The lab's own one-line description is not in our data.</p>}
-  </Fragment>
+<Board title={m.name} description={description} section="models" docTitle={`${m.name} · Models · Agentic Coding Guide`}>
+  <a slot="tools" class="mc-back" href={url('models/')}>All models</a>
 
-  <dl class="card-facts">
-    <div><dt>Lab</dt><dd>{m.lab}</dd></div>
-    <div><dt>Released</dt><dd><Val id={f('released')} /></dd></div>
-    <div><dt>Place in the family</dt><dd>{pos
-      ? (pos.of === 1 ? `The only current ${pos.lab} model in our data`
-        : `${pos.rank === 1 ? 'The most expensive' : pos.rank === pos.of ? 'The cheapest' : `The ${ordinal(pos.rank)} most expensive`} of ${pos.lab}'s ${countWord(pos.of)} current models, by price per output token`)
-      : m.current ? <span class="gap">not published</span> : 'An older model, kept for price comparisons'}</dd></div>
-    {m.apiId && <div><dt>API id</dt><dd><code>{m.apiId}</code></dd></div>}
-  </dl>
+  <Tile title={`${m.lab}, in its own words`} span={7} id="facts">
+    {shown(f('purpose')) ? <p class="finding">“<Fact id={f('purpose')} />”</p> : <p class="gap">No one-line description from the lab in our data.</p>}
+    {m.changed && <p class="mc-changed"><strong>Changed {formatDate(m.changed.date)}:</strong> {m.changed.note}</p>}
+    <dl class="stats mc-stats">
+      <Stat name="Price in, per M"><Val id={f('price.input')} /></Stat>
+      <Stat name="Price out, per M" tone="accent"><Val id={f('price.output')} /></Stat>
+      <Stat name="Cache read, per M"><Val id={f('price.cacheRead')} /></Stat>
+      <Stat name="Context window"><Val id={f('context')} /></Stat>
+      <Stat name="Longest reply"><Val id={f('maxOutput')} /></Stat>
+      <Stat name="Released"><Val id={f('released')} /></Stat>
+      <Stat name={score?.effort ? `Index score, ${score.effort} effort` : 'Index score'}>{score ? <Fact id={score.factId} /> : <span class="gap">not published</span>}</Stat>
+      <Stat name="Default effort, API"><Val id={f('effort.apiDefault')} /></Stat>
+      <Stat name="Knowledge cutoff"><Val id={f('knowledgeCutoff')} /></Stat>
+    </dl>
+    {m.price?.longPrompt && (
+      <p class="mc-note">Above <Val id={f('price.longPrompt.threshold')} /> a prompt: <Val id={f('price.longPrompt.input')} /> in, <Val id={f('price.longPrompt.output')} /> out.</p>
+    )}
+    {m.price?.fast && (
+      <p class="mc-note">Fast mode: <Val id={f('price.fast.input')} /> in, <Val id={f('price.fast.output')} /> out.</p>
+    )}
+  </Tile>
 
-  {m.changed && <Note title={`What changed, ${formatDate(m.changed.date, true)}`}>{m.changed.note}</Note>}
+  <Tile title="Among the others" span={5} id="among">
+    <ModelRank rows={rows} id={id} keys={['score', 'output', 'context']} />
+    <Fragment slot="foot"><a href={url('models/#lab')}>Place them all on your own axes</a></Fragment>
+  </Tile>
 
-  <h2 id="price">What it costs through the API</h2>
-  <p>
-    Through the API you pay for every token, the small pieces of text a model reads and writes. Prices are per million tokens, and writing costs more than reading.
-    On a monthly plan you pay a flat fee instead and these prices only tell you how the lab values the model; the <a href={url('explain/plans-and-api/')}>plans and the API</a> explainer covers the difference.
-  </p>
-  {m.price ? (
-    <table>
-      <tbody>
-        <tr><th scope="row">Input</th><td><Val id={f('price.input')} />{m.price.longPrompt && <> for prompts up to <Val id={f('price.longPrompt.threshold')} /></>}</td></tr>
-        <tr><th scope="row">Output</th><td><Val id={f('price.output')} />{m.price.longPrompt && <> for prompts up to <Val id={f('price.longPrompt.threshold')} /></>}</td></tr>
-        {m.price.longPrompt && <tr><th scope="row">Longer prompts</th><td><Val id={f('price.longPrompt.input')} /> input, <Val id={f('price.longPrompt.output')} /> output</td></tr>}
-        <tr><th scope="row">Cache reads</th><td><Val id={f('price.cacheRead')} /></td></tr>
-        {m.price.fast && <tr><th scope="row">Fast mode</th><td><Val id={f('price.fast.input')} /> input, <Val id={f('price.fast.output')} /> output</td></tr>}
-        {m.lab === 'Anthropic' && <tr><th scope="row">Batch requests</th><td><Val id="lineup.batchDiscount" /> off</td></tr>}
-      </tbody>
-    </table>
-  ) : <p class="gap">No API price in our data.</p>}
-
-  <Deeper level="technical" title="Reading the price">
-    <p>
-      An agent sends its whole conversation back to the model on every turn, so input tokens pile up quickly. The parts that have not changed can be served from the prompt cache at the cache-read price, which is why that row can matter more to a long session than the input price.
-      {m.lab === 'Anthropic' && <> Anthropic's pricing page adds a rule worth knowing: <Fact id="lineup.thinkingBilledAsOutput" show="claim" /></>}
-    </p>
-  </Deeper>
-
-  <h2 id="plans">On the subscription plans</h2>
-  {m.plans?.length ? (
-    <ul>
-      {m.plans.map((p) => <li><Val id={p} show="claim" /></li>)}
-    </ul>
-  ) : <p class="gap">Not published in our data. Check the lab's plan page.</p>}
-  <p>What a plan's limit means in tokens is a separate question, answered as far as the labs allow in <a href={url('explain/plans-and-api/')}>plans and the API</a>.</p>
-
-  <h2 id="specs">Context, effort and input</h2>
-  <table>
-    <tbody>
-      <tr><th scope="row">Context window</th><td><Val id={f('context')} /></td></tr>
-      <tr><th scope="row">Longest reply</th><td><Val id={f('maxOutput')} /></td></tr>
-      <tr><th scope="row">Effort levels</th><td>{m.effort ? <Val id={f('effort.levels')} /> : m.lab === 'OpenAI' ? <><span class="gap">not published per model</span>; Codex offers <Val id="lineup.codexEffortLevels" /></> : <span class="gap">not published</span>}</td></tr>
-      <tr><th scope="row">Default effort, API</th><td><Val id={f('effort.apiDefault')} /></td></tr>
-      {m.harness === 'claudeCode' && <tr><th scope="row">Default effort, Claude Code</th><td><Val id="lineup.claudeCodeEffortDefault" /></td></tr>}
-      <tr><th scope="row">Thinking</th><td><Val id={f('thinking')} /></td></tr>
-      <tr><th scope="row">Input and output</th><td>{m.lab === 'Anthropic' ? <Val id="lineup.claudeModalities" /> : <span class="gap">not published per model</span>}</td></tr>
-      <tr><th scope="row">Knowledge cutoff</th><td><Val id={f('knowledgeCutoff')} /></td></tr>
-      <tr><th scope="row">Not retired before</th><td><Val id={f('retirement')} /></td></tr>
-    </tbody>
-  </table>
-  <p>
-    The context window is how much text the model can hold at once: your request, the files it has read and everything said so far.
-    Effort is how hard it may work on each request; the <a href={url('models/#effort')}>effort dial</a> on the models page shows what that costs.
-  </p>
-
-  <h2 id="runs">Where it runs</h2>
-  {harness ? (
-    <>
-      <p>The harness is the program that gives the model tools and runs it in a loop. For this model that is {harness.name}: <Val id={harness.models} show="claim" /></p>
-      <ul>
-        <li>Pick it: <Val id={f('pick')} show="claim" /></li>
-        <li>Set its effort: <Val id={harness.effort} show="claim" /></li>
-      </ul>
-      <p>T3 Code can run it too, through {harness.name} underneath. See <a href={url('t3-code/')}>T3 Code</a>.</p>
-    </>
-  ) : <p class="gap">Not published in our data.</p>}
-
-  <h2 id="benchmarks">Benchmark numbers</h2>
-  {score && scoreEntry ? (
-    <p>
-      On the <a href={scoreEntry.source}>Artificial Analysis Intelligence Index</a> it scores <Fact id={score.factId} />{score.effort && <> at {score.effort} effort</>}, read on {formatDate(scoreEntry.verified, true)}.
-      Scores from Artificial Analysis, credited as they ask.
-    </p>
-  ) : <p class="gap">Artificial Analysis has no index score for it in our data.</p>}
-  {hasEffortRows && (
-    <table>
-      <thead><tr><th scope="col">Effort</th><th scope="col">Index score</th>{perEffort.some((r) => r.tokens) && <th scope="col">Output tokens, whole run</th>}</tr></thead>
-      <tbody>
-        {perEffort.filter((r) => r.score).map((r) => (
-          <tr><th scope="row">{r.level}</th><td><Val id={r.score!} /></td>{perEffort.some((x) => x.tokens) && <td>{r.tokens ? <Val id={r.tokens} /> : <span class="gap">not published</span>}</td>}</tr>
+  <Tile title="On these plans" span={4} id="plans" side="explain/plans-and-api/">
+    {plans.length ? (
+      <ul class="mc-plans">
+        {plans.map((p) => (
+          <li>
+            <span class="mc-plan">{p.name}{p.price && <> <Fact id={p.price} /></>}</span>
+            <span class="mc-claim"><Val id={p.id} show="claim" /></span>
+          </li>
         ))}
-      </tbody>
-    </table>
+      </ul>
+    ) : <p class="gap">No plan in our data includes it.</p>}
+  </Tile>
+
+  <Tile title="Where it runs" span={4} id="runs" side="t3-code/">
+    {m.harness ? (
+      <dl class="mc-runs">
+        <div><dt>Harness</dt><dd><a href={url(sourcePath(`harnesses.${m.harness}.models`))}>{HARNESS[m.harness]}</a></dd></div>
+        <div><dt>Pick it</dt><dd><code><Val id={f('pick')} /></code></dd></div>
+        <div><dt>Set effort</dt><dd><code><Val id={`harnesses.${m.harness}.effort`} /></code></dd></div>
+        <div><dt>Effort levels</dt><dd>{m.effort ? <Val id={f('effort.levels')} /> : m.lab === 'OpenAI' ? <>In Codex: <Val id="lineup.codexEffortLevels" /></> : <span class="gap">not published</span>}</dd></div>
+        <div><dt>T3 Code</dt><dd><a href={url(sourcePath('t3code.providers'))}>through {HARNESS[m.harness]}</a></dd></div>
+        {m.apiId && <div><dt>API id</dt><dd><code>{m.apiId}</code></dd></div>}
+      </dl>
+    ) : <p class="gap">No harness for it in our data.</p>}
+  </Tile>
+
+  {effortRows.length > 0 && (
+    <Tile title="Index score at each effort" span={4} id="effort" side={sourcePath(effortRows[0]!.id)}>
+      <ol class="mc-effort">
+        {effortRows.map((r) => (
+          <li>
+            <span>{r.level}</span>
+            <span class="mc-track"><span style={`transform:scaleX(${r.score! / top})`}></span></span>
+            <a href={url(sourcePath(r.id))}>{r.score}</a>
+          </li>
+        ))}
+      </ol>
+    </Tile>
   )}
-  <p>A score is one test set at one effort setting. The <a href={url('models/#score-against-cost')}>models page</a> says what it does and does not tell you.</p>
 
-  <h2 id="lab-pages">The lab's own pages</h2>
-  <ul>
-    {m.links.docs ? <li><a href={m.links.docs}>{m.lab}'s documentation for {m.name}</a></li> : <li class="gap">No documentation page in our data.</li>}
-    {m.links.announcement && <li><a href={m.links.announcement}>The announcement</a></li>}
-    {m.links.systemCard ? <li><a href={m.links.systemCard}>The system card</a>, the lab's report on how the model was tested for safety and capability</li> : <li class="gap">No system card in our data.</li>}
-  </ul>
-
-  <h2 id="related">Related</h2>
-  <ul>
-    <li><a href={url('models/')}>All models</a>, with score against cost and the effort dial</li>
-    <li><a href={url('explain/plans-and-api/')}>Plans and the API</a></li>
-    <li><a href={url('sources/#file-models')}>Sources for every model fact</a></li>
-  </ul>
-
-  <Verified ids={ids} />
-</Article>
+  <Tile title="Sources" span={4} id="sources">
+    <ul class="mc-links">
+      {m.links.docs ? <li><a href={m.links.docs}>{m.lab} documentation</a></li> : <li class="gap">No documentation page in our data</li>}
+      {m.links.announcement && <li><a href={m.links.announcement}>The announcement</a></li>}
+      {m.links.systemCard ? <li><a href={m.links.systemCard}>The system card</a></li> : <li class="gap">No system card in our data</li>}
+      {score && <li><a href={url(sourcePath(score.factId))}>The index score's source</a></li>}
+      <li><a href={url('sources/#file-models')}>Every model fact</a></li>
+    </ul>
+    <Fragment slot="foot"><Verified ids={ids} /></Fragment>
+  </Tile>
+</Board>
 
 <style>
-  .card-facts { display: grid; gap: 0; margin: 0 0 var(--space-6); }
-  .card-facts div { display: grid; grid-template-columns: minmax(8rem, 12rem) 1fr; gap: var(--space-4); padding: var(--space-2) 0; border-bottom: 1px solid var(--rule); }
-  .card-facts dt { color: var(--muted); font-size: var(--text-m); }
-  .card-facts dd { margin: 0; }
-  @media (max-width: 30rem) { .card-facts div { grid-template-columns: 1fr; gap: 0; } }
-  .gap, :global(.prose) .gap { color: var(--muted); font-style: italic; }
+  .mc-back { display: inline-flex; align-items: center; min-height: 2.5rem; font-size: var(--text-s); color: var(--accent); }
+  .gap { color: var(--muted); font-style: italic; }
+  .finding { margin-bottom: 0.75rem; }
+  .mc-changed { margin: 0 0 0.75rem; font-size: var(--text-s); }
+  .mc-stats { grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); }
+  .mc-stats :global(.stat-value) { font-size: 1.125rem; }
+  .mc-stats :global(.stat-value a) { color: inherit; }
+  .mc-stats :global(.stat-value .gap) { font-family: var(--sans); font-size: var(--text-s); font-weight: 400; }
+  .mc-note { margin: 0.625rem 0 0; font-size: var(--text-xs); color: var(--ink-2); }
+
+  .mc-plans { display: grid; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+  .mc-plans li { display: grid; gap: 0.125rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--rule); }
+  .mc-plans li:last-child { border-bottom: 0; padding-bottom: 0; }
+  .mc-plan { font-weight: 650; color: var(--ink); }
+  .mc-plan :global(a) { font-family: var(--mono); font-weight: 600; margin-left: 0.25rem; }
+  .mc-claim { font-size: var(--text-xs); color: var(--ink-2); }
+
+  .mc-runs { display: grid; margin: 0; font-size: var(--text-s); }
+  .mc-runs div { display: grid; grid-template-columns: 6.5rem 1fr; gap: 0.5rem; padding: 0.375rem 0; border-top: 1px solid var(--rule); }
+  .mc-runs div:first-child { border-top: 0; padding-top: 0; }
+  .mc-runs dt { color: var(--muted); font-size: var(--text-xs); }
+  .mc-runs dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+
+  .mc-effort { display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+  .mc-effort li { display: grid; grid-template-columns: 4rem 1fr 3rem; align-items: center; gap: 0.5rem; min-height: 2rem; font-size: var(--text-xs); }
+  .mc-effort li > span:first-child { font-family: var(--mono); color: var(--ink-2); }
+  .mc-effort a { font-family: var(--mono); font-weight: 600; color: var(--ink); text-align: right; }
+  .mc-track { position: relative; height: 0.875rem; border-radius: 3px; background: color-mix(in oklab, var(--ink) 4%, transparent); overflow: hidden; }
+  .mc-track span { position: absolute; inset: 0; transform-origin: left; background: var(--accent); border-radius: 3px; }
+
+  .mc-links { display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+  .mc-links li { min-height: 2rem; display: flex; align-items: center; }
+  .tile :global(.verified) { margin: 0; }
 </style>

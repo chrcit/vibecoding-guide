@@ -1,0 +1,65 @@
+---
+/*
+ * Fig. 63, "Among the others". Chart mode, HTML strips, no script.
+ *
+ * Idea: where one model's published numbers sit among every other model in the data, on two or
+ * three strips, so a card read on its own still shows the spread.
+ * Elements: one strip per metric, a faint dot per model that has the number, this model's dot lit
+ * with its value, the lowest and highest values at the ends.
+ * Data: the rows from components/models/lab-data.ts. A model without the number gets no dot and
+ * the strip says why.
+ * Built as HTML with percentage positions, so it reads at 390px and in the side view with no
+ * redraw and no text below 13px.
+ */
+import { has, metric, type LabModel, type MetricKey } from '../model-lab/model';
+import { url } from '../../../lib/nav';
+
+interface Props { rows: LabModel[]; id: string; keys: MetricKey[] }
+const { rows, id, keys } = Astro.props;
+const me = rows.find((r) => r.id === id)!;
+const anchor = (fid: string) => `f-${fid.replace(/[^A-Za-z0-9_.-]/g, '-')}`;
+
+const strips = keys.map((k) => {
+  const m = metric(k);
+  const pts = rows.filter((r) => has(r.cells[k])).map((r) => ({ r, v: (r.cells[k] as { v: number }).v }));
+  const vs = pts.map((p) => p.v);
+  const lo = Math.min(...vs), hi = Math.max(...vs);
+  const pos = (v: number) => (hi === lo ? 50 : m.log ? ((Math.log10(v) - Math.log10(lo)) / (Math.log10(hi) - Math.log10(lo))) * 100 : ((v - lo) / (hi - lo)) * 100);
+  const mine = me.cells[k];
+  const rank = has(mine) ? pts.filter((p) => p.v > mine.v).length + 1 : 0;
+  return { m, pts: pts.map((p) => ({ ...p, at: pos(p.v), self: p.r.id === id })), lo, hi, mine, rank, of: pts.length };
+});
+---
+<div class="mr" id="fig-63" data-figure="63">
+  {strips.map((s) => (
+    <div class="mr-strip">
+      <p class="mr-head">
+        <span>{s.m.short}</span>
+        {has(s.mine)
+          ? <a class="mr-val" href={url(`sources/#${anchor(s.mine.id)}`)}>{s.mine.text}</a>
+          : <span class="gap">{s.mine.gap}</span>}
+      </p>
+      {s.of > 0 && (
+        <div class="mr-track" role="img" aria-label={has(s.mine) ? `${me.name}: ${s.mine.text}. ${s.rank - 1} of the other ${s.of - 1} models with this number are higher.` : `${s.of} models have this number; ${me.name} does not.`}>
+          {s.pts.filter((p) => !p.self).map((p) => <span class="mr-dot" style={`left:${p.at}%`} title={`${p.r.name}: ${(p.r.cells[s.m.key] as { text: string }).text}`}></span>)}
+          {s.pts.filter((p) => p.self).map((p) => <span class="mr-dot" data-self style={`left:${p.at}%`}></span>)}
+        </div>
+      )}
+      {s.of > 0 && <p class="mr-ends"><span>{s.m.format(s.lo)}</span><span>{s.of} models{s.m.log ? ', log scale' : ''}</span><span>{s.m.format(s.hi)}</span></p>}
+    </div>
+  ))}
+</div>
+
+<style>
+  .mr { display: grid; gap: 0.875rem; }
+  .mr-strip { display: grid; gap: 0.25rem; }
+  .mr-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; margin: 0; font-size: var(--text-xs); color: var(--muted); }
+  .mr-val { font-family: var(--mono); font-size: var(--text-m); font-weight: 650; color: var(--accent); text-decoration: none; }
+  .mr-val:hover { text-decoration: underline; }
+  .mr-track { position: relative; height: 1.5rem; margin: 0 0.5rem; }
+  .mr-track::before { content: ''; position: absolute; left: -0.5rem; right: -0.5rem; top: 50%; border-top: 1px solid var(--rule-strong); }
+  .mr-dot { position: absolute; top: 50%; width: 0.625rem; height: 0.625rem; margin: -0.3125rem 0 0 -0.3125rem; border-radius: 50%; border: 1.5px solid var(--muted); background: var(--card); }
+  .mr-dot[data-self] { width: 1rem; height: 1rem; margin: -0.5rem 0 0 -0.5rem; border-color: var(--accent); background: var(--accent); }
+  .mr-ends { display: flex; justify-content: space-between; gap: 0.5rem; margin: 0; font-family: var(--mono); font-size: var(--text-xs); color: var(--muted); }
+  .gap { color: var(--muted); font-style: italic; }
+</style>

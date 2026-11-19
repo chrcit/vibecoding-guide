@@ -1,21 +1,23 @@
 ---
-// Review page for the model figures, Fig. 10 and Fig. 11. Routed at /dev/fig-models/ in `pnpm dev`.
+// Review page for the model figures, Fig. 60 and Fig. 11. Routed at /dev/fig-models/ in `pnpm dev`.
 // Unlike the illustrative values on /dev/figures/, these are the real props from src/data/, so the
 // review shows exactly what the models page shows.
 import Base from '../layouts/Base.astro';
-import ScoreAndCost from '../components/fig/score-and-cost/ScoreAndCost.astro';
+import '../styles/board.css';
+import ModelLab from '../components/fig/model-lab/ModelLab.astro';
+import { labModels } from '../components/models/lab-data';
 import EffortDial from '../components/fig/effort-dial/EffortDial.astro';
-import { scorePoints, effortInputs } from '../components/models/view';
+import { effortInputs } from '../components/models/view';
 import { url } from '../lib/nav';
 import { links } from '../data/links';
 
 const aa = { label: 'Artificial Analysis, Intelligence Index, read 18 November 2026', href: links.artificialAnalysis.url };
 ---
-<Base title="Model figures" description="Development-only review page for Fig. 10 and Fig. 11." noindex>
+<Base title="Model figures" description="Development-only review page for Fig. 60 and Fig. 11." noindex>
   <div class="fig-review">
     <h1>Model figures</h1>
-    <p>Fig. 10 and Fig. 11 with the real values from src/data/, as the models page uses them.</p>
-    <ScoreAndCost points={scorePoints((id) => url(`models/${id}/`))} start="claude-opus-5-5" source={aa} />
+    <p>Fig. 60 and Fig. 11 with the real values from src/data/, as the models page uses them.</p>
+    <div class="board-grid"><ModelLab rows={labModels((id) => url(`models/${id}/`))} /></div>
     <EffortDial {...effortInputs()} source={{ ...aa, href: links.aaOpus.url }} />
   </div>
 </Base>
