@@ -292,7 +292,8 @@ export function mountGraph(root: HTMLElement) {
     });
     data.edges.forEach(([a, b], e) => lineEls[e].classList.toggle('out', out[a] || out[b]));
     root.classList.toggle('filtering', filter.size > 0);
-    if (current !== null && out[current] && current !== pinned) setCurrent(null);
+    if (pinned !== null && out[pinned]) pinned = null;
+    if (current !== null && out[current]) { hovered = focused = null; setCurrent(null); }
     scheduleLabels();
   }
 

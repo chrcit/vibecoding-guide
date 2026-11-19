@@ -261,7 +261,7 @@ const data = {
   }
   .gv-chip:disabled { cursor: default; }
   .gv-chip:not(:disabled):hover { border-color: var(--rule-strong); color: var(--ink); }
-  .gv-chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .gv-chip[aria-pressed='true'], .gv-chip[aria-pressed='true']:not(:disabled):hover { background: var(--ink); border-color: var(--ink); color: var(--paper); }
   .gv-chip[aria-pressed='true'] :global(.cmark path) { fill: var(--paper); }
   .gv.filtering .gv-chip[aria-pressed='false'] { color: var(--muted); }
   .gv.filtering .gv-chip[aria-pressed='false'] :global(.cmark) { opacity: 0.45; }
