@@ -460,7 +460,7 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
       },
     },
     lid: {
-      part: 'Lid closed, job stopped.',
+      part: 'Asleep means stopped.',
       text: {
         plain: 'A sleeping laptop stops its agents where they were. They carry on when you open it.',
         technical: 'Local agent processes sleep with the machine; long test runs and long jobs stall with them.',

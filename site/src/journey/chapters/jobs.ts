@@ -37,7 +37,7 @@ const taskOf = (o: Opts, j: number) => (o.projects === 'one' ? TASKS : PROJECTS)
 /** What the job is called under the picture: its thread's name. */
 const nameOf = (o: Opts, j: number) => (o.board === 'vague' ? `thread “${VAGUE[j % 5]}”` : `job ${j + 1}, ${taskOf(o, j)}`);
 const boardLabel = (o: Opts, j: number, state: keyof typeof STATE): Label =>
-  lab(`j${j}`, o.board === 'vague' ? `“${VAGUE[j % 5]}”` : `${taskOf(o, j)}: ${STATE[state]}`, j % 2 ? 'bottom' : 'top');
+  lab(`j${j}`, o.board === 'vague' ? `“${VAGUE[j % 5]}”` : `${taskOf(o, j)}: ${STATE[state]}`, 'top');
 
 /** The whole floor of five jobs, so moving the slider does not move the camera. */
 const frameFive = (projects: Opts['projects']): P3[] => {

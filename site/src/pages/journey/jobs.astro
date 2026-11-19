@@ -11,7 +11,7 @@ import Fact from '../../components/data/Fact.astro';
 import Verified from '../../components/data/Verified.astro';
 import { url } from '../../lib/nav';
 // The stop lengths below are the made-up ones in journey/chapters/jobs.ts (STOP, OPEN_THREAD).
-const facts = ['t3code.worktrees', 't3code.shortcuts.workspace', 't3code.shortcuts.background', 't3code.limited', 't3code.queueSteer', 't3code.worktreeFolder'];
+const facts = ['t3code.worktrees', 't3code.shortcuts.workspace', 't3code.shortcuts.background', 't3code.queueSteer', 't3code.worktreeFolder'];
 ---
 <Journey chapter="jobs" first="one" title="Several jobs" description="Running several agent jobs at once, in one project or in several, with one of you to answer them.">
   <Step id="one" title="While it works, you wait">
@@ -27,6 +27,7 @@ const facts = ['t3code.worktrees', 't3code.shortcuts.workspace', 't3code.shortcu
         <li>One thread per job. <Fact id="t3code.shortcuts.workspace" /> opens the workspace menu: pick a new worktree so the job gets its own copy and branch.</li>
         <li>Send the brief with <Fact id="t3code.shortcuts.background" />: the thread runs in the background and a fresh composer opens for the next job.</li>
         <li><Fact id="t3code.worktrees" show="claim" /> Merge into main one job at a time.</li>
+        <li><Fact id="t3code.queueSteer" show="claim" /></li>
       </ol>
     </More>
   </Step>
@@ -59,7 +60,6 @@ const facts = ['t3code.worktrees', 't3code.shortcuts.workspace', 't3code.shortcu
     <More title="Do this">
       <p>Start each job in a new worktree, name its thread after the job, and end every brief with this:</p>
       <CopyPrompt compact title="Ending for every brief">When you stop, start with one line: done, blocked, or a question for me. If done, say which tests you ran and what they printed, and attach a screenshot of anything visible. If a question, ask one question I can answer in a sentence.</CopyPrompt>
-      <p><Fact id="t3code.queueSteer" show="claim" /> <Fact id="t3code.limited" show="claim" /></p>
     </More>
     <Next from="jobs" more={[{ href: 'wiki/parallel-work/', text: 'Parallel work', side: true }, { href: 'wiki/worktree/', text: 'Worktrees', side: true }]} />
   </Step>

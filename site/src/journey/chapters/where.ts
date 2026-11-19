@@ -22,7 +22,7 @@ const scene = (n: number, o: { gate?: boolean; phone?: boolean; leave?: boolean 
       lab('you', 'you', 'left'),
       // Each machine is named over the job standing on it: the space above the columns stays free.
       lab('j0', 'your laptop', 'top'),
-      ...(n > 1 ? [lab('j1', 'always-on computer', 'top', 'wiki/always-on-machine/')] : []),
+      ...(n > 1 ? [lab('j1', 'always-on computer', 'right', 'wiki/always-on-machine/')] : []),
       ...(n > 2 ? [lab('j2', 'the cloud', 'top')] : []),
       ...(o.gate ? [termLabel('mgate', 'check', 'right')] : []),
       termLabel('main', 'main', 'bottom'),
