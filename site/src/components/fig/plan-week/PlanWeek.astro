@@ -44,7 +44,7 @@ const groups: [string, string][] = [['claude', 'Claude'], ['chatgpt', 'ChatGPT']
       <select data-c="planId">
         {groups.map(([g, label]) => (
           <optgroup label={label}>
-            {cat.plans.filter((p) => p.provider === g).map((p) => <option value={p.id} selected={p.id === start.planId}>{p.name}{p.provider === 'api' ? '' : `, $${p.price}`}</option>)}
+            {cat.plans.filter((p) => p.provider === g).map((p) => <option value={p.id} selected={p.id === start.planId}>{p.name}{p.provider === 'api' || p.name.includes('$') ? '' : `, $${p.price}`}</option>)}
           </optgroup>
         ))}
       </select>
