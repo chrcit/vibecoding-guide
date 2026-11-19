@@ -2,7 +2,7 @@
 title: "Prompt caching"
 summary: "Prompt caching lets a provider reuse the work of reading a prompt it has seen recently, so an agent that rereads the same context pays far less for it."
 cluster: models
-updated: 2026-11-18
+updated: 2026-11-19
 aliases: ["cache reads", "cache hit", "KV cache"]
 ---
 
@@ -14,31 +14,30 @@ Sources: guides/models-and-costs.md "Lineups and list prices", "Save Money Witho
 
 Prompt caching lets a provider reuse the work of reading a prompt it has seen recently, so an agent that rereads the same context pays far less for it.
 
-A model has no memory between requests. Every step of [the loop](./agent-loop.md) sends the whole conversation again: the harness's instructions, your [instruction file](./instruction-file.md), every message, every file the agent read and every command it ran. Fixing the bakery's holiday hours might take forty steps, and each one sends everything before it plus a little more. Most of what an agent pays for is reading the same text over and over.
+Every step of [the loop](./agent-loop.md) sends the whole conversation again: the harness's instructions, your [instruction file](./instruction-file.md), every message and every file the agent has read. The cache is why that is affordable. When a request starts with exactly the same text as a recent one, that part is read at a much lower price, and only the new end is read in full. The match runs from the first [token](./token.md) and stops at the first difference. Prices for cached and uncached input are on the [models page](/models/).
 
-Providers handle this with a cache. When a request starts with exactly the same text as a recent one, the provider skips the work of reading that part again and charges much less for it. Only the new part at the end is read in full. On a long agent run, nearly all the input is a cache hit, so the cache decides much of the cost and some of the speed. The prices for cached and uncached input are on the [models page](/models/).
+What follows from that, in practice:
 
-The catch is the word "exactly". The cache matches from the very first [token](./token.md) and stops at the first difference. Change something near the start and everything after it has to be read at full price again.
+- Keep one task per [thread](./thread.md). A thread that wanders keeps rereading history that no longer matters.
+- Pick the model at the start. Switching mid-thread starts a new cache.
+- Expect one dear step after [compaction](./compaction.md), which rewrites the history.
+- Leave the instruction file alone mid-session; a change near the start invalidates everything after it.
 
-That explains a few habits that would otherwise look like superstition:
+On an [API key](./api-key.md) the cache shows on the bill; on a [subscription plan](./subscription-plan.md) it shows as speed. The [plans explainer](/explain/plans-and-api/) compares the two. To see it on a real run, ask:
 
-- Keep one task per [thread](./thread.md). A long thread that wanders keeps paying to reread history that no longer matters.
-- Switching model halfway through a thread starts the cache again, because each model has its own.
-- [Compaction](./compaction.md) rewrites the history, so the next step pays full price once.
-- Editing the instruction file mid-session changes the start of the prompt, if the harness reloads it.
-
-On an [API key](./api-key.md) the cache shows up directly on the bill. On a [subscription plan](./subscription-plan.md) there is no bill to read, but a thread that keeps its cache still answers faster. The [plans explainer](/explain/plans-and-api/) compares the two ways of paying.
+```text
+For the last few steps of this session, how much of the input was read
+from the cache and how much was new? What broke the cache, if anything?
+```
 
 > [!technical] What gets cached, in what order
-> A request is assembled in a fixed order: the tool definitions, then the system prompt (the harness's instructions plus your instruction file), then the conversation from the first message on. The cache works on the longest matching prefix of that sequence, so the parts that change least should come first, and they do.
+> A request is assembled in a fixed order: tool definitions, then the system prompt (the harness's instructions plus your instruction file), then the conversation. The cache covers the longest matching start of that sequence.
 >
-> Some practical consequences:
+> - Adding or removing an [MCP](./mcp.md) server changes the tool definitions at the very start, so the next request misses entirely.
+> - Entries expire when unused for a while. A thread you return to after a long break pays to rebuild its cache once.
+> - A [subagent](./subagent.md) starts with a fresh context and builds its own cache: cheap for the main thread, not free overall.
 >
-> - Adding or removing an [MCP](./mcp.md) server changes the tool definitions at the very start. Every request after that is a cache miss until a new prefix has been written.
-> - Writing to the cache can cost a little more than a normal read, and an entry expires if it goes unused for a while. A thread you return to after a long break pays to rebuild its cache on the first step.
-> - A [subagent](./subagent.md) starts with a fresh context, so it builds its own cache. That is part of why subagents are cheap for the main thread and not free overall.
->
-> The exact prices, expiry times and minimum cacheable lengths differ by provider and model, and change. They live in the data on the [models page](/models/).
+> Prices, expiry times and minimum cacheable lengths differ by provider and change; they live on the [models page](/models/).
 
 > [!engineer] Why it is a prefix cache, and how to keep the hit rate high
 > A transformer reads a prompt in a prefill pass that computes, for every token at every layer, a key and a value vector for attention. Generation then attends over those vectors. Because attention is causal, the keys and values for token *n* depend only on tokens 1 to *n*. So two prompts that share their first *n* tokens share those vectors exactly, and a provider can store them (the KV cache) and skip that part of prefill on the next request. It also means there is nothing to reuse after the first differing token: everything downstream was computed against a different past.

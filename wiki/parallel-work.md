@@ -2,7 +2,7 @@
 title: "Working in parallel"
 summary: "While one agent works, start another on something unrelated; your attention, not the agents, sets how many can run at once."
 cluster: teams
-updated: 2026-11-18
+updated: 2026-11-19
 aliases: ["never wait", "parallel threads", "attention"]
 ---
 
@@ -14,22 +14,24 @@ Sources: guides/ways-of-working.md "Never Wait"; guides/t3-code.md "Threads, scr
 
 While one agent works, start another on something unrelated; your attention, not the agents, sets how many can run at once.
 
-A run that takes a quarter of an hour is a short one now. Watching it scroll past is the most expensive thing you can do with that time, because nothing you see changes what the agent does. Give it a task and a way to check its own work, then go and start the next one.
+Watching an agent work changes nothing it does. Give it a task and a way to check its own work, then start the next one. The bakery's holiday hours, the club's paid-members list and a messy contact spreadsheet have nothing to do with each other, so they can run side by side as three [threads](./thread.md), each with its own conversation and context.
 
-Say you have three things to do this week. The bakery's site shows the wrong opening hours on public holidays. The football club wants its members list to show who has paid. And someone has sent you a contact spreadsheet full of duplicates. These have nothing to do with each other, so they can run side by side: three [threads](./thread.md), one per task, each with its own conversation and its own context.
+Two rules keep it from turning into a mess:
 
-Two rules keep this from turning into a mess.
+- Give each thread its own copy of the code. Two agents in one folder overwrite each other's files. A [worktree](./worktree.md) is a separate checkout per thread, and an [agentic development environment](./agentic-development-environment.md) can make one for you.
+- Add threads only while you keep up with them. Each finished run costs you a few minutes: reading the [diff](./diff.md), checking the result, deciding what next. When threads wait on you, your [review](./review.md) gets sloppy. Threads that can [check themselves](./verification.md) need a glance; work only you can judge needs you to sit down with it.
 
-First, each thread gets its own copy of the code. Two agents editing the same folder overwrite each other's files and run each other's half-finished changes in their tests. A [worktree](./worktree.md) gives each one a separate checkout of the repository. Tools like an [agentic development environment](./agentic-development-environment.md) can make one per thread for you.
+You can still add to a running thread: a message either [waits for the next turn or goes into the current one](./queue-and-steer.md). When one task splits into pieces an agent could hand out and check, that is [orchestration](./orchestration.md); the [orchestration explainer](/explain/orchestration/) shows both.
 
-Second, you are the bottleneck. Every run ends with a few minutes of your attention: reading the [diff](./diff.md), checking the result, deciding what comes next. Add threads and at some point they start waiting for you instead of the other way round, and your [review](./review.md) gets sloppy. Where that point is depends on how well each thread can [check itself](./verification.md). A thread with a test suite that settles the question needs a glance; a thread whose work only you can judge needs you to sit down with it.
+When you come back to a thread, ask for a report you can read in seconds:
 
-While a thread runs, you can still add to it. A message you send either [waits for its next turn or goes into the running one](./queue-and-steer.md), so a forgotten detail does not mean stopping the agent.
-
-When the work itself splits into pieces that one agent could hand out and check, that is [orchestration](./orchestration.md), the next step up. The [orchestration explainer](/explain/orchestration/) walks through both.
+```text
+What have you done, what are you doing now, what is blocking you,
+and what have you not verified yet? Keep it short.
+```
 
 > [!technical] Making parallel threads cheap to review
-> - Ask for an update you can read in seconds. "Tell me what you have done, what you are doing now, what is blocking you, and what you have not verified yet. Keep it short." Ask for it as a small page if the thread has results worth seeing.
+> - Ask for the update as a small page when the thread has results worth seeing.
 > - Commit at every green state. Each thread commits when its checks pass, with a message that says what changed and why. Coming back to a thread is then a matter of reading the last few commits.
 > - Keep threads to one task. A thread that has done three unrelated things is three times harder to review and carries all three in its context.
 > - Give each dev server its own port and each worktree its own dependency install, or the threads trip over each other at run time instead.

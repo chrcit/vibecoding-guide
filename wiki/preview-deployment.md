@@ -2,7 +2,7 @@
 title: "Preview deployment"
 summary: "A preview deployment is a copy of the site built from a branch at its own address, so a change can be seen and checked before it goes live."
 cluster: shipping
-updated: 2026-11-18
+updated: 2026-11-19
 aliases: ["preview URL", "deploy preview", "staging"]
 ---
 
@@ -14,23 +14,24 @@ Sources: guides/cloud-infrastructure.md "Continuous Deployment"; guides/web-rule
 
 A preview deployment is a copy of the site built from a branch at its own address, so a change can be seen and checked before it goes live.
 
-The football club's treasurer wants the members list to show who has paid this season. An agent builds it on a [branch](./branch.md), and it works on your machine. That proves less than it seems. Your machine has your settings, your files and your browser; the live site runs somewhere else, built from scratch, with its own configuration. Things that break only there are common: a missing setting, a file that was never committed, a page that is fine on a laptop and unusable on a phone.
+Working on your machine proves less than it seems. The live site is built from scratch somewhere else, with its own settings, and some bugs only appear there: a missing setting, a file that was never committed, a page that is unusable on a phone. Most hosts that [deploy](./deployment.md) from a repository also build every [branch](./branch.md) at its own address while the live site stays as it was. That copy is the preview.
 
-Most hosts that [deploy](./deployment.md) from a repository will also build every branch on its own. Push the branch and shortly afterwards the change is running at a separate address, while the live site stays exactly as it was. That copy is the preview.
+Use it three ways. Open it on your phone and click through it as a member of the club would. Send it to the treasurer who asked for the paid-members list, so they can say whether it is what they meant. And have the agent [check it in a browser](./browser-check.md) the way it checks your local copy:
 
-It is useful three ways. You can open it on your phone and click through it as a member would. The treasurer can try it and say whether it is what she meant, before anyone else sees it. And an agent can open it in a browser and [check it](./browser-check.md) the same way it checks your local copy, which catches the class of bug that only appears once deployed.
+```text
+Push this branch, wait for the preview to build, open it at phone and
+desktop width, try the change as a member would, and send me the
+address with what you checked and what you could not.
+```
 
-When you open a [pull request](./pull-request.md) for the branch, the preview's address usually appears on it next to the [diff](./diff.md), so the [review](./review.md) can look at the code and the running result together. Merge when both look right; the live site then rebuilds from the main line.
+On a [pull request](./pull-request.md) the preview's address usually sits next to the [diff](./diff.md), so [review](./review.md) covers the code and the running result together. Merge when both look right.
 
-A preview is only as safe as what it is connected to. If it talks to the real database, trying out the new feature changes real members' records. Give previews their own test data.
-
-Previews are often reachable by anyone who has the link. That is fine for a change to the club's colour scheme and not fine for a page that lists members' names. For anything private, see [sharing privately](./sharing-privately.md).
+Give previews their own test data; a preview wired to the real database changes real members' records. Previews are often open to anyone with the link, which is fine for a colour change and not for a page of members' names: see [sharing privately](./sharing-privately.md).
 
 > [!technical] Setting previews up
 > - Connect the repository to a host that builds branches, and check in its settings that preview builds are on and which branches they cover.
 > - Give the preview environment its own [environment variables](./secrets.md): a test database, test payment keys, and nothing that can reach production data.
 > - Turn on the host's protection for previews if it has one, or put the preview behind a login.
-> - Ask the agent to finish a task by pushing the branch, waiting for the preview, opening it at a phone width and a desktop width, and reporting the address with what it checked.
 >
 > Some teams also keep a long-lived staging site that mirrors production more closely. A preview per branch is the lighter version of the same idea, and enough for most small projects.
 

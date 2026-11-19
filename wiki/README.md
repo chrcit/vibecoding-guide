@@ -36,8 +36,9 @@ The file name is the slug: `context-window.md` becomes `/wiki/context-window/`.
 
 ## Writing rules
 
+- We don't explain the things. We tell you how. The reader has an agent that can explain anything at their own level, so an article says what the thing is in a sentence or two, then how to use it or what to ask the agent, usually with a prompt they can copy in a `text` code block. It does not try to teach everything.
 - One idea per article. If a section could be linked to on its own, it is probably its own article.
-- The plain layer comes first, 120 to 400 words that someone new to all of this can follow without the rest. Deeper material goes in `> [!technical]` and `> [!engineer]` blocks, which the site folds or opens by reader level. A fact a beginner needs is never only in a deeper block.
+- The plain layer comes first, about 100 to 250 words that someone new to all of this can follow without the rest. Deeper material goes in `> [!technical]` and `> [!engineer]` blocks, which the site folds or opens by reader level. A fact a beginner needs is never only in a deeper block.
 - No number that goes out of date: no price, limit, score, version, release date or list of a product's features. Link the explainer, the models page (`/models/`) or the sources page (`/sources/`) that carries it; those read their numbers from the site's data files, where every value has a source and a date. Facts that do not change, such as an HTTP status code, are fine.
 - No ranking of labs, models or tools.
 - Use the guide's three running examples where an example helps: the club list, the holiday hours bug and the contact tidy (see `site/AGENTS.md`).
