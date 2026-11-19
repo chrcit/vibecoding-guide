@@ -1,24 +1,22 @@
 ---
-import Base from '../../layouts/Base.astro';
-import PageHeader from '../../components/site/PageHeader.astro';
-import CardGrid from '../../components/site/CardGrid.astro';
-import Card from '../../components/site/Card.astro';
-import { categories, pieces, piecesIn } from '../../lib/showcase';
+// The showcase as a board: every piece running in its tile. The story of how
+// each was built, and its prompt, open in the side view.
+import Board from '../../layouts/Board.astro';
+import Tile from '../../components/board/Tile.astro';
+import { pieces } from '../../lib/showcase';
+import { url } from '../../lib/nav';
 ---
-<Base title="Showcase · Agentic Coding Guide" description="Things built by an agent for this guide, each with the prompt that started it and an honest account of how it went." section="showcase" noindex={pieces.length === 0}>
-  <div class="wrap">
-    <PageHeader title="Showcase">
-      <p>Things an agent built for this guide. Each comes with the prompt that started it and a short account of how it went, including what had to be corrected.</p>
-    </PageHeader>
-    {categories.map((c) => (
-      <CardGrid title={c.title}>
-        {piecesIn(c.id).length === 0
-          ? <Card href={`showcase/${c.id}/`} title={c.title}>{c.blurb}</Card>
-          : piecesIn(c.id).map((p) => <Card href={`showcase/${c.id}/#${p.slug}`} title={p.title}>{p.summary}</Card>)}
-      </CardGrid>
-    ))}
-  </div>
-</Base>
+<Board title="Showcase" description="Things built by an agent for this guide, running in the page, each with the prompt that started it and an honest account of how it went." section="showcase">
+  {pieces.map((p) => (
+    <Tile title={p.title} span={6} id={p.slug} flush side={`showcase/${p.category}/#${p.slug}`}>
+      <a slot="tools" class="tile-more" href={url(p.path)} aria-label={`Open ${p.title} full screen`} title="Full screen">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3H13v3.5M13 3 9 7M6.5 13H3V9.5M3 13l4-4" /></svg>
+      </a>
+      <iframe class="piece" src={url(p.path)} title={p.title} loading="lazy"></iframe>
+    </Tile>
+  ))}
+</Board>
+
 <style>
-  .wrap { max-width: var(--wide); margin: 0 auto; padding: var(--space-7) var(--gutter) 0; }
+  .piece { display: block; width: 100%; height: clamp(26rem, 62vh, 40rem); border: 0; border-radius: 0 0 var(--radius) var(--radius); background: var(--paper-2); }
 </style>
