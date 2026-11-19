@@ -11,6 +11,15 @@ import Opinion from '../../components/site/Opinion.astro';
       <p>Claude is better at design, and the current class of Fable 5.2 and Opus 5.5 is better at high-level decisions. That is what I put in the lead’s seat.</p>
     </Opinion>
   </Step>
+  <Step id="shapes" title="Other ways to split one job">
+    <p>The same request, handed round differently. Whoever judges the work is a different model from whoever built it.</p>
+    <div class="pick">
+      <button type="button" data-do="shape" data-val="pair" data-default aria-pressed="true">Build, then review</button>
+      <button type="button" data-do="shape" data-val="line" aria-pressed="false">Plan, build, review</button>
+      <button type="button" data-do="shape" data-val="best" aria-pressed="false">Two builds, keep one</button>
+      <button type="button" data-do="shape" data-val="fan" aria-pressed="false">Fan out</button>
+    </div>
+  </Step>
   <Step id="gate" title="A check before main">
     <p>Nothing a builder calls done lands on main until it has passed.</p>
     <div class="pick">
