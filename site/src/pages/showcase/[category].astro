@@ -10,11 +10,18 @@ export function getStaticPaths() {
 }
 const { category } = Astro.props;
 const list = piecesIn(category.id);
+// Said once near the title: the names in the pieces are invented.
+const madeUp: Record<string, string> = {
+  apps: 'The football club and its members are made up.',
+  pages: 'The bakery and its town are made up.',
+  automations: 'The contacts in the sample are made up.',
+  '3d': 'The landscape is generated from random numbers, not a real place.',
+};
 const date = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 ---
 <Base title={`${category.title} · Showcase · Agentic Coding Guide`} description={`${category.title}: ${category.blurb} Built by an agent for this guide.`} section="showcase" noindex={list.length === 0}>
   <div class="wrap">
-    <PageHeader title={category.title} />
+    {list.length > 0 && madeUp[category.id] ? <PageHeader title={category.title}><p>{madeUp[category.id]}</p></PageHeader> : <PageHeader title={category.title} />}
     {list.length === 0 && <p>Nothing here yet.</p>}
     {list.map((p) => (
       <section class="piece" id={p.slug} aria-labelledby={`${p.slug}-h`}>
