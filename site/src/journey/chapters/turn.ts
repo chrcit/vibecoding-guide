@@ -26,7 +26,7 @@ export const PLAN: Record<Level, string[]> = {
   technical: ['Add paused: boolean to Member in members.ts.', 'Add a Pause button to MemberRow.tsx.', 'Filter paused members out of the list query.', 'Tests in members.test.ts; run tsc --noEmit and npm test.'],
   engineer: ['Migration: members.paused, boolean, default false.', 'Pause action, treasurer only, checked on the server.', 'List query excludes paused members.', 'Tests for the query, the permission and the migration; tsc and npm test in CI.'],
 };
-const planCards = (mark3: 'wait' | 'ok' | 'bad') => [1, 2, 3, 4].map((i) => ({ id: `p${i}`, b: i === 3 && mark3 === 'bad' ? 'bad' as const : 'model' as const, mark: i === 3 ? mark3 : undefined }));
+const planCards = (mark3?: 'wait' | 'ok' | 'bad') => [1, 2, 3, 4].map((i) => ({ id: `p${i}`, b: i === 3 && mark3 === 'bad' ? 'bad' as const : 'model' as const, mark: i === 3 ? mark3 : undefined }));
 const planLabels = (step3: string): Label[] => [...labels(), lab('card:p1', 'plan', 'left'), lab('card:p3', step3, 'right', 'wiki/plan-mode/')];
 
 // One readout for the chapter: the same four names on every step.
@@ -126,7 +126,7 @@ async function plan(ctx: Ctx, h: Script, d: Door) {
   const change = answer === 'change';
   ctx.keep.plan = answer;
   ctx.say('you', change ? 'Step 3: keep them in the list, greyed out.' : 'Go ahead.');
-  h.set((s) => { s.tray!.cards = planCards(change ? 'ok' : 'bad'); s.labels = planLabels(change ? 'step 3: grey them out' : 'step 3: hide them'); });
+  h.set((s) => { s.tray!.cards = planCards(change ? 'ok' : undefined); s.labels = planLabels(change ? 'step 3: grey them out' : 'step 3: hide them'); });
   await h.send(reverse(route.gateToYou()), 'you', { ms: 380 });
   h.set((s) => { s.gates![0]!.lamp = 'ok'; });
   await h.send(reverse(route.agentToGate()), change ? 'you' : 'model', { ms: 320 });
@@ -134,7 +134,7 @@ async function plan(ctx: Ctx, h: Script, d: Door) {
   await work(ctx, h, t, 12, !change);
   await done(ctx, h, !change);
   await h.wait(700);
-  if (!change) markFiles(h, 'bad');
+  if (!change) { markFiles(h, 'bad'); h.set((s) => { s.tray!.cards = planCards('bad'); }); }
   ctx.say(null, change
     ? 'You changed step 3 before any file was touched. All twelve turns went to what you meant.'
     : 'You let step 3 through. Twelve turns built paused members hidden, and you meant greyed out.');
