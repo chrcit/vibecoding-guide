@@ -15,7 +15,7 @@ Three rules follow from that, and they outrank habits you bring from writing art
 ## The journey
 
 The home page and `/journey/<id>/` are the spine of the site: one drawn scene that grows through
-nine steps, from one chat to twenty agents in a loop. Read `JOURNEY.md` before touching it. Boards
+seventeen steps in two parts, from one chat to twenty agents in a loop, and on to the work around them. Read `JOURNEY.md` before touching it. Boards
 (below) are where a reader pushes one idea further; wiki pages are what the labels on the picture
 open. A new idea goes into the journey's picture first, and only then into a board.
 
@@ -75,7 +75,6 @@ Dependencies stay few. Pin exact versions that are at least two weeks old. Ask t
 | `src/components/level/` | Reader levels |
 | `src/components/data/` | Components that render sourced facts |
 | `src/components/fig/` | Figure frame, drawing kit, the figures. See `FIGURES.md` |
-| `src/components/legacy/` | First-version figures, kept only until each is replaced |
 | `src/data/` | Everything that goes out of date. See `../UPDATE.md` |
 | `src/pages/essays/` | The author's first-person essays, on the `Essay` layout |
 | `src/dev/` | Review pages, routed at `/dev/<name>/` in `astro dev` only |

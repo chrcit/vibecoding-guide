@@ -1,14 +1,21 @@
 ---
 import Journey from '../layouts/Journey.astro';
 import Step from '../components/journey/Step.astro';
-import { rungs } from '../journey/rungs';
+import { rungs, parts } from '../journey/rungs';
 import { url } from '../lib/nav';
 ---
 <Journey chapter="whole" first="chat" title="From one chat to twenty agents" description="Agentic coding in nine steps and one picture: a chat, a loop, a window that fills, a file that remembers, a check, a helper, a team, a lead, a fleet.">
-  {rungs.map((r) => (
+  {rungs.filter((r) => r.part === 1).map((r, i, all) => (
     <Step id={r.id} title={`${r.n}. ${r.title}`}>
       <p>{r.line}</p>
-      <a class="j-open" href={url(`journey/${r.id}/`)}>Try it <span aria-hidden="true">→</span></a>
+      <a class="j-open" href={url(`journey/${r.id}/`)} aria-label={`Try it: ${r.title}`}>Try it <span aria-hidden="true">→</span></a>
+      {i === all.length - 1 && (
+        <a class="j-next" href={url(parts[1]!.href)}>
+          <span>Part two, 10 to {rungs.length}</span>
+          <b>{parts[1]!.title}</b>
+          <span>What it costs, who checks it, where you come in, and where it runs.</span>
+        </a>
+      )}
     </Step>
   ))}
 </Journey>

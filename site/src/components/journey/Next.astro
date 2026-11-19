@@ -1,17 +1,25 @@
 ---
 /* The card at the end of a chapter: the next step of the journey, and where to push further. */
 import { url } from '../../lib/nav';
-import { after } from '../../journey/rungs';
+import { after, rung, rungs, parts } from '../../journey/rungs';
 interface Props { from: string; more?: { href: string; text: string; side?: boolean }[] }
 const { from, more = [] } = Astro.props;
 const next = after(from);
+const here = rung(from);
+const crossing = next && here && next.part !== here.part;
 ---
 <div class="j-end">
-  {next ? (
+  {next && !crossing ? (
     <a class="j-next" href={url(`journey/${next.id}/`)}>
-      <span>Next, {next.n} of 9</span>
+      <span>Next, {next.n} of {rungs.length}</span>
       <b>{next.title}</b>
       <span>{next.line}</span>
+    </a>
+  ) : next ? (
+    <a class="j-next" href={url(parts[next.part - 1]!.href)}>
+      <span>Part two, {next.n} to {rungs.length}</span>
+      <b>{parts[next.part - 1]!.title}</b>
+      <span>What it costs, who checks it, where you come in, and where it runs.</span>
     </a>
   ) : (
     <a class="j-next" href={url('start/')}>

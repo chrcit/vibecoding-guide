@@ -14,6 +14,9 @@ export function boot(root: HTMLElement) {
   const scene = new Scene(stage);
   scene.base = root.dataset.base ?? '/';
   root.setAttribute('data-ready', '');
+  for (const d of root.querySelectorAll<HTMLDetailsElement>('details[data-open-for]')) {
+    if ((d.dataset.openFor ?? '').split(' ').includes(document.documentElement.dataset.level ?? 'plain')) d.open = true;
+  }
   const sayEl = root.querySelector<HTMLElement>('.j-say')!;
   const statEl = root.querySelector<HTMLElement>('.j-stats')!;
   const keyEl = root.querySelector<HTMLElement>('.j-key')!;

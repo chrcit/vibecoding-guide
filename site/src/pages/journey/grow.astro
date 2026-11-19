@@ -1,0 +1,11 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import Step from '../../components/journey/Step.astro';
+import Next from '../../components/journey/Next.astro';
+---
+<Journey chapter="grow" first="first" title="The project grows" description="Every job adds to the project and leaves something behind. Clean-ups and refactors are jobs you schedule.">
+  <Step id="first" title="The project grows">
+    <p>This chapter is being built.</p>
+    <Next from="grow" />
+  </Step>
+</Journey>

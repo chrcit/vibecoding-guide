@@ -9,6 +9,11 @@
  *
  * and once the agent has help, a bus runs along y = -46 behind it, with up to twenty workers on a
  * 5 x 4 grid beyond the bus, and a second gate on the bus in front of the project.
+ *
+ * Part two widens the same floor. A meter stands beside the model (-64, 0), a reviewer beside the
+ * gate (-70, 54), a tray beside you (46, 104) for what comes back and what waits for you, other
+ * people stand at the gate in front of main and beyond it, and slabs under the floor mark which
+ * machine a station runs on. Several jobs stand in a row along y = 0.
  * Coordinates are world units on the floor: +x runs down to the right, +y down to the left.
  */
 import * as k from '../components/fig/kit/iso';
@@ -40,6 +45,8 @@ export interface Agent {
   tree?: 'own' | 'bad' | false;
   /** Which model sits on top: only a tone, so two kinds can be told apart. */
   model?: 'a' | 'b';
+  /** Its machine is asleep: drawn faint. */
+  off?: boolean;
 }
 export type FileMark = '' | 'read' | 'edit' | 'bad' | 'ok';
 export interface Project {
@@ -52,11 +59,36 @@ export interface Project {
   skillOut?: number;
   /** What has landed on the main branch, oldest first. */
   commits?: ('ok' | 'bad')[];
+  /** How much has been built on each file tile, in layers. The project grows upwards. */
+  stacks?: number[];
+  /** Layers on each tile that nothing uses any more: copies, dead code. */
+  junk?: number[];
 }
+/** What you pay with. A plan is an allowance that drains and refills; the API is a bill that grows. */
+export interface Meter {
+  id: string;
+  at: XY;
+  mode: 'plan' | 'api';
+  /** plan: how much of the allowance is left, 0 to 1. api: coins spent so far. */
+  level: number;
+  lamp?: Lamp;
+}
+/** Something standing on the tray beside you: a piece of proof, a question, a plan, a job. */
+export interface Card {
+  id: string;
+  /** Its colour, by what it is made of. Default 'model'. */
+  b?: Kind;
+  mark?: 'new' | 'ok' | 'bad' | 'wait' | 'work';
+}
+export interface Tray { at: XY; cards: Card[] }
+export interface Person { id: string; at: XY; who?: 'peer' | 'client' | 'user'; scale?: number }
+/** The machine a part of the floor runs on. `off` is a closed lid. */
+export interface Zone { id: string; rect: [x: number, y: number, w: number, d: number]; kind: 'laptop' | 'box' | 'cloud'; off?: boolean }
 export interface Tools { at: XY; ids: string[]; on?: string | null; off?: string[] }
 export interface Gate { id: string; at: XY; axis: 'x' | 'y'; lamp?: Lamp }
 export interface Label {
-  /** An anchor name ("you", "a0", "tank:a0", "tools", "tool:run", "project", "rules", "skills", "main", a gate id) or a world point. */
+  /** An anchor name ("you", "a0", "tank:a0", "tools", "tool:run", "project", "rules", "skills", "main", a gate id,
+   *  "meter:<id>", "tray", "card:<id>", a person id, "zone:<id>", "p:<id>") or a world point. */
   at: string | P3;
   text: string;
   place?: 'top' | 'left' | 'right' | 'bottom';
@@ -69,6 +101,12 @@ export interface SceneState {
   tools?: Tools | null;
   project?: Project | null;
   gates?: Gate[];
+  meters?: Meter[];
+  tray?: Tray | null;
+  people?: Person[];
+  zones?: Zone[];
+  /** More projects than one, for work in several at once. Keys are `p:<id>`. */
+  projects?: (Project & { id: string; scale?: number })[];
   /** Grooves on the floor, as polylines. */
   tracks?: XY[][];
   labels?: Label[];
@@ -89,6 +127,22 @@ export const SPOT = {
   project: [166, 0] as XY,
   mgate: [124, BUS_Y] as XY,
   main: [208, BUS_Y] as XY,
+  meter: [-64, 0] as XY,
+  reviewer: [-70, 54] as XY,
+  tray: [46, 104] as XY,
+  /** A colleague, at the gate in front of main. */
+  peer: [124, -10] as XY,
+  /** A client, in front of main. */
+  client: [208, 28] as XY,
+};
+/** Where users stand, beyond main. */
+export const USERS: XY[] = [[288, -68], [300, -46], [288, -24]];
+/** Where job i of n stands when several run at once, and where you stand to attend to it. */
+export const jobSpot = (i: number, n: number, gap = 58): XY => [(i - (n - 1) / 2) * gap, 0];
+export const attendSpot = (i: number, n: number, gap = 58): XY => [(i - (n - 1) / 2) * gap, 58];
+export const cardSpot = (tray: Tray, id: string): XY => {
+  const i = Math.max(0, tray.cards.findIndex((c) => c.id === id));
+  return [tray.at[0] + (i - (tray.cards.length - 1) / 2) * 9, tray.at[1]];
 };
 /** Worker slot i (0..4) across, j (0..3) back. */
 export const slot = (i: number, j: number): XY => [-88 + 44 * i, -98 - 52 * j];
@@ -114,6 +168,19 @@ export const route = {
   agentToRules: (project: Project): XY[] => [[20, 0], [project.at[0] - 46, 0], rulesSpot(project)],
   agentToWorker: (at: XY): XY[] => [[0, -20], [0, BUS_Y], [at[0], BUS_Y], [at[0], at[1] + 14]],
   workerToMain: (at: XY, project: Project): XY[] => [[at[0], at[1] + 14], [at[0], BUS_Y], [project.at[0] - 46, BUS_Y]],
+  /** From the agent down to the gate, and from the gate on to you. */
+  agentToGate: (): XY[] => [[0, 22], [0, SPOT.gate[1] - 10]],
+  gateToYou: (): XY[] => [[0, SPOT.gate[1] + 10], [0, 94]],
+  /** From the gate sideways to the reviewer standing beside it. */
+  gateToReviewer: (): XY[] => [[0, SPOT.gate[1]], [SPOT.reviewer[0] + 20, SPOT.gate[1]]],
+  meterToAgent: (): XY[] => [[SPOT.meter[0] + 14, 0], [-22, 0]],
+  /** From the agent to the tray beside you: what comes back as proof, or a question. */
+  agentToTray: (tray: Tray): XY[] => [[14, 18], [tray.at[0], 40], [tray.at[0], tray.at[1] - 14]],
+  /** From the agent along the bus to the gate in front of main, and through it. */
+  agentToMgate: (): XY[] => [[0, -20], [0, BUS_Y], [SPOT.mgate[0] - 12, BUS_Y]],
+  mgateToMain: (project: Project): XY[] => [[SPOT.mgate[0] + 12, BUS_Y], [project.at[0] - 46, BUS_Y]],
+  /** What people beyond main send back to you. */
+  backToYou: (from: XY): XY[] => [[from[0], from[1]], [from[0], 40], [30, 40], [30, 104], [12, 104]],
 };
 const back = (pts: XY[]) => [...pts].reverse();
 export const reverse = back;
@@ -186,7 +253,12 @@ function projectMarkup(p: Project) {
   const files = p.files ?? ['', '', '', '', '', ''];
   FILE_AT.forEach(([x, y], i) => {
     const mark = files[i] ?? '';
-    out += S(k.box({ x: x - 10, y: y - 7, w: 20, d: 14, r: 2 }, 3, mark === 'edit' || mark === 'bad' ? 3 : 1.8, P), { crease: false, 'data-file': mark || undefined, tone: mark === 'edit' ? 'lit' : 'part' });
+    const built = (p.stacks?.[i] ?? 0) * 1.7;
+    const h = (mark === 'edit' || mark === 'bad' ? 3 : 1.8) + built;
+    out += S(k.box({ x: x - 10, y: y - 7, w: 20, d: 14, r: 2 }, 3, h, P), { crease: false, 'data-file': mark || undefined, tone: mark === 'edit' ? 'lit' : 'part' });
+    for (let j = 0; j < (p.junk?.[i] ?? 0); j++) {
+      out += S(k.box({ x: x - 9 + (j % 2) * 2.5, y: y - 6, w: 15.5, d: 12, r: 2 }, 3 + h + j * 1.9, 1.7, P), { crease: false, 'data-b': 'sum' });
+    }
   });
   if (p.rules && p.rules !== 'none') {
     out += S(k.box({ x: -36, y: 10, w: 24, d: 18, r: 3 }, 3, p.rules === 'lit' ? 6 : 3.2, P), { crease: false, 'data-b': 'rules', 'data-lit': p.rules === 'lit' ? '' : undefined });
@@ -207,6 +279,46 @@ function gateMarkup(g: Gate) {
     S(k.box(sw({ x: 10.5, y: -2.5, w: 5, d: 5, r: 1 }), 0, 24, P)) +
     S(k.box(sw({ x: -16.5, y: -3, w: 33, d: 6, r: 2 }), 24, 5, P)) +
     S(k.box(sw({ x: -6, y: -3, w: 12, d: 6, r: 2 }), 29, 2.4, P), { 'data-part': 'lamp', crease: false });
+}
+
+const METER_BASE: k.Plan = { x: -13, y: -13, w: 26, d: 26, r: 6 };
+const METER_TANK: k.Plan = { x: -8, y: -8, w: 16, d: 16, r: 3 };
+const METER_H = 34;
+function meterMarkup(m: Meter) {
+  let out = k.halo(METER_BASE, 0, P) + S(k.box(METER_BASE, 0, 3, P), { tone: 'base' });
+  if (m.mode === 'plan') {
+    const g = k.glass(METER_TANK, 3, METER_H, P);
+    const left = Math.max(0, Math.min(1, m.level));
+    out += `<path class="k-glass-back" d="${g.back}"/>`;
+    if (left > 0.01) out += S(k.box({ x: -6.5, y: -6.5, w: 13, d: 13, r: 2 }, 3.3, (METER_H - 1) * left, P), { crease: false, 'data-part': 'allowance' });
+    out += `<path class="k-glass-front" d="${g.front}"/><path class="k-glass-edges" d="${g.edges}"/>`;
+  } else {
+    const coins = Math.min(40, Math.round(m.level));
+    for (let i = 0; i < coins; i++) out += S(k.cylinder(i % 2 ? 0.8 : -0.8, 0, 6.5, 3 + i * 1.5, 1.3, P, 14), { crease: false, 'data-part': 'coin' });
+  }
+  return out + S(k.cylinder(10.5, 10.5, 2.4, 3, 2, P, 12), { 'data-part': 'lamp', crease: false });
+}
+
+function trayMarkup(t: Tray) {
+  const w = Math.max(40, t.cards.length * 9 + 12);
+  let out = S(k.box({ x: -w / 2, y: -11, w, d: 22, r: 5 }, 0, 2.2, P), { tone: 'base' });
+  t.cards.forEach((c, i) => {
+    const x = (i - (t.cards.length - 1) / 2) * 9;
+    out += S(k.box({ x: x - 2.2, y: -8, w: 4.4, d: 16, r: 1 }, 2.2, c.mark === 'new' ? 15 : 12.5, P), { crease: false, 'data-b': c.b ?? 'model', 'data-card': c.mark ?? '-', 'data-lit': c.mark === 'new' || c.mark === 'wait' ? '' : undefined });
+  });
+  return out;
+}
+
+const personMarkup = (who: string) => once('person:' + who, () =>
+  S(k.cylinder(0, 0, 7.5, 0, 2.6, P), { tone: 'base' }) +
+  S(k.cylinder(0, 0, 4.4, 2.6, 11.5, P), { 'data-part': 'body', 'data-who': who }) +
+  S(k.cylinder(0, 0, 3.9, 15.4, 5.8, P), { 'data-part': 'body', 'data-who': who }));
+
+function zoneMarkup(z: Zone) {
+  const [x, y, w, d] = z.rect;
+  const plan: k.Plan = { x, y, w, d, r: 12 };
+  if (z.kind === 'cloud') return k.halo({ x: x + 6, y: y + 6, w, d, r: 12 }, -16, P) + S(k.box(plan, -3.4, 3, P), { crease: false, 'data-zone': z.kind });
+  return S(k.box(plan, z.kind === 'laptop' ? -5.4 : -10.4, z.kind === 'laptop' ? 5 : 10, P), { crease: false, 'data-zone': z.kind });
 }
 
 export const puckMarkup = (kind: Kind) => S(k.cylinder(0, 0, 4, 0.6, 2.6, P, 16), { crease: false, 'data-b': kind });
@@ -246,6 +358,13 @@ function anchorOf(s: SceneState, name: string): P3 | null {
   }
   const gate = s.gates?.find((g) => g.id === what);
   if (gate) return [gate.at[0], gate.at[1], 34];
+  if (what === 'meter') { const m = s.meters?.find((x) => x.id === id) ?? s.meters?.[0]; return m ? [m.at[0], m.at[1], m.mode === 'plan' ? METER_H + 6 : 8 + Math.min(40, m.level) * 1.5] : null; }
+  if (what === 'tray' && s.tray) return [s.tray.at[0], s.tray.at[1] + 13, 2];
+  if (what === 'card' && id && s.tray) { const [x, y] = cardSpot(s.tray, id); return [x, y, 18]; }
+  if (what === 'zone' && id) { const z = s.zones?.find((x) => x.id === id); return z ? [z.rect[0] + 10, z.rect[1] + z.rect[3], 0] : null; }
+  if (what === 'p' && id) { const p = s.projects?.find((x) => x.id === id); return p ? [p.at[0] - 40 * (p.scale ?? 1), p.at[1] - 32 * (p.scale ?? 1), 5] : null; }
+  const person = s.people?.find((x) => x.id === name);
+  if (person) return [person.at[0], person.at[1], 24 * (person.scale ?? 1)];
   const a = agent(name);
   if (a) return [a.at[0], a.at[1], (TZ + TH + HEAD_H + 3) * (a.scale ?? 1)];
   return null;
@@ -261,6 +380,13 @@ function extent(s: SceneState, key: string): P3[] {
   if (key === 'project' && s.project) return boxPts(s.project.at, 44, 36, 14);
   const gate = s.gates?.find((g) => g.id === key);
   if (gate) return boxPts(gate.at, 17, 17, 32);
+  const [what, id] = key.split(':') as [string, string | undefined];
+  if (what === 'meter') { const m = s.meters?.find((x) => x.id === id); if (m) return boxPts(m.at, 13, 13, METER_H + 6); }
+  if (key === 'tray' && s.tray) return boxPts(s.tray.at, Math.max(20, s.tray.cards.length * 4.5 + 6), 11, 18);
+  if (what === 'zone') { const z = s.zones?.find((x) => x.id === id); if (z) { const [x, y, w, d] = z.rect; return [[x, y, 0], [x + w, y, 0], [x, y + d, -8], [x + w, y + d, -8]]; } }
+  if (what === 'p') { const p = s.projects?.find((x) => x.id === id); if (p) return boxPts(p.at, 44 * (p.scale ?? 1), 36 * (p.scale ?? 1), 14); }
+  const person = s.people?.find((x) => x.id === key);
+  if (person) return boxPts(person.at, 8, 8, 24);
   const a = s.agents.find((x) => x.id === key);
   if (a) { const m = a.scale ?? 1; return boxPts([a.at[0] + (a.tree ? 12 * m : 0), a.at[1]], (a.tree ? 36 : 22) * m, 22 * m, (TZ + TH + HEAD_H + 2) * m); }
   return [];
@@ -281,11 +407,23 @@ export function picture(s: SceneState, frame: Frame, prev?: SceneState): Picture
     const d = s.tracks.map((t) => k.onPlane(t, 0.1, P)).join('');
     ents.push({ key: 'tracks', order: 0, sig: d, html: () => `<path class="j-track" d="${d}"/>`, x: 0, y: 0, scale: 1, attrs: {} });
   }
+  for (const z of s.zones ?? []) {
+    ents.push({ key: 'zone:' + z.id, order: -10 + depth([z.rect[0], z.rect[1]]) / 1000, sig: JSON.stringify([z.rect, z.kind]), html: () => zoneMarkup(z), x: 0, y: 0, scale: 1, attrs: { 'data-asleep': z.off ? '' : '-' } });
+  }
+  const projSig = (p: Project) => JSON.stringify([p.files, p.rules, p.skills, p.skillOut, p.commits?.slice(-10), p.stacks, p.junk]);
   if (s.project) {
     const p = s.project;
     const [x, y] = at(p.at);
-    ents.push({ key: 'project', order: 10, sig: JSON.stringify([p.files, p.rules, p.skills, p.skillOut, p.commits?.slice(-10)]), html: () => projectMarkup(p), x, y, scale: 1, attrs: {} });
+    ents.push({ key: 'project', order: 10, sig: projSig(p), html: () => projectMarkup(p), x, y, scale: 1, attrs: {} });
     if (p.rules && p.rules !== 'none') kinds.add('rules');
+  }
+  for (const p of s.projects ?? []) {
+    const [x, y] = at(p.at);
+    ents.push({ key: 'p:' + p.id, order: 10 + (depth(p.at) + 600) / 1000, sig: projSig(p), html: () => projectMarkup(p), x, y, scale: p.scale ?? 1, attrs: {} });
+  }
+  for (const m of s.meters ?? []) {
+    const [x, y] = at(m.at);
+    ents.push({ key: 'meter:' + m.id, order: 100 + Math.round(depth(m.at) + 400) / 10, sig: m.mode + (m.mode === 'plan' ? m.level.toFixed(3) : Math.round(m.level)), html: () => meterMarkup(m), x, y, scale: 1, attrs: { 'data-lamp': m.lamp ?? 'off', 'data-mode': m.mode } });
   }
   if (s.tools) {
     const t = s.tools;
@@ -304,16 +442,27 @@ export function picture(s: SceneState, frame: Frame, prev?: SceneState): Picture
       sig: blockSig(a.blocks) + '|' + (a.cap ?? CAP) + '|' + (a.tree ? 1 : 0),
       html: () => agentMarkup(a, freshFrom),
       x, y, scale: a.scale ?? 1,
-      attrs: { 'data-busy': a.busy ? '' : '-', 'data-lamp': a.lamp ?? 'off', 'data-model': a.model ?? 'a', 'data-tree': a.tree || '-', 'data-scan': a.scan ? '' : '-' },
+      attrs: { 'data-busy': a.busy ? '' : '-', 'data-lamp': a.lamp ?? 'off', 'data-model': a.model ?? 'a', 'data-tree': a.tree || '-', 'data-scan': a.scan ? '' : '-', 'data-asleep': a.off ? '' : '-' },
     });
   }
   for (const g of s.gates ?? []) {
     const [x, y] = at(g.at);
     ents.push({ key: g.id, order: 520 + depth(g.at) / 100, sig: g.axis, html: () => gateMarkup(g), x, y, scale: 1, attrs: { 'data-lamp': g.lamp ?? 'off' } });
   }
+  for (const person of s.people ?? []) {
+    const [x, y] = at(person.at);
+    const who = person.who ?? 'peer';
+    ents.push({ key: person.id, order: 560 + depth(person.at) / 100, sig: who, html: () => personMarkup(who), x, y, scale: person.scale ?? 1, attrs: {} });
+  }
   if (s.you) {
     const [x, y] = at(s.you);
     ents.push({ key: 'you', order: 600, sig: 'you', html: youMarkup, x, y, scale: 1, attrs: {} });
+  }
+  if (s.tray) {
+    const t = s.tray;
+    const [x, y] = at(t.at);
+    ents.push({ key: 'tray', order: 610, sig: JSON.stringify(t.cards), html: () => trayMarkup(t), x, y, scale: 1, attrs: {} });
+    for (const c of t.cards) kinds.add(c.b ?? 'model');
   }
 
   // Camera: fit what is in focus, leaving room for labels.

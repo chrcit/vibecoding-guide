@@ -152,6 +152,30 @@
 .j-svg [data-part='body'] .k-left { fill: color-mix(in oklab, var(--ink) 68%, var(--card)); }
 .j-svg [data-part='body'] .k-right, .j-svg [data-part='body'] .k-shadow { fill: color-mix(in oklab, var(--ink) 92%, var(--card)); }
 
+/* Part two: the meter, the tray, other people, machines. */
+.j-svg [data-part='allowance'] .k-top, .j-svg [data-part='allowance'] .k-fill, .j-svg [data-part='coin'] .k-top, .j-svg [data-part='coin'] .k-fill { fill: color-mix(in oklab, var(--ink) 46%, var(--card)); }
+.j-svg [data-part='allowance'] .k-left, .j-svg [data-part='coin'] .k-left { fill: color-mix(in oklab, var(--ink) 56%, var(--card)); }
+.j-svg [data-part='allowance'] .k-right, .j-svg [data-part='allowance'] .k-shadow, .j-svg [data-part='coin'] .k-right, .j-svg [data-part='coin'] .k-shadow { fill: color-mix(in oklab, var(--ink) 66%, var(--card)); }
+.j-svg [data-part='allowance'] .k-edge, .j-svg [data-part='coin'] .k-edge { stroke: color-mix(in oklab, var(--ink) 80%, var(--card)); stroke-width: 1px; }
+.j-svg [data-card='ok'] .k-edge { stroke: var(--green); stroke-width: 2px; }
+.j-svg [data-card='bad'] .k-edge { stroke: var(--accent); stroke-width: 2px; }
+.j-svg [data-card='work'] { opacity: 0.55; }
+.j-svg [data-who='peer'] .k-top, .j-svg [data-who='peer'] .k-fill { fill: color-mix(in oklab, var(--ink) 48%, var(--card)); }
+.j-svg [data-who='peer'] .k-left { fill: color-mix(in oklab, var(--ink) 40%, var(--card)); }
+.j-svg [data-who='peer'] .k-right, .j-svg [data-who='peer'] .k-shadow { fill: color-mix(in oklab, var(--ink) 58%, var(--card)); }
+.j-svg [data-who='client'] .k-top, .j-svg [data-who='client'] .k-fill { fill: color-mix(in oklab, var(--blue) 50%, var(--card)); }
+.j-svg [data-who='client'] .k-left { fill: color-mix(in oklab, var(--blue) 42%, var(--card)); }
+.j-svg [data-who='client'] .k-right, .j-svg [data-who='client'] .k-shadow { fill: color-mix(in oklab, var(--blue) 62%, var(--card)); }
+.j-svg [data-who='user'] .k-top, .j-svg [data-who='user'] .k-fill { fill: color-mix(in oklab, var(--ink) 24%, var(--card)); }
+.j-svg [data-who='user'] .k-left { fill: color-mix(in oklab, var(--ink) 18%, var(--card)); }
+.j-svg [data-who='user'] .k-right, .j-svg [data-who='user'] .k-shadow { fill: color-mix(in oklab, var(--ink) 32%, var(--card)); }
+.j-svg [data-zone] .k-top, .j-svg [data-zone] .k-fill { fill: color-mix(in oklab, var(--ink) 5%, var(--card)); }
+.j-svg [data-zone] .k-left { fill: color-mix(in oklab, var(--ink) 11%, var(--card)); }
+.j-svg [data-zone] .k-right, .j-svg [data-zone] .k-shadow { fill: color-mix(in oklab, var(--ink) 17%, var(--card)); }
+.j-svg [data-zone] .k-edge { stroke: var(--fig-faint); stroke-width: 1px; }
+.j-svg [data-zone='cloud'] .k-edge { stroke-dasharray: 5 4; stroke: var(--fig-edge); }
+.j-ent[data-asleep=''] { opacity: 0.32 !important; }
+
 .j-puck .k-solid .k-edge { stroke-width: 1.5px; }
 
 @keyframes j-drop { from { transform: translateY(-9px); opacity: 0; } }
@@ -184,3 +208,18 @@ a.j-label:hover { color: var(--accent); text-decoration-style: solid; }
 
 /* Inside the side view the page is narrow: keep the picture short. */
 html[data-embed] .j-stage { max-height: 36svh; }
+
+/* One thing more inside a step. */
+.j-more-info { margin: 0.25rem 0 0.875rem; max-width: 25rem; border-top: 1px solid var(--rule); }
+.j-more-info > summary { display: flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; cursor: pointer; font-weight: 600; color: var(--ink); list-style: none; }
+.j-more-info > summary::-webkit-details-marker { display: none; }
+.j-more-info > summary::before { content: '+'; display: inline-grid; place-items: center; width: 1.25rem; height: 1.25rem; border: 1px solid var(--rule-strong); border-radius: 50%; font-family: var(--mono); font-size: var(--text-s); line-height: 1; color: var(--accent); }
+.j-more-info[open] > summary::before { content: '−'; }
+.j-more-info > summary:hover { color: var(--accent); }
+.j-more-body { padding-bottom: 0.75rem; font-size: var(--text-s); }
+.j-more-body p { max-width: none; font-size: inherit; margin-bottom: 0.625rem; }
+.j-more-body dl { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 0.875rem; margin: 0 0 0.625rem; }
+.j-more-body dt { color: var(--muted); }
+.j-more-body dd { margin: 0; font-family: var(--mono); color: var(--ink); }
+.j-rail-part { flex: none; display: inline-flex; align-items: center; min-height: 2.5rem; padding-inline: 0.5rem; border-radius: 6px; font-size: var(--text-s); font-weight: 600; color: var(--muted); text-decoration: none; white-space: nowrap; }
+.j-rail-part:hover { color: var(--accent); }

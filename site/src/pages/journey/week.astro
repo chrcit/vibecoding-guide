@@ -1,0 +1,14 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import Step from '../../components/journey/Step.astro';
+import { rungs } from '../../journey/rungs';
+import { url } from '../../lib/nav';
+---
+<Journey chapter="week" first="meter" title="From one job to a working week" description="The second half of the journey, in the same picture: what agents cost, a second model that reviews, proof you can read, where your input goes, several jobs at once, a project that grows, other people, other machines.">
+  {rungs.filter((r) => r.part === 2).map((r) => (
+    <Step id={r.id} title={`${r.n}. ${r.title}`}>
+      <p>{r.line}</p>
+      <a class="j-open" href={url(`journey/${r.id}/`)} aria-label={`Try it: ${r.title}`}>Try it <span aria-hidden="true">→</span></a>
+    </Step>
+  ))}
+</Journey>
