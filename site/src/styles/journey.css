@@ -232,16 +232,17 @@ main:has(> .j-root) { container: journey / inline-size; }
 /* Labels sit over the picture and follow the camera. */
 .j-labels { position: absolute; inset: 0; pointer-events: none; }
 .j-label {
-  position: absolute; transform: translate(-50%, calc(-100% - 6px));
+  /* --dx and --dy keep labels apart and inside the frame (scene.ts spread). */
+  position: absolute; transform: translate(var(--dx, 0px), var(--dy, 0px)) translate(-50%, calc(-100% - 6px));
   padding: 0.1rem 0.4rem; border-radius: 5px;
   background: color-mix(in oklab, var(--card) 86%, transparent);
   font-family: var(--sans); font-size: var(--text-xs); font-weight: 600; line-height: 1.25; color: var(--ink);
   white-space: nowrap; text-decoration: none; pointer-events: auto;
-  transition: left 720ms var(--fig-ease), top 720ms var(--fig-ease), opacity 280ms;
+  transition: left 720ms var(--fig-ease), top 720ms var(--fig-ease), opacity 280ms, transform 280ms var(--fig-ease);
 }
-.j-label[data-place='left'] { transform: translate(calc(-100% - 8px), -50%); }
-.j-label[data-place='right'] { transform: translate(8px, -50%); }
-.j-label[data-place='bottom'] { transform: translate(-50%, 8px); }
+.j-label[data-place='left'] { transform: translate(var(--dx, 0px), var(--dy, 0px)) translate(calc(-100% - 8px), -50%); }
+.j-label[data-place='right'] { transform: translate(var(--dx, 0px), var(--dy, 0px)) translate(8px, -50%); }
+.j-label[data-place='bottom'] { transform: translate(var(--dx, 0px), var(--dy, 0px)) translate(-50%, 8px); }
 /* Only a label that opens something is underlined; the colour is not the accent, which means a problem. */
 a.j-label { text-decoration: underline dotted var(--muted); text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; cursor: pointer; }
 a.j-label::after { content: ''; position: absolute; inset: -0.6rem -0.4rem; }
