@@ -3,93 +3,60 @@ import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
 import Next from '../../components/journey/Next.astro';
 import More from '../../components/journey/More.astro';
-import CopyPrompt from '../../components/site/CopyPrompt.astro';
 import ForLevel from '../../components/level/ForLevel.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import * as p from '../../lib/start';
+import Term from '../../components/journey/Term.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
 import { url } from '../../lib/nav';
+
+const ids = ['t3code.price', 't3code.install', 'plans.claude.pro.claudeCode', 'plans.chatgpt.limits.codexOnEveryPlan', 'harnesses.claudeCode.web'];
 ---
-<Journey
-  chapter="first"
-  first="setup"
-  title="Your first real loop"
-  description="A calm, practical bridge from idea to your first working app on a laptop, desktop PC or phone—no boilerplate overload."
->
-  <Step id="setup" title="Pick your starting device">
-    <p>You do not need a complicated developer setup to begin. Choose what is in front of you right now:</p>
-    <div class="pick" role="group" aria-label="Starting device">
-      <button type="button" data-do="setup" data-val="laptop" data-default>Laptop</button>
-      <button type="button" data-do="setup" data-val="desktop">Desktop PC</button>
-      <button type="button" data-do="setup" data-val="phone">Phone first</button>
+<Journey chapter="first" first="device" title="Your first real loop" description="The first loop on the device in front of you: one app, one plan, one small real job, and four beats: you ask, it builds, you look, you say what to change.">
+  <Step id="device" title="Start on what is in front of you">
+    <p>On a laptop or a desktop PC you need one coding app and the plan from <LessonRef id="providers" />. On a phone, the quickest start is a builder in the browser.</p>
+    <div class="pick" role="group" aria-label="Your device">
+      <button type="button" data-do="device" data-val="laptop" data-default aria-pressed="true">Laptop</button>
+      <button type="button" data-do="device" data-val="desktop" aria-pressed="false">Desktop PC</button>
+      <button type="button" data-do="device" data-val="phone" aria-pressed="false">Phone</button>
     </div>
-    <ForLevel is="plain">
-      <p>On a laptop or desktop PC, create one empty folder, open it in a coding agent app (like T3 Code, Claude Code or Codex), and sign in with your normal AI account. On a phone, record a short voice note of what you want or spin up a quick prototype in a web builder.</p>
-    </ForLevel>
-    <ForLevel is="technical">
-      <p>Run <code>git init</code> in a clean folder, open it in T3 Code / Claude Code / Codex, and make sure Node (or your chosen runtime) is installed so the agent can run typechecks and unit tests locally.</p>
-    </ForLevel>
-    <ForLevel is="engineer">
-      <p>Bootstrap a minimal repo with strict TypeScript, Vitest, a single <code>verify</code> script (<code>tsc --noEmit &amp;&amp; vitest run</code>) and a 15-line <code>AGENTS.md</code>—this guarantees every agent loop has a fast, deterministic oracle from turn one.</p>
-    </ForLevel>
-    <div id="builders">
-      <More title="Side story: zero-setup web builders (v0, Lovable, Bolt, Replit)">
-        <p><a href={url('wiki/web-builders/')} data-side>Web builders</a> like v0, Lovable, Bolt and Replit are the fastest possible first taste: open a browser tab, describe an app, and click a live page in two minutes with nothing installed. Treat them as an easy on-ramp—once a project matters or grows past a prototype, export it to GitHub and bring it into a real coding agent where you own the files, tests and architecture.</p>
-      </More>
-    </div>
+    <More title="The set-up">
+      <ul>
+        <li><a href={url('t3-code/')}>T3 Code</a> is <Fact id="t3code.price" />: <Fact id="t3code.install" />.</li>
+        <li>It drives Claude Code or Codex. <Fact id="plans.claude.pro.claudeCode" show="claim" /> <Fact id="plans.chatgpt.limits.codexOnEveryPlan" show="claim" /></li>
+        <li><a href={url('start/')}>The first hour</a> has every click.</li>
+      </ul>
+    </More>
+    <More title="The side road: builders in the browser">
+      <p>v0, Lovable, Bolt and Replit build a first version from one message, with nothing to install. The files live on their site. When the project matters, connect it to GitHub and carry on with a coding agent on your own computer.</p>
+    </More>
   </Step>
 
-  <Step id="project" title="Pick one small, real job">
-    <p>Skip “build a social network.” Pick something useful that fits on one screen—tap an example to see the prompt at your reading level:</p>
-    <div class="pick" role="group" aria-label="Starter project">
-      <button type="button" data-do="idea" data-val="club" data-default>Club members list</button>
-      <button type="button" data-do="idea" data-val="notes">Invoice maker</button>
-      <button type="button" data-do="idea" data-val="tool">CSV expense grouper</button>
-    </div>
-    <ForLevel is="plain">
-      <CopyPrompt title="Starter prompt (copy and adapt)" compact>Build a simple web page for our 40-person club:
-- Show each member's name, whether they paid this season, and a search box.
-- Include 20 realistic sample members so I can try it right away.
-- Tell me the link to open it and confirm search and filtering both work.</CopyPrompt>
-    </ForLevel>
-    <ForLevel is="technical">
-      <CopyPrompt title="Starter prompt with tests & typecheck" compact>Scaffold a small Vite + TypeScript web app for a club members list (search + paid filter + 20 fixture records).
-- Put filter and summary logic in src/members.ts with Vitest unit tests.
-- Run tsc --noEmit and vitest run and fix any errors before reporting done.
-- Commit the clean baseline to git.</CopyPrompt>
-    </ForLevel>
-    <ForLevel is="engineer">
-      <CopyPrompt title="Starter prompt with clean boundaries" compact>Bootstrap a minimal strict-TypeScript Vite app for a club members tracker:
-- Pure domain module (src/members.ts) with strict types and unit tests covering empty/edge states.
-- Thin UI layer with zero unnecessary dependencies.
-- Add a concise AGENTS.md documenting stack, folder boundaries and the exact verify command (tsc --noEmit &amp;&amp; vitest run).
-- Run verify, confirm green, and commit the baseline.</CopyPrompt>
-    </ForLevel>
+  <Step id="job" title="One small, real job">
+    <p>Pick something you would use next week, small enough to try in a minute: the club's member list, in a new, empty folder that becomes <Term id="project" />. Ask it to ask you first.</p>
+    <ForLevel is="plain"><CopyPrompt compact title="The first prompt">{p.describe.app}</CopyPrompt></ForLevel>
+    <ForLevel is="technical"><CopyPrompt compact title="The first prompt, with tests">{p.describeChecked}</CopyPrompt></ForLevel>
+    <ForLevel is="engineer"><CopyPrompt compact title="The first prompt, stack first">{p.describeEngineer}</CopyPrompt></ForLevel>
   </Step>
 
-  <Step id="run" title="Watch the four-beat loop">
-    <ForLevel is="plain">
-      <p>Describe what you want → the agent creates the files → it checks that the page works → you open the live page and click through it. That simple loop is the heartbeat of every chapter ahead.</p>
-    </ForLevel>
-    <ForLevel is="technical">
-      <p>Prompt → inspect &amp; edit → run <code>tsc --noEmit</code> and unit tests → verify the live UI. Never skip beat 3 or beat 4.</p>
-    </ForLevel>
-    <ForLevel is="engineer">
-      <p>Every advanced pattern in Parts 2 and 3—memory files, subagents, git worktrees, cross-model review and remote machines—optimizes one stage of this four-beat loop.</p>
-    </ForLevel>
+  <Step id="loop" title="Four beats">
+    <p>You ask, it builds, you look, you say what to change. The readout counts the beats.</p>
+    <ForLevel is="technical"><p>“It builds” ends with the tests and the type check, so you look at something that already passed them.</p></ForLevel>
+    <div class="row"><button class="btn ghost" type="button" data-do="loop">Play it again</button></div>
   </Step>
 
-  <Step id="tweak" title="Make one specific tweak—then go under the hood">
-    <p>The first version is only a draft. Open it, pick one concrete improvement, and ask for just that:</p>
-    <div class="row">
-      <button class="btn" type="button" data-do="tweak">Ask for one tweak</button>
+  <Step id="change" title="Say exactly what to change">
+    <p>Clear changes you can look for, or one vague wish. Look at what comes back.</p>
+    <div class="pick" role="group" aria-label="What you ask for">
+      <button type="button" data-do="change" data-val="clear" data-default aria-pressed="true">Three clear changes</button>
+      <button type="button" data-do="change" data-val="vague" aria-pressed="false">“Make it better”</button>
     </div>
-    <ForLevel is="plain">
-      <p>Once you have done two or three small tweaks, you already have the feel of agentic coding. Part 2 opens the hood and shows how to grow from this one chat to twenty agents working together.</p>
-    </ForLevel>
-    <ForLevel is="technical">
-      <p>Small, single-purpose follow-up prompts keep diffs tight, tests green and context windows clean. Part 2 unpacks what happens inside the window, why long threads degrade, and how to scale safely.</p>
-    </ForLevel>
-    <ForLevel is="engineer">
-      <p>With a reproducible single-agent baseline in place, Part 2 dives into context mechanics, attention rot, instruction architecture, verification gates and multi-agent orchestration.</p>
-    </ForLevel>
-    <Next from="first" more={[{ href: 'library/', text: 'Browse all 21 lessons & concepts' }]} />
+    <Next from="first" more={[{ href: 'journey/chat/', text: 'Next: One chat' }, { href: 'start/', text: 'The first hour, click by click' }, { href: 'wiki/web-builders/', text: 'Web builders', side: true }]} />
   </Step>
+  <Fragment slot="foot">
+    <p>The club, the answers and the file names above are made up.</p>
+    <Verified ids={ids} />
+  </Fragment>
 </Journey>

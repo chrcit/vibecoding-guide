@@ -84,8 +84,8 @@ export const archiveEntries: ArchiveEntry[] = [
     href: 'explain/voice/',
     group: 'Interactive Explainers',
     disposition: 'integrate',
-    targetLabel: 'Step 1 · What AI actually is',
-    targetHref: 'journey/ai/#senses',
+    targetLabel: 'What an AI model does · Talk to it, show it, ask it to choose',
+    targetHref: 'journey/ai/#inputs',
     note: 'Voice dictation is one of the highest-leverage everyday habits; fold its concrete dictation workflow & mic tips into Step 1’s multimodal step and Step 17 (Your turn).',
   },
   {
@@ -174,8 +174,8 @@ export const archiveEntries: ArchiveEntry[] = [
     href: 'guide/guides/vibe-coding-web/',
     group: 'Original vibecoding-guide',
     disposition: 'integrate',
-    targetLabel: 'Step 4 · Your first loop (Side story)',
-    targetHref: 'journey/first/#builders',
+    targetLabel: 'Your first real loop · Start on what is in front of you (the side road)',
+    targetHref: 'journey/first/#device',
     note: 'Already repositioned as a collapsible Side Story in Step 4: easiest zero-setup entry point for day one, with a clear graduation path to Git + real local/cloud coding agents.',
   },
   {

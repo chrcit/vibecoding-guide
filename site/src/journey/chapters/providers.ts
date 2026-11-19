@@ -1,278 +1,251 @@
-// Chapter 2 (Part 1: Foundations): Providers, models, where AI runs, and devices (laptop, desktop, phone).
+// Lesson 2 (part one): who makes the models, how you reach them, where the model runs and where
+// your files stay, and the devices you work from. Names and prices come from the page (src/data).
 import type { Chapter, Ctx } from '../chapter';
-import { byLevel } from '../chapter';
 import type { Script } from '../scene';
-import { solo, jobs, lab } from '../presets';
-import { route, reverse, type SceneState } from '../picture';
+import { lab } from '../presets';
+import { route, reverse, SPOT, type SceneState, type XY, type Zone, type Gear } from '../picture';
+import { note, readout, lv } from './part1';
+import { termLabel } from '../terms';
 
-type LabId = 'anthropic' | 'openai' | 'google' | 'local';
-type RunAt = 'cloud' | 'local';
-type Surface = 'web' | 'desktop' | 'cli' | 'api';
-type Device = 'phone' | 'laptop' | 'desktop';
+const stat = readout(['model', 'runs on', 'your files', 'you pay']);
 
-const LABS: Record<LabId, { name: string; models: string; tools: string; note: Record<'plain' | 'technical' | 'engineer', string> }> = {
-  anthropic: {
-    name: 'Anthropic (Claude)',
-    models: 'Claude Opus, Sonnet, Haiku',
-    tools: 'claude.ai, Claude app, Claude Code, T3 Code',
-    note: {
-      plain: 'Makes the Claude models. You can chat on the web or phone, or connect Claude directly to your project folder via Claude Code or T3 Code.',
-      technical: 'Provides Claude models via monthly Pro/Max plans or API, plus the Claude Code CLI and full support inside multi-provider apps like T3 Code.',
-      engineer: 'Strong instruction adherence and long-horizon editing; supports prompt caching, extended thinking budgets, and clean CLI/SDK/MCP integration.',
-    },
-  },
-  openai: {
-    name: 'OpenAI (GPT & Codex)',
-    models: 'GPT series & Codex coding models',
-    tools: 'ChatGPT web/app, Codex app & CLI, T3 Code',
-    note: {
-      plain: 'Makes ChatGPT and Codex. You can use voice and chat on your phone, or run coding agents locally and in cloud sandboxes.',
-      technical: 'Offers ChatGPT Plus/Pro plans and API access; Codex CLI and cloud tasks integrate cleanly with GitHub repos and multi-provider harnesses like T3 Code.',
-      engineer: 'Pair an OpenAI model with a different vendor’s model for cross-lab diff review (step 15) to reduce correlated blind spots.',
-    },
-  },
-  google: {
-    name: 'Google (Gemini)',
-    models: 'Gemini Pro & Flash models',
-    tools: 'Gemini web/app, AI Studio, Gemini CLI, API',
-    note: {
-      plain: 'Makes Gemini, with strong voice, video and huge reading windows—great for throwing in long documents, recordings or whole folders.',
-      technical: 'Large context windows and native multimodal (audio/video/image) ingestion via Gemini app, CLI and API, with fast Flash tiers for high-volume tasks.',
-      engineer: 'Useful for multimodal ingestion (screen recordings, PDFs, large repo surveys) and cost-effective high-throughput subagent routing via Flash tiers.',
-    },
-  },
-  local: {
-    name: 'Open-weight / Local',
-    models: 'Qwen, Llama, DeepSeek, Gemma',
-    tools: 'Ollama, LM Studio, llama.cpp',
-    note: {
-      plain: 'Models you download and run right on your own desktop PC or high-memory Mac. Nothing leaves your computer, though top cloud models are still stronger on hard tasks.',
-      technical: 'Open-weight models run via Ollama or LM Studio on local Apple Silicon or NVIDIA GPUs—zero per-token cost and strict privacy, bounded by your VRAM.',
-      engineer: 'Ideal for air-gapped data, offline autocomplete or cheap classification; benchmark against frontier cloud models before relying on local weights for complex multi-file refactors.',
-    },
-  },
-};
+/** Sourced names and prices, handed over by the page. */
+interface Data {
+  anthropic: string[]; openai: string[];
+  claudeFree: string; claudePro: string; chatgptFree: string; chatgptPlus: string;
+  opusIn: string; opusOut: string; t3: string;
+}
+const D = (ctx: Ctx) => ctx.data as Data;
 
-function runLab(ctx: Ctx, id: LabId) {
-  const l = LABS[id];
-  ctx.model(`${l.name}.`, l.note[ctx.level]);
+const CLOUD: Zone = { id: 'cloud', kind: 'cloud', rect: [-30, -30, 60, 60] };
+const LAPTOP: XY = [40, 100];
+
+/** You at your laptop, the model on a provider's computers. */
+function base(o: { model?: string; zone?: string; tools?: boolean; gear?: Gear[]; local?: boolean } = {}): SceneState {
+  const tools = o.tools ?? false;
+  return {
+    you: SPOT.you,
+    agents: [{ id: 'a0', at: SPOT.agent, blocks: [] }],
+    tools: tools ? { at: SPOT.tools, ids: ['read', 'edit', 'run', 'search'] } : null,
+    project: tools ? { at: SPOT.project, rules: 'none' } : null,
+    zones: [o.local ? { id: 'cloud', kind: 'box', rect: [-30, -30, 60, 60] } : CLOUD, ...(tools ? [{ id: 'lap', kind: 'laptop' as const, rect: [52, -42, 166, 84] as Zone['rect'] }] : [])],
+    gear: o.gear ?? [{ id: 'lap', at: LAPTOP, kind: 'laptop' }],
+    tracks: [[[0, 94], [0, 22]], ...(tools ? [[[20, 0], [56, 0]], [[88, 0], [120, 0]]] as XY[][] : [])],
+    labels: [
+      lab('you', 'you', 'left'),
+      termLabel('a0', 'model', 'top', `${o.model ?? 'Opus 5.5'}, on ${o.zone ?? 'Anthropic’s computers'}`),
+      ...(tools ? [lab('zone:lap', 'your laptop: the files', 'bottom'), termLabel('project', 'project')] : [lab('gear:lap', 'your laptop', 'right')]),
+    ],
+  };
+}
+
+// ---------- labs ----------
+
+type Lab = 'anthropic' | 'openai' | 'open';
+function runLab(ctx: Ctx, which: Lab) {
+  note(ctx, 'providers', 'labs');
+  const d = D(ctx);
+  const model = which === 'anthropic' ? 'Opus 5.5' : which === 'openai' ? 'GPT-6.2 Sol' : 'an open model';
+  const names = which === 'anthropic' ? d.anthropic.join(', ') : which === 'openai' ? d.openai.join(', ') : 'many, free to download';
+  const where = which === 'anthropic' ? 'Anthropic’s computers' : which === 'openai' ? 'OpenAI’s computers' : 'your own computer';
   void ctx.scene.run(async (h) => {
-    h.set((s) => Object.assign(s, jobs(1, {
-      projects: 'one',
-      machines: [id === 'local' ? 'box' : 'cloud'],
-      trees: false,
-      labels: [
-        lab('you', 'you', 'left'),
-        lab('j0', l.name, 'top', 'wiki/model/'),
-        lab('zone:0', id === 'local' ? 'your GPU' : 'provider cloud', 'bottom'),
-        lab('project', 'your files', 'top'),
-      ],
-    })));
-    ctx.stat([['provider', l.name], ['models', l.models], ['access via', l.tools]]);
-    ctx.say(null, `${l.name} — available through ${l.tools}. You are not locked into one lab.`);
-    await h.wait(400);
-    h.set((s) => { s.agents[0]!.blocks = [{ t: 'you', h: 3 }, { t: 'model', h: 4 }]; s.agents[0]!.lamp = 'ok'; });
+    h.set((s) => { Object.assign(s, base({ model, zone: where, local: which === 'open' })); if (which === 'openai') s.agents[0]!.model = 'b'; });
+    stat(ctx, [names, where, 'your laptop', which === 'open' ? 'nothing per message' : 'a plan or per token']);
+    ctx.say('you', 'Who has not paid this season? [list pasted]');
+    await h.send(route.youToAgent(), 'you', { ms: 460 });
+    h.set((s) => { const a = s.agents[0]!; a.blocks = [{ t: 'you', h: 8 }]; a.busy = true; });
+    await h.wait(900);
+    h.set((s) => { const a = s.agents[0]!; a.busy = false; a.blocks!.push({ t: 'model', h: 3 }); });
+    await h.send(reverse(route.youToAgent()), 'model', { ms: 460 });
+    ctx.say(model, '7 have not paid: Ana Ruiz, Ben Okafor, Dev Patel and 4 more.');
+    await h.wait(1800);
+    ctx.say(null, which === 'open'
+      ? 'Same question, same window. The model runs on your own machine, which needs a lot of memory.'
+      : 'Same question, same window, same kind of answer. Only the maker and the machines changed.');
   });
 }
 
-function runWhere(ctx: Ctx, at: RunAt) {
-  ctx.model(
-    at === 'cloud' ? 'Cloud brain, local files.' : 'Local brain, local files.',
-    at === 'cloud'
-      ? byLevel(ctx.level, {
-          plain: 'Even when a coding agent edits files on your laptop, the AI brain runs on the provider’s servers. Only the parts of files the agent opens are sent across—not your whole hard drive.',
-          technical: 'The harness runs locally on your machine (executing git, tsc, vitest) while sending prompt + tool outputs over HTTPS to the provider’s inference servers.',
-          engineer: 'Clear split between control plane/execution (local machine + shell) and inference plane (provider API). Keep `.env` secrets out of tool reads and check zero-data-retention policies for work repos.',
-        })
-      : byLevel(ctx.level, {
-          plain: 'Running a model locally keeps every word on your own computer—great for private notes or offline flights, as long as your desktop or Mac has enough memory.',
-          technical: 'Inference and tool execution both stay on localhost (e.g., Ollama on a 32–64 GB Mac or RTX GPU). Zero network calls, bounded by local memory bandwidth and model size.',
-          engineer: 'Full data residency with predictable hardware CapEx, trading off frontier reasoning depth and context-window speed against local VRAM ceilings.',
-        }),
-  );
+// ---------- reach ----------
+
+type Reach = 'app' | 'code' | 'api' | 't3';
+function runReach(ctx: Ctx, how: Reach) {
+  note(ctx, 'providers', 'reach');
+  const d = D(ctx);
   void ctx.scene.run(async (h) => {
-    h.set((s) => Object.assign(s, jobs(2, {
-      projects: 'one',
-      gap: 92,
-      machines: at === 'cloud' ? ['laptop', 'cloud'] : ['box', 'box'],
-      trees: false,
-      labels: [
-        lab('you', 'you', 'left'),
-        lab('j0', 'harness & tools', 'top', 'wiki/harness/'),
-        lab('j1', at === 'cloud' ? 'AI model' : 'local model', 'top', 'wiki/model/'),
-        lab('zone:0', 'your computer', 'bottom'),
-        lab('zone:1', at === 'cloud' ? 'provider data centre' : 'same computer GPU', 'bottom'),
-        lab('project', 'your files', 'top'),
-      ],
-    })));
-    ctx.stat(at === 'cloud'
-      ? [['your files', 'on your computer'], ['AI thinking', 'provider GPU servers'], ['internet needed', 'yes']]
-      : [['your files', 'on your computer'], ['AI thinking', 'your own GPU / RAM'], ['internet needed', 'no']]);
-    ctx.say(null, at === 'cloud'
-      ? 'Your harness opens files and runs commands locally; only the conversation and read snippets travel to the cloud model.'
-      : 'Everything stays on your desk—both your files and the model weights live on the same machine.');
-    h.set((s) => { s.agents[0]!.blocks = [{ t: 'tool', h: 4 }]; s.agents[1]!.blocks = [{ t: 'you', h: 3 }, { t: 'model', h: 4 }]; s.agents[1]!.busy = true; });
+    const s0 = base({ tools: how !== 'app', gear: how === 'app' ? [{ id: 'lap', at: [30, 112], kind: 'phone' }] : [] });
+    if (how === 'app') s0.labels![3] = lab('gear:lap', 'the Claude app on your phone', 'right');
+    s0.meters = [{ id: 'm0', at: SPOT.meter, mode: how === 'api' ? 'api' : 'plan', level: how === 'api' ? 0 : 1 }];
+    s0.labels!.push(termLabel('meter:m0', how === 'api' ? 'api' : 'plan', 'left', how === 'api' ? 'API bill' : 'plan'));
+    if (how === 't3') {
+      s0.agents.push({ id: 'r0', at: [-70, 54], scale: 0.8, blocks: [], model: 'b' });
+      s0.zones!.push({ id: 'oai', kind: 'cloud', rect: [-96, 30, 52, 48] });
+      s0.labels![1] = termLabel('a0', 'harness', 'top', 'Opus 5.5 · Claude Code');
+      s0.labels!.push(termLabel('r0', 'harness', 'left', 'GPT-6.2 Sol · Codex'));
+      s0.labels!.push(lab('you', 'you, in T3 Code', 'left', 'wiki/agentic-development-environment/'));
+      s0.labels!.shift();
+    }
+    h.set((s) => Object.assign(s, s0));
+    const pay = how === 'app' ? `Claude Free ${d.claudeFree} or Pro ${d.claudePro} a month`
+      : how === 'code' ? `Claude Pro ${d.claudePro} (includes Claude Code); Codex from ChatGPT Free`
+      : how === 'api' ? `Opus 5.5: ${d.opusIn} in, ${d.opusOut} out, per million tokens`
+      : `T3 Code is ${d.t3}; your plans as before`;
+    const model = how === 't3' ? 'Opus 5.5 and GPT-6.2 Sol' : 'Opus 5.5';
+    const files = how === 'app' ? 'none: you paste' : 'your laptop';
+    stat(ctx, [model, 'the providers’ computers', files, pay]);
+    ctx.say('you', how === 'app' ? 'Who has not paid? [photo of the paper list]' : 'Make the member list show who has not paid.');
+    for (let turn = 0; turn < (how === 'app' ? 1 : 4); turn++) {
+      await h.send(turn === 0 ? route.youToAgent() : route.agentToTool({ at: SPOT.tools, ids: ['read', 'edit', 'run', 'search'] }, ['read', 'edit', 'run'][turn - 1]!), turn === 0 ? 'you' : 'model', { ms: 380 });
+      h.set((s) => {
+        const a = s.agents[0]!;
+        a.blocks!.push({ t: turn === 0 ? 'you' : 'tool', h: 2.4 });
+        a.busy = true;
+        if (how === 't3') { const r = s.agents[1]!; r.blocks!.push({ t: turn === 0 ? 'you' : 'tool', h: 2.4 }); r.busy = true; }
+        const m = s.meters![0]!;
+        if (m.mode === 'api') m.level += 3; else m.level = Math.max(0.55, m.level - 0.1);
+      });
+      await h.wait(420);
+      h.set((s) => { for (const a of s.agents) a.busy = false; });
+    }
+    if (how === 'app') {
+      await h.send(reverse(route.youToAgent()), 'model', { ms: 440 });
+      ctx.say('Opus 5.5', '7 have not paid. You will have to copy this into your spreadsheet yourself.');
+    } else {
+      await h.send(reverse(route.youToAgent()), 'model', { ms: 440 });
+      ctx.say(how === 't3' ? 'both' : 'Opus 5.5', how === 't3' ? 'Two answers to the same job, one from each maker, side by side.' : 'Done. The list has an “Unpaid” button; I tried it.');
+    }
+    await h.wait(1800);
+    ctx.say(null, how === 'api' ? 'Every token went on the bill: more work, a bigger bill.'
+      : how === 't3' ? 'One window on your screen, two providers behind it, each on your own login.'
+      : how === 'app' ? 'The app is the quickest way in. It cannot touch your files.'
+      : 'Same plan as the app, now working on a folder on your laptop.');
+  });
+}
+
+// ---------- where it runs ----------
+
+async function runWhere(ctx: Ctx, h: Script, online: boolean) {
+  note(ctx, 'providers', 'where');
+  h.set((s) => Object.assign(s, base({ tools: true, gear: [] })));
+  stat(ctx, ['Opus 5.5', online ? 'Anthropic’s computers' : 'out of reach', 'your laptop', '–']);
+  ctx.say('you', 'Make the member list show who has not paid.');
+  if (!online) {
+    await h.send([[0, 94], [0, 60]], 'you', { ms: 420 });
+    h.set((s) => { s.zones![0]!.off = true; s.agents[0]!.off = true; s.agents[0]!.lamp = 'bad'; });
+    ctx.say(null, 'No connection. The model is out of reach, so nothing happens.');
+    await h.wait(2000);
+    h.set((s) => { s.project!.files = ['ok', 'ok', 'ok', 'ok', 'ok', 'ok']; });
+    ctx.say(null, 'Your files are all still on the laptop, as you left them.');
+    return;
+  }
+  await h.send(route.youToAgent(), 'you', { ms: 420 });
+  h.set((s) => { s.agents[0]!.blocks = [{ t: 'you', h: 2 }]; s.agents[0]!.busy = true; });
+  const tools = { at: SPOT.tools, ids: ['read', 'edit', 'run', 'search'] };
+  const proj = { at: SPOT.project };
+  for (const [tool, file, line] of [
+    ['read', 0, 'Up: “read members.ts”. Down: the file’s text.'],
+    ['edit', 0, 'Up: nothing. Down: the change, written on your laptop.'],
+    ['run', -1, lv(ctx, 'The page runs on your laptop. Down: what it showed.', 'npm test runs on your laptop. Down: its output.')],
+  ] as const) {
+    h.set((s) => { s.tools!.on = tool; });
+    await h.send(route.agentToTool(tools, tool), 'model', { ms: 360 });
+    if (file >= 0) await h.send(route.toolToFile(tools, tool, proj, file), 'tool', { ms: 360 });
+    h.set((s) => { if (file >= 0) { const f = (s.project!.files ??= ['', '', '', '', '', '']); f[file] = tool === 'edit' ? 'edit' : 'read'; } });
+    await h.send(reverse(route.agentToTool(tools, tool)), 'tool', { ms: 360 });
+    h.set((s) => { s.agents[0]!.blocks!.push({ t: 'tool', h: 2 }); s.tools!.on = null; });
+    ctx.say(null, line);
     await h.wait(700);
-    h.set((s) => { s.agents[1]!.busy = false; s.agents[0]!.lamp = 'ok'; s.agents[1]!.lamp = 'ok'; });
-  });
+  }
+  h.set((s) => { s.agents[0]!.busy = false; });
+  await h.send(reverse(route.youToAgent()), 'model', { ms: 420 });
+  ctx.say('Opus 5.5', 'Done. members.ts has an “unpaid” filter; I tried it.');
+  stat(ctx, ['Opus 5.5', 'Anthropic’s computers', 'your laptop: 1 read, 1 changed', '–']);
+  await h.wait(1600);
+  ctx.say(null, 'The thinking happened far away. Every file it read or changed stayed on your laptop.');
 }
 
-const SURFACES: Record<Surface, { title: string; say: string; stat: [string, string][]; model: Record<'plain' | 'technical' | 'engineer', string> }> = {
-  web: {
-    title: 'Web & phone app',
-    say: 'Open claude.ai, ChatGPT or Gemini in a browser or phone app—zero setup, instant chat, voice and document work.',
-    stat: [['setup', 'none (just sign in)'], ['best for', 'chat, voice, specs, research'], ['edits local repo', 'no']],
-    model: {
-      plain: 'Start here for brainstorming, voice notes and learning. Move to a desktop app when you want the AI to build inside your own project folder.',
-      technical: 'Zero-friction surface for research, drafting specs and quick questions—switch to a local harness once you need git commits and test runs.',
-      engineer: 'Use web/mobile clients for asynchronous planning and reading; avoid copy-pasting multi-file diffs out of browser chat.',
-    },
-  },
-  desktop: {
-    title: 'Desktop agent app',
-    say: 'Apps like T3 Code, Cursor or Codex desktop sit on top of your folder—showing live threads, visual diffs, previews and multiple providers side by side.',
-    stat: [['setup', 'install 1 app'], ['best for', 'visual coding & parallel threads'], ['edits local repo', 'yes']],
-    model: {
-      plain: 'The easiest bridge into coding with AI: you see your project, talk to the agent in plain language, and inspect visual changes without living in a scary black terminal.',
-      technical: 'Gives you multi-provider threads, isolated git worktrees, diff viewers, voice input and plan/approval controls in one desktop surface.',
-      engineer: 'High-leverage cockpit for supervising parallel worktrees, switching between models (e.g., builder vs reviewer) and connecting to remote always-on hosts.',
-    },
-  },
-  cli: {
-    title: 'Terminal CLI',
-    say: 'Claude Code, Codex CLI or Gemini CLI run right inside your terminal—fast, keyboard-driven, and works over SSH on any server.',
-    stat: [['setup', 'npm / brew install'], ['best for', 'speed, scripts, remote servers'], ['edits local repo', 'yes']],
-    model: {
-      plain: 'Looks bare at first, but underneath it is the exact same coding agent—just typed directly into a command window.',
-      technical: 'Scriptable, zero-UI overhead, runs seamlessly inside tmux or SSH on remote workstations, and pipes cleanly into CI and git hooks.',
-      engineer: 'First-class automation primitive: supports non-interactive headless runs, custom MCP servers, permission flags and reproducible CI pipelines.',
-    },
-  },
-  api: {
-    title: 'Direct API',
-    say: 'Pay-per-token programmatic access—used by apps you build yourself, automated CI reviewers, and custom pipelines.',
-    stat: [['billing', 'per token used'], ['best for', 'your own apps & CI automation'], ['edits local repo', 'via your code']],
-    model: {
-      plain: 'You don’t need an API key to start learning—a normal monthly subscription covers everyday building. APIs are for when your own software calls AI automatically.',
-      technical: 'Keep an API key in `.env` (never committed to git) when wiring AI features into your app or running headless CI checks.',
-      engineer: 'Metered per-token billing with explicit prompt-caching headers, structured outputs, rate limits and full observability over cost per job.',
-    },
-  },
-};
+// ---------- devices ----------
 
-function runSurface(ctx: Ctx, srf: Surface) {
-  const s = SURFACES[srf];
-  ctx.model(`${s.title}.`, s.model[ctx.level]);
-  void ctx.scene.run(async (h) => {
-    h.set((st) => Object.assign(st, solo({
-      tools: srf === 'desktop' || srf === 'cli',
-      project: srf === 'desktop' || srf === 'cli',
-      meter: srf === 'api' ? 'api' : 'plan',
-      labels: [
-        lab('you', 'you', 'left'),
-        lab('a0', s.title, 'top', srf === 'api' ? 'wiki/api/' : 'wiki/harness/'),
-        ...(srf === 'desktop' || srf === 'cli' ? [lab('project', 'local repo', 'top')] : []),
-      ],
-    })));
-    ctx.stat(s.stat);
-    ctx.say(null, s.say);
-    await h.send(route.youToAgent(), 'you', { ms: 380 });
-    h.set((st) => { st.agents[0]!.blocks = [{ t: 'you', h: 3 }, { t: 'model', h: 4 }]; st.agents[0]!.lamp = 'ok'; });
-    await h.send(reverse(route.youToAgent()), 'model', { ms: 380 });
-  });
+type Device = 'laptop' | 'desktop' | 'phone';
+const DESK: XY = [118, 70];
+const PHONE: XY = [-60, 130];
+function devScene(active: Device): SceneState {
+  return {
+    you: SPOT.you,
+    agents: [{ id: 'a0', at: SPOT.agent, blocks: [] }],
+    zones: [CLOUD, { id: 'home', kind: 'box', rect: [96, 48, 46, 44] }],
+    gear: [
+      { id: 'lap', at: LAPTOP, kind: 'laptop', lamp: active === 'laptop' ? 'work' : 'off' },
+      { id: 'desk', at: DESK, kind: 'desktop', lamp: active === 'desktop' || active === 'phone' ? 'work' : 'off' },
+      { id: 'phone', at: PHONE, kind: 'phone', scale: 0.9, lamp: active === 'phone' ? 'work' : 'off' },
+    ],
+    tracks: [[[0, 94], [0, 22]], [[DESK[0] - 14, DESK[1]], [22, 8]]],
+    labels: [
+      lab('you', 'you', 'bottom'),
+      termLabel('a0', 'model', 'top', 'Opus 5.5, on Anthropic’s computers'),
+      lab('gear:lap', 'laptop', 'bottom'),
+      lab('gear:desk', 'desktop PC at home', 'bottom'),
+      lab('gear:phone', 'phone', 'top'),
+    ],
+  };
 }
-
-const DEVICES: Record<Device, { label: string; say: string; stat: [string, string][]; model: Record<'plain' | 'technical' | 'engineer', string> }> = {
-  phone: {
-    label: 'Phone',
-    say: 'Record voice ideas on a walk, review a summary or screenshot on the sofa, or steer a desktop machine running at home.',
-    stat: [['best for', 'voice specs, review & remote steering'], ['runs heavy builds', 'via remote box / cloud'], ['when', 'away from your desk']],
-    model: {
-      plain: 'Your phone isn’t for typing code—it’s your voice notebook and remote control for approving plans and checking finished previews.',
-      technical: 'Use mobile apps for voice-to-spec capture, PR preview checks and remote steering of threads running on your home workstation or cloud sandbox.',
-      engineer: 'Decouple human decision latency from desk time: approve plans, triage proof artifacts and unblock waiting threads from mobile while compute stays on an always-on host.',
-    },
-  },
-  laptop: {
-    label: 'Laptop',
-    say: 'Your everyday interactive studio: build features, click through live previews in a real browser, and steer 1–3 agents at once.',
-    stat: [['best for', 'hands-on building & visual checks'], ['limit', 'pauses when lid closes'], ['when', 'at a desk or café']],
-    model: {
-      plain: 'A normal laptop is all you need to start—because the heavy AI thinking runs in the cloud, even an older laptop builds software fast.',
-      technical: 'Great for local dev servers, browser inspection and short test suites; close the lid and local agents sleep until you reopen it.',
-      engineer: 'Primary interactive workstation—keep local dev environments light and offload long test matrices or background fleets to an always-on host or cloud container.',
-    },
-  },
-  desktop: {
-    label: 'Desktop PC / Home box',
-    say: 'Stays plugged in and awake all day: runs long test suites, multiple parallel worktrees, optional local models—and lets your laptop or phone connect in.',
-    stat: [['best for', 'always-on agents & heavy runs'], ['lid problem', 'none (stays awake)'], ['bonus', 'can run local GPU models']],
-    model: {
-      plain: 'An always-on desktop PC at home acts like your private workshop—start a job from your phone or laptop and come back to finished proof.',
-      technical: 'Runs persistent worktrees, Docker/Postgres test databases and multi-hour agent loops without draining laptop battery or sleeping on lid-close.',
-      engineer: 'Serves as a dedicated remote execution node (via T3 Code remote or SSH) with full environment parity, fast local NVMe/RAM and optional local GPU inference.',
-    },
-  },
-};
-
-function runDevice(ctx: Ctx, dev: Device) {
-  const d = DEVICES[dev];
-  ctx.model(`${d.label}.`, d.model[ctx.level]);
+function runDevice(ctx: Ctx, which: Device) {
+  note(ctx, 'providers', 'devices');
   void ctx.scene.run(async (h) => {
-    h.set((s) => Object.assign(s, jobs(3, {
-      gap: 84,
-      machines: ['laptop', 'box', 'cloud'],
-      trees: false,
-      labels: [
-        lab('you', dev === 'phone' ? 'you (phone)' : 'you', 'left'),
-        lab('zone:0', 'laptop', 'bottom'),
-        lab('zone:1', 'desktop PC', 'bottom', 'wiki/always-on-machine/'),
-        lab('zone:2', 'cloud', 'bottom'),
-        lab('j0', dev === 'laptop' ? 'active here' : 'standby', 'top'),
-        lab('j1', dev === 'desktop' || dev === 'phone' ? 'running job' : 'ready', 'top'),
-        lab('j2', 'cloud job', 'top'),
-      ],
-    })));
-    ctx.stat(d.stat);
-    ctx.say(null, d.say);
-    const active = dev === 'laptop' ? 0 : 1;
-    h.set((s) => {
-      s.agents[active]!.blocks = [{ t: 'you', h: 3 }, { t: 'tool', h: 4 }, { t: 'model', h: 3 }];
-      s.agents[active]!.lamp = 'ok';
-      if (dev === 'phone') s.agents[2]!.lamp = 'work';
-    });
+    h.set((s) => Object.assign(s, devScene(which)));
+    const files = which === 'laptop' ? 'on the laptop' : 'on the desktop PC';
+    stat(ctx, ['Opus 5.5', 'Anthropic’s computers', files, '–']);
+    const fromDesk: XY[] = [[DESK[0] - 14, DESK[1]], [22, 8]];
+    if (which === 'laptop') {
+      ctx.say('you', 'Add a “paid on” date to each member.');
+      await h.send([[LAPTOP[0], LAPTOP[1] - 10], [0, 40], [0, 22]], 'you', { ms: 520 });
+      h.set((s) => { s.agents[0]!.busy = true; });
+      await h.wait(1200);
+      h.set((s) => { s.gear![0]!.off = true; s.gear![0]!.lamp = 'off'; s.agents[0]!.busy = false; });
+      ctx.say(null, 'You close the lid to catch a train. The job on the laptop stops until you open it again.');
+      stat(ctx, ['Opus 5.5', 'Anthropic’s computers', 'on the laptop, lid closed', '–']);
+      return;
+    }
+    if (which === 'desktop') {
+      ctx.say('you', 'Overnight: add a “paid on” date and try it on every page.');
+      await h.send(reverse(fromDesk), 'you', { ms: 520 });
+      for (let i = 0; i < 3; i++) {
+        h.set((s) => { s.agents[0]!.busy = true; });
+        await h.send(fromDesk, 'model', { ms: 420 });
+        await h.send(reverse(fromDesk), 'tool', { ms: 420 });
+        h.set((s) => { s.agents[0]!.busy = false; });
+      }
+      ctx.say(null, 'The desktop stays on, so the job keeps going while you sleep.');
+      return;
+    }
+    ctx.say('you', '[on the bus] Looks good, go ahead.');
+    await h.send([[PHONE[0] + 6, PHONE[1] - 6], [DESK[0] - 10, DESK[1] + 4]], 'you', { ms: 620 });
+    h.set((s) => { s.agents[0]!.busy = true; });
+    await h.send(fromDesk, 'model', { ms: 420 });
+    await h.send(reverse(fromDesk), 'tool', { ms: 420 });
+    h.set((s) => { s.agents[0]!.busy = false; });
+    await h.send([[DESK[0] - 10, DESK[1] + 4], [PHONE[0] + 6, PHONE[1] - 6]], 'model', { ms: 620 });
+    ctx.say('desktop PC', 'Done: “paid on” dates added. Screenshot attached.');
+    stat(ctx, ['Opus 5.5', 'Anthropic’s computers', 'on the desktop PC; the phone shows them', '–']);
+    await h.wait(1600);
+    ctx.say(null, 'The phone only shows and steers. The desktop at home does the work, so it has to stay on.');
   });
 }
 
 export async function demo(ctx: Ctx, h: Script) {
-  h.set((s) => Object.assign(s, jobs(2, {
-    gap: 92,
-    machines: ['laptop', 'cloud'],
-    trees: false,
-    labels: [
-      lab('you', 'you', 'left'),
-      lab('j0', 'local tools', 'top', 'wiki/harness/'),
-      lab('j1', 'cloud model', 'top', 'wiki/model/'),
-      lab('zone:0', 'your computer', 'bottom'),
-      lab('zone:1', 'provider cloud', 'bottom'),
-    ],
-  })));
-  ctx.say(null, 'Your files stay on your machine while the provider’s servers do the heavy thinking.');
-  h.set((s) => { s.agents[0]!.blocks = [{ t: 'tool', h: 4 }]; s.agents[1]!.blocks = [{ t: 'you', h: 3 }, { t: 'model', h: 4 }]; s.agents[1]!.lamp = 'ok'; });
-  await h.wait(1200);
+  await runWhere(ctx, h, true);
 }
 
 export const providersCh: Chapter = {
   steps: {
-    labs: { scene: () => jobs(1, { machines: ['cloud'], trees: false, labels: [lab('you', 'you', 'left'), lab('j0', 'AI provider', 'top', 'wiki/model/')] }), enter: (ctx) => runLab(ctx, 'anthropic') },
-    'where-brain': { scene: () => jobs(2, { gap: 92, machines: ['laptop', 'cloud'], trees: false }), enter: (ctx) => runWhere(ctx, 'cloud') },
-    surfaces: { scene: () => solo({ tools: true, project: true, meter: 'plan' }), enter: (ctx) => runSurface(ctx, 'desktop') },
-    devices: { scene: () => jobs(3, { gap: 84, machines: ['laptop', 'box', 'cloud'], trees: false }), enter: (ctx) => runDevice(ctx, 'laptop') },
+    labs: { scene: () => base(), enter: (ctx) => runLab(ctx, 'anthropic') },
+    reach: { scene: () => base(), enter: (ctx) => runReach(ctx, 'app') },
+    where: { scene: () => base({ tools: true, gear: [] }), enter: (ctx) => void ctx.scene.run((h) => runWhere(ctx, h, true)) },
+    devices: { scene: () => devScene('laptop'), enter: (ctx) => runDevice(ctx, 'laptop') },
   },
   actions: {
-    lab: (ctx, val) => runLab(ctx, val as LabId),
-    where: (ctx, val) => runWhere(ctx, val as RunAt),
-    surface: (ctx, val) => runSurface(ctx, val as Surface),
+    lab: (ctx, val) => runLab(ctx, val as Lab),
+    reach: (ctx, val) => runReach(ctx, val as Reach),
+    online: (ctx, val) => void ctx.scene.run((h) => runWhere(ctx, h, val === 'on')),
     device: (ctx, val) => runDevice(ctx, val as Device),
   },
 };

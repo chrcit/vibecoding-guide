@@ -391,3 +391,10 @@ html[data-embed] .j-stage { max-height: 36svh; }
 /* Lesson 7: what does not fit the window, drawn on top of the cap (Agent.spill in picture.ts). */
 .j-svg .k-solid[data-over] { opacity: 0.8; }
 .j-svg .k-solid[data-over] .k-edge { stroke: var(--accent); stroke-width: 1.6px; stroke-dasharray: 3 2; }
+/* Part one: devices and servers (picture.ts `gear`). A screen is dark; it turns blue while it shows work. */
+.j-svg [data-part='screen'] .k-top, .j-svg [data-part='screen'] .k-fill { fill: color-mix(in oklab, var(--ink) 62%, var(--card)); }
+.j-svg [data-part='screen'] .k-left { fill: color-mix(in oklab, var(--ink) 78%, var(--card)); }
+.j-svg [data-part='screen'] .k-right, .j-svg [data-part='screen'] .k-shadow { fill: color-mix(in oklab, var(--ink) 52%, var(--card)); }
+.j-ent[data-lamp='work'] [data-part='screen'] .k-left, .j-ent[data-lamp='ok'] [data-part='screen'] .k-left { fill: color-mix(in oklab, var(--blue) 58%, var(--card)); }
+.j-svg [data-part='disc'] .k-top, .j-svg [data-part='disc'] .k-fill { fill: color-mix(in oklab, var(--blue) 30%, var(--card)); }
+.j-svg [data-part='disc'] .k-left, .j-svg [data-part='disc'] .k-right, .j-svg [data-part='disc'] .k-shadow { fill: color-mix(in oklab, var(--blue) 44%, var(--card)); }
