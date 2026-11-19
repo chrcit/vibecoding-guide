@@ -3,38 +3,49 @@ import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
 import Next from '../../components/journey/Next.astro';
 import More from '../../components/journey/More.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
 import Fact from '../../components/data/Fact.astro';
-import { url } from '../../lib/nav';
+import Verified from '../../components/data/Verified.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
+import Term from '../../components/journey/Term.astro';
 ---
-<Journey chapter="parallel" first="three" title="Side by side" description="Several agents can work at once if each has its own copy of the project. Their finished work is merged into the main branch one piece at a time.">
+<Journey chapter="parallel" first="three" title="Side by side" description="Several helpers can work at once if each has its own copy of the project. Their finished work is merged into main one piece at a time.">
   <Step id="three" title="Three at once, one folder">
-    <p>Run three <a href={url('journey/handoff/')}>helpers from step 6</a> in the same folder and they step on each other’s edits, overwriting files as they go.</p>
+    <p>Three <Term id="helper">helpers</Term> from <LessonRef id="handoff" />, each with its own task, all editing the same folder. Orange tiles are edits that landed on top of another helper’s.</p>
   </Step>
   <Step id="copies" title="Give each its own copy">
-    <p>Give every helper its own working copy of the project instead. Finished branches merge back into main one at a time.</p>
+    <p>Each helper gets its own copy of the project on its own <Term id="branch" />: a <Term id="worktree" />, the small plate beside it. Finished work merges into <Term id="main" /> one piece at a time.</p>
     <div class="pick">
       <button type="button" data-do="own" data-val="own" data-default aria-pressed="true">A copy each</button>
       <button type="button" data-do="own" data-val="shared" aria-pressed="false">One shared folder</button>
     </div>
-    <More title="The commands">
-      <p>Git calls a separate working copy a worktree. For a task called <code>search</code>:</p>
-      <pre class="j-code"><code>{`git worktree add ../club-search -b search
-# the helper works in ../club-search
-git merge search
+    <More title="How to set it up" level="technical">
+      <ForLevel is="plain">
+        <CopyPrompt compact title="Ask for parallel work">{`Do these three tasks in parallel, each in its own git worktree on its own branch:\n1. Sort members by rating.\n2. Add a search box.\n3. Export the list to CSV.\nWhen one is finished and its tests pass, merge it into main, then the next.`}</CopyPrompt>
+      </ForLevel>
+      <ForLevel is="technical engineer">
+        <pre class="j-code"><code>{`git worktree add ../club-search -b search   # a copy on its own branch
+cd ../club-search && claude                 # one agent per copy
+git switch main && git merge search          # when its tests pass
 git worktree remove ../club-search`}</code></pre>
+      </ForLevel>
+      <p><Fact id="harnesses.claudeCode.features" show="claim" /></p>
       <p><Fact id="harnesses.claudeCode.subagentWorktree" show="claim" /></p>
     </More>
   </Step>
   <Step id="more" title="How many?">
-    <p>More helpers finish more tasks, but main still takes one merge at a time—and every report still lands in the main agent’s window.</p>
+    <p>More helpers finish sooner, and every report lands in the agent’s window. Watch its number climb.</p>
     <div class="controls">
       <label class="control"><span>Helpers <output>5</output></span>
-        <input type="range" min="1" max="5" step="1" value="5" data-bind="n" />
+        <input type="range" min="1" max="5" step="1" value="5" data-bind="n" aria-label="How many helpers" />
       </label>
     </div>
-    <Next from="parallel" more={[{ href: 'explain/orchestration/', text: 'Ways to split work' }]} />
+    <ForLevel is="engineer"><p>Copies stop clashes on disk, not in the code: two branches that change the same function still conflict at merge. Split tasks by the files they own.</p></ForLevel>
+    <Next from="parallel" />
   </Step>
   <Fragment slot="foot">
-    <p>The parallel tasks and conflict counts above are illustrative examples.</p>
+    <p>The tasks, the clashes and the window numbers are made up; which tasks clash is fixed, so a run reads the same each time.</p>
+    <Verified ids={['harnesses.claudeCode.features', 'harnesses.claudeCode.subagentWorktree']} />
   </Fragment>
 </Journey>

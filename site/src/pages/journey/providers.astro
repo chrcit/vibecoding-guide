@@ -2,86 +2,97 @@
 import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
 import Next from '../../components/journey/Next.astro';
+import More from '../../components/journey/More.astro';
 import ForLevel from '../../components/level/ForLevel.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import { models } from '../../data/models';
+import { plans } from '../../data/plans';
+import { t3code } from '../../data/t3code';
+import Term from '../../components/journey/Term.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
 import { url } from '../../lib/nav';
+
+// Every name and price the picture shows comes from here.
+const current = (lab: string) => Object.values(models).filter((m) => m.lab === lab && m.current).map((m) => m.name.replace(/^Claude /, ''));
+const usd = (n: number) => `$${n}`;
+const opus = models['claude-opus-5-5'].price!;
+const data = {
+  anthropic: current('Anthropic'),
+  openai: current('OpenAI'),
+  claudeFree: usd(plans.claude.free.price.value),
+  claudePro: usd(plans.claude.pro.price.value),
+  chatgptFree: usd(plans.chatgpt.free.price.value),
+  chatgptPlus: usd(plans.chatgpt.plus.price.value),
+  opusIn: usd(opus.input.value),
+  opusOut: usd(opus.output.value),
+  t3: t3code.price.value,
+};
+const ids = [
+  'plans.claude.free.price', 'plans.claude.pro.price', 'plans.claude.pro.claudeCode', 'plans.chatgpt.free.price', 'plans.chatgpt.plus.price',
+  'plans.chatgpt.limits.codexOnEveryPlan', 'plans.chatgpt.limits.apiKey', 'models.claude-opus-5-5.price.input', 'models.claude-opus-5-5.price.output', 't3code.price', 't3code.ownLogins',
+  'claims.privacy.claudeConsumer', 'claims.privacy.openaiApi', 'claims.hardware.unifiedMemory', 't3code.phoneIsRemote', 't3code.install',
+];
 ---
-<Journey
-  chapter="providers"
-  first="labs"
-  title="Providers and where AI runs"
-  description="Anthropic, OpenAI, Google and local models—where the AI actually runs versus where your files live, and how laptop, desktop PC and phone fit together."
->
-  <Step id="labs" title="The main AI providers">
-    <p>You are not locked into one company. Four groups power almost all everyday AI work today—tap each to see what they offer:</p>
-    <div class="pick" role="group" aria-label="AI provider">
-      <button type="button" data-do="lab" data-val="anthropic" data-default>Anthropic (Claude)</button>
-      <button type="button" data-do="lab" data-val="openai">OpenAI (GPT &amp; Codex)</button>
-      <button type="button" data-do="lab" data-val="google">Google (Gemini)</button>
-      <button type="button" data-do="lab" data-val="local">Open-weight / Local</button>
+<Journey chapter="providers" first="labs" data={data} title="Providers and where AI runs" description="Who makes the models, how you reach them (an app, a plan in a coding tool, the API, T3 Code), where the model runs and where your files stay, and the laptop, desktop PC and phone you work from.">
+  <Step id="labs" title="A few companies make the models">
+    <p>The model from <LessonRef id="ai" /> runs on its maker's computers. Anthropic makes Claude, OpenAI makes GPT, Google makes Gemini, and some models are free to download.</p>
+    <div class="pick" role="group" aria-label="Who makes the model">
+      <button type="button" data-do="lab" data-val="anthropic" data-default aria-pressed="true">Anthropic</button>
+      <button type="button" data-do="lab" data-val="openai" aria-pressed="false">OpenAI</button>
+      <button type="button" data-do="lab" data-val="open" aria-pressed="false">A model you download</button>
     </div>
-    <ForLevel is="plain">
-      <p>You only need one subscription to start. Later, apps like T3 Code let you put two different providers side by side—one to build, another to double-check.</p>
-    </ForLevel>
-    <ForLevel is="technical">
-      <p>Each lab publishes multiple tiers (fast/cheap vs deep reasoning). Compare current context windows and per-token pricing any time on the <a href={url('models/')}>Models page</a>.</p>
-    </ForLevel>
-    <ForLevel is="engineer">
-      <p>Keep your workflow provider-agnostic through multi-model harnesses and standard <code>AGENTS.md</code> / MCP interfaces—model leadership shifts every quarter, and cross-vendor review reduces correlated blind spots.</p>
-    </ForLevel>
+    <More title="Today's models">
+      <p>Anthropic: {data.anthropic.join(', ')}. OpenAI: {data.openai.join(', ')}. Prices and windows side by side on <a href={url('models/')}>Models</a>.</p>
+      <ForLevel is="engineer"><p>A downloaded model runs on your own hardware. <Fact id="claims.hardware.unifiedMemory" show="claim" /></p></ForLevel>
+    </More>
   </Step>
 
-  <Step id="where-brain" title="Where the AI runs vs where your files live">
-    <p>A common worry: “Do I need a giant expensive computer to run coding agents?” Toggle between cloud and local to see what actually happens behind the scenes:</p>
-    <div class="pick" role="group" aria-label="Where inference runs">
-      <button type="button" data-do="where" data-val="cloud" data-default>Cloud model (usual)</button>
-      <button type="button" data-do="where" data-val="local">Local GPU model</button>
+  <Step id="reach" title="Four ways in">
+    <p>The same model, reached through an app, through a coding tool on your <Term id="plan" />, through the <Term id="api" /> where every token is billed, or through T3 Code, which drives the coding tools for you.</p>
+    <div class="pick" role="group" aria-label="How you reach it">
+      <button type="button" data-do="reach" data-val="app" data-default aria-pressed="true">An app</button>
+      <button type="button" data-do="reach" data-val="code" aria-pressed="false">A coding tool</button>
+      <button type="button" data-do="reach" data-val="api" aria-pressed="false">The API</button>
+      <button type="button" data-do="reach" data-val="t3" aria-pressed="false">T3 Code</button>
     </div>
-    <ForLevel is="plain">
-      <p>In the usual setup, your project files stay right on your own computer, and the heavy AI thinking happens on the provider’s servers over the internet. That is why even a normal five-year-old laptop can build real software.</p>
-    </ForLevel>
-    <ForLevel is="technical">
-      <p>Your local harness runs git, builds and tests on your CPU while sending only the prompt and opened file slices over HTTPS to the provider’s inference servers. Local models keep everything offline on your own GPU/unified memory, at the cost of smaller model capacity.</p>
-    </ForLevel>
-    <ForLevel is="engineer">
-      <p>Separate the execution plane (your machine, shell, local databases, credentials) from the inference plane (provider API or local Ollama/llama.cpp server). Never read <code>.env</code> secrets into model context, and verify zero-data-retention terms before pointing cloud models at proprietary repos.</p>
-    </ForLevel>
+    <More title="What each costs">
+      <dl class="j-defs">
+        <dt>An app</dt><dd>Claude Free <Fact id="plans.claude.free.price" />, Pro <Fact id="plans.claude.pro.price" /> a month. ChatGPT Free <Fact id="plans.chatgpt.free.price" />, Plus <Fact id="plans.chatgpt.plus.price" />.</dd>
+        <dt>A coding tool</dt><dd><Fact id="plans.claude.pro.claudeCode" show="claim" /> <Fact id="plans.chatgpt.limits.codexOnEveryPlan" show="claim" /></dd>
+        <dt>The API</dt><dd>A separate bill, paid with an API key instead of a plan. <Fact id="plans.chatgpt.limits.apiKey" show="claim" /> Opus 5.5: <Fact id="models.claude-opus-5-5.price.input" /> per million tokens in, <Fact id="models.claude-opus-5-5.price.output" /> out. <LessonRef id="meter" /> runs the sums.</dd>
+        <dt>T3 Code</dt><dd><Fact id="t3code.price" show="claim" /> <Fact id="t3code.ownLogins" show="claim" /></dd>
+      </dl>
+    </More>
   </Step>
 
-  <Step id="surfaces" title="Four ways to use the same models">
-    <p>The same underlying model can be reached from four very different surfaces. Pick one:</p>
-    <div class="pick" role="group" aria-label="Surface">
-      <button type="button" data-do="surface" data-val="desktop" data-default>Desktop agent app</button>
-      <button type="button" data-do="surface" data-val="web">Web &amp; phone app</button>
-      <button type="button" data-do="surface" data-val="cli">Terminal CLI</button>
-      <button type="button" data-do="surface" data-val="api">Direct API</button>
+  <Step id="where" title="The model is far away, your files stay with you">
+    <p>Your message and the files it reads travel to the model; every edit is made on your laptop. Turn the connection off and see what stops.</p>
+    <div class="pick" role="group" aria-label="Internet connection">
+      <button type="button" data-do="online" data-val="on" data-default aria-pressed="true">Online</button>
+      <button type="button" data-do="online" data-val="off" aria-pressed="false">Offline</button>
     </div>
-    <ForLevel is="plain">
-      <p>Start with the web or phone app for ideas and questions, and use a desktop agent app when you want it to actually build inside a folder on your computer.</p>
-    </ForLevel>
-    <ForLevel is="technical">
-      <p>Desktop apps (like T3 Code or Cursor) give visual diffs, worktrees and voice controls; terminal CLIs (Claude Code, Codex CLI) shine for speed, scripting and remote SSH sessions; direct APIs power your own apps and CI pipelines.</p>
-    </ForLevel>
-    <ForLevel is="engineer">
-      <p>All four surfaces hit the same model endpoints—choose by feedback-loop ergonomics, sandboxing requirements and whether billing is fixed subscription vs metered API.</p>
-    </ForLevel>
+    <ForLevel is="technical"><p>The tools run on your machine: <code>npm test</code> runs locally, and only its output is sent up.</p></ForLevel>
+    <More title="What happens to what it reads">
+      <p><Fact id="claims.privacy.claudeConsumer" show="claim" /></p>
+      <p><Fact id="claims.privacy.openaiApi" show="claim" /></p>
+    </More>
   </Step>
 
-  <Step id="devices" title="Laptop, desktop PC and phone working together">
-    <p>You do not have to do everything chained to one screen. Tap each device to see the role it plays best:</p>
-    <div class="pick" role="group" aria-label="Device role">
-      <button type="button" data-do="device" data-val="laptop" data-default>Laptop</button>
-      <button type="button" data-do="device" data-val="desktop">Desktop PC</button>
-      <button type="button" data-do="device" data-val="phone">Phone</button>
+  <Step id="devices" title="Laptop, desktop PC, phone">
+    <p>The work runs where the files are. Pick the device you are on and watch what happens when you walk away.</p>
+    <div class="pick" role="group" aria-label="Your device">
+      <button type="button" data-do="device" data-val="laptop" data-default aria-pressed="true">Laptop</button>
+      <button type="button" data-do="device" data-val="desktop" aria-pressed="false">Desktop PC</button>
+      <button type="button" data-do="device" data-val="phone" aria-pressed="false">Phone</button>
     </div>
-    <ForLevel is="plain">
-      <p>Talk through an idea on your phone during a walk, build and click through it on your laptop, or leave bigger jobs running on a desktop PC that stays awake at home.</p>
-    </ForLevel>
-    <ForLevel is="technical">
-      <p>Use your laptop for interactive UI work, an always-on desktop PC for parallel git worktrees and slow test suites, and your phone to approve plans, inspect preview links and steer remote threads.</p>
-    </ForLevel>
-    <ForLevel is="engineer">
-      <p>Decouple interactive control from long-running execution: keep your primary workspace on an always-on workstation (or cloud sandbox) and treat laptop and phone as low-friction steering and review clients.</p>
-    </ForLevel>
-    <Next from="providers" more={[{ href: 'models/', text: 'Compare current models & prices' }, { href: 'wiki/work-data-privacy/', text: 'What leaves your machine', side: true }]} />
+    <More title="T3 Code on each">
+      <p>It comes as <Fact id="t3code.install" />. <Fact id="t3code.phoneIsRemote" show="claim" /></p>
+    </More>
+    <Next from="providers" more={[{ href: 'models/', text: 'Models and prices' }, { href: 'wiki/harness/', text: 'Harness', side: true }, { href: 'wiki/work-data-privacy/', text: 'What leaves your machine', side: true }]} />
   </Step>
+  <Fragment slot="foot">
+    <p>The club and the jobs above are made up. Names and prices come from the sources page.</p>
+    <Verified ids={ids} />
+  </Fragment>
 </Journey>

@@ -1,0 +1,15 @@
+---
+/* Once per page that shows <Thumb>s: the sourced numbers their scripts read, and the script.
+   centre={false} on a page that already plays a big picture: on a touch screen the thumb nearest
+   the middle then stays still. */
+import { overviewData } from '../../lib/journey-data';
+import { url } from '../../lib/nav';
+interface Props { centre?: boolean }
+const { centre = true } = Astro.props;
+---
+<script type="application/json" data-thumbs-data set:html={JSON.stringify(overviewData())} />
+<div hidden data-thumbs data-base={url('')} data-centre={centre ? undefined : 'off'}></div>
+<script>
+  import { bootThumbs } from '../../journey/thumbs';
+  bootThumbs();
+</script>

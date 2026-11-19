@@ -16,4 +16,4 @@ const { id } = Astro.props;
 const t = term(id);
 const own = Astro.slots.has('default') ? await Astro.slots.render('default') : t.word;
 ---
-<SiteTerm def={t.def} more={{ href: url(termHref(id)), text: `More on ${t.word}` }}><Fragment set:html={own} /></SiteTerm>
+<SiteTerm def={t.def} name={t.word} more={{ href: url(termHref(id)), text: `More on ${t.word}` }}><Fragment set:html={own} /></SiteTerm>

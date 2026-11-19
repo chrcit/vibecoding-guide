@@ -3,26 +3,35 @@ import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
 import Next from '../../components/journey/Next.astro';
 import More from '../../components/journey/More.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
-import { url } from '../../lib/nav';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
+import Term from '../../components/journey/Term.astro';
 ---
-<Journey chapter="handoff" first="alone" title="A second agent" description="An agent can hand part of a job to a helper with an empty window. Only the brief goes in and only a report comes back.">
+<Journey chapter="handoff" first="alone" title="A second agent" description="An agent can hand part of a job to a helper with an empty window. Only the brief goes in and only a short report comes back.">
   <Step id="alone" title="Searching fills its window">
-    <p>Say the agent needs to find three relevant files and reads seven along the way. All seven stay in <a href={url('journey/window/')}>its context window from step 3</a>.</p>
+    <p>The agent from <LessonRef id="loop" /> needs three files and reads seven to find them. All seven stay in its <Term id="window" />, and <LessonRef id="window" /> showed a crowded window answering worse.</p>
     <div class="row"><button class="btn ghost" type="button" data-do="alone">Play it again</button></div>
   </Step>
   <Step id="hand" title="Hand the search to a helper">
-    <p>Instead, hand the search to a second agent. It starts with an empty window, gets a brief, sends back a short report, and then its window is discarded.</p>
+    <p>A <Term id="helper" /> is a second agent with an empty window of its own. It gets a <Term id="brief" />, does the search, sends back three lines, and its window is thrown away.</p>
     <div class="row"><button class="btn ghost" type="button" data-do="hand" data-val="full">Play it again</button></div>
+    <More title="Starting a helper" level="technical">
+      <p><Fact id="harnesses.claudeCode.subagentFreshContext" show="claim" /></p>
+      <p><Fact id="harnesses.claudeCode.subagentFiles" show="claim" /></p>
+      <ForLevel is="engineer"><p><Fact id="harnesses.claudeCode.subagentUsage" show="claim" /></p></ForLevel>
+    </More>
   </Step>
   <Step id="brief" title="The helper knows only the brief">
-    <p>You told the main agent not to change any files. The helper never heard you—it only sees what is in its brief.</p>
+    <p>You told the agent not to change anything. Send a short brief and watch your project.</p>
     <div class="pick">
-      <button type="button" data-do="hand" data-val="short" data-default aria-pressed="true">A short brief</button>
+      <button type="button" data-do="hand" data-val="short" data-default aria-pressed="true">“Sort out the dates.”</button>
       <button type="button" data-do="hand" data-val="full" aria-pressed="false">A full brief</button>
     </div>
     <More title="A brief to copy">
-      <CopyPrompt compact title="A brief for a helper">{`Hand this to a helper. It has seen nothing of our conversation, so the brief must say everything.
+      <CopyPrompt compact title="A brief for a helper">{`Hand this to a helper. It has seen none of our conversation, so the brief says everything.
 
 Goal: list every file that reads or formats a date.
 Already known: members.ts does. The bug is day and month swapped.
@@ -30,9 +39,10 @@ Look in: src/ only.
 Do not: change any file.
 Send back: the file names, one line each on what it does with dates. Nothing else.`}</CopyPrompt>
     </More>
-    <Next from="handoff" more={[{ href: 'explain/orchestration/', text: 'Ways to split work' }]} />
+    <Next from="handoff" more={[{ href: 'wiki/subagent/', text: 'Helpers (subagents)', side: true }]} />
   </Step>
   <Fragment slot="foot">
-    <p>The file counts and example search above are illustrative.</p>
+    <p>The search, the file counts and the helper’s mistake are made up.</p>
+    <Verified ids={['harnesses.claudeCode.subagentFreshContext', 'harnesses.claudeCode.subagentFiles', 'harnesses.claudeCode.subagentUsage']} />
   </Fragment>
 </Journey>

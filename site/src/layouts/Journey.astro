@@ -22,9 +22,6 @@ interface Props { chapter: string; title: string; description: string; first: st
 const { chapter, title, description, first, data } = Astro.props;
 const here = rungs.find((r) => r.id === chapter);
 const part = partOf(chapter);
-const prevPart = parts.find((p) => p.n === part.n - 1);
-const nextPart = parts.find((p) => p.n === part.n + 1);
-const mine = rungs.filter((r) => r.part === part.n);
 const def = chapters[chapter]?.steps[first];
 if (!def) throw new Error(`Journey: chapter "${chapter}" has no step "${first}"`);
 const still = poster(def.scene({ level: 'plain', mem: {}, keep: {}, data: data ?? {}, say() {}, model() {}, stat() {} } as any));
@@ -33,20 +30,23 @@ const still = poster(def.scene({ level: 'plain', mem: {}, keep: {}, data: data ?
   <div class="j-root" data-journey data-chapter={chapter} data-base={url('')}>
     {data && <script type="application/json" data-journey-data set:html={JSON.stringify(data)} />}
     <div class="j-view">
-      <nav class="j-rail" aria-label={`${part.short}: ${part.title}`}>
-        {prevPart && <a class="j-rail-part" href={url(prevPart.href)} title={`${prevPart.short}: ${prevPart.title}`}>← {prevPart.range}</a>}
-        <a class="j-rail-home" href={url(part.href)} aria-current={chapter === part.chapter ? 'page' : undefined}>{part.range}</a>
-        <ol>
-          {mine.map((r) => (
-            <li>
-              <a href={url(`journey/${r.id}/`)} aria-current={r.id === chapter ? 'page' : undefined} data-rung-link={r.id} title={`${r.n}. ${r.title}`}>
-                <span class="j-rail-n">{r.n}</span><span class="j-rail-name">{r.short}</span>
-              </a>
+      <nav class="j-rail" aria-label="The 21 lessons">
+        <ol class="j-rail-all">
+          {parts.map((p) => (
+            <li class="j-rail-group" data-mine={p.n === part.n ? '' : undefined}>
+              <a class="j-rail-part" href={url(p.href)} aria-current={chapter === p.chapter ? 'page' : undefined} title={`Part ${p.n}: ${p.title}`}>Part {p.n}</a>
+              <ol>
+                {rungs.filter((r) => r.part === p.n).map((r) => (
+                  <li>
+                    <a href={url(`journey/${r.id}/`)} aria-current={r.id === chapter ? 'page' : undefined} data-rung-link={r.id} title={`${r.n}. ${r.title}`} aria-label={`${r.short}, lesson ${r.n}`}>
+                      <span class="j-rail-n" aria-hidden="true">{r.n}</span><span class="j-rail-name" aria-hidden="true">{r.short}</span>
+                    </a>
+                  </li>
+                ))}
+              </ol>
             </li>
           ))}
         </ol>
-        {nextPart && <a class="j-rail-part" href={url(nextPart.href)} title={`${nextPart.short}: ${nextPart.title}`}>{nextPart.range} →</a>}
-        <a class="j-rail-part" href={url('library/')} title="Browse all 21 lessons and concepts">Library</a>
       </nav>
       <div class="j-stage tile" role="img" aria-label={here ? `Lesson ${here.n}, ${here.short}: ${here.title}. ${here.line}` : `The picture that grows through the journey. ${part.title}.`}>
         <Fragment set:html={still} />

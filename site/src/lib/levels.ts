@@ -27,6 +27,8 @@ export interface LevelInfo {
   description: string;
   /** Title for a deeper block that has none. */
   defaultTitle: string;
+  /** What this level changes in the lessons, in a few words: said when the reader picks it. */
+  shows: string;
 }
 
 export const levelInfo: Record<Level, LevelInfo> = {
@@ -35,18 +37,21 @@ export const levelInfo: Record<Level, LevelInfo> = {
     label: 'Vibe coding',
     description: "I have no idea what I'm doing.",
     defaultTitle: 'The simple version',
+    shows: 'What got done, what you see, what to do next.',
   },
   technical: {
     id: 'technical',
     label: 'Technical',
     description: 'Some technical background. I use a terminal, know Git and basic deployment.',
     defaultTitle: 'More detail',
+    shows: 'Also the type check, the tests, the commands and the files.',
   },
   engineer: {
     id: 'engineer',
     label: 'Engineer',
     description: 'Serious engineer. Give me the full weight.',
     defaultTitle: 'The full detail',
+    shows: 'Also architecture, invariants, failure modes and cost.',
   },
 };
 

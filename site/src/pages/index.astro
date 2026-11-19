@@ -1,35 +1,95 @@
 ---
-import Journey from '../layouts/Journey.astro';
-import PartSwitch from '../components/journey/PartSwitch.astro';
-import OverviewStep from '../components/journey/OverviewStep.astro';
+/*
+  The home page: the whole guide at a glance. Three parts, each with its lessons as small pictures
+  that play (hover or focus on a desktop; the one in the middle of the screen on a phone), and
+  where to start for the reader's level.
+*/
+import Base from '../layouts/Base.astro';
 import ForLevel from '../components/level/ForLevel.astro';
 import Term from '../components/journey/Term.astro';
-import LessonRef from '../components/journey/LessonRef.astro';
-import { rungs, parts } from '../journey/rungs';
+import Thumb from '../components/journey/Thumb.astro';
+import ThumbsBoot from '../components/journey/ThumbsBoot.astro';
+import { rungs, parts, rung } from '../journey/rungs';
 import { url } from '../lib/nav';
----
-<Journey
-  chapter="foundations"
-  first="ai"
-  title="Agentic Coding Guide"
-  description="An interactive visual guide to building software with AI agents—from what AI is and where it runs, to context rot, verification, parallel teams and production workflows."
->
-  <p class="j-lead">
-    <ForLevel is="plain">An interactive guide for anyone who wants <Term id="agent">AI agents</Term> to build real software with them—starting from scratch before your first line of code. Start with <LessonRef id="ai" />.</ForLevel>
-    <ForLevel is="technical">An interactive mental model of AI coding agents: foundations, context rot, typechecks, unit tests, review loops, parallel worktrees and cloud execution.</ForLevel>
-    <ForLevel is="engineer">An interactive systems guide to agentic engineering: context mechanics, deterministic oracles, architectural boundaries, adversarial review and fleet economics.</ForLevel>
-  </p>
-  <PartSwitch active={1} />
+import '../styles/board.css';
+import '../components/fig/fig.css';
+import '../styles/journey.css';
 
-  {rungs.filter((r) => r.part === 1).map((r, i, all) => (
-    <OverviewStep rung={r}>
-      {i === all.length - 1 && (
-        <a class="j-next" href={url(parts[1]!.href)}>
-          <span>Part two · Lessons {parts[1]!.range}</span>
-          <b>{parts[1]!.title}</b>
-          <span>{parts[1]!.blurb}</span>
-        </a>
-      )}
-    </OverviewStep>
-  ))}
-</Journey>
+const start = (id: string) => { const r = rung(id); return { href: url(`journey/${id}/`), text: `${r.short}, lesson ${r.n}` }; };
+const first = start('ai');
+const agents = start('chat');
+const week = start('meter');
+---
+<Base
+  title="Agentic Coding Guide"
+  description="Twenty-one short lessons, each one picture you can operate: what AI is and where it runs, one agent and its window, checks, helpers and fleets, and the working week around them."
+  section="guide"
+>
+  <div class="home">
+    <header class="home-head">
+      <h1>Agentic Coding Guide</h1>
+      <p class="home-lead">
+        Twenty-one short lessons. Each one is a picture you can operate, growing from your first chat with a
+        model to twenty <Term id="agent">agents</Term> building your project while you read what they prove.
+      </p>
+      <div class="home-start">
+        <ForLevel is="plain">
+          <a class="j-start" href={first.href}>Start with {first.text} <span aria-hidden="true">→</span></a>
+        </ForLevel>
+        <ForLevel is={['technical', 'engineer']}>
+          <a class="j-start" href={agents.href}>Start with {agents.text} <span aria-hidden="true">→</span></a>
+          <a class="home-alt" href={first.href}>or from {first.text}</a>
+        </ForLevel>
+      </div>
+    </header>
+
+    {parts.map((p) => {
+      const mine = rungs.filter((r) => r.part === p.n);
+      return (
+        <section class="home-part" aria-labelledby={`part-${p.n}`}>
+          <div class="home-part-head">
+            <h2 id={`part-${p.n}`}>Part {p.n}: {p.title}</h2>
+            {p.recap && <p class="j-recap">{p.recap}</p>}
+            <p class="home-builds">{p.blurb}</p>
+            <a class="home-ov" href={url(p.href)}>Part {p.n} overview <span aria-hidden="true">→</span></a>
+          </div>
+          <ol class="home-grid" data-count={mine.length}>
+            {mine.map((r) => <li><Thumb id={r.id} line /></li>)}
+          </ol>
+        </section>
+      );
+    })}
+
+    <p class="home-foot">
+      <a href={url('library/')}>The library</a> has every lesson by its steps and every term by the lessons that use it.
+      Busy with something else already? <a href={week.href}>{week.text}</a> starts on what agents cost.
+    </p>
+  </div>
+  <ThumbsBoot />
+</Base>
+
+<style>
+  .home { max-width: var(--full); margin-inline: auto; padding: var(--space-6) var(--gutter) var(--space-8); font-family: var(--sans); }
+  .home-head { display: grid; gap: var(--space-4); max-width: 44rem; margin-bottom: var(--space-7); }
+  .home-head h1 { margin: 0; font-family: var(--serif); font-size: var(--text-3xl); font-weight: 520; line-height: 1.04; letter-spacing: -0.025em; color: var(--ink); }
+  .home-lead { margin: 0; font-size: var(--text-l); line-height: 1.45; color: var(--ink-2); }
+  .home-start .for-level { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+  .home-alt { min-height: 2.75rem; display: inline-flex; align-items: center; color: var(--ink-2); }
+
+  .home-part { display: grid; gap: var(--space-4); padding-block: var(--space-6); border-top: 1px solid var(--rule); }
+  .home-part-head { display: grid; gap: 0.6rem; align-content: start; max-width: 40rem; }
+  .home-part-head h2 { margin: 0; font-family: var(--serif); font-size: var(--text-2xl); font-weight: 520; line-height: 1.1; color: var(--ink); }
+  .home-builds { margin: 0; font-family: var(--sans); font-size: var(--text-m); color: var(--ink-2); }
+  .home-part-head :global(.j-recap) { font-family: var(--sans); max-width: none; }
+  .home-ov { justify-self: start; min-height: 2.75rem; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; color: var(--ink); }
+  .home-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+  @media (min-width: 40rem) { .home-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (min-width: 64rem) {
+    .home-part { grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr); gap: var(--space-6); }
+    .home-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .home-grid[data-count='9'] { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  }
+  .home-grid :global(.j-thumb-name) { font-size: var(--text-s); }
+  .home-foot { max-width: 44rem; margin: var(--space-5) 0 0; color: var(--ink-2); }
+  .home-foot a { color: var(--ink); text-decoration-color: var(--accent); text-underline-offset: 0.2em; }
+</style>

@@ -21,8 +21,10 @@ export interface FleetOpts {
   clashes?: boolean;
   /** Some tasks come back wrong on their own, about one in four. Off: only a clash makes one wrong. */
   flaws?: boolean;
+  /** Add a row to the readout counting the builders' turns (each one reads its whole window). */
+  showTurns?: boolean;
 }
-export interface Tally { landed: number; sentBack: number; wrong: number; clashes: number; compactions: number }
+export interface Tally { landed: number; sentBack: number; wrong: number; clashes: number; compactions: number; turns?: number }
 
 const toLead = (at: XY): XY[] => [[at[0], BUS_Y], [0, BUS_Y], [0, -20]];
 /** Which tasks come back wrong: about one in four, fixed. */
@@ -30,7 +32,7 @@ const goesWrong = (worker: number, task: number) => (worker * 7 + task * 3) % 4 
 
 export async function fleet(ctx: Ctx, h: Script, o: FleetOpts = {}): Promise<Tally> {
   const { scene } = ctx;
-  const tally: Tally = { landed: 0, sentBack: 0, wrong: 0, clashes: 0, compactions: 0 };
+  const tally: Tally = { landed: 0, sentBack: 0, wrong: 0, clashes: 0, compactions: 0, turns: 0 };
   const short = o.shortReports ?? true;
   const workers = scene.state.agents.filter((a) => a.id !== 'a0');
   const total = o.until ?? workers.length * 2;
@@ -39,10 +41,11 @@ export async function fleet(ctx: Ctx, h: Script, o: FleetOpts = {}): Promise<Tal
   // One readout for the parallel, lead and fleet lessons: the same names in the same order, counted towards a total.
   // Counters over this run, each named with what it counts; the window is a gauge.
   const stats = () => ctx.stat([
-    ['tasks on main, this run', `${tally.landed} of ${total}`, 'made-up'],
+    ['tasks on main, this run', `${tally.landed} of ${total}`, 'example'],
     o.clashes ? ['clashes, this run', tally.clashes] : ['sent back by the check, this run', o.gate ? tally.sentBack : 'no check'],
     ['wrong on main, this run', tally.wrong],
     [`${o.name ?? 'the lead'}’s window`, `${Math.round(scene.fill('a0') * 100)}% full`],
+    ...(o.showTurns ? [['helper turns, this run', tally.turns ?? 0] as [string, number]] : []),
   ]);
   const w = (id: string) => (s: typeof scene.state) => s.agents.find((a) => a.id === id)!;
 
@@ -59,6 +62,8 @@ export async function fleet(ctx: Ctx, h: Script, o: FleetOpts = {}): Promise<Tal
       for (let k = 0; k < steps; k++) {
         await h.wait(420 + ((i * 37 + k * 53) % 260));
         h.set((s) => { w(id)(s).blocks!.push({ t: k % 2 ? 'model' : 'tool', h: 3 + ((i + k) % 4) * 2 }); });
+        tally.turns = (tally.turns ?? 0) + 1;
+        if (o.showTurns && k % 2) stats();
       }
       let wrong = flaws && goesWrong(i, task);
       h.set((s) => { w(id)(s).busy = false; w(id)(s).lamp = 'wait'; });

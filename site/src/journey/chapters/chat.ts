@@ -1,14 +1,15 @@
 // Chapter 1: one chat. A model, a window, and nothing else.
 import type { Chapter, Ctx } from '../chapter';
 import { solo, lab } from '../presets';
+import { termLabel } from '../terms';
 import { route, reverse } from '../picture';
 
 export const LINES: [string, string][] = [
-  ['My name is Sam. I run a chess club.', 'Hello Sam. What does the club need?'],
-  ['A list of members with their ratings.', 'I can make that. Who is on it?'],
+  ['My name is Sam. I keep our football club’s member list.', 'Hello Sam. What does the list need?'],
+  ['To show who has paid this season.', 'I can sketch that. How do members pay?'],
   ['What is my name?', 'Sam.'],
 ];
-const labels = [lab('you', 'you', 'left'), lab('a0', 'the model', 'top', 'wiki/model/'), lab('tank:a0', 'its window', 'left', 'wiki/context-window/')];
+const labels = [lab('you', 'you', 'left'), termLabel('a0', 'model', 'top', 'the model'), termLabel('tank:a0', 'window', 'left', 'its window')];
 const base = (blocks = [] as { t: 'you' | 'model'; h: number }[]) => solo({ blocks, labels });
 const said = (n: number) => LINES.slice(0, n).flatMap(() => [{ t: 'you' as const, h: 3 }, { t: 'model' as const, h: 3 }]);
 
@@ -29,7 +30,7 @@ async function exchange(ctx: Ctx, you: string, model: string) {
 
 export const chat: Chapter = {
   steps: {
-    two: { scene: () => base() },
+    two: { scene: () => base(), enter: (ctx) => { ctx.say(null, 'An empty window. The model can see nothing yet.'); ctx.stat([['in the window', '0 messages']]); } },
     send: {
       scene: () => base(),
       enter: (ctx) => { ctx.mem.i = 1; void exchange(ctx, ...LINES[0]!); },
@@ -40,7 +41,7 @@ export const chat: Chapter = {
     },
     fresh: {
       scene: () => base(said(3)),
-      enter: (ctx) => { ctx.say(null, 'Three exchanges are in the window.'); ctx.stat([['in the window', '6 messages']]); },
+      enter: (ctx) => { ctx.say(null, 'Three exchanges are in the window. Press New chat, then ask.'); ctx.stat([['in the window', '6 messages']]); },
     },
   },
   actions: {

@@ -35,9 +35,11 @@ export interface Ctx {
  * - value: a count towards its total ("4 of 6"), a window as "22% full", money with its unit.
  *   A counter only goes up within a run. When a control restarts the run, set it back to 0: the
  *   readout flashes, so the reader sees the restart (a value with % is a gauge and does not flash).
- * - tag, optional: the assumption behind the number, a word or two: 'made-up', 'cache on',
- *   'Opus 5.5 prices'. Shown small beside the value. Say "made-up" once per readout, on the first
- *   number it applies to.
+ * - tag, optional: the assumption behind the number, a word or two: 'example', 'example hour',
+ *   'cache on', 'Opus 5.5 prices'. Shown small beside the value. Put 'example' once per readout,
+ *   on the first number that comes from a made-up job, and say in the line under the picture (or
+ *   the step) that the job is made up. Readers took a "made-up" pill for placeholder data, so the
+ *   pill never says "made-up" (run.ts turns an old 'made-up' tag into 'example').
  */
 export type StatPair = [name: string, value: string | number, tag?: string];
 

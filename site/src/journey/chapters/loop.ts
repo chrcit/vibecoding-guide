@@ -1,12 +1,14 @@
 // Chapter 2: the loop. Tools turn the model's text into actions, and each result goes back in.
 import type { Chapter, Ctx } from '../chapter';
+import { byLevel } from '../chapter';
 import type { Script } from '../scene';
 import { solo, lab } from '../presets';
+import { termLabel } from '../terms';
 import { route, reverse, type Kind } from '../picture';
 
 const labels = [
-  lab('you', 'you', 'left'), lab('a0', 'the model', 'top', 'wiki/model/'),
-  lab('tools', 'tools', 'top', 'wiki/tool-call/'), lab('project', 'your project', 'top'),
+  lab('you', 'you', 'left'), termLabel('a0', 'model', 'top', 'the model'),
+  termLabel('tools', 'tools'), termLabel('project', 'project'),
 ];
 const base = () => solo({ tools: true, project: true, labels });
 
@@ -66,9 +68,10 @@ export async function job(ctx: Ctx, h: Script, o: JobOpts) {
   await call('read', 1, 'read', 'read members.ts', { kind: 'tool', h: 6, says: '84 lines of members.ts' });
   await call('edit', 1, 'edit', 'change how the date is read', { kind: 'tool', h: 1.6, says: 'members.ts changed' });
   if (o.run) {
-    await call('run', 0, 'read', 'run the tests', { kind: 'bad', h: 4, says: '1 of 12 tests fails: 3 March reads as 3 December' });
+    const cmd = byLevel(ctx.level, { plain: 'run the tests', technical: 'run npm test', engineer: 'run tsc --noEmit && npm test' });
+    await call('run', 0, 'read', cmd, { kind: 'bad', h: 4, says: byLevel(ctx.level, { plain: '1 of 12 tests fails: 3 March reads as 3 December', technical: 'npm test: 1 of 12 failed. parseDate("03.03.2026") returned 3 December', engineer: 'tsc clean. vitest: 1 of 12 failed in members.test.ts (day and month swapped)' }) });
     await call('edit', 1, 'edit', 'fix the day and month order', { kind: 'tool', h: 1.6, says: 'members.ts changed' });
-    await call('run', 0, 'read', 'run the tests again', { kind: 'tool', h: 3, says: '12 of 12 tests pass' });
+    await call('run', 0, 'read', cmd + ' again', { kind: 'tool', h: 3, says: byLevel(ctx.level, { plain: '12 of 12 tests pass', technical: 'npm test: 12 of 12 passed', engineer: 'tsc clean. vitest: 12 of 12 passed' }) });
   }
   await think();
   h.set((s) => { s.agents[0]!.blocks!.push({ t: 'model', h: 2.4 }); s.agents[0]!.busy = false; s.agents[0]!.lamp = o.run ? 'ok' : 'off'; });
@@ -97,6 +100,11 @@ export const loop: Chapter = {
   actions: {
     play: (ctx) => play(ctx),
     ask: (ctx, val) => { ctx.mem.ask = val as Ask; play(ctx); },
-    run: (ctx, val) => { ctx.mem.run = val === 'on'; ctx.scene.speed = 2; play(ctx); },
+    run: (ctx, val) => {
+      ctx.mem.run = val === 'on';
+      ctx.scene.speed = 2;
+      play(ctx);
+      ctx.say(null, val === 'on' ? 'With run: it can try its fix. Watch “proof it works”.' : 'Without run: it cannot try its fix. Watch “proof it works”.');
+    },
   },
 };

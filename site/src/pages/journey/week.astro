@@ -4,40 +4,26 @@ import PartSwitch from '../../components/journey/PartSwitch.astro';
 import OverviewStep from '../../components/journey/OverviewStep.astro';
 import { rungs } from '../../journey/rungs';
 import { url } from '../../lib/nav';
-import { models, lineup } from '../../data/models';
-import { plans } from '../../data/plans';
-import { t3code } from '../../data/t3code';
+import { overviewData } from '../../lib/journey-data';
 
-const short = (name: string) => name.replace(/^Claude /, '');
-const priced = Object.fromEntries((['claude-opus-5-5', 'claude-fable-5-2', 'gpt-6-2-sol'] as const).map((id) => {
-  const p = models[id].price as { input: { value: number }; output: { value: number }; cacheRead?: { value: number } };
-  return [id, { name: short(models[id].name), input: p.input.value, output: p.output.value, cacheRead: p.cacheRead?.value }];
-}));
-const builder = models['claude-opus-5-5'];
-const reviewer = models['gpt-6-2-sol'];
-const data = {
-  models: priced, cacheWrite: lineup.cacheWrite5m.value, proPrice: plans.claude.pro.price.value,
-  builder: short(builder.name), reviewer: short(reviewer.name), builderLab: builder.lab, reviewerLab: reviewer.lab,
-  handoffCap: t3code.handoffCap.value,
-};
+// The overview plays each lesson's own loop, so it gets the same sourced names and prices.
+const data = overviewData();
 ---
 <Journey
   chapter="week"
   first="meter"
   data={data}
   title="Part 3 · From one job to a working week"
-  description="Part three of the interactive guide: token cost and caching, second-model review, proof you can read, stepping in, parallel jobs, keeping a growing codebase healthy, teams and remote machines."
+  description="Part three of the guide: cost, a second model's review, proof you can read, your turn, several jobs, a growing project, other people and other machines."
 >
-  <p class="j-lead">Part two built the agents. Part three builds the real working week around them—cost, review, proof, steering, codebase health, teammates and other machines.</p>
   <PartSwitch active={3} />
 
   {rungs.filter((r) => r.part === 3).map((r, i, all) => (
     <OverviewStep rung={r}>
       {i === all.length - 1 && (
-        <a class="j-next" href={url('library/')}>
-          <span>All 21 lessons &amp; 67 concepts</span>
-          <b>Open the Concept &amp; Lesson Library</b>
-          <span>Filter lessons by topic, jump straight to any sub-step, or open any concept side-by-side.</span>
+        <a class="j-next" href={url('start/')}>
+          <span>That is the guide. Next, the first hour</span>
+          <b>Build the club list</b>
         </a>
       )}
     </OverviewStep>

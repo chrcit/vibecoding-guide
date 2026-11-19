@@ -109,3 +109,19 @@ export const permissions = `{
     "deny": ["Bash(git push *)"]
   }
 }`;
+
+/**
+ * The club-list prompt with more on top for readers who want it: the checks to run (technical),
+ * and a stack decision to make before building (engineer). Used by the lesson "Your first real loop".
+ */
+export const describeChecked = `${describe.app.replace(ending, '')}Use TypeScript. Keep the rules (who has paid, the counts) in their own file with tests.
+
+Before you tell me it is done, run the tests and the type check (npm test, npx tsc --noEmit) and show me the output. Then save the version with Git.
+
+${ending}`;
+
+export const describeEngineer = `${describe.app.replace(ending, '')}Before you write code, propose the stack in three lines: framework, where the data lives, how it is tested. Name one alternative and why not, and wait for my OK.
+
+Then: strict TypeScript, the rules in a pure module with unit tests (empty list, a member with two seasons), npm test and npx tsc --noEmit green before you report, one commit per working step, and an AGENTS.md with the commands to run and check it.
+
+${ending}`;

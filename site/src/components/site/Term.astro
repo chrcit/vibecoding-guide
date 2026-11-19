@@ -13,8 +13,8 @@
   card pinned to the bottom of the screen. Without JavaScript, hover still
   shows it and the text is always in the HTML.
 */
-interface Props { def: string; more?: { href: string; text: string } }
-const { def, more } = Astro.props;
+interface Props { def: string; more?: { href: string; text: string }; /** The term in words, so each close button is named for its term. */ name?: string }
+const { def, more, name } = Astro.props;
 const id = 'term-' + Math.random().toString(36).slice(2, 9);
 ---
 <script>
@@ -93,8 +93,11 @@ const id = 'term-' + Math.random().toString(36).slice(2, 9);
     white-space: normal;
   }
   .term[data-open] .term-def { display: block; animation: term-in var(--dur) var(--ease-out); }
+  /* Hover shows the definition after a short pause, and a hover-opened definition never takes
+     the pointer, so it cannot block a control under it (a reader could not open the box below a
+     term). Opened by click, tap or keyboard it takes the pointer, so its link works. */
   @media (hover: hover) {
-    .term:hover .term-def { display: block; }
+    .term:hover:not([data-open]) .term-def { display: block; pointer-events: none; animation: term-in var(--dur) var(--ease-out) 350ms both; }
   }
   .term-text { display: block; }
   .term-more { display: inline-block; margin-top: 0.375rem; font-family: var(--sans); font-size: var(--text-s); font-weight: 600; color: inherit; text-decoration: underline; text-underline-offset: 0.2em; }
@@ -124,4 +127,4 @@ const id = 'term-' + Math.random().toString(36).slice(2, 9);
   }
 </style>
 
-<span class="term" data-term><button type="button" class="term-btn" aria-expanded="false" aria-controls={id}><slot /></button><span class="term-def" id={id}><span class="term-text">{def}</span>{more && <a class="term-more" href={more.href} data-side>{more.text}</a>}<button type="button" class="term-close" data-term-close><span class="visually-hidden">Close definition</span><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg></button></span></span>
+<span class="term" data-term><button type="button" class="term-btn" aria-expanded="false" aria-controls={id}><slot /></button><span class="term-def" id={id}><span class="term-text">{def}</span>{more && <a class="term-more" href={more.href} data-side>{more.text}</a>}<button type="button" class="term-close" data-term-close><span class="visually-hidden">{name ? `Close the definition of ${name}` : 'Close definition'}</span><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg></button></span></span>

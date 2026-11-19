@@ -9,16 +9,15 @@ import { url } from '../../lib/nav';
   chapter="foundations"
   first="ai"
   title="Part 1 · Before your first code"
-  description="Part one of the interactive guide: what AI is, Chat vs Work vs Coding Agent, AI providers and devices, Git, GitHub and cloud hosting, and your first real loop."
+  description="Part one of the guide: what an AI model does, the providers and where the model runs, Git, GitHub and hosting, and your first real loop."
 >
-  <p class="j-lead">Start here if you want the full bridge from everyday AI chat to real software—what runs where, how Git and cloud hosting work, and your first working loop.</p>
   <PartSwitch active={1} />
 
   {rungs.filter((r) => r.part === 1).map((r, i, all) => (
     <OverviewStep rung={r}>
       {i === all.length - 1 && (
         <a class="j-next" href={url(parts[1]!.href)}>
-          <span>Part two · Steps {parts[1]!.range}</span>
+          <span>Part two · Lessons {parts[1]!.range}</span>
           <b>{parts[1]!.title}</b>
           <span>{parts[1]!.blurb}</span>
         </a>
