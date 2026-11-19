@@ -1,0 +1,220 @@
+---
+/*
+ * Fig. 40, "A week on a plan, the same week on the meter". A flat chart in three lanes.
+ *
+ * Idea: the same week of agent work, seen on a plan (windows that fill and reset, a week whose size
+ *   is mostly not published) and on the API (a meter that only climbs).
+ * Elements: the work lane (threads per working day; where work runs, may stop, has stopped), the
+ *   five-hour window lane (timing always; a level only where a size is published), the API meter
+ *   (cost climbing through the week) against the plan's flat price for a week, and where they cross.
+ * States: any plan in src/data/plans.ts, or an API key; any current Claude or OpenAI model; effort
+ *   low to max; 1 to 16 threads; 1 to 24 hours a day. Presets land on the extremes.
+ * Data: src/data/plans.ts and src/data/models.ts through from-data.ts. Token volumes are the model's
+ *   assumptions (model.ts, ASSUME), listed in the long read under "How the model works".
+ * Interaction: the controls above it; every change redraws at once. The lanes open explanations in
+ *   the side view. The board's other tiles listen for the `acg:plan-week` event.
+ * Alt: given by the readout, which says in words what the drawing shows for the current settings.
+ */
+import Figure from '../Figure.astro';
+import { catalogue } from './from-data';
+import { drawWeek, type Sides } from './draw';
+import { finding, week, type LabState } from './model';
+
+export interface Preset { id: string; label: string; state: LabState }
+
+interface Props {
+  n?: number;
+  sides: Sides;
+  presets: Preset[];
+  start: LabState;
+}
+const { n = 40, sides, presets, start } = Astro.props;
+const cat = catalogue();
+const w = week(cat, start);
+const model = cat.models.find((m) => m.id === start.modelId)!;
+const groups: [string, string][] = [['claude', 'Claude'], ['chatgpt', 'ChatGPT'], ['api', 'No plan']];
+---
+<div class="pw" data-plan-week data-cat={JSON.stringify(cat)} data-sides={JSON.stringify(sides)} data-presets={JSON.stringify(presets)} data-start={JSON.stringify(start)}>
+  <div class="pick pw-presets" role="group" aria-label="Presets">
+    {presets.map((p) => <button type="button" data-preset={p.id} aria-pressed={p.id === presets[presets.length - 1]!.id ? 'true' : 'false'}>{p.label}</button>)}
+  </div>
+  <div class="controls pw-controls">
+    <label class="control pw-wide">
+      <span>Plan</span>
+      <select data-c="planId">
+        {groups.map(([g, label]) => (
+          <optgroup label={label}>
+            {cat.plans.filter((p) => p.provider === g).map((p) => <option value={p.id} selected={p.id === start.planId}>{p.name}{p.provider === 'api' ? '' : `, $${p.price}`}</option>)}
+          </optgroup>
+        ))}
+      </select>
+    </label>
+    <label class="control pw-wide">
+      <span>Model</span>
+      <select data-c="modelId">
+        {cat.models.map((m) => <option value={m.id} selected={m.id === start.modelId} data-provider={m.provider}>{m.name}</option>)}
+      </select>
+    </label>
+    <label class="control">
+      <span>Effort <output data-o="effort">{model.effort[start.effort]}</output></span>
+      <input type="range" min="0" max="4" step="1" value={start.effort} data-c="effort" />
+    </label>
+    <label class="control">
+      <span>Threads at once <output data-o="threads">{start.threads}</output></span>
+      <input type="range" min="1" max="16" step="1" value={start.threads} data-c="threads" />
+    </label>
+    <label class="control">
+      <span>Hours a day <output data-o="hoursPerDay">{start.hoursPerDay}</output></span>
+      <input type="range" min="1" max="24" step="1" value={start.hoursPerDay} data-c="hoursPerDay" />
+    </label>
+  </div>
+  <Figure
+    n={n}
+    bare
+    title="A week on a plan, the same week on the meter"
+    alt="A working week in three lanes: the work each day, the plan's five-hour windows, and the API meter climbing against the plan's flat weekly price."
+  >
+    <div class="pw-chart" data-pw-chart set:html={drawWeek(w, 900, `pw${n}`, sides)} />
+    <Fragment slot="readout">{finding(w, start)}</Fragment>
+  </Figure>
+  <ul class="pw-key" aria-hidden="true">
+    <li><i class="k-run"></i>Runs</li>
+    <li><i class="k-maybe"></i>May have stopped</li>
+    <li><i class="k-stop"></i>Stopped</li>
+    <li><i class="k-credits"></i>On credits</li>
+    <li><i class="k-api"></i>API</li>
+    <li><i class="k-plan"></i>Plan</li>
+  </ul>
+</div>
+
+<style is:global>
+  .pw { display: grid; gap: 0.75rem; }
+  .pw-presets { justify-self: start; }
+  .pw-controls .control { flex: 1 1 8.5rem; }
+  .pw-controls .pw-wide { flex: 1 1 12rem; }
+  .pw-chart { min-height: 352px; }
+  .pw-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .pw .fig-readout { font-family: var(--sans); font-size: var(--text-m); line-height: 1.4; color: var(--ink); }
+  .pw .fig-foot { margin-top: 0.25rem; }
+
+  .pw-t { fill: var(--muted); font-family: var(--mono); font-size: 13px; }
+  .pw-day { fill: var(--ink-2); }
+  .pw-ink { fill: var(--ink); }
+  .pw-lit { fill: var(--accent); font-weight: 600; }
+  .pw-mid { stroke: var(--fig-faint); stroke-width: 1px; }
+  .pw-base { stroke: var(--fig-line); stroke-width: 1px; }
+  .pw-run { fill: color-mix(in oklab, var(--ink) 62%, var(--card)); }
+  .pw-credits { fill: var(--blue); }
+  .pw-stop-bg { fill: var(--accent-soft); }
+  .pw-stop-line { stroke: var(--accent); stroke-width: 2px; }
+  .pw-maybe-bg { fill: var(--card); }
+  .pw-maybe-line { stroke: color-mix(in oklab, var(--ink) 45%, var(--card)); stroke-width: 2px; }
+  .pw-win { fill: none; stroke: var(--fig-line); stroke-width: 1px; }
+  .pw-unknown { stroke-dasharray: 4 3; }
+  .pw-open { fill: none; stroke: var(--fig-line); stroke-width: 1px; stroke-dasharray: 2 4; }
+  .pw-fill { fill: var(--accent-soft); }
+  .pw-level { fill: none; stroke: var(--accent); stroke-width: 2px; stroke-linejoin: round; }
+  .pw-level-hi { fill: none; stroke: var(--fig-line); stroke-width: 1.5px; stroke-dasharray: 3 3; }
+  .pw-full { fill: var(--accent); }
+  .pw-band { fill: color-mix(in oklab, var(--accent) 14%, transparent); }
+  .pw-api { fill: none; stroke: var(--accent); stroke-width: 2px; stroke-linejoin: round; }
+  .pw-api-lo { stroke-dasharray: 4 3; stroke-width: 1.5px; }
+  .pw-plan { fill: none; stroke: var(--ink); stroke-width: 1.5px; stroke-dasharray: 6 4; }
+  .pw-cross { fill: var(--card); stroke: var(--accent); stroke-width: 2px; }
+  .pw-lane { outline-offset: 2px; }
+  .pw-lane:hover .pw-t:first-child { fill: var(--accent); }
+
+  .pw-key { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin: 0; padding: 0; list-style: none; font-size: var(--text-xs); color: var(--muted); }
+  .pw-key li { display: inline-flex; align-items: center; gap: 0.4rem; max-width: none; }
+  .pw-key i { display: inline-block; width: 1.25rem; height: 0.75rem; border-radius: 2px; }
+  .pw-key .k-run { background: color-mix(in oklab, var(--ink) 62%, var(--card)); }
+  .pw-key .k-maybe { background: repeating-linear-gradient(45deg, color-mix(in oklab, var(--ink) 45%, var(--card)) 0 2px, var(--card) 2px 5px); border: 1px solid var(--rule); }
+  .pw-key .k-stop { background: repeating-linear-gradient(45deg, var(--accent) 0 2px, var(--accent-soft) 2px 5px); }
+  .pw-key .k-credits { background: var(--blue); }
+  .pw-key .k-api { height: 2px; background: var(--accent); }
+  .pw-key .k-plan { height: 0; border-top: 2px dashed var(--ink); border-radius: 0; }
+</style>
+
+<script>
+  import { drawWeek, type Sides } from './draw';
+  import { finding, week, type Catalogue, type LabState } from './model';
+  import type { Preset } from './PlanWeek.astro';
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-plan-week]')) {
+    const cat: Catalogue = JSON.parse(root.dataset.cat!);
+    const sides: Sides = JSON.parse(root.dataset.sides!);
+    const presets: Preset[] = JSON.parse(root.dataset.presets!);
+    const state: LabState = JSON.parse(root.dataset.start!);
+    const chart = root.querySelector<HTMLElement>('[data-pw-chart]')!;
+    const readout = root.querySelector<HTMLElement>('[data-fig-readout]')!;
+    const plan = root.querySelector<HTMLSelectElement>('[data-c="planId"]')!;
+    const model = root.querySelector<HTMLSelectElement>('[data-c="modelId"]')!;
+    const ranges = [...root.querySelectorAll<HTMLInputElement>('input[data-c]')];
+    const out = (k: string) => root.querySelector<HTMLOutputElement>(`[data-o="${k}"]`)!;
+    const presetButtons = [...root.querySelectorAll<HTMLButtonElement>('[data-preset]')];
+    const uid = `pw${root.querySelector('[data-figure]')?.getAttribute('data-figure') ?? ''}`;
+    let timer = 0;
+
+    const providerOf = (planId: string) => cat.plans.find((p) => p.id === planId)?.provider ?? 'api';
+
+    function syncModels() {
+      const prov = providerOf(state.planId);
+      for (const o of model.options) o.hidden = prov !== 'api' && o.dataset.provider !== prov;
+      const cur = cat.models.find((m) => m.id === state.modelId)!;
+      if (prov !== 'api' && cur.provider !== prov) {
+        // Keep the reader's place on the ladder when switching lab: largest to largest.
+        const own = cat.models.filter((m) => m.provider === cur.provider);
+        const other = cat.models.filter((m) => m.provider === prov);
+        state.modelId = other[Math.min(other.length - 1, Math.max(0, own.findIndex((m) => m.id === cur.id)))]!.id;
+      }
+      model.value = state.modelId;
+    }
+
+    function render(announce = true) {
+      syncModels();
+      plan.value = state.planId;
+      for (const r of ranges) r.value = String(state[r.dataset.c as 'effort' | 'threads' | 'hoursPerDay']);
+      const m = cat.models.find((x) => x.id === state.modelId)!;
+      out('effort').textContent = m.effort[state.effort] ?? '';
+      out('threads').textContent = String(state.threads);
+      out('hoursPerDay').textContent = String(state.hoursPerDay);
+      const w = week(cat, state);
+      chart.innerHTML = drawWeek(w, chart.clientWidth || 640, uid, sides);
+      const text = finding(w, state);
+      clearTimeout(timer);
+      if (announce && !reduced.matches) timer = window.setTimeout(() => (readout.textContent = text), 350);
+      else readout.textContent = text;
+      document.dispatchEvent(new CustomEvent('acg:plan-week', { detail: { state: { ...state }, week: w } }));
+    }
+
+    const clearPresets = () => presetButtons.forEach((b) => b.setAttribute('aria-pressed', String(presets.some((p) => p.id === b.dataset.preset && JSON.stringify(p.state) === JSON.stringify(state)))));
+
+    plan.addEventListener('change', () => { state.planId = plan.value; render(); clearPresets(); });
+    model.addEventListener('change', () => { state.modelId = model.value; render(); clearPresets(); });
+    for (const r of ranges) r.addEventListener('input', () => {
+      (state as unknown as Record<string, number>)[r.dataset.c!] = Number(r.value);
+      render(); clearPresets();
+    });
+    for (const b of presetButtons) b.addEventListener('click', () => {
+      const p = presets.find((x) => x.id === b.dataset.preset)!;
+      Object.assign(state, p.state);
+      render(false); clearPresets();
+    });
+    // Other tiles can ask the lab to switch plan or model.
+    document.addEventListener('acg:plan-week-set', (e) => {
+      Object.assign(state, (e as CustomEvent<Partial<LabState>>).detail);
+      render(false); clearPresets();
+      root.scrollIntoView({ behavior: reduced.matches ? 'auto' : 'smooth', block: 'nearest' });
+    });
+    let lastW = 0;
+    new ResizeObserver(() => {
+      const wpx = chart.clientWidth;
+      if (Math.abs(wpx - lastW) < 2) return;
+      lastW = wpx;
+      render(false);
+    }).observe(chart);
+    clearPresets();
+  }
+</script>
