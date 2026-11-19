@@ -1,8 +1,8 @@
 ---
 /*
-  The top of a page: the one <h1>, an optional lede and an optional
-  "Updated" date.
-  Props: title (string), updated? (Date or ISO date string).
+  The top of a page: the one <h1> and an optional lede.
+  Props: title (string), updated? (accepted and ignored: the date a page was
+  checked is in its "last verified" line, not under the title).
   Slots: default (the lede; one or two sentences, set larger than body text).
 */
 interface Props { title: string; updated?: Date | string }
@@ -15,7 +15,6 @@ const hasLede = Astro.slots.has('default');
 <header class="page-header">
   <h1>{title}</h1>
   {hasLede && <div class="lede"><slot /></div>}
-  {iso && <p class="updated">Updated <time datetime={iso}>{text}</time></p>}
 </header>
 
 <style>
