@@ -1,0 +1,10 @@
+// Cloudflare hosting: the built site is served as static files by a Worker with no code.
+// Deploy from site/:  SITE_URL=https://agentic-coding-guide.madebyarthouse.workers.dev pnpm judge && npx wrangler@4.157.0 deploy
+{
+  "name": "agentic-coding-guide",
+  "compatibility_date": "2026-11-03",
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "force-trailing-slash"
+  }
+}
