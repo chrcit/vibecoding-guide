@@ -29,8 +29,7 @@ What you can do about it:
 Before a long thread compacts, ask for a note:
 
 ```text
-Write a short note for a new thread: the task, what is done,
-what is left, and the decisions we made along the way.
+Write a short note for a new thread: the task, what is done, what is left, and the decisions we made along the way.
 ```
 
 Sizes, in [tokens](./token.md), are on the [models page](/models/); [prompt caching](./prompt-caching.md) makes the rereading cheaper. More in the [context explainer](/explain/context/).

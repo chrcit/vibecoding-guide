@@ -22,9 +22,7 @@ In [chapter 8](/journey/lead/) the agent you talk to stops building. It writes b
 It pays when the job splits into pieces that can each be tested alone. It costs more than it saves on a small task, on pieces that touch the same code, or without an automated check.
 
 ```text
-Plan this as tasks that can be built and tested on their own. For each,
-write a brief: the goal, the files, what not to touch, how to check it.
-Show me the plan before you start anyone.
+Plan this as tasks that can be built and tested on their own. For each, write a brief: the goal, the files, what not to touch, how to check it. Show me the plan before you start anyone.
 ```
 
 The lead often runs on a stronger [model](./model.md) than the builders, and every builder spends your [usage window](./usage-window.md). Splitting by hand is [working in parallel](./parallel-work.md); the [orchestration explainer](/explain/orchestration/) compares both.

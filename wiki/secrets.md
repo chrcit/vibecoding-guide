@@ -21,9 +21,7 @@ Code that needs it runs on the [backend](./backend.md) and reads it by name, as 
 Agents paste keys into code and print them while debugging more often than you would like. Say in your [instruction file](./instruction-file.md) that secrets only ever come from environment variables, search every diff for anything that looks like a key when you [review](./review.md), and now and then ask:
 
 ```text
-Check this repository and its history for secrets: keys, passwords,
-tokens, connection strings. List each with its file and commit.
-Do not print the values.
+Check this repository and its history for secrets: keys, passwords, tokens, connection strings. List each with its file and commit. Do not print the values.
 ```
 
 If a secret leaks, replace it at the service that issued it first, then clean up.

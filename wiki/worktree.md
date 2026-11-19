@@ -22,8 +22,7 @@ Three agents in one folder overwrite each other's files and run each other's hal
 You rarely make one by hand. Tools for [working in parallel](./parallel-work.md) can start each [thread](./thread.md) or [helper](./subagent.md) in its own worktree; turn that on. Otherwise ask:
 
 ```text
-Make a worktree for this task on a new branch, install the dependencies
-there, use a dev-server port no other thread uses, and work only there.
+Make a worktree for this task on a new branch, install the dependencies there, use a dev-server port no other thread uses, and work only there.
 ```
 
 Each copy needs its own install and its own port, and each still has to be merged and looked at.

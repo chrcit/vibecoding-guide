@@ -27,8 +27,7 @@ An agent says "done" whether or not it is ([chapter 5](/journey/check/)). A chec
 Put the check in the request, so that done means passed ([definition of done](./definition-of-done.md)):
 
 ```text
-Done means: the tests and the build pass, and you have opened the page
-at phone width and looked. Show me the output, not a summary of it.
+Done means: the tests and the build pass, and you have opened the page at phone width and looked. Show me the output, not a summary of it.
 ```
 
 Then [review](./review.md) what got through. [What checks cannot catch](./limits-of-checking.md) is still yours; the [verification explainer](/explain/verification/) goes further.

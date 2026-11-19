@@ -22,8 +22,7 @@ A branch is not a copy: one folder shows one branch at a time. Two agents at onc
 Set the rule once, in [AGENTS.md](./instruction-file.md):
 
 ```text
-Never commit to main. Start each task on a new branch named after it,
-commit when the checks pass, and tell me when it is ready to merge.
+Never commit to main. Start each task on a new branch named after it, commit when the checks pass, and tell me when it is ready to merge.
 ```
 
 Branches are part of [version control](./version-control.md); that article covers commits and history.

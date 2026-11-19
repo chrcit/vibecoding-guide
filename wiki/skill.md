@@ -21,8 +21,7 @@ In the picture, skills stand on a shelf beside the project ([chapter 4](/journey
 Use one for know-how that only some jobs need: how you write release notes, how to check a page for accessibility, the steps of a deploy. The description decides when it loads, so write it as "Use when…". After a job you will do again, ask:
 
 ```text
-Turn what we just did into a skill: a SKILL.md whose description says
-when to use it, then the steps we followed and the checks at the end.
+Turn what we just did into a skill: a SKILL.md whose description says when to use it, then the steps we followed and the checks at the end.
 ```
 
 Read someone else's skill before you install it. It is instructions your agent will follow, and a bad one can tell it to do harm ([prompt injection](./prompt-injection.md)). Where each [harness](./harness.md) looks for skills is in the [skills explainer](/explain/skills/).

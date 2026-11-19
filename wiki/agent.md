@@ -21,9 +21,7 @@ A chat model answers once and stops. An agent keeps going: you send one message 
 Because it can act, give it a job with an end it can check:
 
 ```text
-The bakery site shows normal opening hours on public holidays.
-Find out why, fix it, add a test for Easter Monday and run the tests.
-Tell me what you changed and what you could not check.
+The bakery site shows normal opening hours on public holidays. Find out why, fix it, add a test for Easter Monday and run the tests. Tell me what you changed and what you could not check.
 ```
 
 Then read what it [checked](./verification.md). How sure it sounds tells you nothing.

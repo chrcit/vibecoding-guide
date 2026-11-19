@@ -24,9 +24,7 @@ Keep it short and true: how to install, run and test the project, what [done](./
 Grow it from mistakes. When the agent gets something wrong, have it write the rule down:
 
 ```text
-That was wrong: we never edit the files in dist/, they are generated.
-Add a one-line rule to AGENTS.md so it does not happen again,
-and show me the change.
+That was wrong: we never edit the files in dist/, they are generated. Add a one-line rule to AGENTS.md so it does not happen again, and show me the change.
 ```
 
 > [!technical] Files and places

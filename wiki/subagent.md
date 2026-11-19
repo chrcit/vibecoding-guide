@@ -21,9 +21,7 @@ Searching fills a [window](./context-window.md) with files that turn out not to 
 The helper knows only the brief. Anything you told the agent, such as "change nothing", has to be written into it. So when you ask for a helper, say what goes in the brief:
 
 ```text
-Use a subagent to find every place the opening hours are read.
-Brief it: read only, change nothing, and report each place as
-file and line, in under 200 words.
+Use a subagent to find every place the opening hours are read. Brief it: read only, change nothing, and report each place as file and line, in under 200 words.
 ```
 
 Helpers suit searching, reviewing and anything that reads a lot to say a little. Helpers that change files need their own [worktree](./worktree.md), and several building at once is [orchestration](./orchestration.md). Each one counts against your [usage window](./usage-window.md).

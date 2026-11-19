@@ -26,3 +26,10 @@ const { Content, headings } = await render(article.entry);
   <Connections article={article} wiki={wiki} />
   <ClusterNav slot="sidebar" article={article} wiki={wiki} />
 </Article>
+
+<style>
+  /* A prompt to copy wraps instead of scrolling sideways, so it reads in
+     full in the side view and on a phone. */
+  :global(.prose pre[data-language='text']) { white-space: pre-wrap; overflow-wrap: anywhere; }
+  :global(.prose pre[data-language='text'] code) { white-space: inherit; }
+</style>
