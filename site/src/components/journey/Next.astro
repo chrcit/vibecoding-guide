@@ -1,5 +1,5 @@
 ---
-/* The card at the end of a chapter: the next step of the journey, and where to push further. */
+/* The card at the end of a lesson: the next lesson, and where to push further. */
 import { url } from '../../lib/nav';
 import { after, rung, rungs, parts } from '../../journey/rungs';
 interface Props { from: string; more?: { href: string; text: string; side?: boolean }[] }
@@ -12,13 +12,13 @@ const nextPart = next ? parts[next.part - 1]! : null;
 <div class="j-end">
   {next && !crossing ? (
     <a class="j-next" href={url(`journey/${next.id}/`)}>
-      <span>Next, {next.n} of {rungs.length}</span>
+      <span>Next: lesson {next.n} of {rungs.length}</span>
       <b>{next.title}</b>
       <span>{next.line}</span>
     </a>
   ) : next && nextPart ? (
     <a class="j-next" href={url(nextPart.href)}>
-      <span>{nextPart.short} · steps {nextPart.range}</span>
+      <span>{nextPart.short} · lessons {nextPart.range}</span>
       <b>{nextPart.title}</b>
       <span>{nextPart.blurb}</span>
     </a>

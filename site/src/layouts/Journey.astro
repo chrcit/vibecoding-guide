@@ -48,7 +48,7 @@ const still = poster(def.scene({ level: 'plain', mem: {}, keep: {}, data: data ?
         {nextPart && <a class="j-rail-part" href={url(nextPart.href)} title={`${nextPart.short}: ${nextPart.title}`}>{nextPart.range} →</a>}
         <a class="j-rail-part" href={url('library/')} title="Browse all 21 lessons and concepts">Library</a>
       </nav>
-      <div class="j-stage tile" role="img" aria-label={here ? `Step ${here.n}: ${here.title}. ${here.line}` : `The picture that grows through the journey. ${part.title}.`}>
+      <div class="j-stage tile" role="img" aria-label={here ? `Lesson ${here.n}, ${here.short}: ${here.title}. ${here.line}` : `The picture that grows through the journey. ${part.title}.`}>
         <Fragment set:html={still} />
       </div>
       <div class="j-read tile">
@@ -60,7 +60,7 @@ const still = poster(def.scene({ level: 'plain', mem: {}, keep: {}, data: data ?
     </div>
     <div class="j-steps">
       <header class="j-head">
-        {here && <p class="j-count">{here.n} of {rungs.length}</p>}
+        {here && <p class="j-count">Lesson {here.n} of {rungs.length}</p>}
         <h1>{title}</h1>
       </header>
       <slot />

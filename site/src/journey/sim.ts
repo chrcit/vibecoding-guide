@@ -1,6 +1,6 @@
 // The fleet, as a small deterministic simulation: a lead hands out tasks, workers fill their own
 // windows doing them, results go to the main branch (through a gate if there is one), and a short
-// report goes back to the lead. Chapters 7 to 9 and the overview all run this with different
+// report goes back to the lead. The parallel, lead and fleet lessons and the overview run this with different
 // switches. The tasks are made up; which ones go wrong is fixed, not random.
 import type { Ctx } from './chapter';
 import type { Script } from './scene';
@@ -36,7 +36,7 @@ export async function fleet(ctx: Ctx, h: Script, o: FleetOpts = {}): Promise<Tal
   const total = o.until ?? workers.length * 2;
   const flaws = o.flaws ?? true;
   let handed = 0;
-  // One readout for chapters 7 to 9: the same names in the same order, counted towards a total.
+  // One readout for the parallel, lead and fleet lessons: the same names in the same order, counted towards a total.
   const stats = () => ctx.stat([
     ['tasks on main', `${tally.landed} of ${total}`],
     o.clashes ? ['clashes', tally.clashes] : ['sent back before main', o.gate ? tally.sentBack : 'no check'],
@@ -106,7 +106,7 @@ export async function fleet(ctx: Ctx, h: Script, o: FleetOpts = {}): Promise<Tal
   return tally;
 }
 
-// ---------- several jobs, one of you (chapter 14) ----------
+// ---------- several jobs, one of you (the jobs lesson) ----------
 // A made-up hour at a desk. Each job works for a while, then needs you: a question half-way
 // through its task, a result to look at the end. It waits until you have walked over and stayed
 // for the length of a stop. There is one of you, so jobs queue: you go to whichever has waited

@@ -20,6 +20,7 @@
 // technical sees the command or the mechanism, engineer the full detail).
 import type { Level } from '../lib/levels';
 import type { Label } from './picture';
+import { rung } from './rungs';
 
 export interface TermDef {
   /** The one name, as it reads mid-sentence. */
@@ -269,3 +270,10 @@ export function resolveTerm(id: TermId, level: Level, text?: string): { text: st
  * term's own label when it has one.
  */
 export const termLabel = (at: Label['at'], id: TermId, place: Label['place'] = 'top', text?: string): Label => ({ at, term: id, place, text });
+
+/** A lesson by name, as text: "Check, lesson 9". The same words as <LessonRef id>. */
+export function lessonName(id: string): string {
+  const r = rung(id);
+  if (!r) throw new Error(`lessonName: no lesson "${id}"`);
+  return `${r.short}, lesson ${r.n}`;
+}

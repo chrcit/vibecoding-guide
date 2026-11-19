@@ -80,8 +80,11 @@ only through `termLabel()` (below), so the word, the definition and the page agr
   counted from what just happened.
 - One of a step's two sentences says what the reader is looking at, using the label on the part.
   Ten test readers found the steps short enough and the pictures one sentence short.
-- The first step of a chapter says where its parts were met before, with a link ("the check from
-  step 5"). Readers took each chapter for a separate page until it did.
+- The first step of a chapter says where its parts were met before, with a link by the lesson's
+  name: `the check from <LessonRef id="check" />` reads "the check from Check, lesson 9"
+  (`components/journey/LessonRef.astro`; `lessonName(id)` in a script). Never "step 3" or
+  "chapter 7": numbers move, and a reader landing cold does not know them. Readers took each
+  chapter for a separate page until it did. The last step hands over to the next lesson (`<Next>`).
 - One readout per chapter: the same names in the same order on every step, a count shown towards
   its total ("4 of 6"), a window as "22% full". Every run hands out a fixed number of tasks, ends,
   and closes with one sentence that says what came of it.
