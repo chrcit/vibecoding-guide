@@ -41,10 +41,23 @@ function bill(p: Price, cache: Cache, cacheWrite: number) {
       : (hit * p.cacheRead! + fresh * p.input * cacheWrite + t.w * p.output) / 1000;
     prefix = read + t.w;
     window = read + t.w + t.r;
-    return { read, written: t.w, usd };
+    return { read, hit, written: t.w, usd };
   });
 }
 const jobCost = (p: Price, cache: Cache, cw: number) => bill(p, cache, cw).reduce((n, t) => n + t.usd, 0);
+/** Made-up: how many times each agent runs the job in an hour. */
+export const JOBS_PER_HOUR = 4;
+/** The fleet's sum, for the page to state so a reader can redo it: one job, with the cache. */
+export function fleetSums(p: Price, cacheWrite: number) {
+  const b = bill(p, 'on', cacheWrite);
+  return {
+    cached: Math.round(b.reduce((n, t) => n + t.hit, 0) * 1000),
+    read: Math.round(b.reduce((n, t) => n + t.read, 0) * 1000),
+    written: Math.round(b.reduce((n, t) => n + t.written, 0) * 1000),
+    perJob: jobCost(p, 'on', cacheWrite),
+    perAgentHour: jobCost(p, 'on', cacheWrite) * JOBS_PER_HOUR,
+  };
+}
 
 // ---------- the readout ----------
 
@@ -64,7 +77,7 @@ function show(ctx: Ctx, t: Tally, mode: Mode) {
 
 // ---------- the picture ----------
 
-const meterLabel = (mode: Mode) => mode === 'api' ? lab('meter:m0', 'the API', 'top', 'wiki/api/') : lab('meter:m0', 'a plan', 'top', 'wiki/subscription-plan/');
+const meterLabel = (mode: Mode) => lab([SPOT.meter[0] + 13, SPOT.meter[1] + 13, 0], mode === 'api' ? 'the API' : 'a plan', 'bottom', mode === 'api' ? 'wiki/api/' : 'wiki/subscription-plan/');
 const base = (ctx: Ctx, mode: Mode, name?: string): SceneState => solo({
   tools: true, project: true,
   blocks: [{ t: 'rules', h: START }],
@@ -199,7 +212,7 @@ function playPlan(ctx: Ctx, again = false) {
 
 // ----- many: twenty agents, one meter -----
 
-const TICKS_PER_HOUR = TURNS.length * 4;
+const TICKS_PER_HOUR = TURNS.length * JOBS_PER_HOUR;
 const fleet = (n: number, mode: 'plan' | 'api'): SceneState => {
   const s = team(n, { trees: true, lead: [{ t: 'rules', h: 4 }, { t: 'you', h: 3 }], labels: [lab('you', 'you', 'left'), lab('a0', 'the lead', 'top', 'wiki/orchestration/'), lab('project', 'main', 'top', 'wiki/branch/'), meterLabel(mode)] });
   const m: Meter = { id: 'm0', at: SPOT.meter, mode, level: mode === 'plan' ? 1 : 0 };
@@ -214,7 +227,10 @@ function playMany(ctx: Ctx) {
   const turns = bill(p, 'on', cw);
   const readAll = turns.reduce((x, b) => x + b.read, 0);
   const DOLLAR = 1;
-  ctx.say(null, mode === 'plan' ? `${n} ${n === 1 ? 'agent draws' : 'agents draw'} from one allowance.` : `${n} ${n === 1 ? 'agent' : 'agents'} on one bill, at ${p.name}’s prices with the cache.`);
+  const hour = n * fleetSums(p, cw).perAgentHour;
+  ctx.say(null, mode === 'plan'
+    ? `${n} ${n === 1 ? 'agent draws' : 'agents draw'} from one allowance. On the API the same made-up hour would cost ${usd(hour)}.`
+    : `${n} ${n === 1 ? 'agent' : 'agents'} on one bill: ${usd(hour)} for a made-up hour at ${p.name}’s prices.`);
   void ctx.scene.run(async (h) => {
     h.set((s) => { Object.assign(s, fleet(n, mode)); });
     const t = zero();
@@ -250,7 +266,7 @@ function playMany(ctx: Ctx) {
       t.used = 1;
       show(ctx, t, mode);
       const min = Math.max(1, Math.round((tick / TICKS_PER_HOUR) * 60));
-      ctx.say(null, `The allowance ran out after ${min} minutes of a made-up hour. All ${n} stopped mid-job; ${jobs} ${jobs === 1 ? 'job' : 'jobs'} finished.`);
+      ctx.say(null, `The allowance ran out after ${min} minutes of a made-up hour. All ${n} stopped mid-job; ${jobs} ${jobs === 1 ? 'job' : 'jobs'} finished. On the API they would have carried on, for ${usd(hour)} the hour.`);
     } else {
       h.set((s) => { for (const a of s.agents.slice(1)) a.busy = false; });
       ctx.say(null, mode === 'api'
