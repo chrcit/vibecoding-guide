@@ -1,11 +1,71 @@
 ---
 import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
+import More from '../../components/journey/More.astro';
 import Next from '../../components/journey/Next.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+
+const ids = [
+  't3code.ownLogins', 't3code.remote', 't3code.connectMachines', 't3code.phoneIsRemote',
+  'harnesses.claudeCode.web', 'harnesses.codex.sandbox', 'plans.chatgpt.limits.cloudTasks',
+  'harnesses.claudeCode.bestPractice', 't3code.permissionModes', 't3code.defaultMode',
+];
 ---
-<Journey chapter="where" first="first" title="Other machines" description="Where an agent runs: on your laptop, on another computer that stays on, or on a machine in the cloud.">
-  <Step id="first" title="Other machines">
-    <p>This chapter is being built.</p>
-    <Next from="where" />
+<Journey chapter="where" first="laptop" title="Other machines" description="Where an agent runs: on your laptop, on another computer that stays on, or on a machine in the cloud.">
+  <Step id="laptop" title="So far it all ran on your laptop">
+    <p>One job on one machine: your files, your logins.</p>
+    <More title="In T3 Code">
+      <p><Fact id="t3code.ownLogins" show="claim" /></p>
+    </More>
   </Step>
+  <Step id="lid" title="Close the lid and it stops">
+    <p>The laptop sleeps, and the job sleeps with it.</p>
+    <div class="pick" role="group" aria-label="The laptop’s lid">
+      <button type="button" data-do="lid" data-val="open" data-default aria-pressed="true">Lid open</button>
+      <button type="button" data-do="lid" data-val="closed" aria-pressed="false">Lid closed</button>
+    </div>
+  </Step>
+  <Step id="box" title="A computer that stays on">
+    <p>Its job keeps going with the laptop shut. You reach it from the laptop or from a phone.</p>
+    <div class="pick" role="group" aria-label="The laptop’s lid">
+      <button type="button" data-do="lid" data-val="open" aria-pressed="false">Lid open</button>
+      <button type="button" data-do="lid" data-val="closed" data-default aria-pressed="true">Lid closed</button>
+    </div>
+    <More title="In T3 Code">
+      <dl>
+        <dt>Reaching it</dt><dd><Fact id="t3code.remote" show="claim" /></dd>
+        <dt>Machines</dt><dd><Fact id="t3code.connectMachines" show="claim" /></dd>
+        <dt>Phones</dt><dd><Fact id="t3code.phoneIsRemote" show="claim" /></dd>
+      </dl>
+    </More>
+  </Step>
+  <Step id="cloud" title="A machine in the cloud">
+    <p>Claude Code on the web and Codex cloud tasks run on a machine you never see. A made-up case: the check needs a test database.</p>
+    <div class="pick" role="group" aria-label="What the cloud machine is given">
+      <button type="button" data-do="setup" data-val="with" data-default aria-pressed="true">With the setup</button>
+      <button type="button" data-do="setup" data-val="without" aria-pressed="false">Without</button>
+    </div>
+    <More title="What the docs say">
+      <dl>
+        <dt>Claude Code</dt><dd><Fact id="harnesses.claudeCode.web" show="claim" /></dd>
+        <dt>Codex</dt><dd><Fact id="harnesses.codex.sandbox" show="claim" /> <Fact id="plans.chatgpt.limits.cloudTasks" show="claim" /></dd>
+      </dl>
+    </More>
+  </Step>
+  <Step id="mix" title="Which job where">
+    <p>Three jobs on three machines, all landing on one main.</p>
+    <div class="pick" role="group" aria-label="The laptop’s lid">
+      <button type="button" data-do="lid" data-val="open" data-default aria-pressed="true">Lid open</button>
+      <button type="button" data-do="lid" data-val="closed" aria-pressed="false">Lid closed</button>
+    </div>
+    <More title="Before you walk away">
+      <p><Fact id="harnesses.claudeCode.bestPractice" show="claim" /></p>
+      <p><Fact id="t3code.permissionModes" show="claim" /> <Fact id="t3code.defaultMode" show="claim" /></p>
+    </More>
+    <Next from="where" more={[{ href: 'wiki/always-on-machine/', text: 'A computer that stays on', side: true }, { href: 'wiki/secrets/', text: 'Secrets a machine needs', side: true }, { href: 'wiki/permission-mode/', text: 'Permission modes', side: true }]} />
+  </Step>
+  <Fragment slot="foot">
+    <Verified ids={ids} />
+  </Fragment>
 </Journey>
