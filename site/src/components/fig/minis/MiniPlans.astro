@@ -18,7 +18,7 @@ const MX = 190, MW = 70;
     </g>
     <clipPath id="plan-clip"><rect x={TX + 1.5} y={TY + 1.5} width={TW - 3} height={TH - 3} rx="5" /></clipPath>
     <text x={TX + TW / 2} y="134" text-anchor="middle">plan</text>
-    <text x={TX + TW + 8} y={TY + 12} data-plan-wait class="m-wait">{s.waited ? `waits ${s.waited} h` : ''}</text>
+    <text x={TX + TW / 2} y={TY + TH / 2 + 5} text-anchor="middle" data-plan-wait class="m-wait">{s.waited ? `wait ${s.waited} h` : ''}</text>
     <rect class="m-well" x={MX} y={TY} width={MW} height={TH} rx="6" />
     {Array.from({ length: PLAN_MAX_HOURS }, (_, n) => (
       <rect class="m-lit-soft m-move" x={MX + 8} y={TY + TH - 4 - (n + 1) * 7.2} width={MW - 16} height="5.6" rx="1.5" data-plan-coin={n} style={n < first ? '' : 'opacity:0'} />
@@ -44,7 +44,7 @@ const MX = 190, MW = 70;
       const h = Number(input.value);
       const s = planAfter(h);
       level.style.transform = `translateY(${((1 - s.left) * TH).toFixed(1)}px)`;
-      wait.textContent = s.waited ? `waits ${s.waited} h` : '';
+      wait.textContent = s.waited ? `wait ${s.waited} h` : '';
       coins.forEach((c, i) => (c.style.opacity = i < h ? '1' : '0'));
       out.textContent = String(h);
     };

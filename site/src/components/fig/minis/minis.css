@@ -17,6 +17,8 @@
 .mini-control { display: flex; align-items: center; gap: 0.75rem; min-height: 2.75rem; font-size: var(--text-s); }
 .mini-control .pick { display: flex; width: 100%; }
 .mini-control .pick button { flex: 1 1 0; padding: 0 0.375rem; min-width: 0; }
+/* Four choices: two rows of two, so no label is squeezed. */
+.mini-control .pick:has(> :nth-child(4)) { display: grid; grid-template-columns: 1fr 1fr; }
 .mini-range { display: flex; align-items: center; gap: 0.625rem; width: 100%; color: var(--muted); }
 .mini-range input { flex: 1 1 auto; min-width: 0; min-height: 2.75rem; margin: 0; accent-color: var(--accent); }
 .mini-range output, .mini-out { flex: none; font-family: var(--mono); font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }

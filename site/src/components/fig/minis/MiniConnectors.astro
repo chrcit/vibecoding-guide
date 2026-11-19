@@ -9,14 +9,14 @@ const tools = [
   ...Array.from({ length: BUILT_IN_TOOLS }, () => ({ owner: '' })),
   ...CONNECTORS.flatMap((c) => Array.from({ length: c.tools }, () => ({ owner: c.id }))),
 ].map((x) => ({ ...x, i: t++ }));
-const toolX = (i: number) => 150 + (i % 6) * 23;
+const toolX = (i: number) => 150 + (i % 6) * 23 + 6;
 const toolY = (i: number) => 28 + Math.floor(i / 6) * 32;
 ---
 <MiniFrame id="connectors" href="explain/connectors/" name="Connectors and MCP" alt="Three sockets on the left, one with a plug in it. On the right, a rack of tools the agent can call: the built-in ones and those the plugged-in connector adds.">
   <svg viewBox="0 0 300 140" aria-hidden="true">
     {CONNECTORS.map((c, i) => (
       <g data-c={c.id} data-on={on0.has(c.id) ? 'yes' : 'no'}>
-        <rect class="m-frame" x="12" y={14 + i * 40} width="100" height="32" rx="6" />
+        <rect class="m-frame" x="12" y={14 + i * 40} width="118" height="32" rx="6" />
         <circle class="m-well" cx="30" cy={30 + i * 40} r="8" />
         <circle class="c-plug m-move" cx="30" cy={30 + i * 40} r="5" />
         <text x="46" y={35 + i * 40}>{c.name}</text>

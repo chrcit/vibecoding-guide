@@ -1,23 +1,18 @@
 ---
-// The home page: one path through the six layers of working with coding agents, plain first,
-// with deeper notes for technical readers and engineers, and a way on to the explainers.
-// Built on Base, not Article: the hero and the figures run wider than a column of prose.
-import Base from '../layouts/Base.astro';
+// The long read of the home page: the text the home board replaced, with its six layers, its
+// sourced facts and its reader levels. The board (index.astro) opens its sections in the side view.
+import Article from '../layouts/Article.astro';
 import Deeper from '../components/level/Deeper.astro';
 import Fact from '../components/data/Fact.astro';
 import Verified from '../components/data/Verified.astro';
 import CopyPrompt from '../components/site/CopyPrompt.astro';
 import CardGrid from '../components/site/CardGrid.astro';
 import Card from '../components/site/Card.astro';
-import ThreeAgents from '../components/fig/three-agents/ThreeAgents.astro';
 import Loop from '../components/fig/loop/Loop.astro';
-import SteerOrQueue from '../components/fig/steer-or-queue/SteerOrQueue.astro';
-import Bottleneck from '../components/fig/bottleneck/Bottleneck.astro';
-import Horizon from '../components/fig/horizon/Horizon.astro';
 import LevelChoice from '../components/home/LevelChoice.astro';
-import Layer from '../components/home/Layer.astro';
-import LayerGlyph from '../components/home/LayerGlyph.astro';
-import { horizonInputs, horizonSource, horizonFactIds } from '../components/home/horizon-data';
+import { horizonFactIds } from '../components/home/horizon-data';
+import * as stack from '../components/fig/layer-stack/model';
+import * as mini from '../components/fig/minis/model';
 import { explainers } from '../lib/explainers';
 import { links } from '../data/links';
 import { url } from '../lib/nav';
@@ -31,6 +26,15 @@ const layers = [
   { id: 'emergence', name: 'Emergence', says: 'What happens when several agents run at once.' },
 ];
 
+const headings = [
+  { depth: 2, slug: 'levels', text: 'Choose how deep to go' },
+  { depth: 2, slug: 'what-changed', text: 'What changed' },
+  { depth: 2, slug: 'six-layers', text: 'Six layers' },
+  ...layers.map((l) => ({ depth: 2, slug: l.id, text: l.name })),
+  { depth: 2, slug: 'how-the-model-works', text: 'How the model works' },
+  { depth: 2, slug: 'explainers', text: 'The explainers' },
+];
+
 const factIds = [
   'plans.claude.pro.price', 'plans.claude.limits.fiveHour', 'harnesses.t3code.role', 't3code.price', 't3code.ownLogins', 't3code.queueSteer',
   'harnesses.claudeCode.queue', 'harnesses.codex.queue', 'claims.research.speechFaster', 'harnesses.claudeCode.contextFile',
@@ -40,232 +44,166 @@ const factIds = [
   't3code.permissionModes', 't3code.defaultMode', 'harnesses.codex.sandbox', 't3code.worktrees',
   'harnesses.claudeCode.agentTeams', 'harnesses.claudeCode.agentTeamTokens', ...horizonFactIds,
 ];
+const n = (v: number) => v.toLocaleString('en-GB');
+const pct = (v: number) => `${Math.round(v * 1000) / 10}%`;
 ---
-<Base
-  title="Agentic Coding Guide"
-  description="A free guide to building software with AI coding agents, from the first prompt to running several agents at once. Plain first, deeper on request, every number sourced."
+<Article
+  title="Building software with AI agents: the long read"
+  docTitle="The long read · Agentic Coding Guide"
+  description="The whole guide in one read: what changed when agents started writing code, and the six layers of working with one, plain first with deeper notes for technical readers and engineers."
   section="guide"
+  headings={headings}
 >
-  <div class="home">
-    <header class="hero">
-      <div class="hero-text">
-        <h1>Building software with AI agents</h1>
-        <p class="lede">
-          An AI coding agent is a program that reads your project, writes the code, runs it and tells you what it did. This guide is about working with one well: what to tell it, what to check, and what it costs. It is written for people who have never opened a terminal and for engineers who have not kept up, and it assumes the <Fact id="plans.claude.pro.price" /> a month plan most people start on. Every number on the site links to its source.
-        </p>
-      </div>
-      <div class="hero-figure"><ThreeAgents /></div>
-    </header>
+  <h2 id="levels">Choose how deep to go</h2>
+  <p>Everything starts with the simple version. Pick the description that sounds like you, and the deeper notes written for that level open by themselves. Notes above your level stay folded to two lines, and you can open any one of them without changing the rest. The switch also sits at the top of every page.</p>
+  <LevelChoice />
+  <Deeper level="technical" title="What a note at this level looks like">
+    <p>Notes for technical readers name the files, commands and settings behind the plain version: which file an agent reads its instructions from, what a worktree is for, where a permission mode lives.</p>
+  </Deeper>
+  <Deeper level="engineer" title="And at this one">
+    <p>Notes for engineers carry the mechanism and the limits: how the loop feeds tool output back into the context, what a measurement does and does not cover, where a documented behaviour stops. Here they are short and point to the explainer that has the full weight.</p>
+  </Deeper>
 
-    <section class="block levels" aria-labelledby="levels-title">
-      <h2 id="levels-title">Choose how deep to go</h2>
-      <p>Everything starts with the simple version. Pick the description that sounds like you, and the deeper notes written for that level open by themselves. Notes above your level stay folded to two lines, and you can open any one of them without changing the rest. The switch also sits at the top of every page.</p>
-      <LevelChoice />
-      <Deeper level="technical" title="What a note at this level looks like">
-        <p>Notes for technical readers name the files, commands and settings behind the plain version: which file an agent reads its instructions from, what a worktree is for, where a permission mode lives.</p>
-      </Deeper>
-      <Deeper level="engineer" title="And at this one">
-        <p>Notes for engineers carry the mechanism and the limits: how the loop feeds tool output back into the context, what a measurement does and does not cover, where a documented behaviour stops. On the home page they are short and point to the explainer that has the full weight.</p>
-      </Deeper>
-    </section>
+  <h2 id="what-changed">What changed</h2>
+  <p>An AI coding agent is a program that reads your project, writes the code, runs it and tells you what it did. This guide is about working with one well: what to tell it, what to check, and what it costs. It is written for people who have never opened a terminal and for engineers who have not kept up, and it assumes the <Fact id="plans.claude.pro.price" /> a month plan most people start on. Every number on the site links to its source.</p>
+  <p>For as long as there has been software, a person typed every line of it. With an agent you describe the result you want, the agent writes the code, and you decide whether what came back is right. Control moves down a level. You stop typing the code and keep the decisions and the checking.</p>
+  <p>Writing code got cheap. Knowing whether the code does what you meant did not, and that is now most of the work. An agent goes round a loop: it reads what it needs, acts, checks what happened and goes round again. It stops when a check passes, or when it decides it is done, which is why what it can check its work against matters so much.</p>
+  <Loop />
+  <Deeper level="technical" title="Model, harness and workspace">
+    <p>Three words get blurred. The <strong>model</strong> writes text. The <strong>harness</strong>, such as Claude Code or Codex, runs the model in that loop and turns its text into actions on your computer. A <strong>workspace</strong> such as T3 Code sits above the harnesses so you can run several agents and see what each is doing.</p>
+  </Deeper>
+  <Deeper level="engineer" title="The loop is tool calls">
+    <p>Each round, the model answers with text or a structured tool call. The harness runs the call (read a file, run a command, open a page), appends the result to the conversation and sends the whole thing back. Everything the agent knows arrives through that conversation, which is why context and verification get their own layers below.</p>
+  </Deeper>
 
-    <section class="block" aria-labelledby="changed-title">
-      <h2 id="changed-title">What changed</h2>
-      <div class="prose">
-        <p>For as long as there has been software, a person typed every line of it. With an agent you describe the result you want, the agent writes the code, and you decide whether what came back is right. Control moves down a level. You stop typing the code and keep the decisions and the checking.</p>
-        <p>Writing code got cheap. Knowing whether the code does what you meant did not, and that is now most of the work. An agent goes round a loop: it reads what it needs, acts, checks what happened and goes round again. It stops when a check passes, or when it decides it is done, which is why what it can check its work against matters so much.</p>
-      </div>
-    </section>
-    <div class="wide"><Loop /></div>
-    <section class="block" aria-label="More on the loop">
-      <Deeper level="technical" title="Model, harness and workspace">
-        <p>Three words get blurred. The <strong>model</strong> writes text. The <strong>harness</strong>, such as Claude Code or Codex, runs the model in that loop and turns its text into actions on your computer. A <strong>workspace</strong> such as T3 Code sits above the harnesses so you can run several agents and see what each is doing.</p>
-      </Deeper>
-      <Deeper level="engineer" title="The loop is tool calls">
-        <p>Each round, the model answers with text or a structured tool call. The harness runs the call (read a file, run a command, open a page), appends the result to the conversation and sends the whole thing back. Everything the agent knows arrives through that conversation, which is why context and verification get their own layers below.</p>
-      </Deeper>
-    </section>
+  <h2 id="six-layers">Six layers</h2>
+  <p>The designer Emily Campbell describes AI products as six layers in <a href={links.emilyCampbellLayers.url}>The Layers of AI Experience</a>. Four of them make up the product: the interface, the context, the harness and the model. The other two are the conditions it runs in: the rules around it, and the behaviour that shows up only in use. Her article is written for designers. Its six layers also fit the work of directing a coding agent, so this guide borrows them, with one section each.</p>
+  <ol>
+    {layers.map((l) => <li><a href={`#${l.id}`}>{l.name}</a>: {l.says}</li>)}
+  </ol>
 
-    <section class="block six" aria-labelledby="six-title">
-      <h2 id="six-title">Six layers</h2>
-      <div class="prose">
-        <p>The designer Emily Campbell describes AI products as six layers in <a href={links.emilyCampbellLayers.url}>The Layers of AI Experience</a>. Four of them make up the product: the interface, the context, the harness and the model. The other two are the conditions it runs in: the rules around it, and the behaviour that shows up only in use. Her article is written for designers. Its six layers also fit the work of directing a coding agent, so this guide borrows them, with one section each.</p>
-      </div>
-      <ol class="six-list">
-        {layers.map((l, i) => (
-          <li>
-            <a href={`#${l.id}`}>
-              <LayerGlyph n={i + 1} size={22} />
-              <span class="six-name">{l.name}</span>
-              <span class="six-says">{l.says}</span>
-            </a>
-          </li>
-        ))}
-      </ol>
-    </section>
+    <h2 id="interface">Interface: where you and the agent meet</h2>
+    <p>The interface is where you give the agent its task and watch it work: a chat box in a browser, a terminal window, a desktop app such as T3 Code, or your own voice. It decides how much of the agent’s work you can see, and how easily you can step in while it runs.</p>
+    <p>A run can take minutes. You do not have to wait for it to end before you say more. Most tools hold a message you send mid-run until the agent’s turn is over; some can also slip it into the run at the agent’s next step, which is called steering.</p>
+    <Deeper level="technical" title="Workspaces and voice">
+    <p><Fact id="harnesses.t3code.role" show="claim" /> It is <Fact id="t3code.price" /> and uses your own logins. Speaking is quicker than typing: in one Stanford study speech input on a phone was <Fact id="claims.research.speechFaster" /> as fast as typing, and a spoken brief tends to carry more of what you know.</p>
+    </Deeper>
+    <Deeper level="engineer" title="What queue and steer do">
+    <p><Fact id="harnesses.claudeCode.queue" show="claim" /> <Fact id="harnesses.codex.queue" show="claim" /> T3 Code offers both: <Fact id="t3code.queueSteer" show="claim" /> A steer lands at the next tool boundary, so the step in flight still finishes on the old instructions.</p>
+    </Deeper>
+    <h3 id="interface-right">The one thing to get right</h3>
+    <p>Do not sit and watch. Send what you know the moment you know it, and steer when it corrects the work in progress, so the agent does not finish a turn on a wrong assumption.</p>
+    <p>Go deeper: <a href={url('t3-code/')}>T3 Code</a>, <a href={url('explain/voice/')}>Voice</a>.</p>
 
-    <Layer n={1} id="interface" name="Interface" title="Where you and the agent meet" links={[{ href: 't3-code/', title: 'T3 Code' }, { href: 'explain/voice/', title: 'Voice' }]}>
-      <p>The interface is where you give the agent its task and watch it work: a chat box in a browser, a terminal window, a desktop app such as T3 Code, or your own voice. It decides how much of the agent’s work you can see, and how easily you can step in while it runs.</p>
-      <p>A run can take minutes. You do not have to wait for it to end before you say more. Most tools hold a message you send mid-run until the agent’s turn is over; some can also slip it into the run at the agent’s next step, which is called steering.</p>
-      <Deeper level="technical" title="Workspaces and voice">
-        <p><Fact id="harnesses.t3code.role" show="claim" /> It is <Fact id="t3code.price" /> and uses your own logins. Speaking is quicker than typing: in one Stanford study speech input on a phone was <Fact id="claims.research.speechFaster" /> as fast as typing, and a spoken brief tends to carry more of what you know.</p>
-      </Deeper>
-      <Deeper level="engineer" title="What queue and steer do">
-        <p><Fact id="harnesses.claudeCode.queue" show="claim" /> <Fact id="harnesses.codex.queue" show="claim" /> T3 Code offers both: <Fact id="t3code.queueSteer" show="claim" /> A steer lands at the next tool boundary, so the step in flight still finishes on the old instructions.</p>
-      </Deeper>
-      <Fragment slot="figure"><SteerOrQueue /></Fragment>
-      <Fragment slot="right">
-        <p>Do not sit and watch. Send what you know the moment you know it, and steer when it corrects the work in progress, so the agent does not finish a turn on a wrong assumption.</p>
-      </Fragment>
-    </Layer>
 
-    <Layer n={2} id="context" name="Context" title="What the agent knows right now" links={[{ href: 'explain/context/', title: 'Context' }]}>
-      <p>Context is everything the agent can see at this moment: your messages, the files it has opened, the output of the commands it ran, and any instructions file in your project. It knows nothing else about your project or about you. If a fact is not in there, the agent guesses.</p>
-      <p>A conversation also gets tired. Every dead end, wrong guess and long log stays in view and keeps pulling on the answers. A fresh conversation, given the right material at the start, usually does better than a long one that has wandered.</p>
-      <CopyPrompt title="A first message for the holiday hours bug">{`The bakery website shows the normal opening hours on public holidays. It should say "Closed" on the dates in holidays.csv.
 
-Done means: on 25 December the hours page shows "Closed", on an ordinary Tuesday it still shows the usual hours, and there is a test for both.
+    <h2 id="context">Context: what the agent knows right now</h2>
+    <p>Context is everything the agent can see at this moment: your messages, the files it has opened, the output of the commands it ran, and any instructions file in your project. It knows nothing else about your project or about you. If a fact is not in there, the agent guesses.</p>
+    <p>A conversation also gets tired. Every dead end, wrong guess and long log stays in view and keeps pulling on the answers. A fresh conversation, given the right material at the start, usually does better than a long one that has wandered.</p>
+    <CopyPrompt title="A first message for the holiday hours bug">{`The bakery website shows the normal opening hours on public holidays. It should say "Closed" on the dates in holidays.csv.
 
-Read the hours page and holidays.csv first. Ask me before changing anything outside the hours page.`}</CopyPrompt>
-      <Deeper level="technical" title="Instructions files">
-        <p>A harness reads a standing instructions file at the start of every conversation. Claude Code reads <code><Fact id="harnesses.claudeCode.contextFile" /></code>; Codex reads <code><Fact id="harnesses.codex.contextFile" /></code>. Put what every task needs there: how to run the tests, what not to touch, how you like things named.</p>
-      </Deeper>
-      <Deeper level="engineer" title="Fresh windows on purpose">
-        <p>The context window is finite and everything loaded takes room, including tool definitions and skill descriptions. <Fact id="harnesses.claudeCode.subagents" show="claim" /> That is the main reason to use one: a search or a review runs in a clean window and returns a summary instead of its whole working.</p>
-      </Deeper>
-      <Fragment slot="right">
-        <p>Say what done looks like in your first message, and start a new conversation when the task changes.</p>
-      </Fragment>
-    </Layer>
+    Done means: on 25 December the hours page shows "Closed", on an ordinary Tuesday it still shows the usual hours, and there is a test for both.
 
-    <Layer n={3} id="harness" name="Harness" title="The program around the model" links={[{ href: 'explain/skills/', title: 'Skills' }, { href: 'explain/connectors/', title: 'Connectors and MCP' }, { href: 'explain/orchestration/', title: 'Orchestration' }]}>
-      <p>The model on its own only writes text. The harness is the program around it that turns that text into actions, such as reading a file, running a test or opening a web page, and feeds each result back. Claude Code and Codex are harnesses. The loop in Fig. 2 is the harness at work.</p>
-      <p>The harness is also where you add to what the agent can do. A skill is written know-how it loads when a task calls for it. A connector gives it a door into another system, such as your issue tracker. A helper agent takes a side task in a conversation of its own.</p>
-      <Deeper level="technical" title="Skills and connectors">
-        <p>A skill is a folder with a <code>SKILL.md</code> file; the agent sees its short description and reads the rest only when a task matches. Connectors mostly use the Model Context Protocol, which calls itself “<Fact id="connectors.mcp.definition" />”.</p>
-      </Deeper>
-      <Deeper level="engineer" title="Helpers share your limits">
-        <p><Fact id="harnesses.claudeCode.nestingDepth" show="claim" /> <Fact id="harnesses.claudeCode.subagentUsage" show="claim" /> More helpers means faster progress and a faster-emptying plan, in the same breath.</p>
-      </Deeper>
-      <Fragment slot="right">
-        <p>When you correct the same thing twice, write it down where the harness loads it every time: in the instructions file, or as a skill.</p>
-      </Fragment>
-    </Layer>
+    Read the hours page and holidays.csv first. Ask me before changing anything outside the hours page.`}</CopyPrompt>
+    <Deeper level="technical" title="Instructions files">
+    <p>A harness reads a standing instructions file at the start of every conversation. Claude Code reads <code><Fact id="harnesses.claudeCode.contextFile" /></code>; Codex reads <code><Fact id="harnesses.codex.contextFile" /></code>. Put what every task needs there: how to run the tests, what not to touch, how you like things named.</p>
+    </Deeper>
+    <Deeper level="engineer" title="Fresh windows on purpose">
+    <p>The context window is finite and everything loaded takes room, including tool definitions and skill descriptions. <Fact id="harnesses.claudeCode.subagents" show="claim" /> That is the main reason to use one: a search or a review runs in a clean window and returns a summary instead of its whole working.</p>
+    </Deeper>
+    <h3 id="context-right">The one thing to get right</h3>
+    <p>Say what done looks like in your first message, and start a new conversation when the task changes.</p>
+    <p>Go deeper: <a href={url('explain/context/')}>Context</a>.</p>
 
-    <Layer n={4} id="model" name="Model" title="Which model, at what effort, for what cost" links={[{ href: 'models/', title: 'Models' }, { href: 'explain/plans-and-api/', title: 'Plans against the API' }]}>
-      <p>The model is the part that writes. Which model you pick, and how long you let it think before it answers (the effort setting), change the quality of the work and how fast you use up your plan.</p>
-      <p>On a <Fact id="plans.claude.pro.price" /> plan you do not pay per answer. You pay with your allowance, which refills every <Fact id="plans.claude.limits.fiveHour" /> and again every week. A large model at high effort empties it sooner, and <Fact id="plans.claude.limits.whatUsageMeans" show="claim" /></p>
-      <p>Models also keep getting better at long tasks. The research group METR measures how long a task a model can finish, in the time it would take a skilled person. That length has doubled about every <Fact id="benchmarks.metr.doublingDays" /> since 2023.</p>
-      <Deeper level="technical" title="Effort and the default">
-        <p>Claude Opus 5.5 takes the effort levels <Fact id="models.claude-opus-5-5.effort.levels" />. <Fact id="harnesses.claudeCode.defaultModel" show="claim" /> <Fact id="plans.claude.limits.sharedAcrossModels" show="claim" /></p>
-      </Deeper>
-      <Deeper level="engineer" title="Reading the time horizon">
-        <p>The horizon is a fit at a given success rate, not a promise. At four tasks in five the same models manage far shorter tasks than at one in two. METR calls its estimates above <Fact id="benchmarks.metr.unreliableAbove" /> unreliable with its current tasks, and stopped updating the page on <Fact id="benchmarks.metr.lastUpdate" />.</p>
-      </Deeper>
-      <Fragment slot="figure"><Horizon {...horizonInputs} source={horizonSource} /></Fragment>
-      <Fragment slot="right">
-        <p>Try a model on your own task before you trust any ranking, this guide’s included. Running the same task on two models and comparing the results costs a few minutes.</p>
-      </Fragment>
-    </Layer>
 
-    <Layer n={5} id="governance" name="Governance" title="Who checks the work" links={[{ href: 'explain/verification/', title: 'Verification' }]}>
-      <p>Governance is what the agent may do, and who checks what it did. Permissions decide which files and commands it can touch without asking. Tests and a browser let it check its own work before you see it. Your review comes last, and it is the only check that knows what you meant.</p>
-      <p>An agent’s summary of its work is its own account of it. The changes themselves, and whether they pass a check, are the evidence.</p>
-      <Deeper level="technical" title="Permission modes">
-        <p>In T3 Code the modes are <Fact id="t3code.permissionModes" />, and a new thread starts in <Fact id="t3code.defaultMode" />. <Fact id="harnesses.codex.sandbox" show="claim" /> Choose the mode on purpose before a run goes unattended.</p>
-      </Deeper>
-      <Deeper level="engineer" title="What reruns can and cannot find">
-        <p>Running the same task again removes noise: mistakes that come and go between runs. It does not remove a mistake every run shares, such as a wrong assumption in the brief. For that you need a different judge: a test written from the requirement, or a second model reviewing the diff.</p>
-      </Deeper>
-      <Fragment slot="right">
-        <p>Anthropic’s own advice for Claude Code puts it in one line: “<Fact id="harnesses.claudeCode.bestPractice" />”</p>
-      </Fragment>
-    </Layer>
 
-    <Layer n={6} id="emergence" name="Emergence" title="When several agents run at once" links={[{ href: 'explain/orchestration/', title: 'Orchestration' }, { href: 'explain/verification/', title: 'Verification' }]}>
-      <p>Campbell’s last layer is the behaviour nobody designed, “revealed through use”. For you it shows up most when several agents run at the same time. Two of them edit the same file. Three finish within a minute of each other. A fourth waits half an hour for an answer you did not see it ask for.</p>
-      <p>Past a few agents the limit moves. It stops being how fast code gets written and becomes how fast you can decide and check. More agents beyond that point add to the pile of finished work in front of you, not to what you get through.</p>
-      <Deeper level="technical" title="Keep them apart">
-        <p>Give each agent its own copy of the project so they cannot overwrite each other. <Fact id="t3code.worktrees" show="claim" /></p>
-      </Deeper>
-      <Deeper level="engineer" title="Teams cost more than they look">
-        <p><Fact id="harnesses.claudeCode.agentTeams" show="claim" /> <Fact id="harnesses.claudeCode.agentTeamTokens" show="claim" /> Measure what a pattern costs on your plan before you make it a habit.</p>
-      </Deeper>
-      <Fragment slot="figure"><Bottleneck /></Fragment>
-      <Fragment slot="right">
-        <p>Add agents only as fast as you can review their work, and make each one check its own work before it reaches you.</p>
-      </Fragment>
-    </Layer>
+    <h2 id="harness">Harness: the program around the model</h2>
+    <p>The model on its own only writes text. The harness is the program around it that turns that text into actions, such as reading a file, running a test or opening a web page, and feeds each result back. Claude Code and Codex are harnesses. The loop in Fig. 2 is the harness at work.</p>
+    <p>The harness is also where you add to what the agent can do. A skill is written know-how it loads when a task calls for it. A connector gives it a door into another system, such as your issue tracker. A helper agent takes a side task in a conversation of its own.</p>
+    <Deeper level="technical" title="Skills and connectors">
+    <p>A skill is a folder with a <code>SKILL.md</code> file; the agent sees its short description and reads the rest only when a task matches. Connectors mostly use the Model Context Protocol, which calls itself “<Fact id="connectors.mcp.definition" />”.</p>
+    </Deeper>
+    <Deeper level="engineer" title="Helpers share your limits">
+    <p><Fact id="harnesses.claudeCode.nestingDepth" show="claim" /> <Fact id="harnesses.claudeCode.subagentUsage" show="claim" /> More helpers means faster progress and a faster-emptying plan, in the same breath.</p>
+    </Deeper>
+    <h3 id="harness-right">The one thing to get right</h3>
+    <p>When you correct the same thing twice, write it down where the harness loads it every time: in the instructions file, or as a skill.</p>
+    <p>Go deeper: <a href={url('explain/skills/')}>Skills</a>, <a href={url('explain/connectors/')}>Connectors and MCP</a>, <a href={url('explain/orchestration/')}>Orchestration</a>.</p>
 
-    <section class="block start" aria-labelledby="start-title">
-      <h2 id="start-title">Where to start</h2>
-      <a class="start-route" href={url('start/')}>
-        <span class="start-title">The first hour</span>
-        <span class="start-says">Install one tool, give an agent one small real task, and check what it did. A different first hour for each level.</span>
-        <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" /></svg>
-      </a>
-    </section>
-    <div class="cards">
-      <CardGrid title="The explainers">
-        {explainers.map((e) => <Card href={`explain/${e.slug}/`} title={e.title}>{e.blurb}</Card>)}
-        <Card href="t3-code/" title="T3 Code">The workspace this guide is written around, what it does and where it stops.</Card>
-        <Card href="models/" title="Models">Every current model with its score, price and what your plan includes.</Card>
-      </CardGrid>
-      <Verified ids={factIds} />
-    </div>
-  </div>
-</Base>
 
-<style>
-  .home { padding: clamp(2rem, 6vw, 4.5rem) var(--gutter) var(--space-8); }
 
-  .hero { max-width: 64rem; margin: 0 auto; }
-  .hero-text { max-width: 44rem; }
-  h1 {
-    margin: 0 0 var(--space-5); font-size: clamp(2.5rem, 1.6rem + 4.2vw, 4.75rem); font-weight: 470;
-    line-height: 1.02; letter-spacing: -0.03em; text-wrap: balance;
-  }
-  .lede { margin: 0; font-size: var(--text-l); line-height: 1.5; color: var(--ink-2); max-width: var(--measure); }
-  .hero-figure :global(.fig) { margin: var(--space-7) 0 0; }
+    <h2 id="model">Model: which model, at what effort, for what cost</h2>
+    <p>The model is the part that writes. Which model you pick, and how long you let it think before it answers (the effort setting), change the quality of the work and how fast you use up your plan.</p>
+    <p>On a <Fact id="plans.claude.pro.price" /> plan you do not pay per answer. You pay with your allowance, which refills every <Fact id="plans.claude.limits.fiveHour" /> and again every week. A large model at high effort empties it sooner, and <Fact id="plans.claude.limits.whatUsageMeans" show="claim" /></p>
+    <p>Models also keep getting better at long tasks. The research group METR measures how long a task a model can finish, in the time it would take a skilled person. That length has doubled about every <Fact id="benchmarks.metr.doublingDays" /> since 2023.</p>
+    <Deeper level="technical" title="Effort and the default">
+    <p>Claude Opus 5.5 takes the effort levels <Fact id="models.claude-opus-5-5.effort.levels" />. <Fact id="harnesses.claudeCode.defaultModel" show="claim" /> <Fact id="plans.claude.limits.sharedAcrossModels" show="claim" /></p>
+    </Deeper>
+    <Deeper level="engineer" title="Reading the time horizon">
+    <p>The horizon is a fit at a given success rate, not a promise. At four tasks in five the same models manage far shorter tasks than at one in two. METR calls its estimates above <Fact id="benchmarks.metr.unreliableAbove" /> unreliable with its current tasks, and stopped updating the page on <Fact id="benchmarks.metr.lastUpdate" />.</p>
+    </Deeper>
+    <h3 id="model-right">The one thing to get right</h3>
+    <p>Try a model on your own task before you trust any ranking, this guide’s included. Running the same task on two models and comparing the results costs a few minutes.</p>
+    <p>Go deeper: <a href={url('models/')}>Models</a>, <a href={url('explain/plans-and-api/')}>Plans against the API</a>.</p>
 
-  .block { max-width: var(--measure); margin: var(--space-8) auto 0; }
-  .block > h2, .start h2 {
-    margin: 0 0 var(--space-4); font-size: var(--text-2xl); font-weight: 500;
-    line-height: var(--leading-tight); letter-spacing: -0.014em;
-  }
-  .block > p { margin: 0 0 1.05em; }
-  .levels :global(.deeper) { margin-top: var(--space-5); }
-  .wide { max-width: 60rem; margin: 0 auto; }
-  .wide :global(.fig) { margin: var(--space-6) 0 0; }
-  .block[aria-label] { margin-top: var(--space-4); }
 
-  .six-list { list-style: none; margin: var(--space-5) 0 0; padding: 0; border-top: 1px solid var(--rule); }
-  .six-list li { border-bottom: 1px solid var(--rule); }
-  .six-list a {
-    display: grid; grid-template-columns: auto minmax(7rem, auto) 1fr; align-items: baseline; gap: var(--space-3);
-    padding: var(--space-3) 0; min-height: 2.75rem; text-decoration: none; color: var(--ink);
-  }
-  .six-list a :global(.layer-glyph) { align-self: center; }
-  .six-name { font-weight: 560; }
-  .six-says { color: var(--ink-2); font-size: var(--text-m); }
-  .six-list a:hover .six-name { color: var(--accent); }
-  @media (max-width: 30rem) {
-    .six-list a { grid-template-columns: auto 1fr; }
-    .six-says { grid-column: 2; }
-  }
 
-  .start { margin-top: var(--space-9); }
-  .start-route {
-    display: grid; grid-template-columns: 1fr auto; gap: var(--space-2) var(--space-4); align-items: center;
-    padding: var(--space-5) var(--space-5); border-radius: var(--radius-l);
-    background: var(--ink); color: var(--paper); text-decoration: none;
-    transition: transform var(--dur-fast) var(--ease-out);
-  }
-  .start-route:hover { color: var(--paper); }
-  .start-route:active { transform: scale(0.99); }
-  .start-title { font-size: var(--text-xl); font-weight: 500; letter-spacing: -0.01em; }
-  .start-says { grid-column: 1; color: color-mix(in oklab, var(--paper) 80%, var(--ink)); font-size: var(--text-m); line-height: 1.45; }
-  .start-route svg { grid-row: 1 / span 2; grid-column: 2; transition: transform var(--dur) var(--ease-out); }
-  .start-route:hover svg { transform: translateX(4px); }
-  .cards { max-width: var(--wide); margin: var(--space-7) auto 0; }
-</style>
+    <h2 id="governance">Governance: who checks the work</h2>
+    <p>Governance is what the agent may do, and who checks what it did. Permissions decide which files and commands it can touch without asking. Tests and a browser let it check its own work before you see it. Your review comes last, and it is the only check that knows what you meant.</p>
+    <p>An agent’s summary of its work is its own account of it. The changes themselves, and whether they pass a check, are the evidence.</p>
+    <Deeper level="technical" title="Permission modes">
+    <p>In T3 Code the modes are <Fact id="t3code.permissionModes" />, and a new thread starts in <Fact id="t3code.defaultMode" />. <Fact id="harnesses.codex.sandbox" show="claim" /> Choose the mode on purpose before a run goes unattended.</p>
+    </Deeper>
+    <Deeper level="engineer" title="What reruns can and cannot find">
+    <p>Running the same task again removes noise: mistakes that come and go between runs. It does not remove a mistake every run shares, such as a wrong assumption in the brief. For that you need a different judge: a test written from the requirement, or a second model reviewing the diff.</p>
+    </Deeper>
+    <h3 id="governance-right">The one thing to get right</h3>
+    <p>Anthropic’s own advice for Claude Code puts it in one line: “<Fact id="harnesses.claudeCode.bestPractice" />”</p>
+    <p>Go deeper: <a href={url('explain/verification/')}>Verification</a>.</p>
+
+
+
+    <h2 id="emergence">Emergence: when several agents run at once</h2>
+    <p>Campbell’s last layer is the behaviour nobody designed, “revealed through use”. For you it shows up most when several agents run at the same time. Two of them edit the same file. Three finish within a minute of each other. A fourth waits half an hour for an answer you did not see it ask for.</p>
+    <p>Past a few agents the limit moves. It stops being how fast code gets written and becomes how fast you can decide and check. More agents beyond that point add to the pile of finished work in front of you, not to what you get through.</p>
+    <Deeper level="technical" title="Keep them apart">
+    <p>Give each agent its own copy of the project so they cannot overwrite each other. <Fact id="t3code.worktrees" show="claim" /></p>
+    </Deeper>
+    <Deeper level="engineer" title="Teams cost more than they look">
+    <p><Fact id="harnesses.claudeCode.agentTeams" show="claim" /> <Fact id="harnesses.claudeCode.agentTeamTokens" show="claim" /> Measure what a pattern costs on your plan before you make it a habit.</p>
+    </Deeper>
+    <h3 id="emergence-right">The one thing to get right</h3>
+    <p>Add agents only as fast as you can review their work, and make each one check its own work before it reaches you.</p>
+    <p>Go deeper: <a href={url('explain/orchestration/')}>Orchestration</a>, <a href={url('explain/verification/')}>Verification</a>.</p>
+
+  <h2 id="how-the-model-works">How the model works</h2>
+  <p>Some pictures on the home board run a small model: a few assumed numbers and the arithmetic that follows from them. The assumptions are made for the picture. They are not measurements, and your own runs will differ. Every sourced number on the board comes from the data files instead and links to its source.</p>
+  <h3 id="model-request">One request through six layers</h3>
+  <p>The request is the holiday hours bug. Each step of the four scenarios adds to the context window, and each model call sends the whole window again. The token counts are rough sizes for a small task:</p>
+  <ul>
+    <li>Loaded before you type (instructions file, tool list, skill descriptions): {n(stack.STARTUP_TOKENS)} tokens.</li>
+    <li>Your request: {n(stack.REQUEST_TOKENS)}. The hours page, read once: {n(stack.FILE_TOKENS)}. One edit: {n(stack.EDIT_TOKENS)}. One test run’s output: {n(stack.TEST_TOKENS)}. The closing summary: {n(stack.SUMMARY_TOKENS)}.</li>
+    <li>Your answer when the harness asks first: {n(stack.APPROVAL_TOKENS)}.</li>
+    <li>Other threads finishing at the same time, in “Three at once”: {stack.OTHER_THREADS}.</li>
+  </ul>
+  <p>The chart of what each call sends counts, for each call, the part the previous call already sent. That part is what a prompt cache can serve.</p>
+  <h3 id="model-minis">The miniatures</h3>
+  <ul>
+    <li>Context: the start-up material takes {pct(mini.CTX_STARTUP)} of the window, each turn {pct(mini.CTX_TURN)}. When the next turn would not fit, the conversation is compacted into a summary that keeps {pct(mini.CTX_SUMMARY)}.</li>
+    <li>Plans and the API: one usage window covers {mini.PLAN_HOURS_PER_WINDOW} hours of steady work, and the window resets every {mini.WINDOW_HOURS} hours. The API meter adds the same amount for every hour.</li>
+    <li>Orchestration: each agent finishes a piece of work every {mini.AGENT_MINUTES} minutes and you review one in {mini.REVIEW_MINUTES}, over a session of {mini.SESSION_HOURS} hours.</li>
+    <li>Checking the work: three mistakes in the holiday hours fix, and which judge can see each, as a worked example rather than a rule.</li>
+    <li>Connectors: the harness starts with {mini.BUILT_IN_TOOLS} tools; the made-up connectors add {mini.CONNECTORS.map((c) => `${c.tools} (${c.name.toLowerCase()})`).join(', ')}.</li>
+    <li>Voice: {mini.TYPED_WORDS} typed words against that number times the study’s multiplier, <Fact id="claims.research.speechFaster" />.</li>
+  </ul>
+
+  <h2 id="explainers">The explainers</h2>
+  <p>To start, go to <a href={url('start/')}>the first hour</a>: install one tool, give an agent one small real task, and check what it did.</p>
+  <CardGrid>
+    {explainers.map((e) => <Card href={`explain/${e.slug}/`} title={e.title}>{e.blurb}</Card>)}
+    <Card href="t3-code/" title="T3 Code">The workspace this guide is written around, what it does and where it stops.</Card>
+    <Card href="models/" title="Models">Every current model with its score, price and what your plan includes.</Card>
+  </CardGrid>
+
+  <Verified ids={factIds} />
+</Article>
