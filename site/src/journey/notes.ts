@@ -91,7 +91,7 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
     github: {
       part: 'A copy that is not on your desk.',
       text: {
-        plain: 'GitHub is a website that keeps your project and every save point. Push often; what was never pushed lives on one laptop.',
+        plain: 'You can start without GitHub; add it once the project matters to you. After that, push often: what was never pushed lives on one laptop.',
         technical: 'origin is the copy on GitHub. Push after each commit you care about; clone gives a new machine the whole history.',
         engineer: 'GitHub is also where checks run, cloud agents start from and other people review. Treat the default branch there as the source of truth.',
       },

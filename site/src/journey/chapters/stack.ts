@@ -241,7 +241,7 @@ function runSpecs(ctx: Ctx, idx: number) {
       s.people = Array.from({ length: n }, (_, i) => ({ id: `u${i}`, at: [240 + (i % 3) * 22, -40 + Math.floor(i / 3) * 34] as XY, who: 'user' as const, scale: 0.8 }));
       s.labels!.push(lab('u0', `${members.toLocaleString('en-GB')} members`, 'top'));
     });
-    stat(ctx, [4, 4, [`${perSec < 1 ? perSec.toFixed(2) : Math.round(perSec)} views a second on match day`, 'made-up'], `1 core · 1 GB · ${busy}% busy`]);
+    stat(ctx, [4, 4, [`${perSec < 1 ? perSec.toFixed(2) : Math.round(perSec)} views a second on match day`, 'made-up'], busy > 100 ? `1 core · 1 GB · asked for ${(busy / 100).toFixed(1)}× what it can answer` : `1 core · 1 GB · ${busy}% busy`]);
     for (let i = 0; i < 3; i++) {
       await h.send([[240, -10], [175, 5]], 'you', { ms: 300 });
       h.set((s) => { s.gear![0]!.lamp = busy > 100 ? 'bad' : 'work'; });

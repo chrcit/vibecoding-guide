@@ -30,7 +30,7 @@ const data = {
 };
 const ids = [
   'plans.claude.free.price', 'plans.claude.pro.price', 'plans.claude.pro.claudeCode', 'plans.chatgpt.free.price', 'plans.chatgpt.plus.price',
-  'plans.chatgpt.limits.codexOnEveryPlan', 'models.claude-opus-5-5.price.input', 'models.claude-opus-5-5.price.output', 't3code.price', 't3code.ownLogins',
+  'plans.chatgpt.limits.codexOnEveryPlan', 'plans.chatgpt.limits.apiKey', 'models.claude-opus-5-5.price.input', 'models.claude-opus-5-5.price.output', 't3code.price', 't3code.ownLogins',
   'claims.privacy.claudeConsumer', 'claims.privacy.openaiApi', 'claims.hardware.unifiedMemory', 't3code.phoneIsRemote', 't3code.install',
 ];
 ---
@@ -60,7 +60,7 @@ const ids = [
       <dl class="j-defs">
         <dt>An app</dt><dd>Claude Free <Fact id="plans.claude.free.price" />, Pro <Fact id="plans.claude.pro.price" /> a month. ChatGPT Free <Fact id="plans.chatgpt.free.price" />, Plus <Fact id="plans.chatgpt.plus.price" />.</dd>
         <dt>A coding tool</dt><dd><Fact id="plans.claude.pro.claudeCode" show="claim" /> <Fact id="plans.chatgpt.limits.codexOnEveryPlan" show="claim" /></dd>
-        <dt>The API</dt><dd>Opus 5.5: <Fact id="models.claude-opus-5-5.price.input" /> per million tokens in, <Fact id="models.claude-opus-5-5.price.output" /> out. <LessonRef id="meter" /> runs the sums.</dd>
+        <dt>The API</dt><dd>A separate bill, paid with an API key instead of a plan. <Fact id="plans.chatgpt.limits.apiKey" show="claim" /> Opus 5.5: <Fact id="models.claude-opus-5-5.price.input" /> per million tokens in, <Fact id="models.claude-opus-5-5.price.output" /> out. <LessonRef id="meter" /> runs the sums.</dd>
         <dt>T3 Code</dt><dd><Fact id="t3code.price" show="claim" /> <Fact id="t3code.ownLogins" show="claim" /></dd>
       </dl>
     </More>

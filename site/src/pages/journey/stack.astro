@@ -36,7 +36,8 @@ git restore .                     # throw those changes away</code></pre>
       <button type="button" data-do="pushed" data-val="no" aria-pressed="false">Never pushed</button>
     </div>
     <More title="The commands" level="technical">
-      <pre><code>git remote add origin https://github.com/you/club-list.git
+      <pre><code># origin is the name for the copy on GitHub
+git remote add origin https://github.com/you/club-list.git
 git push -u origin main           # first time
 git push                          # after that
 git clone https://github.com/you/club-list.git   # on the new laptop</code></pre>
@@ -53,7 +54,7 @@ git clone https://github.com/you/club-list.git   # on the new laptop</code></pre
       <pre><code>git switch -c paid-date           # a new branch
 git push -u origin paid-date      # then “Compare &amp; pull request” on GitHub
 git switch main &amp;&amp; git merge paid-date   # or the Merge button</code></pre>
-      <p>The check on a pull request is usually a GitHub Actions workflow that runs <code>npm test</code> on every push.</p>
+      <p>The check on a pull request is usually CI (continuous integration): a GitHub Actions workflow that runs <code>npm test</code> on every push.</p>
     </More>
   </Step>
 

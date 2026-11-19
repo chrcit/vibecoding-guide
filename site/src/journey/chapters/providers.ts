@@ -183,7 +183,7 @@ function devScene(active: Device): SceneState {
       lab('you', 'you', 'bottom'),
       termLabel('a0', 'model', 'top', 'Opus 5.5, on Anthropic’s computers'),
       lab('gear:lap', 'laptop', 'bottom'),
-      lab('gear:desk', 'desktop PC at home', 'bottom', 'wiki/always-on-machine/'),
+      lab('gear:desk', 'desktop PC at home', 'bottom'),
       lab('gear:phone', 'phone', 'top'),
     ],
   };
