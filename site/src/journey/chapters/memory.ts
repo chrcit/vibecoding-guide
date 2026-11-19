@@ -53,7 +53,7 @@ export async function session(ctx: Ctx, h: Script, o: { rules: boolean; size?: n
   if (long) {
     ctx.say('tool', byLevel(ctx.level, {
       plain: 'The new page shows dates as 3/3/2026. The rule for day.month.year is on line 140.',
-      technical: 'npm test: command not found in CI. Line 140 says pnpm.',
+      technical: 'npx jest: no tests found. Line 140 says the tests run with npm test (vitest).',
       engineer: 'UI component imports the database client directly. The boundary rule is on line 140.',
     }));
     await h.wait(450);
@@ -64,19 +64,19 @@ export async function session(ctx: Ctx, h: Script, o: { rules: boolean; size?: n
   ctx.say('tool', o.rules
     ? byLevel(ctx.level, {
         plain: 'Checks pass, dates formatted DD.MM.YYYY, layout matches the rest of the site.',
-        technical: 'pnpm tsc --noEmit && pnpm test: 14 of 14 unit tests pass.',
-        engineer: 'pnpm verify: strict types green, domain boundary clean, 14/14 tests pass.',
+        technical: 'npm run check (tsc --noEmit && vitest run): 14 of 14 unit tests pass.',
+        engineer: 'npm run check: types clean, domain boundary clean, 14 of 14 tests pass.',
       })
     : byLevel(ctx.level, {
         plain: 'Dates show as 3/3/2026 and the colours do not match the rest of the site: yesterday’s choices are gone.',
-        technical: 'npm test failed: this repo uses pnpm and vitest, not jest.',
+        technical: 'npx jest: no tests found. This repo runs vitest through npm test.',
         engineer: 'UI component imports the database client directly: the module boundary it learned yesterday is gone.',
       }));
   await h.wait(450);
   ctx.say('model', o.rules
     ? byLevel(ctx.level, {
         plain: 'Done, in the exact style your file asks for.',
-        technical: 'Done. Ran pnpm tsc --noEmit and unit tests as AGENTS.md specifies.',
+        technical: 'Done. Ran npm run check, as AGENTS.md says.',
         engineer: 'Done within domain boundaries. Full verification script green.',
       })
     : byLevel(ctx.level, {

@@ -20,7 +20,7 @@ import { url } from '../../lib/nav';
       <p><code>AGENTS.md</code> is an <Term id="instructions" />: plain text in your project folder, the green tile. The tool loads it before your first message, so your date format and style rules are there every time.</p>
     </ForLevel>
     <ForLevel is="technical">
-      <p><code>AGENTS.md</code> loads into every new session before your prompt. Put your package manager (<code>pnpm</code>), exact check commands (<code>tsc --noEmit</code>, <code>vitest run</code>), and folder layout there so the agent never guesses.</p>
+      <p><code>AGENTS.md</code> loads into every new session before your prompt. Put the test runner, the check command (<code>npm run check</code>, which runs <code>tsc --noEmit</code> and <code>vitest run</code>) and the folder layout there, so it never guesses.</p>
     </ForLevel>
     <ForLevel is="engineer">
       <p><code>AGENTS.md</code> loads into every new session before your prompt. Record stack decisions, module boundaries, the verify command and the shortcuts that are not allowed; leave tutorials out.</p>
@@ -45,13 +45,13 @@ import { url } from '../../lib/nav';
     </ForLevel>
     <ForLevel is="technical">
       <More title="Starter AGENTS.md for tests & types">
-        <CopyPrompt compact title="Technical AGENTS.md skeleton">{`# Project rules\n- Package manager: pnpm (never npm).\n- Before reporting done, run: pnpm tsc --noEmit && pnpm test.\n- Add a unit test for every bug fix and pure logic change.`}</CopyPrompt>
+        <CopyPrompt compact title="Technical AGENTS.md skeleton">{`# Project rules\n- Tests: vitest, run with npm test (not jest).\n- Before reporting done, run: npm run check (tsc --noEmit && vitest run).\n- Add a unit test for every bug fix and pure logic change.`}</CopyPrompt>
         <p><Fact id="harnesses.claudeCode.claudeMdLines" show="claim" /></p>
       </More>
     </ForLevel>
     <ForLevel is="engineer">
       <More title="Starter AGENTS.md for architecture & stack">
-        <CopyPrompt compact title="Engineer AGENTS.md skeleton">{`# Architecture & verification\n- Stack: strict TypeScript, Vite, Vitest. Zero unapproved runtime deps.\n- Boundaries: pure domain logic in src/domain/ (no DOM or DB imports); UI reads via typed selectors.\n- Gate: pnpm verify (tsc --noEmit && vitest run && lint) must pass before any commit or PR.`}</CopyPrompt>
+        <CopyPrompt compact title="Engineer AGENTS.md skeleton">{`# Architecture & verification\n- Stack: strict TypeScript, Vite, Vitest. Zero unapproved runtime deps.\n- Boundaries: pure domain logic in src/domain/ (no DOM or DB imports); UI reads via typed selectors.\n- Done means: npm run check (tsc --noEmit && vitest run && lint) passes before any commit or PR.`}</CopyPrompt>
         <p><Fact id="harnesses.claudeCode.claudeMdLines" show="claim" /></p>
       </More>
     </ForLevel>

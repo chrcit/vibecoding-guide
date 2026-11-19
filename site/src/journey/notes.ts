@@ -133,7 +133,7 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
       part: 'A new session.',
       text: {
         plain: 'The new thread from lesson 7 is clean, and also forgets the format and the style it worked out yesterday.',
-        technical: 'A new session knows nothing about pnpm, the test command or the folder layout until it finds them again, turn by turn.',
+        technical: 'A new session knows nothing about the test runner, the check command or the folder layout until it finds them again, turn by turn.',
         engineer: 'A fresh context removes rot only if the invariants it needs are loaded deterministically at the start.',
       },
     },
@@ -141,7 +141,7 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
       part: 'AGENTS.md.',
       text: {
         plain: 'The green tile is a text file in your project. The tool loads it before your first word, every session.',
-        technical: 'Put the package manager, the check command (`pnpm tsc --noEmit && pnpm test`) and the folder map in it. Claude Code reads CLAUDE.md, Codex reads AGENTS.md.',
+        technical: 'Put the package manager, the check command (`npm run check`: `tsc --noEmit && vitest run`) and the folder map in it. Claude Code reads CLAUDE.md, Codex reads AGENTS.md.',
         engineer: 'Record stack decisions, module boundaries and the verify command. It is versioned with the code and reviewed like code.',
       },
     },

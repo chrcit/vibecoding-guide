@@ -88,7 +88,7 @@ async function playShape(ctx: Ctx, h: Script, shape: Exclude<Shape, 'fan'>) {
   let handoffs = 0, caught = 0;
   // The same readout as the rest of the chapter. Here there is one task, passed between roles.
   let landed = 0;
-  const stats = () => ctx.stat([['tasks on main, this run', `${landed} of 1`, 'made-up'], ['sent back by the check, this run', caught], ['wrong on main, this run', 0], ['the lead’s window', `${Math.round(scene.fill('a0') * 100)}% full`]]);
+  const stats = () => ctx.stat([['the one task, on main', landed ? 'yes' : 'not yet', 'made-up'], ['sent back by the check, this run', caught], ['wrong on main, this run', 0], ['the lead’s window', `${Math.round(scene.fill('a0') * 100)}% full`]]);
   const tally = (how: string) => ctx.say(null, `One task on main after ${handoffs} handoffs. ${how}`);
   const pass = async (path: XY[], kind: Kind) => { await h.send(path, kind); handoffs++; stats(); };
   const give = (i: number, kind: Kind, size: number) => h.set((s) => { (s.agents[i + 1]!.blocks ??= []).push({ t: kind, h: size }); });
