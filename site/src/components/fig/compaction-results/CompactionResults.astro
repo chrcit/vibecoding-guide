@@ -1,0 +1,109 @@
+---
+/*
+ * Fig. 38, compaction turns a test log into one line.
+ *
+ * Idea: tool results are most of a long thread; compaction keeps a line about each and drops the
+ * rest, so the exact error text is gone, while recently read files come back from disk. One bar
+ * per tool result in the holiday hours thread, at one scale; "After compaction" shrinks each to
+ * what the summary keeps. A progress file in the repo survives whole.
+ * Controls: before or after (.pick), progress file on or off (.pick).
+ * Data: the 25,000-token cap on an MCP result and the five re-read files arrive as props; the
+ * sizes of the results are illustrative.
+ */
+import Figure from '../Figure.astro';
+import Stat from '../../board/Stat.astro';
+
+interface Props { cap: number; reread: number }
+const { cap, reread } = Astro.props;
+type R = { name: string; tokens: number; after: string; kept: number; file?: boolean; progress?: boolean };
+const RESULTS: R[] = [
+  { name: 'Read src/hours.ts', tokens: 6_000, after: 'Read again from disk', kept: 6_000, file: true },
+  { name: 'pnpm test, full log', tokens: 18_000, after: '“3 tests failed in hours”', kept: 40 },
+  { name: 'Error: Invalid date “25/12/2026” at parseHoliday (hours.ts:41)', tokens: 1_500, after: '“A date parsing error”', kept: 30 },
+  { name: 'Search for “holiday”', tokens: 2_500, after: 'Gone', kept: 0 },
+  { name: 'Server log', tokens: cap, after: 'Gone', kept: 0 },
+  { name: 'Read data/holidays.csv', tokens: 3_000, after: 'Read again from disk', kept: 3_000, file: true },
+  { name: 'pnpm test, after the fix', tokens: 18_000, after: '“All tests pass”', kept: 20 },
+  { name: 'PROGRESS.md: done, next, why', tokens: 800, after: 'Read again from the repo', kept: 800, progress: true },
+];
+const max = Math.max(...RESULTS.map((r) => r.tokens));
+const fmt = (n: number) => (n >= 1000 ? `${(Math.round(n / 100) / 10).toString()}K` : String(n));
+const before = RESULTS.filter((r) => !r.progress).reduce((a, r) => a + r.tokens, 0);
+---
+<div class="cr" data-cr data-max={max}>
+  <div class="cr-picks">
+    <div class="pick" role="group" aria-label="When" data-cr-when>
+      <button type="button" data-when="before" aria-pressed="true">Before</button>
+      <button type="button" data-when="after" aria-pressed="false">After compaction</button>
+    </div>
+    <div class="pick" role="group" aria-label="Progress file" data-cr-prog>
+      <button type="button" data-prog="off" aria-pressed="true">No progress file</button>
+      <button type="button" data-prog="on" aria-pressed="false">Progress file</button>
+    </div>
+  </div>
+  <Figure n={38} title="Compaction turns a test log into one line" alt="One bar per tool result in a thread, the server log and two test logs the longest." bare>
+    <ol class="cr-list">
+      {RESULTS.map((r) => (
+        <li class="cr-row" data-tokens={r.tokens} data-kept={r.kept} data-progress={r.progress ? '' : undefined} hidden={r.progress}>
+          <span class="cr-name">{r.name}</span>
+          <span class="cr-bar"><span class="cr-fill" data-file={r.file ? '' : undefined} style={`transform:scaleX(${r.tokens / max})`}></span></span>
+          <span class="cr-n" data-before={fmt(r.tokens)} data-after={r.after}>{fmt(r.tokens)}</span>
+        </li>
+      ))}
+    </ol>
+  </Figure>
+  <dl class="stats">
+    <Stat name="Tool results in the window" id="cr-total" tone="accent">{fmt(before)}</Stat>
+    <Stat name="Files read again" id="cr-files">{`up to ${reread}`}</Stat>
+  </dl>
+</div>
+
+<style is:global>
+  .cr { display: grid; gap: 0.75rem; }
+  .cr-picks { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .cr-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+  .tile .cr-list li { max-width: none; }
+  .cr-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'name n' 'bar bar'; gap: 0.125rem 0.75rem; }
+  .cr-row[hidden] { display: none; }
+  .cr-name { grid-area: name; font-family: var(--mono); font-size: var(--text-xs); color: var(--ink-2); overflow-wrap: anywhere; transition: opacity 400ms var(--ease-out); }
+  .cr-n { grid-area: n; font-family: var(--mono); font-size: var(--text-xs); color: var(--ink); text-align: right; }
+  .cr-bar { grid-area: bar; height: 0.75rem; border-radius: 2px; background: var(--paper-2); overflow: hidden; }
+  .cr-fill { display: block; height: 100%; background: color-mix(in oklab, var(--ink) 35%, var(--card)); transform-origin: 0 50%; transition: transform 550ms var(--ease-out), background-color 400ms; }
+  .cr-fill[data-file] { background: var(--blue); }
+  .cr-row[data-progress] .cr-fill { background: var(--green); }
+  .cr[data-state='after'] .cr-row[data-lost] .cr-name { opacity: 0.5; text-decoration: line-through; text-decoration-color: var(--accent); }
+  .cr[data-state='after'] .cr-row[data-lost] .cr-n { color: var(--accent); }
+  @media (prefers-reduced-motion: reduce) { .cr-fill, .cr-name { transition: none; } }
+</style>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-cr]')) {
+    const max = Number(root.dataset.max);
+    const rows = [...root.querySelectorAll<HTMLElement>('.cr-row')];
+    const total = root.querySelector<HTMLElement>('[data-stat="cr-total"]')!;
+    let when = 'before', prog = 'off';
+    const fmt = (n: number) => (n >= 1000 ? `${(Math.round(n / 100) / 10).toString()}K` : String(n));
+    function show() {
+      root.dataset.state = when;
+      let sum = 0;
+      for (const r of rows) {
+        const isProg = r.hasAttribute('data-progress');
+        r.hidden = isProg && prog === 'off';
+        if (r.hidden) continue;
+        const t = Number(r.dataset.tokens), kept = Number(r.dataset.kept);
+        const v = when === 'after' ? kept : t;
+        sum += v;
+        r.querySelector<HTMLElement>('.cr-fill')!.style.transform = `scaleX(${Math.max(v / max, v ? 0.004 : 0)})`;
+        const n = r.querySelector<HTMLElement>('.cr-n')!;
+        n.textContent = when === 'after' ? n.dataset.after! : n.dataset.before!;
+        r.toggleAttribute('data-lost', when === 'after' && kept < t);
+      }
+      total.textContent = fmt(sum);
+      for (const b of root.querySelectorAll<HTMLButtonElement>('[data-when]')) b.setAttribute('aria-pressed', String(b.dataset.when === when));
+      for (const b of root.querySelectorAll<HTMLButtonElement>('[data-prog]')) b.setAttribute('aria-pressed', String(b.dataset.prog === prog));
+    }
+    for (const b of root.querySelectorAll<HTMLButtonElement>('[data-when]')) b.addEventListener('click', () => { when = b.dataset.when!; show(); });
+    for (const b of root.querySelectorAll<HTMLButtonElement>('[data-prog]')) b.addEventListener('click', () => { prog = b.dataset.prog!; show(); });
+    show();
+  }
+</script>

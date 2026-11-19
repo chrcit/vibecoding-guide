@@ -1,0 +1,88 @@
+---
+/*
+ * Where each harness reads its instruction file from: one project tree, two harnesses, two places
+ * to start the session. Each file shows whether it loads at the start, once the agent works in its
+ * folder, or not at all. The rules are the sourced claims in harnesses.ts (contextFile,
+ * claudeMdNesting, codex.contextFile); the file names arrive as props from the same facts.
+ */
+interface Props { claudeFile: string; codexFile: string }
+const { claudeFile, codexFile } = Astro.props;
+
+type When = 'start' | 'later' | 'no';
+// [harness][started in][row] → when it loads. Rows: home, project root, src/.
+const RULES: Record<'cc' | 'cx', Record<'root' | 'src', When[]>> = {
+  cc: { root: ['start', 'start', 'later'], src: ['start', 'start', 'start'] },
+  cx: { root: ['start', 'start', 'no'], src: ['start', 'start', 'start'] },
+};
+const files = (h: 'cc' | 'cx') => {
+  const f = h === 'cc' ? claudeFile : codexFile;
+  return [h === 'cc' ? `~/.claude/${f}` : `~/.codex/${f}`, `bakery-site/${f}`, `bakery-site/src/${f}`];
+};
+const WHEN: Record<When, string> = { start: 'At the start', later: 'When it works in src/', no: 'Not read' };
+const data = JSON.stringify({ rules: RULES, files: { cc: files('cc'), cx: files('cx') }, when: WHEN });
+---
+<div class="hf" data-hf data-hf-data={data}>
+  <div class="hf-picks">
+    <div class="pick" role="group" aria-label="Harness">
+      <button type="button" data-h="cc" aria-pressed="true">Claude Code</button>
+      <button type="button" data-h="cx" aria-pressed="false">Codex</button>
+    </div>
+    <div class="pick" role="group" aria-label="Started in">
+      <button type="button" data-in="root" aria-pressed="true">Start in bakery-site/</button>
+      <button type="button" data-in="src" aria-pressed="false">in src/</button>
+    </div>
+  </div>
+  <ol class="hf-tree">
+    {files('cc').map((f, i) => (
+      <li class="hf-file" data-row={i} data-when={RULES.cc.root[i]} style={`--depth:${i}`}>
+        <span class="hf-icon" aria-hidden="true"></span>
+        <code data-name>{f}</code>
+        <span class="hf-when" data-when-text>{WHEN[RULES.cc.root[i]!]}</span>
+      </li>
+    ))}
+  </ol>
+</div>
+
+<style is:global>
+  .hf { display: grid; gap: 0.875rem; }
+  .hf-picks { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .hf-tree { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+  .tile .hf-tree li { max-width: none; }
+  .hf-file {
+    display: grid; grid-template-columns: 1.5rem minmax(0, 1fr); gap: 0.125rem 0.5rem; align-items: center;
+    margin-left: calc(var(--depth) * 1rem); padding: 0.5rem 0.75rem; border-radius: var(--radius-s);
+    border: 1.5px solid var(--green); background: var(--green-soft);
+    transition: background-color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out), opacity var(--dur) var(--ease-out);
+  }
+  .hf-file code { font-family: var(--mono); font-size: var(--text-s); color: var(--ink); background: none; padding: 0; overflow-wrap: anywhere; }
+  .hf-when { grid-column: 2; font-size: var(--text-xs); color: var(--ink-2); }
+  .hf-icon { width: 1rem; height: 1.25rem; border: 1.5px solid currentColor; border-radius: 2px 6px 2px 2px; color: var(--green); }
+  .hf-file[data-when='later'] { border-style: dashed; border-color: var(--blue); background: var(--blue-soft); }
+  .hf-file[data-when='later'] .hf-icon { color: var(--blue); }
+  .hf-file[data-when='no'] { border-style: dashed; border-color: var(--rule-strong); background: none; opacity: 0.7; }
+  .hf-file[data-when='no'] .hf-icon { color: var(--muted); }
+  .hf-file[data-when='no'] code { text-decoration: line-through; text-decoration-color: var(--muted); }
+</style>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-hf]')) {
+    const d = JSON.parse(root.dataset.hfData!) as { rules: Record<string, Record<string, string[]>>; files: Record<string, string[]>; when: Record<string, string> };
+    let h = 'cc';
+    let start = 'root';
+    const hb = [...root.querySelectorAll<HTMLButtonElement>('[data-h]')];
+    const sb = [...root.querySelectorAll<HTMLButtonElement>('[data-in]')];
+    const show = () => {
+      for (const b of hb) b.setAttribute('aria-pressed', String(b.dataset.h === h));
+      for (const b of sb) b.setAttribute('aria-pressed', String(b.dataset.in === start));
+      for (const li of root.querySelectorAll<HTMLElement>('[data-row]')) {
+        const i = Number(li.dataset.row);
+        const w = d.rules[h]![start]![i]!;
+        li.dataset.when = w;
+        li.querySelector('[data-name]')!.textContent = d.files[h]![i]!;
+        li.querySelector('[data-when-text]')!.textContent = d.when[w]!;
+      }
+    };
+    for (const b of hb) b.addEventListener('click', () => { h = b.dataset.h!; show(); });
+    for (const b of sb) b.addEventListener('click', () => { start = b.dataset.in!; show(); });
+  }
+</script>
