@@ -144,6 +144,7 @@ function fill(ctx: Ctx) {
     const a = s.agents[0]!;
     a.cap = cap; a.blocks = blocks; a.spill = true;
     a.lamp = over ? 'bad' : pct >= 80 ? 'wait' : 'off';
+    s.labels = [termLabel('a0', 'model', 'left', 'the model'), termLabel('tank:a0', 'window', 'left', 'its window'), ...(over ? [{ at: [14, -14, 86] as [number, number, number], text: `does not fit: ${fmt(over)}`, place: 'right' as const }] : [])];
   });
   ctx.stat([
     ['the window', `${fmt(cap)} tokens`],

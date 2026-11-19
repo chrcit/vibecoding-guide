@@ -216,28 +216,28 @@ const once = (key: string, make: () => string) => memo.get(key) ?? (memo.set(key
 
 /** What does not fit the window, drawn on top of the cap (Agent.spill). At most SPILL_MAX high. */
 const SPILL_MAX = 16;
-function spillMarkup(blocks: Block[], cap: number, freshFrom: number) {
+function spillSplit(blocks: Block[], cap: number, freshFrom: number) {
   const f = CAP / cap;
-  let z = 0, over = 0, out = '';
+  let z = 0, over = 0, inside = '', outside = '';
   blocks.forEach((b, i) => {
     let h = Math.max(1.3, b.h * f);
-    const inside = Math.max(0, Math.min(h, CAP - z));
-    if (inside > 0.01) {
-      out += S(k.box(SLAB, TZ + 0.4 + z, inside - 0.5, P), { crease: false, 'data-b': b.t, 'data-fresh': i >= freshFrom ? '' : undefined, style: `--i:${i}` });
-      z += inside;
-      h -= inside;
+    const fits = Math.max(0, Math.min(h, CAP - z));
+    if (fits > 0.01) {
+      inside += S(k.box(SLAB, TZ + 0.4 + z, fits - 0.5, P), { crease: false, 'data-b': b.t, 'data-fresh': i >= freshFrom ? '' : undefined, style: `--i:${i}` });
+      z += fits;
+      h -= fits;
     }
     if (h > 0.01 && over < SPILL_MAX) {
       const hh = Math.min(Math.max(h, 3), SPILL_MAX - over);
-      out += S(k.box(SLAB, TZ + TH + HEAD_H + 1.2 + over, Math.max(0.8, hh - 0.5), P), { crease: false, 'data-b': b.t, 'data-over': '', style: `--i:${i}` });
+      outside += S(k.box(SLAB, TZ + TH + HEAD_H + 3 + over, Math.max(0.8, hh - 0.5), P), { crease: false, 'data-b': b.t, 'data-over': '', style: `--i:${i}` });
       over += hh;
     }
   });
-  return out;
+  return { inside, outside };
 }
 
 function stackMarkup(blocks: Block[], cap: number, freshFrom: number, spill = false) {
-  if (spill) return spillMarkup(blocks, cap, freshFrom);
+  if (spill) return spillSplit(blocks, cap, freshFrom).inside;
   const total = blocks.reduce((a, b) => a + b.h, 0);
   const f = (CAP / cap) * (total > cap ? cap / total : 1);
   let z = 0;
@@ -264,7 +264,7 @@ function agentMarkup(a: Agent, freshFrom: number) {
         S(k.box({ x: 31, y: -9, w: 14, d: 7, r: 1.5 }, 2.6, 1.6, P), { 'data-part': 'leaf', crease: false }) +
         S(k.box({ x: 31, y: 1, w: 14, d: 7, r: 1.5 }, 2.6, 1.6, P), { 'data-part': 'leaf', crease: false }))
     : '';
-  return tree + under + stackMarkup(a.blocks ?? [], a.cap ?? CAP, freshFrom, a.spill) + over;
+  return tree + under + stackMarkup(a.blocks ?? [], a.cap ?? CAP, freshFrom, a.spill) + over + (a.spill ? spillSplit(a.blocks ?? [], a.cap ?? CAP, freshFrom).outside : '');
 }
 
 const youMarkup = () => once('you', () =>
