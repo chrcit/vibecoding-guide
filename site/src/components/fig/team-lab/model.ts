@@ -631,7 +631,7 @@ export function describe(r: Run): string {
   ];
   const [score, says] = issues.reduce((a, b) => (b[0] > a[0] ? b : a));
   if (score >= 0.25) out.push(says);
-  else if (s.pattern !== 'solo' && through === 0) out.push('Nearly every mistake is caught before the end.');
+  else if (s.pattern !== 'solo' && through === 0 && st.pieces >= 4) out.push('Nearly every mistake is caught before the end.');
   return out.join(' ');
 }
 

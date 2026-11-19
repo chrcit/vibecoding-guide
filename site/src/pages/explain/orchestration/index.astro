@@ -171,11 +171,13 @@ const factIds = [
 </Board>
 
 <style>
-  .lab-presets { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; }
-  .lab-presets button { min-height: 2.25rem; }
-  @media (max-width: 760px) {
+  .lab-presets { flex-wrap: wrap; }
+  .lab-presets button { min-height: 2.5rem; }
+  @media (max-width: 900px) {
     :global(#lab .tile-head) { flex-wrap: wrap; padding-bottom: 0.5rem; }
-    :global(#lab .tile-tools) { order: 3; flex-basis: 100%; }
+    :global(#lab .tile-tools) { order: 3; flex: 1 1 100%; min-width: 0; }
+    .lab-presets { display: flex; width: 100%; }
+    .lab-presets button { flex: 1 1 40%; }
   }
 
   .hx { display: grid; font-size: var(--text-s); }
