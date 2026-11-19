@@ -47,7 +47,8 @@ const before = RESULTS.filter((r) => !r.progress).reduce((a, r) => a + r.tokens,
         <li class="cr-row" data-tokens={r.tokens} data-kept={r.kept} data-progress={r.progress ? '' : undefined} hidden={r.progress}>
           <span class="cr-name">{r.name}</span>
           <span class="cr-bar"><span class="cr-fill" data-file={r.file ? '' : undefined} style={`transform:scaleX(${r.tokens / max})`}></span></span>
-          <span class="cr-n" data-before={fmt(r.tokens)} data-after={r.after}>{fmt(r.tokens)}</span>
+          <span class="cr-n" data-n>{fmt(r.tokens)}</span>
+          <span class="cr-after" aria-live="off">{r.after}</span>
         </li>
       ))}
     </ol>
@@ -63,7 +64,10 @@ const before = RESULTS.filter((r) => !r.progress).reduce((a, r) => a + r.tokens,
   .cr-picks { display: flex; flex-wrap: wrap; gap: 0.5rem; }
   .cr-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
   .tile .cr-list li { max-width: none; }
-  .cr-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'name n' 'bar bar'; gap: 0.125rem 0.75rem; }
+  .cr-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'name n' 'bar bar' 'after after'; gap: 0.125rem 0.75rem; }
+  .cr-after { grid-area: after; display: none; font-size: var(--text-xs); color: var(--green); }
+  .cr[data-state='after'] .cr-after { display: block; }
+  .cr[data-state='after'] .cr-row[data-lost] .cr-after { color: var(--accent); }
   .cr-row[hidden] { display: none; }
   .cr-name { grid-area: name; font-family: var(--mono); font-size: var(--text-xs); color: var(--ink-2); overflow-wrap: anywhere; transition: opacity 400ms var(--ease-out); }
   .cr-n { grid-area: n; font-family: var(--mono); font-size: var(--text-xs); color: var(--ink); text-align: right; }
@@ -94,8 +98,7 @@ const before = RESULTS.filter((r) => !r.progress).reduce((a, r) => a + r.tokens,
         const v = when === 'after' ? kept : t;
         sum += v;
         r.querySelector<HTMLElement>('.cr-fill')!.style.transform = `scaleX(${Math.max(v / max, v ? 0.004 : 0)})`;
-        const n = r.querySelector<HTMLElement>('.cr-n')!;
-        n.textContent = when === 'after' ? n.dataset.after! : n.dataset.before!;
+        r.querySelector<HTMLElement>('[data-n]')!.textContent = fmt(v);
         r.toggleAttribute('data-lost', when === 'after' && kept < t);
       }
       total.textContent = fmt(sum);
