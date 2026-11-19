@@ -17,7 +17,7 @@ Sources to draw on:
 
 An instruction file such as AGENTS.md is a plain file in your project that the harness loads into the window before your first word, every session.
 
-The [window](./context-window.md) does not outlive the session; a file does ([chapter 4](/journey/memory/)). AGENTS.md is the shared name, and Claude Code reads CLAUDE.md. It survives [compaction](./compaction.md) and every new [thread](./thread.md).
+The [window](./context-window.md) does not outlive the session; a file does ([Memory, lesson 8](/journey/memory/)). AGENTS.md is the shared name, and Claude Code reads CLAUDE.md. It survives [compaction](./compaction.md) and every new [thread](./thread.md).
 
 Keep it short and true: how to install, run and test the project, what [done](./definition-of-done.md) means, rules the code does not show, and what not to touch. A wrong line is worse than none, because the agent follows it every time. Know-how only some jobs need goes in a [skill](./skill.md).
 

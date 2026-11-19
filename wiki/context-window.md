@@ -18,7 +18,7 @@ Sources to draw on:
 
 The context window is everything the model can see at once; whatever is not in it does not exist for the agent.
 
-In the picture it is the glass column, and each slab is something in it: your messages, its answers, every file it read and every tool result. Nothing leaves on its own, and all of it is read again on every turn ([chapter 3](/journey/window/)). When it is full, the [harness](./harness.md) summarises the pile ([compaction](./compaction.md)) or you start a new [thread](./thread.md).
+In the picture it is the glass column, and each slab is something in it: your messages, its answers, every file it read and every tool result. Nothing leaves on its own, and all of it is read again on every turn ([Window, lesson 7](/journey/window/)). When it is full, the [harness](./harness.md) summarises the pile ([compaction](./compaction.md)) or you start a new [thread](./thread.md).
 
 What you can do about it:
 

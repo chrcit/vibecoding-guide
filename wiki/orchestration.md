@@ -17,7 +17,7 @@ Sources to draw on:
 
 Orchestration is the agent you talk to becoming the lead: it splits the job into briefs, hands them to builders, and lets nothing reach main until it passes a check.
 
-In [chapter 8](/journey/lead/) the agent you talk to stops building. It writes briefs for [helpers](./subagent.md) that build, each in its own [worktree](./worktree.md), and collects short reports. A [check](./verification.md) in front of main catches what a builder called done and is not. In [chapter 9](/journey/fleet/) the same loop runs twenty at once.
+In [Lead, lesson 12](/journey/lead/) the agent you talk to stops building. It writes briefs for [helpers](./subagent.md) that build, each in its own [worktree](./worktree.md), and collects short reports. A [check](./verification.md) in front of main catches what a helper called done and is not. In [Fleet, lesson 13](/journey/fleet/) the same loop runs twenty at once.
 
 It pays when the job splits into pieces that can each be tested alone. It costs more than it saves on a small task, on pieces that touch the same code, or without an automated check.
 

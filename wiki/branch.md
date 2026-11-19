@@ -15,7 +15,7 @@ Sources to draw on:
 
 A branch is a separate line of work on the project; main is the line everything lands on, and a branch joins it when it is merged.
 
-In the picture, main is the plate every finished piece lands on ([chapter 7](/journey/parallel/), [chapter 8](/journey/lead/)). Work happens on a branch, so main keeps working while a change is half done. When the change passes its checks it is merged into main. A [pull request](./pull-request.md) is the usual place to look at it first, and a [preview](./preview-deployment.md) lets you click through it.
+In the picture, main is the plate every finished piece lands on ([Parallel, lesson 11](/journey/parallel/), [Lead, lesson 12](/journey/lead/)). Work happens on a branch, so main keeps working while a change is half done. When the change passes its checks it is merged into main. A [pull request](./pull-request.md) is the usual place to look at it first, and a [preview](./preview-deployment.md) lets you click through it.
 
 A branch is not a copy: one folder shows one branch at a time. Two agents at once need a [worktree](./worktree.md) each.
 

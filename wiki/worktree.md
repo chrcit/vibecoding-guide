@@ -17,7 +17,7 @@ Sources to draw on:
 
 A worktree is its own copy of the project, a second folder on its own branch, so two agents can work at once without overwriting each other's files.
 
-Three agents in one folder overwrite each other's files and run each other's half-finished changes ([chapter 7](/journey/parallel/)). Give each its own copy. A worktree is the cheap kind: Git puts another [branch](./branch.md) in a second folder that shares the same history, and finished work is merged into main one piece at a time.
+Three agents in one folder overwrite each other's files and run each other's half-finished changes ([Parallel, lesson 11](/journey/parallel/)). Give each its own copy. A worktree is the cheap kind: Git puts another [branch](./branch.md) in a second folder that shares the same history, and finished work is merged into main one piece at a time.
 
 You rarely make one by hand. Tools for [working in parallel](./parallel-work.md) can start each [thread](./thread.md) or [helper](./subagent.md) in its own worktree; turn that on. Otherwise ask:
 

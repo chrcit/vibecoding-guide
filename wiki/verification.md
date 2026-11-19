@@ -16,7 +16,7 @@ Sources to draw on:
 
 Verification is a check the work must pass before it reaches you, so the agent finds its own mistakes.
 
-An agent says "done" whether or not it is ([chapter 5](/journey/check/)). A check turns that into evidence: a failing job goes back to the agent, and only what passes comes to you. Each check sees one kind of wrong, so use several:
+An agent says "done" whether or not it is ([Check, lesson 9](/journey/check/)). A check turns that into evidence: a failing job goes back to the agent, and only what passes comes to you. Each check sees one kind of wrong, so use several:
 
 - [Tests](./test.md) catch behaviour that differs from what you asked.
 - Type check, lint and build catch code that does not fit together.

@@ -15,7 +15,7 @@ Sources to draw on:
 
 A tool call is the model asking for an action, such as reading a file or running a command; the harness carries it out and puts the result in the window.
 
-The model can only write text. Tools turn that text into actions: read, edit, run, search ([chapter 2](/journey/loop/)). The [harness](./harness.md) runs each call, the result goes into the [window](./context-window.md), and the model picks the next step. That back and forth is [the loop](./agent-loop.md). Every result takes room, so a long log costs as much as a long file.
+The model can only write text. Tools turn that text into actions: read, edit, run, search ([Loop, lesson 6](/journey/loop/)). The [harness](./harness.md) runs each call, the result goes into the [window](./context-window.md), and the model picks the next step. That back and forth is [the loop](./agent-loop.md). Every result takes room, so a long log costs as much as a long file.
 
 Two things are yours to set:
 
