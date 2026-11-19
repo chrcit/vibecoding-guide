@@ -37,7 +37,7 @@ export function drawWeek(w: Week, width: number, uid: string, sides: Sides): str
   // ---- Work lane ----
   const WORK_TOP = 48, WORK_H = 72, workBase = WORK_TOP + WORK_H;
   const threads = Math.max(1, Math.round(w.threadHours / w.workHours));
-  const bandH = Math.max(4, (threads / 16) * WORK_H);
+  const bandH = 12 + ((Math.min(16, threads) - 1) / 15) * (WORK_H - 12);
   const work: string[] = [text(0, WORK_TOP - 10, narrow ? `Work, ${threads} ×` : `Work: ${threads} ${threads === 1 ? 'thread' : 'threads'}`)];
   work.push(`<path class="pw-base" d="M0 ${workBase}H${W}"/>`);
   if (w.blocked) {
@@ -122,7 +122,9 @@ export function drawWeek(w: Week, width: number, uid: string, sides: Sides): str
       met.push(`<path class="pw-plan" d="M0 ${n1(y(plan[0] - w.apiWeek[0]))}H${W}"/>`);
     } else {
       met.push(`<path class="pw-plan" d="M0 ${n1(y(plan[0]))}H${W}"/>`);
-      met.push(text(4, y(plan[0]) - 6, `Plan: ${usd(plan[0])} a week`, 'pw-t pw-ink'));
+      // The plan's label sits at the left, under its line if there is room, clear of the meter's rise.
+      const py = y(plan[0]);
+      met.push(text(4, py + 18 < metBase - 2 ? py + 18 : py - 8, `Plan ${usd(plan[0])} a week`, 'pw-t pw-ink'));
     }
     const xo = crossover(w);
     if (xo) {

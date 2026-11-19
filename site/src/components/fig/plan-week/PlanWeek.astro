@@ -36,7 +36,7 @@ const groups: [string, string][] = [['claude', 'Claude'], ['chatgpt', 'ChatGPT']
 ---
 <div class="pw" data-plan-week data-cat={JSON.stringify(cat)} data-sides={JSON.stringify(sides)} data-presets={JSON.stringify(presets)} data-start={JSON.stringify(start)}>
   <div class="pick pw-presets" role="group" aria-label="Presets">
-    {presets.map((p) => <button type="button" data-preset={p.id} aria-pressed={p.id === presets[presets.length - 1]!.id ? 'true' : 'false'}>{p.label}</button>)}
+    {presets.map((p) => <button type="button" data-preset={p.id} aria-pressed={JSON.stringify(p.state) === JSON.stringify(start) ? 'true' : 'false'}>{p.label}</button>)}
   </div>
   <div class="controls pw-controls">
     <label class="control pw-wide">

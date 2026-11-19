@@ -143,8 +143,8 @@ export function threadHour(effort: number): Mix {
 export type Money = [number, number]; // low, high: equal when the price is known
 
 export interface PriceOpts {
-  /** Cache lifetime asked for; sets the write price on Claude. */
-  cache?: '5m' | '1h';
+  /** Cache lifetime asked for, which sets the write price on Claude; 'off' sends everything as plain input. */
+  cache?: '5m' | '1h' | 'off';
   batch?: boolean;
   fast?: boolean;
   /** Prompt length, for models with long-prompt prices. */
@@ -166,7 +166,7 @@ export function bill(m: ModelInfo, mix: Mix, c: Catalogue, o: PriceOpts = {}): B
   if (o.fast && m.fast) { input = m.fast.input; output = m.fast.output; }
   const k = o.batch && m.provider === 'claude' ? 1 - c.batchDiscount / 100 : 1;
   const per = (tokens: number, price: number) => (tokens / 1e6) * price * k;
-  const write = m.provider === 'claude' ? (o.cache === '1h' ? c.cacheWrite.h1 : c.cacheWrite.m5) : 1;
+  const write = m.provider !== 'claude' || o.cache === 'off' ? 1 : o.cache === '1h' ? c.cacheWrite.h1 : c.cacheWrite.m5;
   // The cached-read price scales with the input price when long-prompt or fast prices apply.
   const readPrice = m.cacheRead === null ? null : m.cacheRead * (input / m.input);
   const cacheRead: Money = readPrice === null ? [0, per(mix.cacheRead, input)] : [per(mix.cacheRead, readPrice), per(mix.cacheRead, readPrice)];

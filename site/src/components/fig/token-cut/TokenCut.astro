@@ -1,0 +1,70 @@
+---
+/*
+ * Fig. 41, "A token is a piece of a word".
+ *
+ * Idea: models read and write in tokens, pieces a few characters long. Common words are one piece;
+ *   names, code and numbers break into more.
+ * Elements: one line from each running example cut into tokens, the counts beside it.
+ * States: the club list sentence, the holiday hours code, the contact tidy date.
+ * Data: none. The cuts are illustrative, made by hand in the style of a byte-pair tokenizer; every
+ *   model's tokenizer cuts differently, and the tile's foot says so.
+ * Interaction: a .pick of the three lines.
+ * Alt: the readout says the counts for the line shown.
+ */
+import Figure from '../Figure.astro';
+
+export interface Cut { id: string; label: string; pieces: string[] }
+
+// The leading space belongs to the token that follows it, as in most tokenizers.
+const cuts: Cut[] = [
+  { id: 'sentence', label: 'Sentence', pieces: ['El', 'm', 'field', ' Rovers', ' tracks', ' which', ' members', ' have', ' paid', ' this', ' season', '.'] },
+  { id: 'code', label: 'Code', pieces: ['if', ' (', 'is', 'Hol', 'iday', '(', 'day', '))', ' return', ' hours', '.', 'hol', 'iday', ';'] },
+  { id: 'date', label: 'A date', pieces: ['03', '/', '11', '/', '202', '6', ',', ' ', '3', ' Nov', ' 26'] },
+];
+const say = (c: Cut) => {
+  const chars = c.pieces.join('').length;
+  return `${chars} characters, ${c.pieces.length} tokens: ${(chars / c.pieces.length).toFixed(1)} characters a token.`;
+};
+const show = (p: string) => p.replace(/ /g, '·');
+interface Props { n?: number }
+const { n = 41 } = Astro.props;
+---
+<div class="tc" data-token-cut data-says={JSON.stringify(cuts.map(say))}>
+  <div class="pick" role="group" aria-label="Which line">
+    {cuts.map((c, i) => <button type="button" data-cut={c.id} aria-pressed={i === 0 ? 'true' : 'false'}>{c.label}</button>)}
+  </div>
+  <Figure n={n} bare title="A token is a piece of a word" alt="A line of text cut into tokens, each a coloured chip.">
+    {cuts.map((c, i) => (
+      <div class="tc-line" data-line={c.id} hidden={i !== 0}>
+        <p class="tc-src">{c.pieces.join('')}</p>
+        <p class="tc-chips">{c.pieces.map((p, k) => <span class="tc-chip" data-tone={k % 2 ? 'b' : 'a'}>{show(p)}</span>)}</p>
+      </div>
+    ))}
+    <Fragment slot="readout">{say(cuts[0]!)}</Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .tc { display: grid; gap: 0.75rem; }
+  .tc .pick { justify-self: start; }
+  .tc-src { margin: 0 0 0.5rem; font-family: var(--mono); font-size: var(--text-s); color: var(--ink-2); overflow-wrap: anywhere; }
+  .tc-chips { display: flex; flex-wrap: wrap; gap: 3px; margin: 0; }
+  .tc-chip { padding: 0.25rem 0.35rem; border-radius: 4px; font-family: var(--mono); font-size: var(--text-s); line-height: 1.2; color: var(--ink); white-space: pre; }
+  .tc-chip[data-tone='a'] { background: var(--accent-soft); }
+  .tc-chip[data-tone='b'] { background: var(--blue-soft); }
+  .tc .fig-readout { font-family: var(--sans); font-size: var(--text-s); color: var(--ink); }
+</style>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-token-cut]')) {
+    const says: string[] = JSON.parse(root.dataset.says!);
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-cut]')];
+    const lines = [...root.querySelectorAll<HTMLElement>('[data-line]')];
+    const readout = root.querySelector<HTMLElement>('[data-fig-readout]')!;
+    buttons.forEach((b, i) => b.addEventListener('click', () => {
+      buttons.forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+      lines.forEach((l) => (l.hidden = l.dataset.line !== b.dataset.cut));
+      readout.textContent = says[i]!;
+    }));
+  }
+</script>

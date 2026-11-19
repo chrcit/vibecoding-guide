@@ -1,23 +1,24 @@
 ---
-// Explainer C1: a subscription and the API are two ways to pay for the same models.
+// Explainer C1, the long read: a subscription and the API are two ways to pay for the same models.
+// The board at /explain/plans-and-api/ shows the same facts as things to operate; this page keeps the
+// full text, the levels and the list of the lab's modelling assumptions.
 // Every number on this page comes from src/data/ through <Fact> or a data import.
-import Article from '../../layouts/Article.astro';
-import Deeper from '../../components/level/Deeper.astro';
-import Fact from '../../components/data/Fact.astro';
-import Verified from '../../components/data/Verified.astro';
-import Estimate from '../../components/site/Estimate.astro';
-import Note from '../../components/site/Note.astro';
-import Term from '../../components/site/Term.astro';
-import CopyPrompt from '../../components/site/CopyPrompt.astro';
-import Embed from '../../components/site/Embed.astro';
-import MeterTank from '../../components/fig/meter-tank/MeterTank.astro';
-import PlanRuns from '../../components/fig/plan-runs/PlanRuns.astro';
-import { planRunsFromData, planRunsFacts } from '../../components/fig/plan-runs/from-data';
-import { plans } from '../../data/plans';
-import { estimates } from '../../data/observations';
-import { links } from '../../data/links';
-import { formatDate } from '../../lib/facts';
-import { url } from '../../lib/nav';
+import Article from '../../../layouts/Article.astro';
+import Deeper from '../../../components/level/Deeper.astro';
+import Fact from '../../../components/data/Fact.astro';
+import Verified from '../../../components/data/Verified.astro';
+import Estimate from '../../../components/site/Estimate.astro';
+import Note from '../../../components/site/Note.astro';
+import Term from '../../../components/site/Term.astro';
+import CopyPrompt from '../../../components/site/CopyPrompt.astro';
+import Embed from '../../../components/site/Embed.astro';
+import MeterTank from '../../../components/fig/meter-tank/MeterTank.astro';
+import { ASSUME } from '../../../components/fig/plan-week/model';
+import { plans } from '../../../data/plans';
+import { estimates } from '../../../data/observations';
+import { links } from '../../../data/links';
+import { formatDate } from '../../../lib/facts';
+import { url } from '../../../lib/nav';
 
 const usd = (n: number) => `$${n}`;
 const tiers = `${usd(plans.claude.pro.price.value)}, ${usd(plans.claude.max.price.value)} and ${usd(plans.claude.ultra.price.value)}`;
@@ -31,13 +32,17 @@ const headings = [
   { depth: 2, slug: 'twenty-dollars', text: `What fits in a window on ${usd(plans.claude.pro.price.value)}` },
   { depth: 2, slug: 'when-the-api-is-right', text: 'When the API is the right choice' },
   { depth: 2, slug: 'what-a-plan-is-worth', text: 'What a plan is worth in API terms' },
+  { depth: 2, slug: 'how-the-model-works', text: 'How the model works' },
 ];
 
 const theoEstimates = Object.values(estimates).sort((a, b) => a.published.localeCompare(b.published));
 const newest = theoEstimates[theoEstimates.length - 1]!;
 
 const pageFacts = [
-  ...planRunsFacts,
+  'plans.claude.pro.price', 'plans.claude.max.price', 'plans.claude.max.usage', 'plans.claude.max.fable', 'plans.claude.max.apiCredit',
+  'plans.claude.ultra.price', 'plans.claude.ultra.usage', 'plans.claude.ultra.noFiveHourLimit', 'plans.claude.ultra.fable', 'plans.claude.ultra.apiCredit',
+  'plans.chatgpt.plus.messages.astra', 'plans.chatgpt.plus.messages.sol', 'plans.chatgpt.plus.messages.terra', 'plans.chatgpt.plus.messages.luna',
+  'plans.chatgpt.pro.price', 'plans.chatgpt.pro.noFiveHourLimit', 'plans.chatgpt.limits.proNoEstimates',
   'plans.chatgpt.plus.price', 'plans.claude.pro.surfaces', 'plans.claude.pro.fable', 'plans.claude.pro.apiCredit', 'plans.claude.free.models',
   'plans.claude.limits.fiveHour', 'plans.claude.limits.weekly', 'plans.claude.limits.windowHours', 'plans.claude.limits.whatUsageMeans',
   'plans.claude.limits.sharedAcrossSurfaces', 'plans.claude.limits.effort', 'plans.claude.limits.longConversations', 'plans.claude.limits.atTheLimit',
@@ -54,11 +59,10 @@ const pageFacts = [
 ];
 ---
 <Article
-  title="Plans against the API"
+  title="Plans against the API: the long read"
   description="A subscription and the API are two ways to pay for the same models. What each plan includes, what a five-hour window is, and when paying per token makes sense."
   section="explain"
   headings={headings}
-  lede="You can pay for the same model by the token or by the month. Which one you are on decides what a long afternoon of agent work costs you, and what happens when you push it too far."
 >
   <h2 id="two-ways-to-pay">Two ways to pay for the same models</h2>
   <p>
@@ -101,7 +105,7 @@ const pageFacts = [
     </table>
   </div>
   <p>
-    Codex comes with every ChatGPT plan, the free one included. Claude Code needs Pro or above. The figure below sets the plans side by side at each price and draws only what each lab publishes.
+    Codex comes with every ChatGPT plan, the free one included. Claude Code needs Pro or above. The <a href={url('explain/plans-and-api/')}>board</a> sets every plan side by side and marks what each lab leaves unpublished.
   </p>
 
   <Deeper level="technical" title="What each plan includes, in the labs' words">
@@ -113,7 +117,6 @@ const pageFacts = [
     </ul>
   </Deeper>
 
-  <PlanRuns {...planRunsFromData()} source={{ label: `${links.claudePricing.label} and ${links.codexPricing.label}`, href: links.claudePricing.url }} />
 
   <h2 id="what-usage-means">Usage is an allowance with no price tag</h2>
   <p>
@@ -229,6 +232,25 @@ Don't explore the rest of the repository unless the fix needs it. When you are d
       ))}
     </ul>
   </Estimate>
+
+  <h2 id="how-the-model-works">How the model works</h2>
+  <p>
+    The lab on the <a href={url('explain/plans-and-api/')}>board</a> runs a working week through a plan and through the API. Prices, window lengths, the multiples between plans and OpenAI's message estimates come from the data files, each with its source. How many tokens an hour of agent work moves is not published by anyone, so the lab assumes it. These are the assumptions, all of them; change one in <code>components/fig/plan-week/model.ts</code> and the board follows.
+  </p>
+  <ul>
+    <li>An hour of one thread sends {ASSUME.requestsPerThreadHour} requests to the model. Each tool call is a request.</li>
+    <li>Each request carries a prompt of about {ASSUME.promptTokens.toLocaleString('en-GB')} tokens: a thread that has been running for a while. Of that, {ASSUME.newTokensPerRequest.toLocaleString('en-GB')} tokens are new (your message, tool results) and are written to the cache; the rest is read from it.</li>
+    <li>Each request writes {ASSUME.outputPerRequest} tokens of output at medium effort, thinking included. Low, medium, high, xhigh and max write {ASSUME.effortOutput.join(', ')} times that, and send {ASSUME.effortRequests.join(', ')} times as many requests.</li>
+    <li>On a key, Claude cache writes are priced at the five-minute rate, which is what Claude Code asks for with an API key.</li>
+    <li>OpenAI's price for cached input is not in this guide's data. For GPT models the lab prices cache reads anywhere from free to the full input price, and shows the API side as a range.</li>
+    <li>On Codex you send {ASSUME.messagesPerThreadHour} messages per thread per hour. OpenAI counts its estimates in messages, so this turns hours into messages; the lab keeps OpenAI's whole range and does not pick a point in it.</li>
+    <li>The week has {ASSUME.workdays} working days, each starting at {ASSUME.dayStart}:00. A window opens with the first message after the last one closed. A month is {(52 / 12).toFixed(2)} weeks.</li>
+    <li>Where a provider publishes no size for a window or a week, the lab draws the window's timing and prints "not published". It does not stop the work at a guessed point.</li>
+    <li>The smaller tiles use the same numbers: a task of {ASSUME.taskRequests} requests; a fresh thread's prompt of {ASSUME.freshPrompt.toLocaleString('en-GB')} tokens against {ASSUME.longPrompt.toLocaleString('en-GB')} after about six hours; a subagent of {ASSUME.subagentRequests} requests starting from {ASSUME.subagentPrompt.toLocaleString('en-GB')} tokens of its own and handing back a {ASSUME.subagentSummary.toLocaleString('en-GB')}-token summary.</li>
+  </ul>
+  <p>
+    A sense of scale for the defaults: one thread on Opus 5.5 at medium effort comes to a little under two dollars an hour on these assumptions. Anthropic's own average across enterprise deployments is <Fact id="harnesses.claudeCode.enterpriseCost" show="claim" /> Your own numbers will differ; <code>/usage</code> in Claude Code shows them.
+  </p>
 
   <h2 id="related">Related pages</h2>
   <ul>

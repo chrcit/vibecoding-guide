@@ -1,26 +1,27 @@
 ---
-// Review page for the figures of /explain/plans-and-api/: Fig. 8 and Fig. 9 with the real data the page
-// uses. Routed at /dev/fig-plans/ in `pnpm dev`, or in a build with ACG_DEV_PAGES=1.
+// Review page for the figures of /explain/plans-and-api/: Fig. 8 (on the long read) and Fig. 40 (the
+// board's lab) with the real data the pages use. Routed at /dev/fig-plans/ in `pnpm dev`, or in a
+// build with ACG_DEV_PAGES=1.
 import Base from '../layouts/Base.astro';
 import MeterTank from '../components/fig/meter-tank/MeterTank.astro';
-import PlanRuns from '../components/fig/plan-runs/PlanRuns.astro';
-import { planRunsFromData } from '../components/fig/plan-runs/from-data';
+import PlanWeek from '../components/fig/plan-week/PlanWeek.astro';
 import { plans } from '../data/plans';
 import { links } from '../data/links';
 
 const pro = plans.claude.pro.price.value;
+const start = { planId: 'chatgpt-plus', modelId: 'gpt-6-2-astra', effort: 4, threads: 16, hoursPerDay: 8 };
 ---
-<Base title="Figures for plans against the API" description="Development-only review page for Fig. 8 and Fig. 9." noindex>
+<Base title="Figures for plans against the API" description="Development-only review page for Fig. 8 and Fig. 40." noindex>
   <div class="fig-review">
     <h1>Plans against the API: figures</h1>
-    <p>Fig. 8 and Fig. 9 as they appear on the page, fed from src/data/.</p>
+    <p>Fig. 8 and Fig. 40 as they appear on the pages, fed from src/data/.</p>
     <MeterTank currency="$" planPricePerMonth={pro} windowHours={plans.claude.limits.windowHours.value} source={{ label: links.claudeLimits.label, href: links.claudeLimits.url }} />
-    <PlanRuns {...planRunsFromData()} source={{ label: `${links.claudePricing.label} and ${links.codexPricing.label}`, href: links.claudePricing.url }} />
+    <PlanWeek sides={{ work: '#', window: '#', meter: '#' }} presets={[{ id: 'x', label: 'Extreme', state: start }]} start={start} />
   </div>
 </Base>
 
 <style>
-  .fig-review { max-width: 46rem; margin: 2rem auto 4rem; padding: 0 var(--gutter); }
+  .fig-review { max-width: 60rem; margin: 2rem auto 4rem; padding: 0 var(--gutter); }
   h1 { margin: 0 0 0.5rem; }
   p { color: var(--muted); margin: 0; }
 </style>
