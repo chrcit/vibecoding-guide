@@ -155,7 +155,11 @@ export class Scene {
         el.style.top = `${(l.y / this.frame.h) * 100}%`;
         void el.offsetWidth;
       } else {
-        if (el.dataset.text !== l.text || (el.dataset.def ?? '') !== (l.def ?? '')) fillLabel(el, l.text, l.def);
+        if (el.dataset.text !== l.text || (el.dataset.def ?? '') !== (l.def ?? '')) {
+          // A label that takes a new word (a change of level, a script) flashes once.
+          if (el.dataset.text !== l.text) { el.removeAttribute('data-level-new'); void el.offsetWidth; el.setAttribute('data-level-new', ''); setTimeout(() => el.removeAttribute('data-level-new'), 1600); }
+          fillLabel(el, l.text, l.def);
+        }
         if (l.side) (el as HTMLAnchorElement).href = this.base + l.side;
       }
       el.dataset.place = l.place;

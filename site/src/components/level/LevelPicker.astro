@@ -2,6 +2,9 @@
 // The level control in the header. A button showing the current level opens a
 // small panel with the three levels as radio buttons, in the owner's words.
 // Shown only when the boot script has run: without JavaScript every layer is open anyway.
+// Each option says what it changes in the lessons. After a switch a short note under the header
+// says it again, and what changed on the page flashes once: text for that level, the note under
+// the picture, labels on the picture that took the level's word.
 import { LEVELS, levelInfo } from '../../lib/levels';
 import LevelGlyph from './LevelGlyph.astro';
 import Chevron from './Chevron.astro';
@@ -23,13 +26,15 @@ import './levels.css';
           <input type="radio" name="acg-level-choice" value={id} />
           <strong>{levelInfo[id].label}</strong>
           <span>{levelInfo[id].description}</span>
+          <span class="level-shows">{levelInfo[id].shows}</span>
         </label>
       ))}
     </fieldset>
   </div>
+  <p class="level-said" role="status" aria-live="polite" hidden></p>
 </div>
 <script>
-  import { getLevel, isLevel, onLevel, setLevel, type Level } from '../../lib/levels';
+  import { getLevel, isLevel, levelInfo, onLevel, setLevel, type Level } from '../../lib/levels';
 
   const GUTTER = 16;
 
@@ -103,5 +108,23 @@ import './levels.css';
     addEventListener('resize', () => isOpen() && place());
 
     onLevel(check);
+
+    // Say what the switch changed, and flash what changed on the page.
+    const said = picker.querySelector<HTMLElement>('.level-said')!;
+    let timer = 0;
+    onLevel((level) => {
+      said.textContent = `${levelInfo[level].label}: ${levelInfo[level].shows}`;
+      said.hidden = false;
+      clearTimeout(timer);
+      timer = window.setTimeout(() => (said.hidden = true), 4000);
+      requestAnimationFrame(() => {
+        const changed = [
+          ...document.querySelectorAll<HTMLElement>(`main [data-for-level~="${level}"]:not([data-for-level~="plain"][data-for-level~="technical"][data-for-level~="engineer"])`),
+          ...document.querySelectorAll<HTMLElement>('main .j-model:not([hidden])'),
+        ].filter((el) => el.offsetParent);
+        for (const el of changed) { el.removeAttribute('data-level-new'); void el.offsetWidth; el.setAttribute('data-level-new', ''); }
+        setTimeout(() => changed.forEach((el) => el.removeAttribute('data-level-new')), 1600);
+      });
+    });
   });
 </script>

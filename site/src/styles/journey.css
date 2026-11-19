@@ -91,24 +91,33 @@ main:has(> .j-root) { container: journey / inline-size; }
 .j-more { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin: 0.75rem 0 0; padding: 0; list-style: none; font-size: var(--text-s); }
 .j-foot { margin-top: var(--space-6); font-size: var(--text-xs); color: var(--muted); }
 
-/* ---------- the nine steps, as a rail ---------- */
+/* ---------- the 21 lessons, as a rail (Journey.astro) ---------- */
+/* Every lesson by its number, grouped by part; the one on show also by its name. On a narrow page
+   it scrolls sideways with the current lesson in the middle and the ends fading out. */
 
-.j-rail { display: flex; align-items: center; gap: 0.25rem; min-width: 0; font-size: var(--text-xs); container-type: inline-size; }
-.j-rail ol { display: flex; flex: 1 1 auto; min-width: 0; gap: 0.125rem; margin: 0; padding: 0; list-style: none; overflow-x: auto; scrollbar-width: none; }
-.j-rail ol::-webkit-scrollbar { display: none; }
-.j-rail li { flex: none; }
+.j-rail { min-width: 0; font-size: var(--text-xs); }
+.j-rail-all {
+  display: flex; align-items: center; gap: 0.25rem; margin: 0; padding: 0 0.25rem; list-style: none;
+  overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain;
+  mask-image: linear-gradient(90deg, transparent, #000 0.75rem, #000 calc(100% - 0.75rem), transparent);
+}
+.j-rail-all::-webkit-scrollbar { display: none; }
+.j-rail-group { flex: none; display: flex; align-items: center; gap: 0.1rem; }
+.j-rail-group + .j-rail-group { padding-left: 0.35rem; border-left: 1px solid var(--rule); }
+.j-rail-group > ol { display: flex; gap: 0.1rem; margin: 0; padding: 0; list-style: none; }
+.j-rail-group li { flex: none; }
 .j-rail a {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem;
-  min-width: 1.6rem; min-height: 2.5rem; padding: 0 0.3rem; border-radius: var(--radius-s);
+  min-width: 1.75rem; min-height: 2.5rem; padding: 0 0.3rem; border-radius: var(--radius-s);
   color: var(--muted); text-decoration: none; white-space: nowrap;
 }
-.j-rail a:hover { color: var(--ink); }
+.j-rail a:hover { color: var(--ink); background: var(--paper-2); }
 .j-rail a[aria-current='page'], .j-rail a[data-here] { color: var(--ink); background: var(--card); box-shadow: inset 0 0 0 1px var(--rule-strong); font-weight: 600; }
+.j-rail a.j-rail-part { padding-inline: 0.4rem; font-weight: 600; color: var(--ink-2); }
+.j-rail-group:not([data-mine]) a:not(.j-rail-part) { color: color-mix(in oklab, var(--muted) 75%, var(--paper)); }
 .j-rail-n { font-family: var(--mono); }
 .j-rail-name { display: none; }
 .j-rail a[aria-current='page'] .j-rail-name, .j-rail a[data-here] .j-rail-name { display: inline; }
-@media (min-width: 60rem) { .j-rail a { min-width: 2rem; padding: 0 0.45rem; } }
-@container (min-width: 43rem) { .j-rail-name { display: inline; } .j-rail a { padding: 0 0.55rem; } }
 
 /* ---------- under the picture ---------- */
 
@@ -266,8 +275,6 @@ html[data-embed] .j-stage { max-height: 36svh; }
 .j-more-body dl { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 0.875rem; margin: 0 0 0.625rem; }
 .j-more-body dt { color: var(--muted); }
 .j-more-body dd { margin: 0; font-family: var(--mono); color: var(--ink); }
-.j-rail-part { flex: none; display: inline-flex; align-items: center; min-height: 2.5rem; padding-inline: 0.5rem; border-radius: 6px; font-size: var(--text-s); font-weight: 600; color: var(--muted); text-decoration: none; white-space: nowrap; }
-.j-rail-part:hover { color: var(--accent); }
 
 /* Switches: each one is on or off by itself, so each shows a box that is ticked or empty. */
 .pick[data-multi] button::before {
@@ -374,3 +381,7 @@ html[data-embed] .j-stage { max-height: 36svh; }
   border-radius: var(--radius-pill); background: var(--ink); color: var(--paper); font-weight: 600; text-decoration: none;
 }
 .j-start:hover { background: color-mix(in oklab, var(--ink) 86%, var(--paper)); }
+
+/* On a narrow page the note and the colour key sit under the step's text (run.ts placeExtras). */
+.j-step-extra { display: grid; gap: 0.5rem; margin-top: 0.75rem; }
+.j-step-extra .j-model { padding: 0.5rem 0 0; font-size: var(--text-s); }
