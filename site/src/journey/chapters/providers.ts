@@ -33,8 +33,7 @@ function base(o: { model?: string; zone?: string; tools?: boolean; gear?: Gear[]
     tracks: [[[0, 94], [0, 22]], ...(tools ? [[[20, 0], [56, 0]], [[88, 0], [120, 0]]] as XY[][] : [])],
     labels: [
       lab('you', 'you', 'left'),
-      termLabel('a0', 'model', 'top', o.model ?? 'Opus 5.5'),
-      lab('zone:cloud', o.zone ?? 'Anthropic’s computers', 'left'),
+      termLabel('a0', 'model', 'top', `${o.model ?? 'Opus 5.5'}, on ${o.zone ?? 'Anthropic’s computers'}`),
       ...(tools ? [lab('zone:lap', 'your laptop: the files', 'bottom'), termLabel('project', 'project')] : [lab('gear:lap', 'your laptop', 'right')]),
     ],
   };
@@ -168,7 +167,7 @@ async function runWhere(ctx: Ctx, h: Script, online: boolean) {
 
 type Device = 'laptop' | 'desktop' | 'phone';
 const DESK: XY = [118, 70];
-const PHONE: XY = [-36, 124];
+const PHONE: XY = [-60, 130];
 function devScene(active: Device): SceneState {
   return {
     you: SPOT.you,
@@ -181,12 +180,11 @@ function devScene(active: Device): SceneState {
     ],
     tracks: [[[0, 94], [0, 22]], [[DESK[0] - 14, DESK[1]], [22, 8]]],
     labels: [
-      lab('you', 'you', 'left'),
-      termLabel('a0', 'model', 'top', 'Opus 5.5'),
-      lab('zone:cloud', 'Anthropic’s computers', 'left'),
-      lab('gear:lap', 'laptop', 'right'),
-      lab('gear:desk', 'desktop PC at home', 'top', 'wiki/always-on-machine/'),
-      lab('gear:phone', 'phone', 'bottom'),
+      lab('you', 'you', 'bottom'),
+      termLabel('a0', 'model', 'top', 'Opus 5.5, on Anthropic’s computers'),
+      lab('gear:lap', 'laptop', 'bottom'),
+      lab('gear:desk', 'desktop PC at home', 'bottom', 'wiki/always-on-machine/'),
+      lab('gear:phone', 'phone', 'top'),
     ],
   };
 }

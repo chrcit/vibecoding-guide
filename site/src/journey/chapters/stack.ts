@@ -183,10 +183,10 @@ function hostScene(dynamic: boolean): SceneState {
     people,
     tracks: [[[175, 5], [COACH[0] - 10, COACH[1]]], [[175, 5], [TREAS[0] - 10, TREAS[1]]]],
     labels: [
-      lab('zone:host', dynamic ? 'a server, always running' : 'static hosting', 'bottom', 'wiki/deployment/'),
-      ...(dynamic ? [lab('gear:srv', 'server: runs your code', 'left', 'wiki/backend/'), lab('gear:db', 'database', 'top', 'wiki/database/')] : [lab('p:site', 'the finished pages', 'top', 'wiki/frontend/')]),
-      lab('coach', 'coach, on a phone', 'right'),
-      lab('treas', 'treasurer', 'right'),
+      lab('zone:host', dynamic ? 'a server, always on' : 'static hosting', 'top', 'wiki/deployment/'),
+      ...(dynamic ? [lab('gear:srv', 'server', 'bottom', 'wiki/backend/'), lab('gear:db', 'database', 'top', 'wiki/database/')] : [lab('p:site', 'the finished pages', 'top', 'wiki/frontend/')]),
+      lab('coach', 'coach', 'bottom'),
+      lab('treas', 'treasurer', 'top'),
     ],
   };
 }
@@ -234,13 +234,14 @@ function runSpecs(ctx: Ctx, idx: number) {
   void ctx.scene.run(async (h) => {
     h.set((s) => {
       Object.assign(s, hostScene(true));
-      s.labels![0] = lab('zone:host', 'smallest server: 1 core, 1 GB memory, 10 GB disk', 'bottom', 'wiki/deployment/');
+      s.labels = s.labels!.filter((l) => l.at !== 'zone:host' && l.at !== 'gear:srv');
+      s.labels.push(lab('gear:srv', 'the smallest server', 'bottom', 'wiki/deployment/'));
       s.labels = s.labels!.filter((l) => l.at !== 'coach' && l.at !== 'treas');
       const n = Math.min(9, 1 + Math.round(Math.log10(members) * 2));
       s.people = Array.from({ length: n }, (_, i) => ({ id: `u${i}`, at: [240 + (i % 3) * 22, -40 + Math.floor(i / 3) * 34] as XY, who: 'user' as const, scale: 0.8 }));
       s.labels!.push(lab('u0', `${members.toLocaleString('en-GB')} members`, 'top'));
     });
-    stat(ctx, [4, 4, `${perSec < 1 ? perSec.toFixed(2) : Math.round(perSec)} views a second on match day`, `${busy}% busy`]);
+    stat(ctx, [4, 4, [`${perSec < 1 ? perSec.toFixed(2) : Math.round(perSec)} views a second on match day`, 'made-up'], `1 core · 1 GB · ${busy}% busy`]);
     for (let i = 0; i < 3; i++) {
       await h.send([[240, -10], [175, 5]], 'you', { ms: 300 });
       h.set((s) => { s.gear![0]!.lamp = busy > 100 ? 'bad' : 'work'; });

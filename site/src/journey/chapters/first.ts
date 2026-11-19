@@ -35,9 +35,9 @@ function scene(device: Device = 'laptop', o: { tray?: boolean } = {}): SceneStat
       termLabel('a0', 'agent', 'top', 'the agent'),
       termLabel('gate', 'check', 'right'),
       termLabel('project', 'project'),
-      builder
-        ? lab('zone:cloud', 'all on the builder’s site', 'bottom', 'wiki/web-builders/')
-        : lab('zone:mine', device === 'desktop' ? 'your desktop PC: the files' : 'your laptop: the files', 'bottom'),
+      ...(!showGear ? [] : builder
+        ? [lab('zone:cloud', 'all on the builder’s site', 'bottom', 'wiki/web-builders/')]
+        : [lab('zone:mine', device === 'desktop' ? 'your desktop PC: the files' : 'your laptop: the files', 'bottom')]),
       ...(showGear ? [lab('gear:me', builder ? 'phone browser' : device === 'desktop' ? 'desktop PC' : 'laptop', 'right')] : []),
     ],
   };
@@ -155,7 +155,7 @@ async function runChange(ctx: Ctx, h: Script, clear: boolean) {
   await h.send(route.gateToYou(), clear ? 'model' : 'bad', { ms: 340 });
   h.set((s) => {
     s.tray!.cards = clear ? [{ id: 'a', b: 'tool', mark: 'ok' }, { id: 'b', b: 'tool', mark: 'ok' }, { id: 'c', b: 'tool', mark: 'ok' }] : [{ id: 'a', b: 'bad', mark: 'bad' }];
-    s.labels!.push(lab(clear ? 'card:b' : 'card:a', clear ? '3 of 3, each one easy to see' : 'a new look you did not ask for', 'right'));
+    s.labels!.push(lab(clear ? 'card:b' : 'card:a', clear ? '3 changes' : 'a new look', 'right'));
   });
   ctx.say('agent', clear ? 'Done: sorted, unpaid in red, “18 of 25 paid” at the top.' : 'Done. New design, a stats page, dark mode, and a menu.');
   stat(ctx, ['your laptop', '3 of 4: you look', clear ? '2 changed' : 'all 6 changed', clear ? checked : 'passes, but is it right?']);
