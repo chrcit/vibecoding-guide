@@ -18,12 +18,14 @@ import { describe, type HorizonInputs } from './model';
 interface Props extends HorizonInputs {
   n?: number | string;
   source: { label: string; href?: string };
+  bare?: boolean;
 }
-const { n = 7, source, ...inputs } = Astro.props;
+const { n = 7, source, bare = false, ...inputs } = Astro.props;
 const first = inputs.p50[0]!, last = inputs.p50[inputs.p50.length - 1]!;
 ---
 <div class="fig-horizon" data-fig-horizon data-inputs={JSON.stringify(inputs)}>
   <Figure
+    bare={bare}
     n={n}
     title="How long a task can be"
     hint="Switch the vertical scale between linear and log."

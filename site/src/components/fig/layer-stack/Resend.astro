@@ -1,0 +1,92 @@
+---
+/*
+ * Fig. 67, "Every call sends the whole window". A flat chart from the same steps as Fig. 65.
+ * Idea: the model keeps nothing between calls, so each call sends the window again; most of each
+ *   send is what the last one already sent, which is what a prompt cache serves more cheaply.
+ * Elements: one bar per model call, split into the part sent before (faint) and the new part (lit).
+ * Data: the token assumptions in model.ts. Interaction: the scenario pick.
+ */
+import '../fig.css';
+import Stat from '../../board/Stat.astro';
+import { SCENARIOS, callsOf, ktok, type Scenario } from './model';
+
+const W = 520, H = 220, L = 52, R = 10, T = 12, B = 34;
+const data = Object.fromEntries(SCENARIOS.map((s) => [s.id, callsOf(s.id)])) as Record<Scenario, { repeat: number; fresh: number }[]>;
+const max = Math.max(...Object.values(data).flat().map((c) => c.repeat + c.fresh));
+const top = Math.ceil(max / 5000) * 5000;
+const yOf = (v: number) => T + (1 - v / top) * (H - T - B);
+const ticks = [0, top / 2, top];
+const maxCalls = Math.max(...Object.values(data).map((d) => d.length));
+const slot = (W - L - R) / maxCalls;
+const sums = (d: { repeat: number; fresh: number }[]) => {
+  const sent = d.reduce((n, c) => n + c.repeat + c.fresh, 0);
+  const rep = d.reduce((n, c) => n + c.repeat, 0);
+  return { sent: ktok(sent), share: `${Math.round((rep / sent) * 100)}%` };
+};
+const s0 = sums(data.test);
+---
+<div class="rs" data-rs data-data={JSON.stringify({ data, top, slot, L, T, H, B })}>
+  <figure class="fig" id="fig-67" data-figure="67" data-bare aria-labelledby="fig-67-title">
+    <p class="fig-head"><span class="fig-n">Fig. 67</span><span class="fig-title" id="fig-67-title">Every call sends the whole window</span></p>
+    <div class="pick rs-pick" role="group" aria-label="Scenario">
+      {SCENARIOS.map((s) => <button type="button" data-scenario={s.id} aria-pressed={s.id === 'test' ? 'true' : 'false'}>{s.name}</button>)}
+    </div>
+    <div class="rs-grid">
+      <svg class="rs-svg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Bars, one per model call, each taller than the last: most of every bar is what earlier calls already sent.">
+        {ticks.map((v) => <g><path class="c-grid" d={`M${L} ${yOf(v).toFixed(1)}H${W - R}`} /><text class="c-label" x={L - 8} y={yOf(v).toFixed(1)} text-anchor="end" dominant-baseline="middle">{ktok(v)}</text></g>)}
+        {Array.from({ length: maxCalls }, (_, i) => (
+          <g data-bar={i}>
+            <rect class="rs-rep" x={(L + i * slot + slot * 0.18).toFixed(1)} width={(slot * 0.64).toFixed(1)} y={yOf(data.test[i]?.repeat ?? 0).toFixed(1)} height={(yOf(0) - yOf(data.test[i]?.repeat ?? 0)).toFixed(1)} />
+            <rect class="rs-new" x={(L + i * slot + slot * 0.18).toFixed(1)} width={(slot * 0.64).toFixed(1)} y={yOf((data.test[i]?.repeat ?? 0) + (data.test[i]?.fresh ?? 0)).toFixed(1)} height={(yOf(data.test[i]?.repeat ?? 0) - yOf((data.test[i]?.repeat ?? 0) + (data.test[i]?.fresh ?? 0))).toFixed(1)} />
+            <text class="c-label" x={(L + i * slot + slot / 2).toFixed(1)} y={H - 10} text-anchor="middle">{i + 1}</text>
+          </g>
+        ))}
+      </svg>
+      <dl class="stats rs-stats">
+        <Stat name="Tokens sent" id="rs-sent">{s0.sent}</Stat>
+        <Stat name="Sent before" id="rs-share" tone="accent">{s0.share}</Stat>
+      </dl>
+    </div>
+  </figure>
+</div>
+<style is:global>
+  .rs-pick { margin-bottom: 0.75rem; }
+  .rs-grid { display: grid; grid-template-columns: minmax(0, 1fr) 10rem; gap: 1rem; align-items: center; }
+  @container (max-width: 34rem) { .rs-grid { grid-template-columns: minmax(0, 1fr); } }
+  .rs-svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .rs-rep { fill: color-mix(in oklab, var(--ink) 18%, var(--card)); }
+  .rs-new { fill: var(--accent); }
+  .rs-stats { grid-template-columns: 1fr; }
+</style>
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-rs]')) {
+    const { data, top, T, H, B } = JSON.parse(root.dataset.data!);
+    const y = (v: number) => T + (1 - v / top) * (H - T - B);
+    const bars = [...root.querySelectorAll<SVGGElement>('[data-bar]')];
+    const sent = root.querySelector<HTMLElement>('[data-stat="rs-sent"]')!;
+    const share = root.querySelector<HTMLElement>('[data-stat="rs-share"]')!;
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-scenario]')];
+    const k = (n: number) => (n >= 1000 ? `${(Math.round(n / 100) / 10).toLocaleString('en-GB')}K` : String(n));
+    const draw = (id: string) => {
+      const d: { repeat: number; fresh: number }[] = data[id];
+      bars.forEach((g, i) => {
+        const c = d[i];
+        g.style.display = c ? '' : 'none';
+        if (!c) return;
+        const [rep, neu] = g.querySelectorAll('rect');
+        rep!.setAttribute('y', y(c.repeat).toFixed(1));
+        rep!.setAttribute('height', (y(0) - y(c.repeat)).toFixed(1));
+        neu!.setAttribute('y', y(c.repeat + c.fresh).toFixed(1));
+        neu!.setAttribute('height', (y(c.repeat) - y(c.repeat + c.fresh)).toFixed(1));
+      });
+      const total = d.reduce((n, c) => n + c.repeat + c.fresh, 0);
+      sent.textContent = k(total);
+      share.textContent = `${Math.round((d.reduce((n, c) => n + c.repeat, 0) / total) * 100)}%`;
+    };
+    buttons.forEach((b) => b.addEventListener('click', () => {
+      buttons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      draw(b.dataset.scenario!);
+    }));
+    draw('test');
+  }
+</script>

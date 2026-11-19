@@ -1,0 +1,48 @@
+---
+// Miniature for the Orchestration board: agents send finished work to one reviewer; past a few
+// agents the pile on your desk only grows.
+import MiniFrame from './MiniFrame.astro';
+import { MAX_AGENTS, SESSION_HOURS, queueAfter } from './model';
+const first = 3;
+const q = queueAfter(first);
+const PILE = 24; // boxes drawn on the desk; more shows as a number
+const box = (n: number) => ({ x: 196 + (n % 4) * 21, y: 104 - Math.floor(n / 4) * 15 });
+---
+<MiniFrame id="queue" href="explain/orchestration/" name="Orchestration" alt="A grid of agents on the left sends finished boxes of work to one desk on the right, where they pile up waiting for review.">
+  <svg viewBox="0 0 300 140" aria-hidden="true" data-cfg={JSON.stringify({ PILE })}>
+    {Array.from({ length: MAX_AGENTS }, (_, n) => (
+      <rect class="m-part m-move" x={12 + (n % 4) * 26} y={22 + Math.floor(n / 4) * 26} width="18" height="18" rx="4" data-q-agent={n} style={n < first ? '' : 'opacity:0.18'} />
+    ))}
+    <path class="m-dash" d="M122 70H172" />
+    <path class="m-line" d="M166 64l7 6-7 6" />
+    <rect class="m-well" x="188" y="120" width="96" height="8" rx="2" />
+    {Array.from({ length: PILE }, (_, n) => (
+      <rect class="m-lit-soft m-move" x={box(n).x} y={box(n).y} width="17" height="12" rx="2" data-q-box={n} style={n < q.waiting ? '' : 'opacity:0'} />
+    ))}
+    <text x="12" y="134">agents</text>
+    <text class="m-big" x="284" y="22" text-anchor="end" data-q-wait>{q.waiting}</text>
+    <text x="284" y="40" text-anchor="end">waiting</text>
+  </svg>
+  <label slot="control" class="mini-range">Agents<input type="range" min="1" max={MAX_AGENTS} value={first} data-q-agents aria-label={`Agents running for ${SESSION_HOURS} hours`} /><output class="mini-out" data-q-out>{first}</output></label>
+</MiniFrame>
+
+<script>
+  import { queueAfter } from './model';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-mini="queue"]')) {
+    const input = root.querySelector<HTMLInputElement>('[data-q-agents]')!;
+    const out = root.querySelector<HTMLOutputElement>('[data-q-out]')!;
+    const wait = root.querySelector<SVGTextElement>('[data-q-wait]')!;
+    const agents = [...root.querySelectorAll<SVGRectElement>('[data-q-agent]')];
+    const boxes = [...root.querySelectorAll<SVGRectElement>('[data-q-box]')];
+    const draw = () => {
+      const n = Number(input.value);
+      const q = queueAfter(n);
+      agents.forEach((a, i) => (a.style.opacity = i < n ? '1' : '0.18'));
+      boxes.forEach((b, i) => (b.style.opacity = i < q.waiting ? '1' : '0'));
+      wait.textContent = String(q.waiting);
+      out.textContent = String(n);
+    };
+    input.addEventListener('input', draw);
+    draw();
+  }
+</script>

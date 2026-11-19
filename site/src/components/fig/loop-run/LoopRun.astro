@@ -1,0 +1,128 @@
+---
+/*
+ * Fig. 66, "The loop, on three tasks".
+ *
+ * Idea: an agent goes round read, act and check until a check passes; how many rounds depends on
+ *   the task and on what the check can catch.
+ * Elements: a round track with the model at the hub; read (a sheet), act (a press), check (a lamp);
+ *   a spur to the done tray; the task, lit.
+ * States: three running examples (model.ts), 8 to 11 steps each.
+ * Data: none.
+ * Interaction: pick the example; back and next.
+ */
+import '../fig.css';
+import { drawLoopRun, pathBetween, restOf } from './draw';
+import { STEPS, EXAMPLES, type Example } from './model';
+
+const { svg, labels, press } = drawLoopRun();
+const motion = {
+  press,
+  rest: Object.fromEntries(EXAMPLES.map((e) => [e.id, STEPS[e.id].map(restOf)])),
+  paths: Object.fromEntries(EXAMPLES.map((e) => [e.id, STEPS[e.id].map((st, i) => (i ? pathBetween(STEPS[e.id][i - 1]!, st) : []))])),
+} satisfies Record<string, unknown>;
+const first: Example = 'bakery';
+---
+<div class="lr" data-lr data-motion={JSON.stringify(motion)} data-first={first}>
+  <figure class="fig lr-fig" id="fig-66" data-figure="66" data-bare aria-labelledby="fig-66-title">
+    <p class="fig-head"><span class="fig-n">Fig. 66</span><span class="fig-title" id="fig-66-title">The loop, on three tasks</span></p>
+    <div class="pick lr-pick" role="group" aria-label="Task">
+      {EXAMPLES.map((e) => <button type="button" data-example={e.id} aria-pressed={e.id === first ? 'true' : 'false'}>{e.name}</button>)}
+    </div>
+    <div class="lr-drawing" role="img" aria-label="A round track on a plate, the model at its centre. Outside the track stand three stations: read, with a sheet of paper; act, with a press; check, with a lamp. A spur leads to a tray marked done. The task, an orange puck, waits at the start.">
+      <Fragment set:html={svg.replace('data-puck=""', `data-puck="" style="transform:translate(${motion.rest[first][0].map((v) => v.toFixed(1) + 'px').join(',')})"`)} />
+      {labels.map((l) => <span class="lr-label" data-label={l.id} style={`left:${l.at.left};top:${l.at.top}`} aria-hidden="true">{l.name}</span>)}
+    </div>
+    <p class="finding lr-finding" aria-live="polite" data-lr-says>{STEPS[first][0]!.says}</p>
+    <div class="lr-controls" data-lr-controls hidden>
+      <button type="button" class="ls-btn" data-lr-back aria-label="Back one step" disabled>
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5 5.5 8l4.5 4.5" /></svg>
+      </button>
+      <button type="button" class="lr-next" data-lr-next>Next step</button>
+      <output class="lr-count" data-lr-count>1 / {STEPS[first].length}</output>
+    </div>
+  </figure>
+</div>
+
+<style is:global>
+  .lr-pick { display: flex; width: 100%; }
+  .lr-pick button { flex: 1 1 0; padding: 0 0.5rem; }
+  .lr-drawing { position: relative; margin-top: 0.5rem; }
+  .lr-drawing .k-svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .lr-label {
+    position: absolute; transform: translate(-50%, -50%); pointer-events: none;
+    padding: 0.1rem 0.4rem; border-radius: 6px; background: color-mix(in oklab, var(--card) 82%, transparent);
+    font-family: var(--mono); font-size: 0.875rem; line-height: 1.2; color: var(--ink-2); white-space: nowrap;
+  }
+  .lr-label[data-active] { color: var(--ink); font-weight: 650; }
+  .lr-finding { min-height: 4.2em; font-size: var(--text-m); margin-top: 0.25rem; }
+  .lr-controls { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; }
+  .lr-controls[hidden] { display: none; }
+  .lr-next {
+    min-height: 2.75rem; padding: 0 1.125rem; border: 1px solid var(--ink); border-radius: var(--radius-s);
+    background: var(--ink); color: var(--paper); font: inherit; font-size: var(--text-s); font-weight: 600; cursor: pointer;
+    transition: transform 120ms var(--ease-out);
+  }
+  .lr-next:active { transform: scale(0.97); }
+  .lr-count { margin-left: auto; font-family: var(--mono); font-size: var(--text-s); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .lr [data-lamp='fail'] .k-fill, .lr [data-lamp='fail'] .k-top, .lr [data-lamp='fail'] .k-left,
+  .lr [data-lamp='fail'] .k-right, .lr [data-lamp='fail'] .k-shadow { fill: var(--accent-soft); }
+  .lr [data-lamp='fail'] .k-edge, .lr [data-lamp='fail'] .k-crease { stroke: var(--accent); stroke-width: 2px; }
+  .lr [data-lamp='pass'] .k-fill, .lr [data-lamp='pass'] .k-top { fill: color-mix(in oklab, var(--green) 45%, var(--card)); }
+  .lr [data-lamp='pass'] .k-left, .lr [data-lamp='pass'] .k-right, .lr [data-lamp='pass'] .k-shadow { fill: var(--green); }
+  .lr [data-lamp='pass'] .k-edge { stroke: var(--green); }
+</style>
+
+<script>
+  import { STEPS, type Example } from './model';
+
+  type Flat = [number, number];
+  type Motion = { press: Flat; rest: Record<Example, Flat[]>; paths: Record<Example, Flat[][]> };
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const tr = ([x, y]: Flat) => `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-lr]')) {
+    const m: Motion = JSON.parse(root.dataset.motion!);
+    const q = <T extends Element>(s: string) => root.querySelector<T>(s)!;
+    const puck = q<SVGGElement>('[data-puck]');
+    const pressEl = q<SVGGElement>('[data-press]');
+    const lamp = q<SVGGElement>('[data-lamp]');
+    const says = q<HTMLElement>('[data-lr-says]');
+    const back = q<HTMLButtonElement>('[data-lr-back]');
+    const next = q<HTMLButtonElement>('[data-lr-next]');
+    const count = q<HTMLOutputElement>('[data-lr-count]');
+    const labels = [...root.querySelectorAll<HTMLElement>('[data-label]')];
+    const picks = [...root.querySelectorAll<HTMLButtonElement>('[data-example]')];
+    let ex = root.dataset.first as Example;
+    let at = 0;
+    let moving: Animation | null = null;
+    q<HTMLElement>('[data-lr-controls]').hidden = false;
+
+    function show(i: number, animate: boolean) {
+      const list = STEPS[ex];
+      const st = list[i]!;
+      at = i;
+      root.style.setProperty('--fig-ms', reduced.matches ? '0ms' : '');
+      moving?.cancel();
+      const path = m.paths[ex][i]!;
+      if (animate && !reduced.matches && path.length > 1) {
+        moving = puck.animate(path.map((p) => ({ transform: tr(p) })), { duration: Math.min(1400, 260 + path.length * 60), easing: 'cubic-bezier(0.45, 0, 0.25, 1)' });
+      }
+      puck.style.transform = tr(m.rest[ex][i]!);
+      pressEl.style.transform = st.at === 'act' ? tr(m.press) : 'translate(0px, 0px)';
+      lamp.dataset.lamp = st.lamp;
+      labels.forEach((l) => l.toggleAttribute('data-active', l.dataset.label === st.at));
+      says.textContent = st.says;
+      count.textContent = `${i + 1} / ${list.length}`;
+      back.disabled = i === 0;
+      next.textContent = i === list.length - 1 ? 'Start again' : 'Next step';
+    }
+    next.addEventListener('click', () => { const last = STEPS[ex].length - 1; show(at === last ? 0 : at + 1, at !== last); });
+    back.addEventListener('click', () => { show(Math.max(0, at - 1), false); if (at === 0) next.focus(); });
+    picks.forEach((b) => b.addEventListener('click', () => {
+      ex = b.dataset.example as Example;
+      picks.forEach((p) => p.setAttribute('aria-pressed', String(p === b)));
+      show(0, false);
+    }));
+    show(0, false);
+  }
+</script>

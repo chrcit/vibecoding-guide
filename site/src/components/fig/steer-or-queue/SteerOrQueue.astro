@@ -15,12 +15,13 @@ import Figure from '../Figure.astro';
 import { drawSteerOrQueue } from './draw';
 import { stateOf, describe, MESSAGE, SENT_AFTER } from './model';
 
-interface Props { n?: number | string }
-const { n = 5 } = Astro.props;
+interface Props { n?: number | string; bare?: boolean }
+const { n = 5, bare = false } = Astro.props;
 const { svg, labels, motion } = drawSteerOrQueue();
 ---
 <div class="fig-steer" data-fig-steer data-motion={JSON.stringify(motion)}>
   <Figure
+    bare={bare}
     n={n}
     title="Steer or queue"
     hint="Switch between queueing your message and steering with it."
