@@ -134,7 +134,7 @@ async function asking(ctx: Ctx, h: Script, d: Door) {
   await work(ctx, h, t, 3, false, [0, 1]);
   // The fork: a question card, and the agent carries on with the rest.
   await h.send(toTray(), 'model', { ms: 380 });
-  h.set((s) => { s.tray!.cards = [{ id: 'q', mark: 'wait' }]; s.labels = [...labels(), lab('card:q', 'a question', 'top', 'wiki/giving-feedback/')]; });
+  h.set((s) => { s.tray!.cards = [{ id: 'q', mark: 'wait' }]; s.labels = [...labels(), lab('card:q', 'a question', 'right', 'wiki/giving-feedback/')]; });
   ctx.say('the model', 'Hidden from the list, or greyed out? I will carry on with the rest meanwhile.');
   await h.wait(900);
   let answered = false;
@@ -177,7 +177,7 @@ async function pin(ctx: Ctx, h: Script, d: Door) {
   show(ctx, t);
   await h.wait(300);
   await h.send(toTray(), 'tool', { ms: 380 });
-  h.set((s) => { s.tray!.cards = [{ id: 'shot', b: 'tool', mark: 'wait' }]; s.labels = [...labels(), lab('card:shot', 'screenshot', 'top', 'wiki/browser-check/')]; });
+  h.set((s) => { s.tray!.cards = [{ id: 'shot', b: 'tool', mark: 'wait' }]; s.labels = [...labels(), lab('card:shot', 'screenshot', 'right', 'wiki/browser-check/')]; });
   ctx.say('the model', 'Here is the list with the new pause badge. Anything off?');
   if (d.value !== undefined) await h.wait(1200);
   const how = await d.wake;
@@ -199,11 +199,11 @@ async function pin(ctx: Ctx, h: Script, d: Door) {
     ctx.say('you', 'This badge sits on top of the name.');
     h.set((s) => {
       s.tray!.cards = [{ id: 'shot', b: 'tool' }, { id: 'note', b: 'you', mark: 'new' }];
-      s.labels = [...labels(), lab('card:shot', 'screenshot', 'top', 'wiki/browser-check/'), lab('card:note', 'your pin', 'right', 'wiki/giving-feedback/')];
+      s.labels = [...labels(), lab('card:shot', 'screenshot', 'right', 'wiki/browser-check/'), lab('card:note', 'your pin', 'right', 'wiki/giving-feedback/')];
     });
-    await h.wait(700);
-    await h.send(reverse(toTray()), 'you', { ms: 420 });
-    h.set((s) => { s.tray!.cards = [{ id: 'shot', b: 'tool' }]; s.labels = [...labels(), lab('card:shot', 'screenshot', 'top', 'wiki/browser-check/')]; s.agents[0]!.blocks!.push({ t: 'you', h: 0.8 }); });
+    await h.wait(1300);
+    await h.send(reverse(toTray()), 'you', { ms: 520 });
+    h.set((s) => { s.tray!.cards = [{ id: 'shot', b: 'tool' }]; s.labels = [...labels(), lab('card:shot', 'screenshot', 'right', 'wiki/browser-check/')]; s.agents[0]!.blocks!.push({ t: 'you', h: 0.8 }); });
     ctx.say('the model', 'Your pin is on the pause badge in the member row. Moving it after the name.');
     await work(ctx, h, t, 2, false, [3]);
     await h.send(toTray(), 'tool', { ms: 360 });
@@ -232,7 +232,7 @@ async function build(ctx: Ctx, h: Script) {
     s.tray!.cards = [{ id: 'review', b: 'tool', mark: 'new' }];
     s.project!.files = ['', '', '', '', '', 'ok'];
     const [x, y] = notesAt(s);
-    s.labels = [...labels(), lab('card:review', 'review page', 'top', 'wiki/giving-feedback/'), lab([x, y, 6], 'notes file', 'right')];
+    s.labels = [...labels(), lab('card:review', 'review page', 'right', 'wiki/giving-feedback/'), lab([x, y, 6], 'notes file', 'right')];
   });
   ctx.say('the model', 'The review page is up. It lists the three screens the last job changed.');
   await h.wait(1600);
