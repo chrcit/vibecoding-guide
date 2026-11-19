@@ -27,6 +27,7 @@ const empty = !from.length && !to.length;
 const id = `cx-${article.slug}`;
 ---
 {!empty && (
+  <div class="cx-wrap">
   <section class:list={['cx', { 'no-l': !from.length, 'no-r': !to.length }]} aria-labelledby={from.length ? `${id}-l` : `${id}-r`} data-cx>
     {from.length > 0 && <h2 class="cx-h cx-hl" id={`${id}-l`}>{leftTitle}</h2>}
     {to.length > 0 && <h2 class="cx-h cx-hr" id={`${id}-r`}>{rightTitle}</h2>}
@@ -54,6 +55,7 @@ const id = `cx-${article.slug}`;
       </ul>
     )}
   </section>
+  </div>
 )}
 
 <script>
@@ -71,12 +73,12 @@ const id = `cx-${article.slug}`;
 </script>
 
 <style>
+  .cx-wrap { container-type: inline-size; margin: var(--space-8) 0 0; }
   .cx {
     display: grid;
     grid-template-columns: minmax(0, 1fr) clamp(3.5rem, 14vw, 8.5rem) minmax(0, 1fr);
     grid-template-areas: 'hl . hr' 'l m r';
     column-gap: 0;
-    margin: var(--space-8) 0 0;
     padding-top: var(--space-5);
     border-top: 1px solid var(--rule);
     font-size: var(--text-s);
@@ -136,4 +138,19 @@ const id = `cx-${article.slug}`;
   }
   .cx-me:hover { border-color: var(--accent); transform: scale(1.06); }
   .cx-me:focus-visible { border-radius: 50%; }
+
+  /* Narrow (a phone, the side view): two short lists, no drawing. */
+  @container (max-width: 34rem) {
+    .cx, .cx.no-l, .cx.no-r {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: 'hl' 'l' 'hr' 'r';
+    }
+    .cx-mid { display: none; }
+    .cx-hl { text-align: left; }
+    .cx-hr { margin-top: var(--space-5); }
+    .cx-list { display: flex; flex-wrap: wrap; gap: 0 var(--space-4); }
+    .cx-l li { justify-content: flex-start; }
+    .cx-l a { flex-direction: row-reverse; text-align: left; padding-right: 0; }
+    .cx-list a { min-height: 2.25rem; }
+  }
 </style>

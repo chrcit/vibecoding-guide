@@ -22,12 +22,12 @@ const wiki = await getWiki();
 <style>
   .gp {
     width: 100%;
-    max-width: 120rem;
+    max-width: var(--board);
     margin-inline: auto;
     padding: clamp(1rem, 2vw, 1.25rem) var(--gutter) 0;
   }
   h1 a { text-decoration: none; color: inherit; }
   h1 a:hover { color: var(--accent); }
-  .gp-list { max-width: var(--full); margin: var(--space-8) auto 0; }
-  .gp-list h2 { margin: 0 0 var(--space-6); font-size: var(--text-2xl); font-weight: 480; letter-spacing: -0.016em; }
+  .gp-list { max-width: var(--board); margin: var(--space-7) auto var(--space-8); }
+  .gp-list h2 { margin: 0 0 var(--space-5); font-size: var(--text-xl); font-weight: 520; letter-spacing: -0.016em; }
 </style>

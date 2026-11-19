@@ -16,7 +16,7 @@ const k = 1.5; // marks drawn larger than in the full graph, so they read at thi
   </g>
   <g>
     {nodes.map((n) => (
-      <path class={`tone-${clusterOf(n.cluster).tone}`} transform={`translate(${n.x} ${n.y})`} d={shapePath(clusterOf(n.cluster).shape, n.r * k)} fill-rule="evenodd" />
+      <path class={`tone-${clusterOf(n.cluster).tone} c-${n.cluster}`} data-slug={n.slug} transform={`translate(${n.x} ${n.y})`} d={shapePath(clusterOf(n.cluster).shape, n.r * k)} fill-rule="evenodd" />
     ))}
   </g>
 </svg>
@@ -24,7 +24,8 @@ const k = 1.5; // marks drawn larger than in the full graph, so they read at thi
 <style>
   .gthumb { display: block; width: 100%; height: 100%; }
   .e line { stroke: var(--rule-strong); stroke-width: 2.2; }
-  path { fill: var(--tone); }
+  path { fill: var(--tone); transition: opacity var(--dur) ease; }
+  line { transition: opacity var(--dur) ease; }
   .tone-ink { --tone: var(--ink); }
   .tone-accent { --tone: var(--accent); }
   .tone-green { --tone: var(--green); }

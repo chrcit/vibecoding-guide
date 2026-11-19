@@ -551,7 +551,14 @@ export function mountGraph(root: HTMLElement) {
     const i = nodeIndex(e.target);
     if (i === null) return;
     const dirs: Record<string, [number, number]> = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowDown: [0, 1], ArrowUp: [0, -1] };
-    if (dirs[e.key]) {
+    if (e.key === 'Tab' && !e.altKey && !e.ctrlKey && !e.metaKey) {
+      // Move between nodes ourselves, so the browser does not scroll the page
+      // to a node that is outside the current view; the camera follows instead.
+      const live = ALL.filter((j) => !out[j]);
+      const at = live.indexOf(i);
+      const j = live[at + (e.shiftKey ? -1 : 1)];
+      if (j !== undefined) { e.preventDefault(); nodeEls[j].focus({ preventScroll: true }); }
+    } else if (dirs[e.key]) {
       e.preventDefault();
       const j = step(i, dirs[e.key]);
       if (j !== null) nodeEls[j].focus({ preventScroll: true });

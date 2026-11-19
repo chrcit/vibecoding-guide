@@ -25,6 +25,8 @@ const siblings = wiki.articles.filter((a) => a.cluster === c.id);
 
 <style>
   .cn { font-size: var(--text-s); line-height: 1.35; }
+  /* In the side view the article is a quick look: no list of its neighbours in the cluster. */
+  :global(html[data-embed]) .cn { display: none; }
   .cn-head {
     display: flex; align-items: center; gap: 0.55rem;
     min-height: 2.5rem;

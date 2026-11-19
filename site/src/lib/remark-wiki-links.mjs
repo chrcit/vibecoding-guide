@@ -22,7 +22,9 @@ const LINK = /^(?:\.\/)?([A-Za-z0-9_-]+)\.md(#.*)?$/;
 
 const text = (node) =>
   typeof node.value === 'string' ? node.value : Array.isArray(node.children) ? node.children.map(text).join('') : '';
-const norm = (s) => s.replace(/\s+/g, ' ').trim();
+// Smartypants may already have curled the quotes and turned dashes into dashes.
+const norm = (s) =>
+  s.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/\u2014/g, '---').replace(/\u2013/g, '--').replace(/\u2026/g, '...').replace(/\s+/g, ' ').trim();
 
 export function remarkWikiLinks({ base = '/' } = {}) {
   const prefix = base.endsWith('/') ? base : base + '/';
