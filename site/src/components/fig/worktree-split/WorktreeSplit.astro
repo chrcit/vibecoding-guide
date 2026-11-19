@@ -1,6 +1,6 @@
 ---
 /*
- * Fig. 34, "A worktree each stops clobbering, not collisions". Goes inside a board tile.
+ * Fig. 34, "A worktree each still meets the others at the merge". Goes inside a board tile.
  * Idea: two agents in one folder overwrite each other while they work; a worktree each keeps their
  * changes apart until the merge, where edits to the same lines still collide, and some things a
  * worktree never separates.
@@ -21,7 +21,7 @@ const states = [
   <div class="pick wt-pick" role="group" aria-label="Where the two agents work">
     {states.map((s, i) => <button type="button" data-wt-pick={i} aria-pressed={i === 0 ? 'true' : 'false'}>{s.name}</button>)}
   </div>
-  <Figure bare n={34} title="A worktree each stops clobbering, not collisions" alt="Two agents on the bakery site, one fixing holiday hours and one Sunday hours, both saving into the same hours.js in one folder. The second save overwrites the first.">
+  <Figure bare n={34} title="A worktree each still meets the others at the merge" alt="Two agents on the bakery site, one fixing holiday hours and one Sunday hours, both saving into the same hours.js in one folder. The second save overwrites the first.">
     <div class="wt-draw" aria-hidden="true">
       <div class="wt-agents"><span>Agent A · holiday hours</span><span>Agent B · Sunday hours</span></div>
       <div class="wt-one"><span class="wt-file">hours.js</span><span class="wt-bang">B’s save overwrites A’s</span></div>
