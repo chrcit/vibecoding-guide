@@ -79,8 +79,11 @@ export interface Card {
   /** Its colour, by what it is made of. Default 'model'. */
   b?: Kind;
   mark?: 'new' | 'ok' | 'bad' | 'wait' | 'work';
+  /** A card that fills as the work goes on (a progress file): how far it has got, 0 to 1. */
+  fill?: number;
 }
-export interface Tray { at: XY; cards: Card[] }
+/** `gap`: space between cards, default 9. Wider when each card carries a label. */
+export interface Tray { at: XY; cards: Card[]; gap?: number }
 export interface Person { id: string; at: XY; who?: 'peer' | 'client' | 'user'; scale?: number }
 /** The machine a part of the floor runs on. `off` is a closed lid. */
 export interface Zone { id: string; rect: [x: number, y: number, w: number, d: number]; kind: 'laptop' | 'box' | 'cloud'; off?: boolean }
@@ -142,7 +145,7 @@ export const jobSpot = (i: number, n: number, gap = 58): XY => [(i - (n - 1) / 2
 export const attendSpot = (i: number, n: number, gap = 58): XY => [(i - (n - 1) / 2) * gap, 58];
 export const cardSpot = (tray: Tray, id: string): XY => {
   const i = Math.max(0, tray.cards.findIndex((c) => c.id === id));
-  return [tray.at[0] + (i - (tray.cards.length - 1) / 2) * 9, tray.at[1]];
+  return [tray.at[0] + (i - (tray.cards.length - 1) / 2) * (tray.gap ?? 9), tray.at[1]];
 };
 /** Worker slot i (0..4) across, j (0..3) back. */
 export const slot = (i: number, j: number): XY => [-88 + 44 * i, -98 - 52 * j];
@@ -300,11 +303,13 @@ function meterMarkup(m: Meter) {
 }
 
 function trayMarkup(t: Tray) {
-  const w = Math.max(40, t.cards.length * 9 + 12);
+  const gap = t.gap ?? 9;
+  const w = Math.max(40, t.cards.length * gap + 12);
   let out = S(k.box({ x: -w / 2, y: -11, w, d: 22, r: 5 }, 0, 2.2, P), { tone: 'base' });
   t.cards.forEach((c, i) => {
-    const x = (i - (t.cards.length - 1) / 2) * 9;
-    out += S(k.box({ x: x - 2.2, y: -8, w: 4.4, d: 16, r: 1 }, 2.2, c.mark === 'new' ? 15 : 12.5, P), { crease: false, 'data-b': c.b ?? 'model', 'data-card': c.mark ?? '-', 'data-lit': c.mark === 'new' || c.mark === 'wait' ? '' : undefined });
+    const x = (i - (t.cards.length - 1) / 2) * gap;
+    const h = c.fill !== undefined ? 1.5 + 13.5 * Math.max(0, Math.min(1, c.fill)) : c.mark === 'new' ? 15 : 12.5;
+    out += S(k.box({ x: x - 2.2, y: -8, w: 4.4, d: 16, r: 1 }, 2.2, h, P), { crease: false, 'data-b': c.b ?? 'model', 'data-card': c.mark ?? '-', 'data-lit': c.mark === 'new' || c.mark === 'wait' ? '' : undefined });
   });
   return out;
 }
@@ -382,7 +387,7 @@ function extent(s: SceneState, key: string): P3[] {
   if (gate) return boxPts(gate.at, 17, 17, 32);
   const [what, id] = key.split(':') as [string, string | undefined];
   if (what === 'meter') { const m = s.meters?.find((x) => x.id === id); if (m) return boxPts(m.at, 13, 13, METER_H + 6); }
-  if (key === 'tray' && s.tray) return boxPts(s.tray.at, Math.max(20, s.tray.cards.length * 4.5 + 6), 11, 18);
+  if (key === 'tray' && s.tray) return boxPts(s.tray.at, Math.max(20, s.tray.cards.length * (s.tray.gap ?? 9) / 2 + 6), 11, 18);
   if (what === 'zone') { const z = s.zones?.find((x) => x.id === id); if (z) { const [x, y, w, d] = z.rect; return [[x, y, 0], [x + w, y, 0], [x, y + d, -8], [x + w, y + d, -8]]; } }
   if (what === 'p') { const p = s.projects?.find((x) => x.id === id); if (p) return boxPts(p.at, 44 * (p.scale ?? 1), 36 * (p.scale ?? 1), 14); }
   const person = s.people?.find((x) => x.id === key);

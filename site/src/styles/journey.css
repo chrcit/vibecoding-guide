@@ -166,6 +166,8 @@ main:has(> .j-root) { container: journey / inline-size; }
 .j-svg [data-card='ok'] .k-edge { stroke: var(--green); stroke-width: 2px; }
 .j-svg [data-card='bad'] .k-edge { stroke: var(--accent); stroke-width: 2px; }
 .j-svg [data-card='work'] { opacity: 0.55; }
+/* A card that waits for you has a blue edge, like a lamp that waits. */
+.j-svg .k-solid[data-b][data-lit][data-card='wait'] .k-edge { stroke: var(--blue); stroke-width: 2px; }
 .j-svg [data-who='peer'] .k-top, .j-svg [data-who='peer'] .k-fill { fill: color-mix(in oklab, var(--ink) 48%, var(--card)); }
 .j-svg [data-who='peer'] .k-left { fill: color-mix(in oklab, var(--ink) 40%, var(--card)); }
 .j-svg [data-who='peer'] .k-right, .j-svg [data-who='peer'] .k-shadow { fill: color-mix(in oklab, var(--ink) 58%, var(--card)); }
