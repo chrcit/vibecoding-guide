@@ -82,7 +82,7 @@ export function boot(root: HTMLElement) {
     ctx.level = getLevel();
     ctx.mem = {};
     ctx.say(null, '');
-    const note = STEP_NOTES[name]?.[el.dataset.step!];
+    const note = STEP_NOTES[root.dataset.chapter ?? '']?.[el.dataset.step!];
     if (note) ctx.model(note.part, note.text[ctx.level]);
     else ctx.model('', '');
     ctx.stat([]);
