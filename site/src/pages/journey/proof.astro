@@ -1,11 +1,63 @@
 ---
 import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
+import More from '../../components/journey/More.astro';
 import Next from '../../components/journey/Next.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+
+const ids = ['harnesses.claudeCode.askForEvidence', 't3code.htmlRenders', 't3code.browser'];
+const prompt = `When you finish, hand back proof I can judge in a minute:
+- three lines on what changed and what you left out
+- the test command you ran and its output
+- screenshots of every page you touched, at 390 and 1440 pixels wide
+- a link where I can try it
+If you could not check something, say so.`;
 ---
-<Journey chapter="proof" first="first" title="Proof you can read" description="An agent can hand back more than the word done: a summary, a test run, a screenshot, a link to try. Each shows you one kind of wrong at a glance.">
-  <Step id="first" title="Proof you can read">
-    <p>This chapter is being built.</p>
-    <Next from="proof" />
+<Journey chapter="proof" first="word" title="Proof you can read" description="An agent can hand back more than the word done: a summary, a test run, a screenshot, a link to try. Each shows you one kind of wrong at a glance.">
+  <Step id="word" title="“Done” is one word">
+    <p>A made-up job passes the check and comes back to you. To know it is what you asked for, you would read every changed line.</p>
   </Step>
+  <Step id="cards" title="Ask for proof with the work">
+    <p>The agent runs the tests and opens the page, and hands back four cards. Each answers one question.</p>
+    <More title="Where this comes from">
+      <p><Fact id="harnesses.claudeCode.askForEvidence" show="claim" /></p>
+    </More>
+  </Step>
+  <Step id="catch" title="Each card shows one kind of wrong">
+    <p>Six made-up jobs, all green at the check. Four are not what you asked for. Switch the cards off and on.</p>
+    <div class="pick">
+      <button type="button" data-do="toggle" data-val="sum" aria-pressed="true">Summary</button>
+      <button type="button" data-do="toggle" data-val="tests" aria-pressed="true">Test run</button>
+      <button type="button" data-do="toggle" data-val="shot" aria-pressed="true">Screenshot</button>
+      <button type="button" data-do="toggle" data-val="link" aria-pressed="true">Link</button>
+    </div>
+  </Step>
+  <Step id="during" title="Proof while it runs">
+    <p>A long job. With a progress file it keeps up to date, you can look at any time without stopping it.</p>
+    <div class="pick">
+      <button type="button" data-do="progress" data-val="off" data-default aria-pressed="true">Nothing until the end</button>
+      <button type="button" data-do="progress" data-val="on" aria-pressed="false">A progress file</button>
+    </div>
+    <More title="In T3 Code">
+      <p><Fact id="t3code.htmlRenders" show="claim" /> <Fact id="t3code.browser" show="claim" /></p>
+    </More>
+  </Step>
+  <Step id="ask" title="Say what you want back">
+    <p>Different work needs different proof.</p>
+    <div class="pick">
+      <button type="button" data-do="kind" data-val="page" data-default aria-pressed="true">A page</button>
+      <button type="button" data-do="kind" data-val="script" aria-pressed="false">A script</button>
+      <button type="button" data-do="kind" data-val="fix" aria-pressed="false">A bug fix</button>
+    </div>
+    <More title="A prompt for this">
+      <CopyPrompt title="Proof with the work" compact>{prompt}</CopyPrompt>
+    </More>
+    <Next from="proof" more={[{ href: 'explain/verification/', text: 'Checking the work' }]} />
+  </Step>
+  <Fragment slot="foot">
+    <p>The jobs, the 212 changed lines and which jobs went wrong are made up.</p>
+    <Verified ids={ids} />
+  </Fragment>
 </Journey>
