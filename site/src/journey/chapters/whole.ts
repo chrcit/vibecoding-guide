@@ -3,6 +3,7 @@ import type { Chapter, Ctx } from '../chapter';
 import { solo, team, lab, worked } from '../presets';
 import { fleet } from '../sim';
 import { route, reverse, BUS_Y } from '../picture';
+import { LINES } from './chat';
 import { job } from './loop';
 import { session } from './memory';
 import { jobs } from './check';
@@ -15,14 +16,18 @@ export const whole: Chapter = {
   steps: {
     chat: {
       scene: () => solo({ labels: [you, lab('a0', 'the model', 'top', 'wiki/model/'), lab('tank:a0', 'its window', 'left', 'wiki/context-window/')] }),
-      enter: (ctx) => again(ctx, async (h) => {
+      enter: (ctx) => { let i = 0; again(ctx, async (h) => {
+        const [you, model] = LINES[i++ % LINES.length]!;
         h.set((s) => { if (s.agents[0]!.blocks!.length >= 12) s.agents[0]!.blocks = []; });
+        ctx.say('you', you);
         await h.send(route.youToAgent(), 'you');
         h.set((s) => { s.agents[0]!.blocks!.push({ t: 'you', h: 3 }); s.agents[0]!.busy = true; });
         await h.wait(700);
         h.set((s) => { s.agents[0]!.blocks!.push({ t: 'model', h: 3 }); s.agents[0]!.busy = false; });
+        ctx.say('model', model);
         await h.send(reverse(route.youToAgent()), 'model');
-      }, 700),
+        ctx.stat([['in the window', `${ctx.scene.agent('a0').blocks!.length} messages`]]);
+      }, 1100); },
     },
     loop: {
       scene: () => solo({ tools: true, project: true, labels: [you, lab('tools', 'tools', 'top', 'wiki/tool-call/'), lab('project', 'your project')] }),
@@ -53,11 +58,11 @@ export const whole: Chapter = {
     },
     parallel: {
       scene: () => team(3, { trees: true, lead: [{ t: 'rules', h: 4 }], labels: [you, lab('project', 'main', 'top', 'wiki/branch/')] }),
-      enter: (ctx) => void ctx.scene.run((h) => fleet(ctx, h, {})),
+      enter: (ctx) => void ctx.scene.run((h) => fleet(ctx, h, { until: 9 }).then(() => undefined)),
     },
     lead: {
       scene: () => team(5, { trees: true, mgate: true, mixed: true, lead: [{ t: 'rules', h: 4 }], labels: [you, lab('a0', 'the lead', 'top', 'wiki/orchestration/'), lab('mgate', 'check', 'top', 'wiki/verification/'), lab('project', 'main', 'top', 'wiki/branch/')] }),
-      enter: (ctx) => void ctx.scene.run((h) => fleet(ctx, h, { gate: true })),
+      enter: (ctx) => void ctx.scene.run((h) => fleet(ctx, h, { gate: true, until: 15 }).then(() => undefined)),
     },
     fleet: {
       scene: () => {
@@ -65,7 +70,7 @@ export const whole: Chapter = {
         s.focus = ['you', 'a0', 'project', [-88, -254, 30], [88, -254, 30], [-110, BUS_Y, 0]];
         return s;
       },
-      enter: (ctx) => { ctx.scene.speed = 1.5; void ctx.scene.run((h) => fleet(ctx, h, { gate: true })); },
+      enter: (ctx) => { ctx.scene.speed = 1.5; void ctx.scene.run(async (h) => { const t = await fleet(ctx, h, { gate: true, until: 40 }); ctx.say(null, `${t.landed} tasks landed. ${t.sentBack} were sent back at the gate first. ${t.wrong} wrong ones reached main.`); }); },
     },
   },
 };

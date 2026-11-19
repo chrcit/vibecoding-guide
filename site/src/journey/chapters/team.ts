@@ -11,7 +11,14 @@ const lead = () => [{ t: 'rules' as const, h: 4 }, { t: 'you' as const, h: 3 }];
 function go(ctx: Ctx, scene: SceneState, o: FleetOpts) {
   void ctx.scene.run(async (h) => {
     h.set((s) => { Object.assign(s, scene); });
-    await fleet(ctx, h, o);
+    const t = await fleet(ctx, h, o);
+    // Every run ends, and says what came of it.
+    const parts = [`${t.landed} tasks landed on main.`];
+    if (o.gate) parts.push(`${t.sentBack} were sent back at the gate first.`);
+    if (o.shared) parts.push(`${t.clashes} clashed with another agent’s edit.`);
+    parts.push(t.wrong ? `${t.wrong} of them were wrong, and nothing stopped them.` : 'None of them was wrong.');
+    if (t.compactions) parts.push(`The lead’s window filled and was compacted ${t.compactions === 1 ? 'once' : t.compactions + ' times'}.`);
+    ctx.say(null, parts.join(' '));
   });
 }
 
@@ -172,7 +179,7 @@ const runFleet = (ctx: Ctx) => {
   const n = ctx.mem.n ?? 20, gate = ctx.mem.gate ?? true;
   ctx.say(null, gate ? 'You are not reading twenty windows. You are reading what gets through the gate.' : 'No gate. Whatever a builder calls done lands on main.');
   ctx.scene.speed = n > 10 ? 1.5 : 1.2;
-  go(ctx, many(n, gate), { gate });
+  go(ctx, many(n, gate), { gate, until: Math.max(8, n * 2) });
 };
 export const fleetCh: Chapter = {
   steps: {

@@ -3,7 +3,7 @@ import type { Chapter, Ctx } from '../chapter';
 import { solo, lab } from '../presets';
 import { route, reverse } from '../picture';
 
-const LINES: [string, string][] = [
+export const LINES: [string, string][] = [
   ['My name is Sam. I run a chess club.', 'Hello Sam. What does the club need?'],
   ['A list of members with their ratings.', 'I can make that. Who is on it?'],
   ['What is my name?', 'Sam.'],

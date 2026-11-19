@@ -46,7 +46,8 @@ import './levels.css';
       offer.style.top = `${top + 8}px`;
       if (picker) {
         const gap = innerWidth - picker.getBoundingClientRect().right;
-        offer.style.right = `${Math.max(16, gap)}px`;
+        // Line up with the picker, but never run off the left edge.
+        offer.style.right = `${Math.max(16, Math.min(gap, innerWidth - offer.offsetWidth - 16))}px`;
       }
     };
 
