@@ -27,8 +27,12 @@ export interface Part {
   title: string;
   short: string;
   range: string;
+  /** What the part builds, in one plain sentence. */
   blurb: string;
+  /** Where the part picks up: one line that ties it to the part before. */
+  recap?: string;
   href: string;
+  /** The overview's chapter script (journey/chapters): one step per lesson, keyed by lesson id. */
   chapter: string;
 }
 
@@ -38,7 +42,7 @@ export const parts: Part[] = [
     title: 'Before your first code',
     short: 'Part one · Foundations',
     range: '1–4',
-    blurb: 'What AI is, Chat vs Work vs Coding Agent, providers and where models run, Git and cloud hosting, and your first real loop on a laptop, desktop or phone.',
+    blurb: 'What AI is and where it runs, the tools around your code (Git, GitHub, hosting), and your first loop with a coding agent on a laptop, desktop or phone.',
     href: 'journey/foundations/',
     chapter: 'foundations',
   },
@@ -47,7 +51,8 @@ export const parts: Part[] = [
     title: 'From one chat to twenty agents',
     short: 'Part two · The agents',
     range: '5–13',
-    blurb: 'One chat, tool loops, context windows and context rot, memory files, automated checks, helpers, parallel worktrees, leads and fleets.',
+    blurb: 'One chat grows into an agent with tools, a window that fills, an instruction file and a check, then helpers, a lead and a fleet of twenty.',
+    recap: 'The loop you ran at the end of part one is one agent. This part takes it apart and grows it into twenty.',
     href: 'journey/agents/',
     chapter: 'whole',
   },
@@ -56,7 +61,8 @@ export const parts: Part[] = [
     title: 'From one job to a working week',
     short: 'Part three · The working week',
     range: '14–21',
-    blurb: 'Tokens and billing, adversarial second-model review, readable proof, stepping in, parallel jobs, keeping a growing codebase healthy, teams and remote machines.',
+    blurb: 'What the agents cost, who reviews their work, the proof you read, where you step in, several jobs at once, a growing project, other people and other machines.',
+    recap: 'The fleet you just watched is what this part prices, checks and runs through a working week.',
     href: 'journey/week/',
     chapter: 'week',
   },
