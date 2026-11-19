@@ -116,7 +116,7 @@ const checked = formatDate(CHECKED, true);
   <Tile title="How the bars are worked out" span={4} id="cost-model">
     <dl class="mb-model">
       <div><dt>Price</dt><dd>Fresh input × price in, cached input × cache read, output × effort × price out. List prices, <Explain to="sources/#file-models">from the data</Explain>.</dd></div>
-      <div><dt>Job sizes</dt><dd>{PRESETS.map((p, i) => <>{i > 0 && '; '}{p.name.toLowerCase()} {tokens(p.input)} in, {tokens(p.output)} out, {p.cache}% cached</>)}. Our illustrations.</dd></div>
+      <div><dt>Job sizes</dt><dd>{PRESETS.map((p, i) => <>{i > 0 && '; '}{`${p.name.toLowerCase()} ${tokens(p.input)} in, ${tokens(p.output)} out, ${p.cache}% cached`}</>)}. Our illustrations.</dd></div>
       <div><dt>Effort</dt><dd>Output scaled by what {ratio.model} wrote at each level against {EFFORT_BASE} on the <Explain to={sourcePath('benchmarks.aa.opusByEffort.max.totalTokens')}>index run</Explain>, applied to every model.</dd></div>
       <div><dt>Left out</dt><dd>Cache writes, batch, fast mode, long-prompt prices.</dd></div>
     </dl>
@@ -214,7 +214,8 @@ When you are done, tell me which files you changed, paste the test output, and l
   .mb-harness tbody th { color: var(--muted); font-weight: 500; white-space: nowrap; }
   .gap { color: var(--muted); font-style: italic; }
 
-  .mb-share { display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+  .mb-share { --fig-edge: color-mix(in oklab, var(--ink) 72%, var(--card));
+    display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
   .mb-share li { display: grid; grid-template-columns: minmax(7rem, 9rem) 1fr 3.5rem; align-items: center; gap: 0.5rem; min-height: 2.25rem; }
   .mb-share a { color: var(--ink-2); text-decoration: none; font-size: var(--text-xs); }
   .mb-share .mb-pct { font-family: var(--mono); font-weight: 600; color: var(--ink); text-align: right; }

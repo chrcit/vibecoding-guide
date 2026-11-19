@@ -73,6 +73,7 @@ const baseAt = effort.levels.indexOf(effort.base);
 </div>
 
 <style is:global>
+  .jc { --fig-edge: color-mix(in oklab, var(--ink) 72%, var(--card)); --fig-line: color-mix(in oklab, var(--ink) 42%, var(--card)); --fig-faint: color-mix(in oklab, var(--ink) 18%, var(--card)); --fig-ease: cubic-bezier(0.32, 0.72, 0, 1); }
   .jc { display: grid; gap: 1rem 1.5rem; grid-template-columns: minmax(0, 1fr); }
   @container (min-width: 44rem) { .jc { grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr); } }
   .jc-controls { display: grid; gap: 0.75rem; align-content: start; }

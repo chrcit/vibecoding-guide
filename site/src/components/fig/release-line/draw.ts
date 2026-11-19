@@ -33,7 +33,7 @@ export function draw(all: Release[], from: number, to: number, width: number) {
     if (day > to) break;
     const every = yearly ? (width < 520 ? 2 : 1) : width < 520 ? 3 : span > 400 ? 2 : 1;
     const idx = yearly ? d.getUTCFullYear() : d.getUTCMonth();
-    if (idx % every === 0) ticks.push({ day, text: yearly ? String(d.getUTCFullYear()) : `${MONTHS[d.getUTCMonth()]}${d.getUTCMonth() === 0 ? ` ${d.getUTCFullYear()}` : ''}` });
+    if (idx % every === 0) ticks.push({ day, text: yearly || d.getUTCMonth() === 0 ? String(d.getUTCFullYear()) : MONTHS[d.getUTCMonth()]! });
   }
   const axis = `<path class="c-axis" d="M${m.l} ${mid}H${width - m.r}"/>` + ticks.map((t) =>
     `<path class="c-grid" d="M${n1(x(t.day))} ${mid - 4}V${mid + 4}"/><text class="c-label" x="${n1(x(t.day))}" y="${height - 8}" text-anchor="middle">${esc(t.text)}</text>`).join('');
