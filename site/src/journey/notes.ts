@@ -201,7 +201,7 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
     fix: {
       part: 'One request, many turns.',
       text: {
-        plain: 'The red slab is a failing check. The agent read it and fixed its own mistake before telling you anything.',
+        plain: 'The orange slab is a failing check. The agent read it and fixed its own mistake before telling you anything.',
         technical: 'Here the run tool is `npm test`: 1 of 12 fails, the agent patches members.ts and runs it again until 12 of 12 pass.',
         engineer: 'Fast local oracles (type checker, unit tests) turn generation into iteration: each failure is an observation the next turn can act on.',
       },
@@ -361,7 +361,7 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
     brief: {
       part: 'Only the brief crosses.',
       text: {
-        plain: '“Do not change anything” was said to the agent, not written in the brief, so the helper changed three files. Red tiles are those changes.',
+        plain: '“Do not change anything” was said to the agent, not written in the brief, so the helper changed three files. Orange tiles are those changes.',
         technical: 'The helper sees no conversation. Scope, read-only, where to look and what to return all go in the brief.',
         engineer: 'State inputs, allowed side effects and the answer’s shape. Anything left implicit is a guess on the other side.',
       },
@@ -371,7 +371,7 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
     three: {
       part: 'One folder, three writers.',
       text: {
-        plain: 'Red tiles are edits that landed on top of another helper’s. Each helper thinks it finished; one of them did not.',
+        plain: 'Orange tiles are edits that landed on top of another helper’s. Each helper thinks it finished; one of them did not.',
         technical: 'Three agents on one working tree: overwritten saves, test runs that see each other’s half-done edits.',
         engineer: 'Shared mutable state with no isolation. Never run write-capable agents in parallel on one checkout.',
       },
