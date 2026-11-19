@@ -198,113 +198,113 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
   },
   handoff: {
     alone: {
-      part: 'Exploration fills the main window.',
+      part: 'A search is mostly noise.',
       text: {
-        plain: 'When one agent hunts through seven files to find one answer, all seven files stay stuck in its window and clutter the actual build.',
-        technical: 'Exploratory `grep` and file reads bloat the main thread’s context with irrelevant code before you even start writing the patch or tests.',
-        engineer: 'Mixing broad discovery with implementation pollutes the primary working set, accelerating context rot and inflating prefix cost.',
+        plain: 'Seven whole files went into the window for a three-line answer, and they stay for the rest of the job.',
+        technical: 'A grep and seven file reads, all appended to the main thread before the first edit of the real task.',
+        engineer: 'Discovery and implementation share one context here: the search output dilutes everything after it and is paid for on every later turn.',
       },
     },
     hand: {
-      part: 'Subagent = disposable context.',
+      part: 'A helper.',
       text: {
-        plain: 'A helper starts with an empty window, reads the messy files, sends back a 3-line summary, and gets thrown away—keeping your main agent sharp.',
-        technical: 'Delegate codebase search or log triage to a subagent so only the distilled file paths, symbols and line numbers enter the main thread.',
-        engineer: 'Subagents act as context firewalls: isolate high-volume read/search noise in ephemeral windows and pass only structured summaries across the boundary.',
+        plain: 'The second column is a helper: an agent with its own empty window. Its window filled instead of the agent’s, then was thrown away.',
+        technical: 'In Claude Code this is a subagent: a fresh context, a summary back. Only the three lines cost the main thread anything.',
+        engineer: 'A context firewall: high-volume reads stay in a disposable window; only the structured result crosses the boundary.',
       },
     },
     brief: {
-      part: 'The helper only knows its brief.',
+      part: 'Only the brief crosses.',
       text: {
-        plain: 'A helper cannot see your earlier chat—if you forget to include a rule like “read only, don’t edit”, it will happily go off-script.',
-        technical: 'Explicitly pass scope, read-only constraints and expected output format in every delegation brief; never assume inherited thread context.',
-        engineer: 'Treat subagent delegation like an RPC contract: define inputs, invariants, allowed side effects and return schema explicitly.',
+        plain: '“Do not change anything” was said to the agent, not written in the brief, so the helper changed three files. Red tiles are those changes.',
+        technical: 'The helper sees no conversation. Scope, read-only, where to look and what to return all go in the brief.',
+        engineer: 'State inputs, allowed side effects and the answer’s shape. Anything left implicit is a guess on the other side.',
       },
     },
   },
   parallel: {
     three: {
-      part: 'Shared folder = clobbered edits.',
+      part: 'One folder, three writers.',
       text: {
-        plain: 'Three agents editing the exact same folder at once step on each other’s files and break each other’s work.',
-        technical: 'Concurrent agents on one working tree cause dirty diffs, conflicting file saves and polluted test runs.',
-        engineer: 'Mutable shared working directories break isolation—never run parallel write-capable agents against the same checkout.',
+        plain: 'Red tiles are edits that landed on top of another helper’s. Each helper thinks it finished; one of them did not.',
+        technical: 'Three agents on one working tree: overwritten saves, test runs that see each other’s half-done edits.',
+        engineer: 'Shared mutable state with no isolation. Never run write-capable agents in parallel on one checkout.',
       },
     },
     copies: {
-      part: 'Git worktrees isolate parallel jobs.',
+      part: 'A copy each.',
       text: {
-        plain: 'Each agent gets its own clean copy of your project (a worktree) so they can build three features at once and merge them neatly one by one.',
-        technical: 'One git worktree + branch per task gives every agent isolated files, its own `tsc`/unit-test run, and a clean PR diff into `main`.',
-        engineer: 'Worktrees provide cheap filesystem & branch isolation on a shared object store, serializing integration cleanly at the merge gate.',
+        plain: 'The small plate beside each helper is its own copy of the project. Nothing it does touches main until it is merged.',
+        technical: 'One worktree and branch per task: its own files, its own `npm test`, a clean merge into main.',
+        engineer: 'Worktrees share one object store and isolate the working tree; integration is serialised at the merge.',
       },
     },
     more: {
-      part: 'Scaling workers shifts the bottleneck.',
+      part: 'More helpers, fuller window.',
       text: {
-        plain: 'Adding more parallel agents speeds up building, but only if you keep jobs small and clear enough that you can actually review what comes back.',
-        technical: 'Five concurrent worktrees multiply merge conflicts and review load unless tasks touch disjoint modules with passing automated suites.',
-        engineer: 'Parallelism scales cleanly only across orthogonal module boundaries with automated verification; otherwise merge contention and human review saturate.',
+        plain: 'More helpers finish sooner, but each sends a report to the same agent. Its window is the next thing to run out.',
+        technical: 'Five branches merge one at a time, and five reports land in one thread. The agent becomes the bottleneck.',
+        engineer: 'Parallelism moves the limit to integration: merge order, conflicts and the coordinator’s context.',
       },
     },
   },
   lead: {
     roles: {
-      part: 'Lead orchestrator + specialist builders.',
+      part: 'The lead.',
       text: {
-        plain: 'Instead of juggling five chats yourself, one lead agent breaks the goal into pieces, assigns helpers, and brings you one combined update.',
-        technical: 'An orchestrator decomposes a spec into bounded subtasks, dispatches workers per module, and coordinates `tsc` + test verification before reporting.',
-        engineer: 'Hierarchical orchestration separates planning/coordination from execution, keeping the lead’s context focused on architecture and integration contracts.',
-      },
-    },
-    shapes: {
-      part: 'Match the team shape to the risk.',
-      text: {
-        plain: 'Use Build→Review for tricky features, Plan→Build→Review for big changes, or Best-of-two when you want to compare two approaches.',
-        technical: 'Choose pair (builder + reviewer), pipeline (plan → implement + unit tests → review), or parallel best-of-N based on blast radius.',
-        engineer: 'Different coordination topologies trade token spend for variance reduction: pipelines enforce upfront design, pairs catch blind spots, N-way tournaments hedge hard design choices.',
-      },
-    },
-    gate: {
-      part: 'Merge gate protects main.',
-      text: {
-        plain: 'Every helper’s work has to pass the check before touching your live project—broken edits bounce back automatically.',
-        technical: 'Require full `tsc --noEmit`, unit tests and lint to pass at the merge gate so broken worker branches never poison `main`.',
-        engineer: 'A mandatory CI/local merge gate preserves `main` as a permanently green invariant regardless of how many autonomous workers run.',
+        plain: 'The front column is the agent you talk to. It no longer edits files: it writes briefs and merges. The five behind it are the helpers.',
+        technical: 'The lead splits the request into tasks, starts a helper per worktree, and merges branches into main.',
+        engineer: 'Separate coordination from execution: the lead holds decisions and integration; helpers hold the code reads.',
       },
     },
     reports: {
-      part: 'Short structured reports protect the lead.',
+      part: 'Its window is for reports.',
       text: {
-        plain: 'If five builders dump their entire messy logs back to the lead, the lead’s window rots too—short status reports keep it clear-headed.',
-        technical: 'Return compact summaries (changed files, test counts, remaining risks) rather than raw transcripts so the orchestrator avoids context rot.',
-        engineer: 'Enforce strict information compression at every agent boundary; verbose child outputs collapse parent reasoning quality.',
+        plain: 'With “Everything”, the lead’s window fills with other agents’ work and gets compacted, losing what it was keeping track of.',
+        technical: 'Ask helpers for changed files, test result, open questions. Diffs and logs stay on the branch for whoever needs them.',
+        engineer: 'Compress at every boundary. A coordinator that ingests raw child output degrades like any overfull context.',
+      },
+    },
+    shapes: {
+      part: 'Shapes of a team.',
+      text: {
+        plain: 'Build then review for a tricky change, plan first for a big one, two builds when you are unsure which approach is right.',
+        technical: 'Pair (helper and reviewer), pipeline (plan, build, review), best of two. The reviewer runs a different model.',
+        engineer: 'Topologies trade tokens for variance: a pipeline fixes design up front, a pair catches blind spots, best-of-N hedges a hard choice.',
+      },
+    },
+    gate: {
+      part: 'The check in front of main.',
+      text: {
+        plain: 'Main only gets work that passed. Without the check, red marks land on main and stay there.',
+        technical: 'The lead runs the check on each branch before merging. Broken branches go back to their helper with the output.',
+        engineer: 'Main stays green as an invariant however many helpers run; re-run the check after each merge.',
       },
     },
   },
   fleet: {
     twenty: {
-      part: 'Fleet = verification-driven workflow.',
+      part: 'The fleet.',
       text: {
-        plain: 'At twenty agents you stop babysitting individual edits—you write clear goals and review only the finished work that passed every check.',
-        technical: 'High-concurrency runs work only when tasks are well-decomposed and guarded by strict types, unit suites and preview checks.',
-        engineer: 'At fleet scale your role shifts from line-level authoring to system design: spec clarity, module decoupling, oracle coverage and merge-queue throughput.',
+        plain: 'The lead, the check and twenty helpers, each with its own copy. The readout counts the forty tasks onto main.',
+        technical: 'Each helper starts every task with an empty window and a brief; nothing carries over between tasks except what is on main.',
+        engineer: 'Small, independent tasks with a check each are what make twenty helpers useful; big coupled tasks just queue at the merge.',
       },
     },
     nogate: {
-      part: 'Fleet without checks = chaos at speed.',
+      part: 'No check, at speed.',
       text: {
-        plain: 'Running twenty agents with no checks doesn’t make you twenty times faster—it just piles up twenty broken changes for you to untangle.',
-        technical: 'Removing typecheck and test gates scales defect injection linearly with worker count; `main` breaks immediately.',
-        engineer: 'Autonomy without deterministic verification amplifies entropy—never increase concurrency faster than your automated oracle coverage.',
+        plain: 'Twenty helpers without a check land broken work twenty times faster. The red marks on main are yours to untangle.',
+        technical: 'Without the check, about one task in four (made up here) merges broken; later tasks build on top of it.',
+        engineer: 'Never raise concurrency faster than check coverage: defects scale with the number of helpers.',
       },
     },
     yours: {
-      part: 'Your real job: intent, taste & judgement.',
+      part: 'Your part.',
       text: {
-        plain: 'Machines check syntax and tests; only you decide whether the app actually feels good and solves the right problem for your users.',
-        technical: 'Let automated suites verify types and regressions while you focus human attention on architecture, edge-case specs and real user flows.',
-        engineer: 'Reserve human cognitive bandwidth for irreducible decisions: problem framing, architectural boundaries, stack choices and product quality.',
+        plain: 'What to build, and whether what got through is what you wanted. The check cannot tell you that.',
+        technical: 'Write the task list and the checks; read what passes. Helper turns are the cost driver, counted in the readout.',
+        engineer: 'Your time goes on framing, boundaries and the checks. Cost scales with windows times turns: lesson 14 prices it.',
       },
     },
   },

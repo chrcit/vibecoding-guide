@@ -2,6 +2,7 @@
 // (sim.ts) with different switches, so the picture and its rules do not change between them.
 import type { Chapter, Ctx } from '../chapter';
 import { team, lab } from '../presets';
+import { termLabel } from '../terms';
 import { fleet, type FleetOpts, type Tally } from '../sim';
 import type { Script } from '../scene';
 import { BUS_Y, route, type SceneState, type XY, type Kind } from '../picture';
@@ -31,11 +32,11 @@ function go(ctx: Ctx, scene: SceneState, o: FleetOpts) {
 // ----- 7: side by side -----
 const side = (n: number, own: boolean) => team(n, {
   trees: own, lead: lead(),
-  labels: [lab('you', 'you', 'left'), lab('a0', 'the agent', 'top', 'wiki/agent/'), lab('project', 'main', 'top', 'wiki/branch/'), ...(own ? [lab([-88 + 44 * 2 + 30, -98, 4], 'its own copy', 'right', 'wiki/worktree/')] : [])],
+  labels: [lab('you', 'you', 'left'), termLabel('a0', 'agent', 'top', 'the agent'), termLabel('project', 'main'), termLabel([-88, -98 + 4, 50], 'helper', 'left', 'helpers'), ...(own ? [termLabel([-88 + 44 * 2 + 30, -98, 4], 'worktree', 'right')] : [])],
 });
 const runSide = (ctx: Ctx) => {
   const n = ctx.mem.n ?? 3, own = ctx.mem.own ?? true;
-  ctx.say(null, own ? 'Each helper works in its own copy of the project. Finished work is merged into main one piece at a time.' : 'Everyone edits the same files at once.');
+  ctx.say(null, own ? `${n} helpers, each in its own copy. Finished work is merged into main one piece at a time.` : `${n} helpers in one folder, editing the same files at once.`);
   go(ctx, side(n, own), { shared: !own, until: n * 2, name: 'the agent', clashes: true, flaws: false });
 };
 export const parallel: Chapter = {
@@ -51,12 +52,12 @@ export const parallel: Chapter = {
 // ----- 8: a lead -----
 const led = (gate: boolean) => team(5, {
   trees: true, mgate: gate, mixed: true, lead: lead(),
-  labels: [lab('you', 'you', 'left'), lab('a0', 'the lead', 'top', 'wiki/orchestration/'), lab('project', 'main', 'top', 'wiki/branch/'), ...(gate ? [lab('mgate', 'check', 'top', 'wiki/verification/')] : []), lab([-88, -98 + 4, 50], 'builders', 'left')],
+  labels: [lab('you', 'you', 'left'), termLabel('a0', 'lead', 'top', 'the lead'), termLabel('project', 'main'), ...(gate ? [termLabel('mgate', 'check')] : []), termLabel([-88, -98 + 4, 50], 'helper', 'left', 'helpers')],
 });
 const runLead = (ctx: Ctx) => {
   const gate = ctx.mem.gate ?? true, short = ctx.mem.short ?? true;
-  ctx.say(null, short ? 'The lead reads a short report from each task, not the work itself.' : 'Every builder sends back everything it did. The lead’s window fills with other agents’ work.');
-  go(ctx, led(gate), { gate, shortReports: short, until: short ? 12 : 14 });
+  ctx.say(null, !gate ? 'No check in front of main: whatever a helper calls done is merged.' : short ? 'Each helper sends five lines. The lead’s window stays small.' : 'Each helper sends back everything it did: diffs, logs, file reads. Watch the lead’s window.');
+  go(ctx, led(gate), { gate, shortReports: short, until: 12 });
 };
 
 // Other ways to split one job, played in the same picture. The job and what goes wrong are made up.
@@ -71,7 +72,7 @@ const shaped = (shape: Shape): SceneState => {
   const roles = ROLES[shape];
   const s = team(roles.length, {
     trees: true, mgate: true, lead: lead(),
-    labels: [lab('you', 'you', 'left'), lab('a0', 'the lead', 'top', 'wiki/orchestration/'), lab('project', 'main'), lab('mgate', 'check', 'top', 'wiki/verification/'), ...roles.map((r, i) => lab(`w${i}`, r))],
+    labels: [lab('you', 'you', 'left'), termLabel('a0', 'lead', 'top', 'the lead'), termLabel('project', 'main'), termLabel('mgate', 'check'), ...roles.map((r, i) => lab(`w${i}`, r))],
   });
   // Whoever judges the work runs on a different model from whoever built it.
   s.agents[roles.length]!.model = 'b';
@@ -87,7 +88,7 @@ async function playShape(ctx: Ctx, h: Script, shape: Exclude<Shape, 'fan'>) {
   let handoffs = 0, caught = 0;
   // The same readout as the rest of the chapter. Here there is one task, passed between roles.
   let landed = 0;
-  const stats = () => ctx.stat([['tasks on main', `${landed} of 1`], ['sent back before main', caught], ['wrong on main', 0], ['the lead’s window', `${Math.round(scene.fill('a0') * 100)}% full`]]);
+  const stats = () => ctx.stat([['tasks on main, this run', `${landed} of 1`, 'made-up'], ['sent back by the check, this run', caught], ['wrong on main, this run', 0], ['the lead’s window', `${Math.round(scene.fill('a0') * 100)}% full`]]);
   const tally = (how: string) => ctx.say(null, `One task on main after ${handoffs} handoffs. ${how}`);
   const pass = async (path: XY[], kind: Kind) => { await h.send(path, kind); handoffs++; stats(); };
   const give = (i: number, kind: Kind, size: number) => h.set((s) => { (s.agents[i + 1]!.blocks ??= []).push({ t: kind, h: size }); });
@@ -117,7 +118,7 @@ async function playShape(ctx: Ctx, h: Script, shape: Exclude<Shape, 'fan'>) {
   if (shape === 'pair') {
     await pass(route.agentToWorker(at(0)), 'model'); give(0, 'model', 4);
     await work(0, 5);
-    ctx.say('builder', 'Built. Tests pass.');
+    ctx.say('helper', 'Built. Tests pass.');
     await pass(between(at(0), at(1)), 'model'); give(1, 'tool', 7);
     await work(1, 2);
     ctx.say('reviewer', 'Hidden ratings still show in the export.');
@@ -135,7 +136,7 @@ async function playShape(ctx: Ctx, h: Script, shape: Exclude<Shape, 'fan'>) {
     ctx.say('planner', 'Plan: the list, the member page, the export. A test for each.');
     await pass(between(at(1), at(0)), 'model'); give(0, 'model', 5);
     await work(0, 6);
-    ctx.say('builder', 'Built to the plan. Tests pass.');
+    ctx.say('helper', 'Built to the plan. Tests pass.');
     await pass(between(at(0), at(2)), 'model'); give(2, 'tool', 7);
     await work(2, 2);
     ctx.say('reviewer', 'Matches the plan. Nothing to send back.');
@@ -147,7 +148,7 @@ async function playShape(ctx: Ctx, h: Script, shape: Exclude<Shape, 'fan'>) {
     h.set((s) => { s.agents[0]!.busy = false; });
     give(0, 'model', 4); give(1, 'model', 4);
     await Promise.all([work(0, 5), work(1, 6)]);
-    ctx.say(null, 'Two builders, the same brief, two answers.');
+    ctx.say(null, 'Two helpers, the same brief, two answers.');
     await Promise.all([pass(between(at(0), at(2)), 'model'), pass(between(at(1), at(2)), 'model')]);
     give(2, 'tool', 7); give(2, 'tool', 8);
     await work(2, 2);
@@ -181,23 +182,28 @@ export const leadCh: Chapter = {
 const many = (n: number, gate: boolean) => {
   const s = team(n, {
     trees: true, mgate: gate, gate: true, mixed: true, lead: lead(),
-    labels: [lab('you', 'you', 'left'), lab('a0', 'the lead', 'top', 'wiki/orchestration/'), lab('project', 'main', 'top', 'wiki/branch/'), ...(gate ? [lab('mgate', 'check', 'top', 'wiki/verification/')] : [])],
+    labels: [lab('you', 'you', 'left'), termLabel('a0', 'lead', 'top', 'the lead'), termLabel('project', 'main'), ...(gate ? [termLabel('mgate', 'check')] : [])],
   });
   // Frame the whole floor from the start, so adding agents does not move the camera.
   s.focus = ['you', 'a0', 'project', [-88, -254, 30], [88, -254, 30], [-110, BUS_Y, 0]];
   return s;
 };
 const runFleet = (ctx: Ctx) => {
-  const n = ctx.mem.n ?? 20, gate = ctx.mem.gate ?? true;
-  ctx.say(null, gate ? 'You are not reading twenty windows. You are reading what gets through the check.' : 'No check. Whatever a builder calls done lands on main.');
+  const n = ctx.mem.n ?? 20, gate = ctx.mem.gate ?? true, turns = !!ctx.mem.turns;
+  ctx.say(null, gate ? `${n} helper${n === 1 ? '' : 's'}, forty tasks, one check in front of main.` : 'No check. Whatever a helper calls done lands on main.');
   ctx.scene.speed = n > 10 ? 1.5 : 1.2;
-  go(ctx, many(n, gate), { gate, until: Math.max(8, n * 2) });
+  const o: FleetOpts = { gate, until: 40, showTurns: turns };
+  void ctx.scene.run(async (h) => {
+    h.set((s) => { Object.assign(s, many(n, gate)); });
+    const t = await fleet(ctx, h, o);
+    ctx.say(null, closing(t, o) + (turns ? ` The helpers took ${t.turns} turns, and each turn read a whole window again.` : ''));
+  });
 };
 export const fleetCh: Chapter = {
   steps: {
     twenty: { scene: () => many(20, true), enter: (ctx) => { ctx.mem.n = 20; ctx.mem.gate = true; runFleet(ctx); } },
     nogate: { scene: () => many(20, false), enter: (ctx) => { ctx.mem.n = 20; ctx.mem.gate = false; runFleet(ctx); } },
-    yours: { scene: () => many(20, true), enter: (ctx) => { ctx.mem.n = 20; ctx.mem.gate = true; runFleet(ctx); } },
+    yours: { scene: () => many(20, true), enter: (ctx) => { ctx.mem.n = 20; ctx.mem.gate = true; ctx.mem.turns = true; runFleet(ctx); } },
   },
   inputs: { n: (ctx, val) => { ctx.mem.n = Number(val); runFleet(ctx); } },
   actions: { gate: (ctx, val) => { ctx.mem.gate = val === 'on'; runFleet(ctx); } },

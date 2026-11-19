@@ -1,4 +1,6 @@
 ---
+import LessonRef from '../../components/journey/LessonRef.astro';
+import Term from '../../components/journey/Term.astro';
 import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
 import Next from '../../components/journey/Next.astro';
@@ -11,11 +13,11 @@ import { url } from '../../lib/nav';
 ---
 <Journey chapter="memory" first="gone" title="Write it down" description="The window is emptied between sessions. A short instruction file in the project is loaded at the start of every one.">
   <Step id="gone" title="The window does not outlive the session">
-    <p>The new thread from <a href={url('journey/window/')}>The window fills</a> starts empty, like every chat since <a href={url('journey/chat/')}>One chat</a>. That clears the clutter, and also everything the agent worked out yesterday.</p>
+    <p>The new <Term id="thread" /> from <LessonRef id="window" /> starts empty, like every chat since <LessonRef id="chat" />. That clears the clutter, and also everything the agent worked out yesterday.</p>
   </Step>
   <Step id="file" title="A short file in your project does">
     <ForLevel is="plain">
-      <p><code>AGENTS.md</code> is a plain text file in your project folder, the green tile. The tool loads it before your first message, so your date format and style rules are there every time.</p>
+      <p><code>AGENTS.md</code> is an <Term id="instructions" />: plain text in your project folder, the green tile. The tool loads it before your first message, so your date format and style rules are there every time.</p>
     </ForLevel>
     <ForLevel is="technical">
       <p><code>AGENTS.md</code> loads into every new session before your prompt. Put your package manager (<code>pnpm</code>), exact check commands (<code>tsc --noEmit</code>, <code>vitest run</code>), and folder layout there so the agent never guesses.</p>

@@ -3,11 +3,12 @@ import type { Chapter, Ctx } from '../chapter';
 import { byLevel } from '../chapter';
 import type { Script } from '../scene';
 import { solo, lab } from '../presets';
+import { termLabel } from '../terms';
 import { route, reverse, type Kind } from '../picture';
 
 const labels = [
-  lab('you', 'you', 'left'), lab('a0', 'the model', 'top', 'wiki/model/'),
-  lab('tools', 'tools', 'top', 'wiki/tool-call/'), lab('project', 'your project', 'top'),
+  lab('you', 'you', 'left'), termLabel('a0', 'model', 'top', 'the model'),
+  termLabel('tools', 'tools'), termLabel('project', 'project'),
 ];
 const base = () => solo({ tools: true, project: true, labels });
 

@@ -5,49 +5,79 @@ import Next from '../../components/journey/Next.astro';
 import More from '../../components/journey/More.astro';
 import ForLevel from '../../components/level/ForLevel.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
-import { url } from '../../lib/nav';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
+import Term from '../../components/journey/Term.astro';
 ---
-<Journey chapter="check" first="done" title="Make it prove it" description="An agent reports done whether or not the work is right. Automated checks between the agent and you bounce broken work straight back.">
+<Journey chapter="check" first="done" title="Make it prove it" description="An agent says done whether or not the work is right. A check between the agent and you sends broken work back; each kind of check catches one kind of wrong.">
   <Step id="done" title="It says “done” either way">
-    <p>Run six example tasks through <a href={url('journey/loop/')}>the agent loop</a>. Three come out broken (shown in orange), yet all six arrive on your desk marked “done”.</p>
+    <p>The <Term id="agent" /> from <LessonRef id="loop" />, given six made-up jobs. Four come out broken, in orange, and all six arrive marked “done”.</p>
   </Step>
-  <Step id="tests" title="Put an automated check in the way">
+
+  <Step id="tests" title="Put a check in the way">
     <ForLevel is="plain">
-      <p>Put a check between the agent and you. Whenever something breaks, the check bounces it straight back to the agent to fix before you ever have to look.</p>
+      <p>The gate is the <Term id="check" />: before it says done, the agent runs the app and clicks through it. Broken work goes back to the agent instead of on to you.</p>
       <More title="A prompt for this">
-        <CopyPrompt compact title="Ask for proof with the work">{`Before you tell me it is done:\n1. Run the project's checks and paste the result.\n2. Open the page at phone width, take a screenshot and confirm nothing overflows.\n3. Tell me what I should click to try it myself.`}</CopyPrompt>
+        <CopyPrompt compact title="Ask it to check before it says done">{`Before you tell me it is done:\n1. Start the app and click through what you changed.\n2. Tell me what you clicked and what you saw.\n3. If anything is wrong, fix it first.`}</CopyPrompt>
       </More>
     </ForLevel>
     <ForLevel is="technical">
-      <p>Wire <code>tsc --noEmit</code> and automated unit tests (<code>vitest run</code> / <code>pytest</code>) as a mandatory gate. Broken types or failing assertions bounce straight back into the loop automatically.</p>
-      <More title="A prompt for this">
-        <CopyPrompt compact title="Verification gate prompt">{`Before reporting done:\n1. Run tsc --noEmit and the full unit test suite; paste the final summary line.\n2. Add a regression unit test covering the change or bug fix.\n3. If UI changed, inspect a 390 px and 1280 px screenshot and fix any overflow.`}</CopyPrompt>
+      <p>The gate is the <Term id="check" />: <code>tsc --noEmit &amp;&amp; npm test</code>, run by the agent before it reports. A red result goes back into its loop.</p>
+      <More title="A prompt for this" level="technical">
+        <CopyPrompt compact title="Done means green">{`Before reporting done:\n1. Run tsc --noEmit and npm test. Paste the last lines of each.\n2. Add a test that fails without your change.\n3. If the UI changed, run the browser check at 390 px and 1280 px.`}</CopyPrompt>
       </More>
     </ForLevel>
     <ForLevel is="engineer">
-      <p>Treat verification as a first-class architectural asset: fast strict typechecking, deterministic unit/integration suites and headless browser checks turn open-ended generation into a self-correcting inner loop.</p>
-      <More title="A prompt for this">
-        <CopyPrompt compact title="Contract-level verification prompt">{`Do not report completion until:\n1. Strict typecheck, lint and unit/integration suites are all green (include command output).\n2. New invariants and boundary cases have deterministic unit tests.\n3. Any UI surface passes headless viewport checks (390 px + desktop) with zero console errors.\n4. List any assumptions or gaps automated checks did not cover.`}</CopyPrompt>
+      <p>The gate is the <Term id="check" />, one command the agent must run green before it reports: types and unit tests first, because they are fast and give the same answer every time.</p>
+      <More title="One command" level="engineer">
+        <pre class="j-code"><code>{`// package.json
+"scripts": {
+  "check": "tsc --noEmit && vitest run",
+  "check:all": "npm run check && playwright test"
+}`}</code></pre>
+        <p>Put <code>npm run check</code> in AGENTS.md as the definition of done.</p>
       </More>
     </ForLevel>
   </Step>
-  <Step id="more" title="Each check catches a different kind of miss">
-    <p>Now three checks stand between the agent and you. Turn any one off and watch which bug slips right through:</p>
-    <div class="pick" data-multi role="group" aria-label="Checks that are switched on">
-      <button type="button" data-do="toggle" data-val="tests" data-default aria-pressed="true">Types &amp; unit tests</button>
-      <button type="button" data-do="toggle" data-val="look" data-default aria-pressed="true">Browser screenshot</button>
-      <button type="button" data-do="toggle" data-val="review" data-default aria-pressed="true">Second model</button>
-    </div>
-    <More title="What each layer catches">
+
+  <Step id="more" title="Each check catches one kind of wrong">
+    <p>Switch one off and the six jobs run again. The kind of wrong it was catching now reaches you.</p>
+    <ForLevel is="plain">
+      <div class="pick" data-multi role="group" aria-label="Checks that are on">
+        <button type="button" data-do="toggle" data-val="run" data-default aria-pressed="true">It runs the app</button>
+        <button type="button" data-do="toggle" data-val="phone" data-default aria-pressed="true">It looks on a phone</button>
+      </div>
+    </ForLevel>
+    <ForLevel is="technical engineer">
+      <div class="pick" data-multi role="group" aria-label="Checks that are on">
+        <button type="button" data-do="toggle" data-val="types" data-default aria-pressed="true">tsc --noEmit</button>
+        <button type="button" data-do="toggle" data-val="tests" data-default aria-pressed="true">npm test</button>
+        <button type="button" data-do="toggle" data-val="browser" data-default aria-pressed="true">Browser check</button>
+      </div>
+    </ForLevel>
+    <More title="Where each check runs" level="engineer">
       <dl class="j-defs">
-        <dt>Types &amp; unit tests</dt><dd>Fast commands (<code>tsc --noEmit</code>, unit suite) that prove logic, edge cases and type contracts.</dd>
-        <dt>Browser screenshot</dt><dd>Opens the rendered page at phone and desktop widths to catch broken layouts and overlap.</dd>
-        <dt>Second model</dt><dd>A fresh model reads only the brief and diff to catch privacy leaks, missed rules and architectural flaws.</dd>
+        <dt><code>tsc --noEmit</code></dt><dd>Seconds. In the agent’s loop and in a pre-commit hook. Catches broken contracts, not wrong values.</dd>
+        <dt>Unit tests</dt><dd>Seconds to a minute. In the loop and in CI on every push. Catch wrong logic you wrote a test for.</dd>
+        <dt>Browser check</dt><dd>Minutes. In CI before merge. Catches layout and wiring a unit test never renders.</dd>
       </dl>
     </More>
-    <Next from="check" more={[{ href: 'wiki/verification/', text: 'Verification', side: true }, { href: 'journey/proof/', text: 'Proof you can read (step 16)' }]} />
+  </Step>
+
+  <Step id="spec" title="No check sees what nobody wrote down">
+    <p>Every check is on, and hidden ratings still reach you in the CSV. Turn your rule into a check and run again.</p>
+    <div class="row">
+      <button class="btn" type="button" data-do="spec" aria-pressed="false">Make the rule a check</button>
+    </div>
+    <More title="A prompt for this">
+      <CopyPrompt compact title="Turn a rule into a test">{`Rule: a member who hides their rating must never have it shown or exported.\nWrite a test that fails if a hidden rating appears anywhere, including the CSV export.\nRun it before your fix and after, and show me both results.`}</CopyPrompt>
+      <p><Fact id="harnesses.claudeCode.checkToRun" show="claim" /></p>
+    </More>
+    <Next from="check" more={[{ href: 'wiki/verification/', text: 'Verification', side: true }, { href: 'journey/proof/', text: 'Proof you can read, lesson 16' }]} />
   </Step>
   <Fragment slot="foot">
-    <p>The six tasks and failure types above are illustrative examples.</p>
+    <p>The six jobs, their bugs and the error messages are made up.</p>
+    <Verified ids={['harnesses.claudeCode.checkToRun']} />
   </Fragment>
 </Journey>

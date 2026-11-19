@@ -1,4 +1,6 @@
 ---
+import LessonRef from '../../components/journey/LessonRef.astro';
+import Term from '../../components/journey/Term.astro';
 import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
 import Next from '../../components/journey/Next.astro';
@@ -29,11 +31,11 @@ const data = { autoCompactAt: harnesses.claudeCode.autoCompactAt.value };
 ---
 <Journey chapter="window" first="pile" title="The window fills" description="Everything an agent reads stays in its window and is read again every turn. Unrelated text in the window makes the answer worse long before the window is full." data={data}>
   <Step id="pile" title="Nothing leaves the window">
-    <p>This is the window from <a href={url('journey/chat/')}>One chat</a>, holding the date fix from <a href={url('journey/loop/')}>It gets hands</a>. Watch a morning of work pile on top: every message, file and log stays, and is read again before every turn.</p>
+    <p>This is the <Term id="window" /> from <LessonRef id="chat" />, holding the date fix from <LessonRef id="loop" />. Watch a morning of work pile on top: every message, file and log stays, and is read again before every turn.</p>
   </Step>
 
   <Step id="rot" title="More in the window, worse answers">
-    <p>Same model, same request: fix the date on the member card. Pick what else is in the window, then look at which file it edits and whether it keeps your first rule.</p>
+    <p>Same <Term id="model" />, same request: fix the date on the member card. Pick what else is in the window, then look at which file it edits and whether it keeps your first rule.</p>
     <div class="pick" role="group" aria-label="What else is in the window">
       <button type="button" data-do="mix" data-val="job" aria-pressed="false">Only this job</button>
       <button type="button" data-do="mix" data-val="morning" aria-pressed="false">After a morning</button>
@@ -60,7 +62,7 @@ const data = { autoCompactAt: harnesses.claudeCode.autoCompactAt.value };
   </Step>
 
   <Step id="compact" title="What survives">
-    <p>A full window gets cleared one of two ways. Pick one, then ask for one more change and watch what happens to your first rule.</p>
+    <p>A full window gets cleared one of two ways: the tool compacts it, or you start a new <Term id="thread" />. Pick one, then ask for one more change and watch what happens to your first rule.</p>
     <div class="pick" role="group" aria-label="How the window is cleared">
       <button type="button" data-do="clear" data-val="compact" data-default aria-pressed="true">The tool compacts it</button>
       <button type="button" data-do="clear" data-val="fresh" aria-pressed="false">New thread, short brief</button>

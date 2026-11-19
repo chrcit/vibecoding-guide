@@ -1,6 +1,7 @@
 // Chapter 1: one chat. A model, a window, and nothing else.
 import type { Chapter, Ctx } from '../chapter';
 import { solo, lab } from '../presets';
+import { termLabel } from '../terms';
 import { route, reverse } from '../picture';
 
 export const LINES: [string, string][] = [
@@ -8,7 +9,7 @@ export const LINES: [string, string][] = [
   ['To show who has paid this season.', 'I can sketch that. How do members pay?'],
   ['What is my name?', 'Sam.'],
 ];
-const labels = [lab('you', 'you', 'left'), lab('a0', 'the model', 'top', 'wiki/model/'), lab('tank:a0', 'its window', 'left', 'wiki/context-window/')];
+const labels = [lab('you', 'you', 'left'), termLabel('a0', 'model', 'top', 'the model'), termLabel('tank:a0', 'window', 'left', 'its window')];
 const base = (blocks = [] as { t: 'you' | 'model'; h: number }[]) => solo({ blocks, labels });
 const said = (n: number) => LINES.slice(0, n).flatMap(() => [{ t: 'you' as const, h: 3 }, { t: 'model' as const, h: 3 }]);
 

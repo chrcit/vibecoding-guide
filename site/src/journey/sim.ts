@@ -45,7 +45,7 @@ export async function fleet(ctx: Ctx, h: Script, o: FleetOpts = {}): Promise<Tal
     o.clashes ? ['clashes, this run', tally.clashes] : ['sent back by the check, this run', o.gate ? tally.sentBack : 'no check'],
     ['wrong on main, this run', tally.wrong],
     [`${o.name ?? 'the lead'}’s window`, `${Math.round(scene.fill('a0') * 100)}% full`],
-    ...(o.showTurns ? [['builder turns so far', tally.turns ?? 0] as [string, number]] : []),
+    ...(o.showTurns ? [['helper turns, this run', tally.turns ?? 0] as [string, number]] : []),
   ]);
   const w = (id: string) => (s: typeof scene.state) => s.agents.find((a) => a.id === id)!;
 

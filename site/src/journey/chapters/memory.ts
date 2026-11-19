@@ -3,9 +3,10 @@ import type { Chapter, Ctx } from '../chapter';
 import { byLevel } from '../chapter';
 import type { Script } from '../scene';
 import { solo, lab, worked } from '../presets';
+import { termLabel } from '../terms';
 import { route, reverse, rulesSpot, type XY } from '../picture';
 
-const labels = [lab('you', 'you', 'left'), lab('a0', 'the model', 'top', 'wiki/model/'), lab('rules', 'AGENTS.md', 'bottom', 'wiki/instruction-file/'), lab('project', 'your project')];
+const labels = [lab('you', 'you', 'left'), termLabel('a0', 'model', 'top', 'the model'), termLabel('rules', 'instructions', 'bottom'), termLabel('project', 'project')];
 const base = (rules: boolean, size = 4, skills = 0) => {
   const s = solo({ tools: true, project: { rules: rules ? 'plain' : 'none', skills }, labels: skills ? [...labels, lab('skills', 'skills', 'bottom', 'wiki/skill/')] : labels });
   s.agents[0]!.blocks = [];

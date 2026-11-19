@@ -7,6 +7,7 @@ import type { Chapter, Ctx } from '../chapter';
 import { byLevel } from '../chapter';
 import type { Script } from '../scene';
 import { solo, lab } from '../presets';
+import { termLabel } from '../terms';
 import { route, reverse, fileSpot, CAP, type Block, type Label, type SceneState } from '../picture';
 
 /** Token counts are in thousands. A slab of 25 is 25k tokens. */
@@ -40,7 +41,7 @@ const view = (blocks: Block[], cap: number, labels: Label[] = [], wide = false):
     tools: true, project: true, blocks,
     focus: wide ? ['a0', 'project'] : ['a0'],
     zoomMax: 6.5,
-    labels: [lab('a0', 'the model', 'top', 'wiki/model/'), ...(labels.length ? labels : [lab('tank:a0', 'its window', 'left', 'wiki/context-window/')])],
+    labels: [termLabel('a0', 'model', 'top', 'the model'), ...(labels.length ? labels : [termLabel('tank:a0', 'window', 'left', 'its window')])],
   });
   s.agents[0]!.cap = cap;
   return s;
@@ -173,7 +174,7 @@ async function clear(ctx: Ctx, h: Script, way: Way) {
   const after: Block[] = way === 'compact'
     ? [{ t: 'sum', h: 20 }, { t: 'tool', h: 8 }, { t: 'tool', h: 6 }, { t: 'tool', h: 6 }, { t: 'tool', h: 5 }, { t: 'tool', h: 4 }]
     : [{ t: 'you', h: 1 }];
-  h.set((s) => { s.agents[0]!.blocks = after; s.agents[0]!.lamp = 'off'; s.labels = [lab('a0', 'the model', 'top', 'wiki/model/'), at(after, cap, 0, way === 'compact' ? 'a summary' : 'your brief')]; });
+  h.set((s) => { s.agents[0]!.blocks = after; s.agents[0]!.lamp = 'off'; s.labels = [termLabel('a0', 'model', 'top', 'the model'), at(after, cap, 0, way === 'compact' ? 'a summary' : 'your brief')]; });
   ctx.stat([
     ['in the window', `${fmt(sum(after))} of 1M`],
     ['kept', way === 'compact' ? 'a summary and 5 recent files' : 'only your brief'],
@@ -215,6 +216,9 @@ function paste(ctx: Ctx, what: 'log' | 'lines') {
     ? 'The whole log: 200k tokens of passing tests around 30 lines that matter, read again on every turn from now on.'
     : 'Only the failing lines: the same information, a hundredth of the size.');
 }
+
+/** The rot run's opening picture, for the part 2 overview. */
+export const windowView = () => view(MIX.log(), 1000, [], true);
 
 export const windowCh: Chapter = {
   steps: {

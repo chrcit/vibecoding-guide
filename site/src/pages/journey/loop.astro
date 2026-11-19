@@ -1,4 +1,6 @@
 ---
+import LessonRef from '../../components/journey/LessonRef.astro';
+import Term from '../../components/journey/Term.astro';
 import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
 import Next from '../../components/journey/Next.astro';
@@ -8,14 +10,14 @@ import { url } from '../../lib/nav';
 ---
 <Journey chapter="loop" first="hands" title="It gets hands" description="Tools turn a model's text into actions. Each result goes back into the window and the model goes again, until the job is done.">
   <Step id="hands" title="Tools are its hands">
-    <p>The model and window from <a href={url('journey/chat/')}>One chat</a>, now with four tools beside it and your project behind them. The model only writes text; the tools turn it into actions: search, read a file, edit it, run a command.</p>
+    <p>The model and window from <LessonRef id="chat" />, now with four <Term id="tools" /> beside it and <Term id="project" /> behind them. The model only writes text; the tools turn it into actions: search, read a file, edit it, run a command.</p>
   </Step>
   <Step id="fix" title="One request, many turns">
     <p>You ask once: the dates on the member list are wrong. Watch it search, read, edit, run the tests, see one fail, and fix that too.</p>
     <div class="row"><button class="btn ghost" type="button" data-do="play">Play it again</button></div>
   </Step>
   <Step id="again" title="You sent one message">
-    <p>Every other turn was its own: each tool result went back into the window and the model chose the next step. That loop makes it an agent.</p>
+    <p>Every other turn was its own: each tool result went back into the window and the model chose the next step. That loop makes it an <Term id="agent" />.</p>
   </Step>
   <Step id="norun" title="Take one tool away">
     <p>The run cube is greyed out. It cannot try its own fix, and it still says “fixed”: look at the last line of the numbers.</p>
