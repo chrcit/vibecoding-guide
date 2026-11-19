@@ -302,5 +302,7 @@ const legend = [
     });
     new ResizeObserver(() => { if (Math.abs((chart.clientWidth || 0) - width) > 2) render(false); }).observe(chart);
     render(false);
+    // Tiles whose scripts load after this one hear the first run too.
+    setTimeout(() => render(false), 0);
   }
 </script>

@@ -1,0 +1,16 @@
+---
+/*
+  A sourced value that opens its source row in the side view, for board tiles.
+    <SideFact id="harnesses.claudeCode.nestingDepth" />          → 3
+    <SideFact id="t3code.worktrees">a worktree per thread</SideFact>
+  Throws on an unknown or unverified fact, like <Fact>.
+*/
+import { anchor, fact, formatValue } from '../../lib/facts.ts';
+import { url } from '../../lib/nav';
+
+interface Props { id: string }
+const { id } = Astro.props;
+const f = fact(id);
+if (f.status === 'unverified') throw new Error(`<SideFact id="${id}">: unverified (${f.note}).`);
+---
+<a class="explain side-fact" href={url(`sources/#${anchor(id)}`)} data-side title={f.claim}>{Astro.slots.has('default') ? <slot /> : formatValue(f)}</a>
