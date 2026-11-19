@@ -85,7 +85,7 @@ const OUTCOME: Record<Mix, { file: number; date: string; says: string }> = {
   log: { file: EXPORT, date: 'still wrong', says: 'Fixed the date in export.ts.' },
 };
 function rotLabels(mix: Mix, blocks: Block[], cap: number): Label[] {
-  const out = [{ ...at(blocks, cap, 0, 'your rule: day.month.year'), at: [-14, 14, slabZ(blocks, cap, 0)] as [number, number, number], place: 'left' as const }];
+  const out = [{ ...at(blocks, cap, 0, 'your rule: day.month.year'), at: [14, 14, 0] as [number, number, number], place: 'bottom' as const }];
   if (mix !== 'job') out.push(at(blocks, cap, RULE.length + FIX.length + 1, 'the CSV job'));
   if (mix === 'log') out.push(at(blocks, cap, blocks.length - 1, 'a pasted log'));
   return out;
