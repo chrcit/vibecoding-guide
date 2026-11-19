@@ -258,15 +258,15 @@ export const rungs: Rung[] = [
     part: 2,
     title: 'Write it down',
     short: 'Memory',
-    line: 'A new session starts empty. A short file in the project, AGENTS.md, is loaded before your first word in every one.',
+    line: 'A new thread starts empty. An instruction file in the project, AGENTS.md, is loaded before your first word in every one.',
     theme: 'core',
     adds: {
-      plain: 'Write down the rules you are tired of repeating, in AGENTS.md. Add one when a mistake repeats; keep the file short.',
-      technical: 'Put the package manager, the check command (tsc --noEmit, npm test) and the folder map in AGENTS.md or CLAUDE.md, so every session checks the same way.',
+      plain: 'Write the rules you are tired of repeating into AGENTS.md. Add one when a mistake repeats; keep the file short.',
+      technical: 'Put the test runner, the check command (npm run check: tsc --noEmit, vitest run) and the folder map in AGENTS.md or CLAUDE.md, so every thread checks the same way.',
       engineer: 'Encode stack decisions, module boundaries and the definition of done in a versioned file; move procedures that only some tasks need into skills.',
     },
     steps: [
-      { id: 'gone', label: 'A new session forgets' },
+      { id: 'gone', label: 'A new thread forgets' },
       { id: 'file', label: 'AGENTS.md' },
       { id: 'grow', label: 'Keep it short' },
       { id: 'skills', label: 'Skills' },
@@ -296,7 +296,7 @@ export const rungs: Rung[] = [
       { id: 'spec', label: 'What no check sees' },
     ],
     concepts: [
-      { slug: 'verification', label: 'Verification' },
+      { slug: 'verification', label: 'Check' },
       { slug: 'test', label: 'Tests' },
       { slug: 'browser-check', label: 'Browser check' },
       { slug: 'limits-of-checking', label: 'Limits of checking' },
@@ -312,7 +312,7 @@ export const rungs: Rung[] = [
     theme: 'scale',
     adds: {
       plain: 'Send a helper to read the messy files so your main chat stays short. Tell it everything in the brief, including what not to touch.',
-      technical: 'Searches and log triage go to a subagent; only its summary enters the main thread. It sees none of the conversation, so the brief carries the constraints.',
+      technical: 'Searches and log triage go to a helper; only its summary enters the main thread. It sees none of the conversation, so the brief carries the constraints.',
       engineer: 'Treat delegation like an RPC contract: inputs, allowed side effects and the shape of the answer, stated in the brief.',
     },
     steps: [
@@ -321,7 +321,7 @@ export const rungs: Rung[] = [
       { id: 'brief', label: 'Only the brief' },
     ],
     concepts: [
-      { slug: 'subagent', label: 'Helper (subagent)' },
+      { slug: 'subagent', label: 'Helper' },
       { slug: 'context-window', label: 'Context window' },
     ],
   },
@@ -369,8 +369,8 @@ export const rungs: Rung[] = [
       { id: 'gate', label: 'A check before main' },
     ],
     concepts: [
-      { slug: 'orchestration', label: 'Orchestration' },
-      { slug: 'subagent', label: 'Helper (subagent)' },
+      { slug: 'orchestration', label: 'Lead' },
+      { slug: 'subagent', label: 'Helper' },
     ],
   },
   {
@@ -392,8 +392,8 @@ export const rungs: Rung[] = [
       { id: 'yours', label: 'What is left for you' },
     ],
     concepts: [
-      { slug: 'orchestration', label: 'Orchestration' },
-      { slug: 'verification', label: 'Verification' },
+      { slug: 'orchestration', label: 'Lead' },
+      { slug: 'verification', label: 'Check' },
     ],
   },
 

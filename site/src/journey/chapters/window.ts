@@ -39,7 +39,7 @@ const at = (blocks: Block[], cap: number, i: number, text: string): Label => ({ 
 const view = (blocks: Block[], cap: number, labels: Label[] = [], wide = false): SceneState => {
   const s = solo({
     tools: true, project: true, blocks,
-    focus: wide ? ['a0', 'project'] : ['a0'],
+    focus: wide ? ['you', 'a0', 'tools', 'project'] : ['you', 'a0', 'tools'],
     zoomMax: 6.5,
     labels: [termLabel('a0', 'model', 'top', 'the model'), ...(labels.length ? labels : [termLabel('tank:a0', 'window', 'left', 'its window')])],
   });
@@ -85,7 +85,7 @@ const OUTCOME: Record<Mix, { file: number; date: string; says: string }> = {
   log: { file: EXPORT, date: 'still wrong', says: 'Fixed the date in export.ts.' },
 };
 function rotLabels(mix: Mix, blocks: Block[], cap: number): Label[] {
-  const out = [{ ...at(blocks, cap, 0, 'your rule: day.month.year'), at: [14, 14, 0] as [number, number, number], place: 'bottom' as const }];
+  const out = [{ ...at(blocks, cap, 0, 'your rule: day.month.year'), at: [-14, 14, slabZ(blocks, cap, 0) + 4] as [number, number, number], place: 'left' as const }];
   if (mix !== 'job') out.push(at(blocks, cap, RULE.length + FIX.length + 1, 'the CSV job'));
   if (mix === 'log') out.push(at(blocks, cap, blocks.length - 1, 'a pasted log'));
   return out;

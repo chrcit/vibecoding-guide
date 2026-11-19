@@ -21,7 +21,7 @@ const lines = (size: number) => (size <= 4 ? 12 : Math.round(size * 11 - 8));
 export async function session(ctx: Ctx, h: Script, o: { rules: boolean; size?: number; ask?: boolean }) {
   const size = o.size ?? 4;
   h.set((s) => { s.agents[0]!.blocks = []; s.agents[0]!.lamp = 'off'; s.project!.rules = o.rules ? 'plain' : 'none'; });
-  ctx.say(null, 'A new session. The window starts empty.');
+  ctx.say(null, 'A new thread. The window starts empty.');
   await h.wait(650);
   if (o.rules) {
     const p = ctx.scene.state.project!;
@@ -32,7 +32,7 @@ export async function session(ctx: Ctx, h: Script, o: { rules: boolean; size?: n
     await h.wait(450);
   }
   const long = o.rules && size >= 20;
-  ctx.stat([['AGENTS.md', o.rules ? `${lines(size)} lines, read every session` : 'none'], ['the job', '…']]);
+  ctx.stat([['AGENTS.md', o.rules ? `${lines(size)} lines, read in every thread` : 'none'], ['the job', '…']]);
   if (o.ask === false) return;
   ctx.say('you', byLevel(ctx.level, {
     plain: 'Add a profile page for each member.',
@@ -49,7 +49,7 @@ export async function session(ctx: Ctx, h: Script, o: { rules: boolean; size?: n
   const good = o.rules && !long;
   await h.send(reverse(route.agentToTool(tools, 'run')), good ? 'tool' : 'bad');
   h.set((s) => { s.tools!.on = null; s.agents[0]!.busy = false; s.agents[0]!.blocks!.push({ t: good ? 'tool' : 'bad', h: 3 }); s.agents[0]!.lamp = good ? 'ok' : 'bad'; });
-  ctx.stat([['AGENTS.md', o.rules ? `${lines(size)} lines, read every session` : 'none'], ['the job', good ? 'followed your rules' : long ? 'missed a rule in the middle of the file' : 'guessed, and guessed wrong']]);
+  ctx.stat([['AGENTS.md', o.rules ? `${lines(size)} lines, read in every thread` : 'none'], ['the job', good ? 'followed your rules' : long ? 'missed a rule in the middle of the file' : 'guessed, and guessed wrong']]);
   if (long) {
     ctx.say('tool', byLevel(ctx.level, {
       plain: 'The new page shows dates as 3/3/2026. The rule for day.month.year is on line 140.',
@@ -95,7 +95,7 @@ export const memory: Chapter = {
       scene: () => { const s = base(false); s.agents[0]!.blocks = worked(12); return s; },
       enter: (ctx) => {
         void ctx.scene.run(async (h) => {
-          ctx.say(null, 'Yesterday’s session. It learned how this project works the slow way.');
+          ctx.say(null, 'Yesterday’s thread. It learned how this project works the slow way.');
           await h.wait(1400);
           await session(ctx, h, { rules: false });
         });
@@ -111,8 +111,8 @@ export const memory: Chapter = {
       scene: () => base(true),
       enter: (ctx) => {
         ctx.mem.size = 4;
-        ctx.say(null, 'Each rule you add is read at the start of every session from then on. Press the button three times.');
-        ctx.stat([['AGENTS.md', `${lines(4)} lines, read every session`], ['the job', 'not run yet']]);
+        ctx.say(null, 'Each rule you add is read at the start of every thread from then on. Press the button three times.');
+        ctx.stat([['AGENTS.md', `${lines(4)} lines, read in every thread`], ['the job', 'not run yet']]);
       },
     },
     skills: {
@@ -135,8 +135,8 @@ export const memory: Chapter = {
       h.set((s) => { s.project!.rules = 'lit'; });
       await h.wait(450);
       await session(ctx, h, { rules: true, size });
-      if (size < 20) ctx.say(null, `One more rule: ${lines(size)} lines now, all read at the start of every session.`);
-      else ctx.say(null, `${lines(size)} lines, read in full every session. The rule that mattered today was one line in the middle, and it was missed.`);
+      if (size < 20) ctx.say(null, `One more rule: ${lines(size)} lines now, all read at the start of every thread.`);
+      else ctx.say(null, `${lines(size)} lines, read in full in every thread. The rule that mattered today was one line in the middle, and it was missed.`);
     }),
     skill: (ctx) => void ctx.scene.run(async (h) => {
       const p = ctx.scene.state.project!;

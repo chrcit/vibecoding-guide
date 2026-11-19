@@ -11,14 +11,13 @@ import { url } from '../../lib/nav';
   title="Part 2 · From one chat to twenty agents"
   description="Part two of the guide: one chat, the tool loop, the window and context rot, the instruction file, checks, helpers, worktrees, a lead and a fleet of twenty."
 >
-  <p class="j-lead">Nine lessons, one picture: a single chat grows into a lead, twenty helpers and a check in front of main. Scroll to watch each lesson play; open one to break it.</p>
   <PartSwitch active={2} />
 
   {rungs.filter((r) => r.part === 2).map((r, i, all) => (
     <OverviewStep rung={r}>
       {i === all.length - 1 && (
         <a class="j-next" href={url(parts[2]!.href)}>
-          <span>Part three · Steps {parts[2]!.range}</span>
+          <span>Part three · lessons {parts[2]!.range}</span>
           <b>{parts[2]!.title}</b>
           <span>{parts[2]!.blurb}</span>
         </a>

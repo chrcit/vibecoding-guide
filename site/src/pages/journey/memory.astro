@@ -11,8 +11,8 @@ import Fact from '../../components/data/Fact.astro';
 import Verified from '../../components/data/Verified.astro';
 import { url } from '../../lib/nav';
 ---
-<Journey chapter="memory" first="gone" title="Write it down" description="The window is emptied between sessions. A short instruction file in the project is loaded at the start of every one.">
-  <Step id="gone" title="The window does not outlive the session">
+<Journey chapter="memory" first="gone" title="Write it down" description="The window is emptied between threads. A short instruction file in the project is loaded at the start of every one.">
+  <Step id="gone" title="The window does not outlive the thread">
     <p>The new <Term id="thread" /> from <LessonRef id="window" /> starts empty, like every chat since <LessonRef id="chat" />. That clears the clutter, and also everything the agent worked out yesterday.</p>
   </Step>
   <Step id="file" title="A short file in your project does">
@@ -20,10 +20,10 @@ import { url } from '../../lib/nav';
       <p><code>AGENTS.md</code> is an <Term id="instructions" />: plain text in your project folder, the green tile. The tool loads it before your first message, so your date format and style rules are there every time.</p>
     </ForLevel>
     <ForLevel is="technical">
-      <p><code>AGENTS.md</code> loads into every new session before your prompt. Put the test runner, the check command (<code>npm run check</code>, which runs <code>tsc --noEmit</code> and <code>vitest run</code>) and the folder layout there, so it never guesses.</p>
+      <p><code>AGENTS.md</code> loads into every new thread before your prompt. Put the test runner, the check command (<code>npm run check</code>, which runs <code>tsc --noEmit</code> and <code>vitest run</code>) and the folder layout there, so it never guesses.</p>
     </ForLevel>
     <ForLevel is="engineer">
-      <p><code>AGENTS.md</code> loads into every new session before your prompt. Record stack decisions, module boundaries, the verify command and the shortcuts that are not allowed; leave tutorials out.</p>
+      <p><code>AGENTS.md</code> loads into every new thread before your prompt. Record stack decisions, module boundaries, the verify command and the shortcuts that are not allowed; leave tutorials out.</p>
     </ForLevel>
     <div class="pick">
       <button type="button" data-do="session" data-val="with" data-default aria-pressed="true">With AGENTS.md</button>
@@ -39,7 +39,7 @@ import { url } from '../../lib/nav';
     <div class="row"><button class="btn" type="button" data-do="teach">Add a rule</button></div>
     <ForLevel is="plain">
       <More title="A prompt for this">
-        <CopyPrompt compact title="Add a plain rule to AGENTS.md">{`You wrote the date as month/day. This project uses day.month.year everywhere.\nAdd one short line to AGENTS.md so every future session knows. Show me the line first.`}</CopyPrompt>
+        <CopyPrompt compact title="Add a plain rule to AGENTS.md">{`You wrote the date as month/day. This project uses day.month.year everywhere.\nAdd one short line to AGENTS.md so every future thread knows. Show me the line first.`}</CopyPrompt>
         <p><Fact id="harnesses.claudeCode.claudeMdLines" show="claim" /></p>
       </More>
     </ForLevel>

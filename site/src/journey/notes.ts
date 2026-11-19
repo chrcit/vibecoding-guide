@@ -130,17 +130,17 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
   },
   memory: {
     gone: {
-      part: 'A new session.',
+      part: 'A new thread.',
       text: {
         plain: 'The new thread from lesson 7 is clean, and also forgets the format and the style it worked out yesterday.',
-        technical: 'A new session knows nothing about the test runner, the check command or the folder layout until it finds them again, turn by turn.',
+        technical: 'A new thread knows nothing about the test runner, the check command or the folder layout until it finds them again, turn by turn.',
         engineer: 'A fresh context removes rot only if the invariants it needs are loaded deterministically at the start.',
       },
     },
     file: {
       part: 'AGENTS.md.',
       text: {
-        plain: 'The green tile is a text file in your project. The tool loads it before your first word, every session.',
+        plain: 'The green tile is a text file in your project. The tool loads it before your first word, in every thread.',
         technical: 'Put the package manager, the check command (`npm run check`: `tsc --noEmit && vitest run`) and the folder map in it. Claude Code reads CLAUDE.md, Codex reads AGENTS.md.',
         engineer: 'Record stack decisions, module boundaries and the verify command. It is versioned with the code and reviewed like code.',
       },
@@ -148,7 +148,7 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
     grow: {
       part: 'Short beats long.',
       text: {
-        plain: 'Add a line when a mistake repeats, and delete lines that stopped mattering. Every line is read every session.',
+        plain: 'Add a line when a mistake repeats, and delete lines that stopped mattering. Every line is read at the start of every thread.',
         technical: 'Anthropic advises keeping CLAUDE.md under 200 lines: longer files take more of the window and are followed less.',
         engineer: 'Keep always-true invariants here; move procedures that only some tasks need into skills.',
       },
@@ -191,7 +191,7 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
       part: 'What no check sees.',
       text: {
         plain: 'A check only looks for what someone told it to. Tell the agent what must never happen, and it can write a check for it.',
-        technical: 'Turn the rule into a test: export the CSV with a hidden rating and assert it is absent. Now the gate knows.',
+        technical: 'Turn the rule into a test: export the CSV with a hidden rating and assert it is absent. Now the check knows.',
         engineer: 'A check proves what it asserts and nothing more. Spec gaps need a test written from the requirement, or a reviewer (lesson 15).',
       },
     },
@@ -209,7 +209,7 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
       part: 'A helper.',
       text: {
         plain: 'The second column is a helper: an agent with its own empty window. Its window filled instead of the agent’s, then was thrown away.',
-        technical: 'In Claude Code this is a subagent: a fresh context, a summary back. Only the three lines cost the main thread anything.',
+        technical: 'Claude Code calls a helper a subagent: a fresh window, a summary back. Only the three lines cost the main thread anything.',
         engineer: 'A context firewall: high-volume reads stay in a disposable window; only the structured result crosses the boundary.',
       },
     },

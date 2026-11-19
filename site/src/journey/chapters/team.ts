@@ -3,6 +3,7 @@
 import type { Chapter, Ctx } from '../chapter';
 import { team, lab } from '../presets';
 import { termLabel } from '../terms';
+import { STEP_NOTES } from '../notes';
 import { fleet, type FleetOpts, type Tally } from '../sim';
 import type { Script } from '../scene';
 import { BUS_Y, route, type SceneState, type XY, type Kind } from '../picture';
@@ -206,5 +207,13 @@ export const fleetCh: Chapter = {
     yours: { scene: () => many(20, true), enter: (ctx) => { ctx.mem.n = 20; ctx.mem.gate = true; ctx.mem.turns = true; runFleet(ctx); } },
   },
   inputs: { n: (ctx, val) => { ctx.mem.n = Number(val); runFleet(ctx); } },
-  actions: { gate: (ctx, val) => { ctx.mem.gate = val === 'on'; runFleet(ctx); } },
+  actions: {
+    gate: (ctx, val) => {
+      ctx.mem.gate = val === 'on';
+      // The note under the picture follows the switch, not the step it opened on.
+      const n = STEP_NOTES.fleet?.[val === 'on' ? 'twenty' : 'nogate'];
+      if (n) ctx.model(n.part, n.text[ctx.level]);
+      runFleet(ctx);
+    },
+  },
 };
