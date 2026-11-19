@@ -17,7 +17,7 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
       text: {
         plain: 'Everything it uses is in there: what you typed, what you pasted, its own replies. Leave something out and it fills the gap with what sounds likely.',
         technical: 'The app sends the whole window with every message and the model keeps nothing between calls. A wrong answer usually means something was missing from the window.',
-        engineer: 'Output depends only on the tokens sent. Memory files, retrieved documents and tool results are all the harness putting more text into this one window.',
+        engineer: 'Output depends only on the tokens sent. Instruction files, retrieved documents and tool results are all the harness putting more text into this one window.',
       },
     },
     inputs: {
@@ -49,7 +49,7 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
     labs: {
       part: 'Different makers, same idea.',
       text: {
-        plain: 'Every model on this page does what the last lesson showed: it reads its window and writes. You do not need to pick the right company to start; any one plan will do.',
+        plain: 'Every model here does what AI model, lesson 1, showed: it reads its window and writes. You do not need to pick the right company to start; any one plan will do.',
         technical: 'Each maker has a large model and smaller, cheaper ones. The window, the tools and the loop work the same way on all of them.',
         engineer: 'Stay portable: keep instructions in AGENTS.md and checks in npm scripts, so swapping the model is a setting. A second maker’s model is also a cheap reviewer later.',
       },
@@ -139,7 +139,7 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
       },
     },
     loop: {
-      part: 'Ask, build, look, change.',
+      part: 'Your two beats.',
       text: {
         plain: 'You do two of the four beats: you ask and you look. The looking is the part nobody else can do for you.',
         technical: 'Look at the running page, then read the test output it shows you. If it shows none, ask for it before the next change.',
@@ -147,7 +147,7 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
       },
     },
     change: {
-      part: 'Changes you can look for.',
+      part: 'What comes back.',
       text: {
         plain: 'A few precise changes come back as a few things to check. A vague wish comes back as a different app.',
         technical: 'A vague request turns into a wide diff that the tests may pass and you still did not want. Precise asks keep the diff small.',

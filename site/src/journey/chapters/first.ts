@@ -59,7 +59,7 @@ function runDevice(ctx: Ctx, d: Device) {
     await h.wait(1500);
     ctx.say(null, d === 'phone'
       ? 'Quickest start of all. The files live on their site, not on a computer of yours.'
-      : 'One app, one plan, one empty folder. That is the whole set-up.');
+      : 'Set up once. Every job after this starts in this folder.');
   });
 }
 
