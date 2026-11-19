@@ -4,7 +4,7 @@
  * See site/FIGURES.md for what each tone is for.
  */
 
-.fig {
+.fig, .tile {
   /* Light: faces get darker as they turn from the light. */
   --fig-top: var(--card);
   --fig-left: color-mix(in oklab, var(--ink) 8%, var(--card));
@@ -33,7 +33,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .fig {
+  :root:not([data-theme='light']) .fig, :root:not([data-theme='light']) .tile {
     /* Dark: the top catches the light, sides fall away towards the page colour. */
     --fig-top: color-mix(in oklab, var(--ink) 17%, var(--card));
     --fig-left: color-mix(in oklab, var(--ink) 10%, var(--card));
@@ -56,7 +56,7 @@
     --fig-halo: color-mix(in oklab, var(--paper) 85%, transparent);
   }
 }
-:root[data-theme='dark'] .fig {
+:root[data-theme='dark'] .fig, :root[data-theme='dark'] .tile {
   --fig-top: color-mix(in oklab, var(--ink) 17%, var(--card));
   --fig-left: color-mix(in oklab, var(--ink) 10%, var(--card));
   --fig-right: color-mix(in oklab, var(--ink) 5%, var(--card));

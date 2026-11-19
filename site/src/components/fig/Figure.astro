@@ -27,6 +27,8 @@ interface Props {
   hint?: string;
   /** No frame and no heading of its own: for a figure inside a board tile, which supplies both. */
   bare?: boolean;
+  /** The drawing has parts the reader can focus or press, so it is a group, not one image. */
+  interactive?: boolean;
   /** Text alternative for the drawing: what it shows in its first state. */
   alt: string;
   /** Shown when the figure shows data. */
@@ -38,7 +40,7 @@ interface Props {
   legend?: string[];
 }
 
-const { n, title, alt, source, wide = false, bare = false, labels = [] } = Astro.props;
+const { n, title, alt, source, wide = false, bare = false, interactive = false, labels = [] } = Astro.props;
 const legend = Astro.props.legend ?? labels.map((l) => l.name);
 const id = `fig-${n}`;
 const hasControl = Astro.slots.has('control');
@@ -49,7 +51,7 @@ const hasCaption = Astro.slots.has('caption') || !!source;
     <span class="fig-n"><a href={`#${id}`}>Fig. {n}</a></span>
     <span class="fig-title" id={`${id}-title`}>{title}</span>
   </p>
-  <div class="fig-drawing" role="img" aria-label={alt} data-fig-drawing>
+  <div class="fig-drawing" role={interactive ? 'group' : 'img'} aria-label={alt} data-fig-drawing>
     <slot />
     {labels.map((l, i) => (
       <span class="fig-label" style={`left:${l.at.left};top:${l.at.top}`} data-label={l.id ?? String(i + 1)} aria-hidden="true">
