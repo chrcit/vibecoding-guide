@@ -114,7 +114,7 @@ async function cards(ctx: Ctx, h: Script) {
   await h.send(route.gateToYou(), 'model', { ms: 420 });
   t.done = 1;
   show(ctx, t);
-  ctx.say(null, 'Four cards, each answering one question in a glance. The 212 changed lines are still there if a card makes you want to read them.');
+  ctx.say(null, 'Four cards, each answering one question at a glance. The 212 changed lines are still there if a card makes you want to read them.');
 }
 
 // ----- catch: six jobs, all green at the check -----
@@ -163,7 +163,7 @@ async function catching(ctx: Ctx, h: Script, on: CardId[]) {
   }
   const missed = t.missed as number;
   ctx.say(null, missed
-    ? `The check was green six times out of six. ${missed} of the jobs were not what you asked for and reached you as “done” anyway.`
+    ? `The check was green six times out of six. ${missed === 1 ? 'One job was' : `${missed} jobs were`} not what you asked for and reached you as “done” anyway.`
     : `The check was green six times out of six. All ${t.seen} jobs that were not what you asked for showed it on a card before they reached you.`);
 }
 
@@ -285,7 +285,7 @@ export const proof: Chapter = {
     word: { scene: () => base(), enter: (ctx) => run(ctx, (h) => word(ctx, h)) },
     cards: { scene: () => base(), enter: (ctx) => run(ctx, (h) => cards(ctx, h)) },
     catch: { scene: () => base(), enter: (ctx) => { ctx.mem.on = [...ORDER]; ctx.scene.speed = 1.5; playCatch(ctx); } },
-    during: { scene: () => base(), enter: (ctx) => run(ctx, (h) => during(ctx, h, false)) },
+    during: { scene: () => base(), enter: (ctx) => run(ctx, (h) => during(ctx, h, true)) },
     ask: { scene: () => base(), enter: (ctx) => run(ctx, (h) => asking(ctx, h, 'page')) },
   },
   actions: {

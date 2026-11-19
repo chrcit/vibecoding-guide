@@ -6,46 +6,60 @@ import Next from '../../components/journey/Next.astro';
 import Fact from '../../components/data/Fact.astro';
 import Verified from '../../components/data/Verified.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import { url } from '../../lib/nav';
 
 const ids = ['harnesses.claudeCode.askForEvidence', 't3code.htmlRenders', 't3code.browser'];
-const prompt = `When you finish, hand back proof I can judge in a minute:
-- three lines on what changed and what you left out
-- the test command you ran and its output
-- screenshots of every page you touched, at 390 and 1440 pixels wide
-- a link where I can try it
-If you could not check something, say so.`;
+const prompt = `When you finish, hand back proof I can judge in a minute, before you say done:
+- a screenshot of every page you changed, at phone width (390 pixels) and desktop width
+- the test command you ran and its full output
+- for any number the change affects: its value before and after
+- a short list of what you did not check, and why
+If something could not be checked, say so instead of guessing.`;
 ---
 <Journey chapter="proof" first="word" title="Proof you can read" description="An agent can hand back more than the word done: a summary, a test run, a screenshot, a link to try. Each shows you one kind of wrong at a glance.">
   <Step id="word" title="“Done” is one word">
-    <p>A made-up job passes the check and comes back to you. To know it is what you asked for, you would read every changed line.</p>
+    <p>The <a href={url('journey/check/')}>check from step 5</a> answers yes or no, and here it says yes: one pale puck reaches you with “Done.” and the tray beside you stays empty.</p>
+    <p>To know whether the job is what you asked for, you would read every changed line, 212 in this made-up job.</p>
   </Step>
   <Step id="cards" title="Ask for proof with the work">
-    <p>The agent runs the tests and opens the page, and hands back four cards. Each answers one question.</p>
+    <p>Four cards land on the tray one by one: a summary, a test run, a screenshot and a link to try.</p>
+    <p>A check says yes or no; a card is something you look at, and each answers one question at a glance.</p>
     <More title="Where this comes from">
       <p><Fact id="harnesses.claudeCode.askForEvidence" show="claim" /></p>
     </More>
   </Step>
   <Step id="catch" title="Each card shows one kind of wrong">
-    <p>Six made-up jobs, all green at the check. Four are not what you asked for. Switch the cards off and on.</p>
+    <p>Six made-up jobs pass the check, four of them not what you asked for, and the card that shows it turns red.</p>
+    <p>Switch a card off and its kind of wrong reaches you as “done”.</p>
     <div class="pick">
       <button type="button" data-do="toggle" data-val="sum" aria-pressed="true">Summary</button>
       <button type="button" data-do="toggle" data-val="tests" aria-pressed="true">Test run</button>
       <button type="button" data-do="toggle" data-val="shot" aria-pressed="true">Screenshot</button>
       <button type="button" data-do="toggle" data-val="link" aria-pressed="true">Link</button>
     </div>
+    <More title="A worked check for a number">
+      <dl>
+        <dt>Reference</dt><dd>Fees paid last season, from the club’s own spreadsheet: €14,880 (made-up).</dd>
+        <dt>Tolerance</dt><dd>Money: exactly equal. For a measured value, write down how far off is fine before the run.</dd>
+        <dt>Rerun</dt><dd>The agent runs it again on a fresh copy of the data and gets the same number.</dd>
+        <dt>The card</dt><dd>“Total €14,880.00. Reference €14,880.00. Rerun €14,880.00. Match.”</dd>
+      </dl>
+    </More>
   </Step>
   <Step id="during" title="Proof while it runs">
-    <p>A long job. With a progress file it keeps up to date, you can look at any time without stopping it.</p>
+    <p>The progress card on the tray grows with each step of a long job, and turns red at step 4, where the agent does something you did not ask for.</p>
+    <p>You see it while it works, without stopping it to ask.</p>
     <div class="pick">
-      <button type="button" data-do="progress" data-val="off" data-default aria-pressed="true">Nothing until the end</button>
-      <button type="button" data-do="progress" data-val="on" aria-pressed="false">A progress file</button>
+      <button type="button" data-do="progress" data-val="on" data-default aria-pressed="true">A progress file</button>
+      <button type="button" data-do="progress" data-val="off" aria-pressed="false">Nothing until the end</button>
     </div>
     <More title="In T3 Code">
       <p><Fact id="t3code.htmlRenders" show="claim" /> <Fact id="t3code.browser" show="claim" /></p>
     </More>
   </Step>
   <Step id="ask" title="Say what you want back">
-    <p>Different work needs different proof.</p>
+    <p>The cards on the tray change with the work: two screenshots for a page, rows before and after for a script, a failing test that then passes for a fix, with made-up counts.</p>
+    <p>Say in the brief which proof you want.</p>
     <div class="pick">
       <button type="button" data-do="kind" data-val="page" data-default aria-pressed="true">A page</button>
       <button type="button" data-do="kind" data-val="script" aria-pressed="false">A script</button>
@@ -57,7 +71,7 @@ If you could not check something, say so.`;
     <Next from="proof" more={[{ href: 'explain/verification/', text: 'Checking the work' }]} />
   </Step>
   <Fragment slot="foot">
-    <p>The jobs, the 212 changed lines and which jobs went wrong are made up.</p>
+    <p>The jobs, the 212 changed lines, the counts and which jobs went wrong are made up.</p>
     <Verified ids={ids} />
   </Fragment>
 </Journey>
