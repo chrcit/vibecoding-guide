@@ -160,7 +160,7 @@ When you are done, tell me which files you changed, paste the test output, and l
     {noCache.length > 0 && <p class="mb-none">No cache price in our data: {noCache.map((r) => r.name).join(', ')}.</p>}
   </Tile>
 
-  <Tile title="Per task, the tokens decide" span={4} level="engineer" side={sourcePath('benchmarks.aa.opusByEffort.max.costPerTask')}>
+  <Tile title="Cost per task, as measured" span={4} level="engineer" side={sourcePath('benchmarks.aa.opusByEffort.max.costPerTask')}>
     <dl class="stats">
       <Stat name="Opus 5.5 at max, per index task" tone="accent"><Fact id="benchmarks.aa.opusByEffort.max.costPerTask" /></Stat>
       <Stat name="Output, whole run, low"><Fact id="benchmarks.aa.opusByEffort.low.totalTokens" /></Stat>
