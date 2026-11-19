@@ -28,7 +28,7 @@ const baseAt = effort.levels.indexOf(effort.base);
 <div class="jc" id="fig-61" data-figure="61" data-job-cost data-rows={JSON.stringify(rows)} data-effort={JSON.stringify(effort)}>
   <div class="jc-controls">
     <div class="pick jc-presets" role="group" aria-label="Size of the job">
-      {PRESETS.map((p) => <button type="button" aria-pressed={String(p.key === start.key)} data-preset={p.key}>{p.name}</button>)}
+      {PRESETS.map((p) => <button type="button" aria-pressed={String(p.key === start.key)} data-preset={p.key}><span>{p.name}</span><span class="jc-size">{tokens(p.input)} read,<br />{tokens(p.output)} written</span></button>)}
     </div>
     <div class="controls">
       <label class="control">
@@ -79,6 +79,8 @@ const baseAt = effort.levels.indexOf(effort.base);
   .jc-controls { display: grid; gap: 0.75rem; align-content: start; }
   .jc-controls .controls { display: grid; gap: 0.25rem; }
   .jc-presets { display: grid; grid-template-columns: 1fr 1fr; }
+  .jc-presets button { display: grid; justify-items: center; gap: 0.1rem; height: auto; min-height: 3.25rem; padding-block: 0.4rem; line-height: 1.2; }
+  .jc-size { font-family: var(--mono); font-size: var(--text-xs); font-weight: 400; color: var(--muted); white-space: normal; text-align: center; }
   .jc-presets button { white-space: normal; line-height: 1.2; }
   .jc-label { display: flex; gap: 0.5rem; font-size: var(--text-xs); color: var(--muted); margin-bottom: 0.25rem; }
   .jc-label output { font-family: var(--mono); font-weight: 600; color: var(--ink); }

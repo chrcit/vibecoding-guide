@@ -75,12 +75,25 @@ export function cost(r: PriceRow, j: Job): Bar {
 
 export const bars = (rows: PriceRow[], j: Job) => rows.map((r) => cost(r, j)).sort((a, b) => a.cost - b.cost);
 
+/**
+ * A cost rounded the way `money` shows it, in dollars. The ratio in the finding is worked out from
+ * these, so it matches the two numbers on screen and is rounded only once more, at the end.
+ */
+export function shown(v: number) {
+  if (v >= 10) return Math.round(v);
+  if (v >= 0.995) return Math.round(v * 100) / 100;
+  if (v >= 0.1) return Math.round(v * 100) / 100;
+  if (v >= 0.01) return Math.round(v * 1000) / 1000;
+  return Math.round(v * 10000) / 10000;
+}
+
 export function money(v: number) {
-  if (v >= 1000) return `$${Math.round(v).toLocaleString('en-GB')}`;
-  if (v >= 10) return `$${v.toFixed(0)}`;
-  if (v >= 0.995) return `$${v.toFixed(2)}`;
-  if (v >= 0.01) return `${(v * 100).toFixed(v >= 0.1 ? 0 : 1)}¢`;
-  return `${(v * 100).toFixed(2)}¢`;
+  const r = shown(v);
+  if (v >= 1000) return `$${r.toLocaleString('en-GB')}`;
+  if (v >= 10) return `$${r.toFixed(0)}`;
+  if (v >= 0.995) return `$${r.toFixed(2)}`;
+  if (v >= 0.01) return `${(r * 100).toFixed(v >= 0.1 ? 0 : 1)}¢`;
+  return `${(r * 100).toFixed(2)}¢`;
 }
 
 export function tokens(v: number) {
@@ -103,7 +116,8 @@ export const toSlider = (v: number, [lo, hi]: readonly [number, number]) =>
 export function finding(list: Bar[]) {
   if (!list.length) return '';
   const lo = list[0]!, hi = list[list.length - 1]!;
-  const ratio = lo.cost > 0 ? Math.round(hi.cost / lo.cost) : 0;
+  const a = shown(lo.cost), b = shown(hi.cost);
+  const ratio = a > 0 ? Math.round(b / a) : 0;
   const upper = list.some((b) => b.upper) ? ' A dashed bar has no cache price in our data, so it is an upper bound.' : '';
   return `From ${money(lo.cost)} on ${lo.row.name} to ${money(hi.cost)} on ${hi.row.name}, ${ratio}× apart.${upper}`;
 }
