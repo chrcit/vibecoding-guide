@@ -2,7 +2,7 @@
 /*
   Renders one rich lesson overview step inside a Part overview page:
   - Plain summary
-  - Reading-level-specific mental-model takeaway (Vibe coding / Technical / Engineer)
+  - What the lesson adds to the picture, for the reader's level
   - Direct sub-step jump chips into exact interactive sections of that lesson
   - Related concept pills that open in the side drawer (data-side) without losing your place
   - Primary "Open lesson →" link
@@ -20,9 +20,9 @@ const { rung: r } = Astro.props;
 <Step id={r.id} title={`${r.n}. ${r.title}`}>
   <p>{r.line}</p>
   <div class="j-adds">
-    <ForLevel is="plain"><p><b>In your model:</b> {r.adds.plain}</p></ForLevel>
-    <ForLevel is="technical"><p><b>In your model:</b> {r.adds.technical}</p></ForLevel>
-    <ForLevel is="engineer"><p><b>In your model:</b> {r.adds.engineer}</p></ForLevel>
+    <ForLevel is="plain"><p>{r.adds.plain}</p></ForLevel>
+    <ForLevel is="technical"><p>{r.adds.technical}</p></ForLevel>
+    <ForLevel is="engineer"><p>{r.adds.engineer}</p></ForLevel>
   </div>
   {r.steps.length > 0 && (
     <div class="j-chips" aria-label={`Jump inside ${r.title}`}>
