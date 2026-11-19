@@ -34,10 +34,8 @@ function scene(device: Device = 'laptop', o: { tray?: boolean } = {}): SceneStat
       lab('you', 'you', 'left'),
       termLabel('a0', 'agent', 'top', 'the agent'),
       termLabel('gate', 'check', 'right'),
-      termLabel('project', 'project'),
-      ...(!showGear ? [] : builder
-        ? [lab('zone:cloud', 'all on the builder’s site', 'bottom', 'wiki/web-builders/')]
-        : [lab('zone:mine', device === 'desktop' ? 'your desktop PC: the files' : 'your laptop: the files', 'bottom')]),
+      builder ? lab('project', 'your project, on the builder’s site', 'top', 'wiki/web-builders/') : termLabel('project', 'project'),
+      ...(!showGear || builder ? [] : [lab('zone:mine', device === 'desktop' ? 'your desktop PC: the files' : 'your laptop: the files', 'bottom')]),
       ...(showGear ? [lab('gear:me', builder ? 'phone browser' : device === 'desktop' ? 'desktop PC' : 'laptop', 'right')] : []),
     ],
   };
@@ -70,7 +68,7 @@ function runDevice(ctx: Ctx, d: Device) {
 async function runJob(ctx: Ctx, h: Script) {
   note(ctx, 'first', 'job');
   h.set((s) => Object.assign(s, scene('laptop', { tray: true })));
-  stat(ctx, ['your laptop', '1 of 4: you ask', 'empty', '–']);
+  stat(ctx, ['your laptop', 'round 1 · 1 of 4: you ask', 'empty', '–']);
   ctx.say('you', 'I want a small web app for a neighbourhood football club to track who has paid this season…');
   await h.send(route.youToAgent(), 'you', { ms: 460 });
   h.set((s) => { s.agents[0]!.blocks = [{ t: 'you', h: 5 }]; s.agents[0]!.busy = true; });
@@ -96,11 +94,11 @@ async function runLoop(ctx: Ctx, h: Script) {
   note(ctx, 'first', 'loop');
   h.set((s) => Object.assign(s, scene('laptop', { tray: true })));
   const checked = lv(ctx, 'it opened the page', 'npm test, tsc --noEmit', 'npm test, tsc --noEmit');
-  stat(ctx, ['your laptop', '1 of 4: you ask', 'empty', '–']);
+  stat(ctx, ['your laptop', 'round 1 · 1 of 4: you ask', 'empty', '–']);
   ctx.say('you', 'A list of members, a form to add one, a way to mark them paid.');
   await h.send(route.youToAgent(), 'you', { ms: 440 });
   h.set((s) => { s.agents[0]!.blocks = [{ t: 'you', h: 4 }]; s.agents[0]!.lamp = 'work'; });
-  stat(ctx, ['your laptop', '2 of 4: it builds', 'writing…', '–']);
+  stat(ctx, ['your laptop', 'round 1 · 2 of 4: it builds', 'writing 4 new files', '–']);
   const files: [number, string][] = [[0, 'index.html'], [1, 'members.ts'], [2, 'members.test.ts'], [3, 'style.css']];
   for (const [i, name] of files) {
     h.set((s) => { s.agents[0]!.busy = true; s.tools!.on = 'edit'; });
@@ -112,17 +110,17 @@ async function runLoop(ctx: Ctx, h: Script) {
   ctx.say('agent', lv(ctx, 'Opening the page and trying the form…', 'npm test: 6 passed. npx tsc --noEmit: no errors.', 'npm test: 6 passed (store, filters, empty list). npx tsc --noEmit: clean. npm run dev on :5173.'));
   await h.send(route.agentToGate(), 'model', { ms: 360 });
   h.set((s) => { s.gates![0]!.lamp = 'ok'; s.tools!.on = null; s.agents[0]!.busy = false; s.project!.files = ['ok', 'ok', 'ok', 'ok', '', '']; });
-  stat(ctx, ['your laptop', '2 of 4: it builds', '4 new files', checked]);
+  stat(ctx, ['your laptop', 'round 1 · 2 of 4: it builds', '4 new files', checked]);
   await h.wait(900);
   await h.send(route.gateToYou(), 'model', { ms: 360 });
   h.set((s) => { s.tray!.cards = [{ id: 'shot', b: 'tool', }]; s.labels!.push(lab('card:shot', 'the page, open', 'right')); s.agents[0]!.lamp = 'ok'; });
   ctx.say('agent', 'Done. Open http://localhost:5173 and add a member first.');
-  stat(ctx, ['your laptop', '3 of 4: you look', '4 new files', checked]);
+  stat(ctx, ['your laptop', 'round 1 · 3 of 4: you look', '4 new files', checked]);
   await h.wait(1800);
   ctx.say('you', 'The paid tick works. Unpaid people should stand out more.');
   await h.send(route.youToAgent(), 'you', { ms: 440 });
   h.set((s) => { s.agents[0]!.blocks!.push({ t: 'you', h: 1.5 }); s.agents[0]!.lamp = 'work'; s.gates![0]!.lamp = 'off'; });
-  stat(ctx, ['your laptop', '4 of 4: you say what to change', '4 new files', checked]);
+  stat(ctx, ['your laptop', 'round 1 · 4 of 4: you say what to change', '4 new files', checked]);
   await h.wait(1400);
   ctx.say(null, 'Then round again. Every round is these four beats.');
 }
@@ -137,12 +135,13 @@ async function runChange(ctx: Ctx, h: Script, clear: boolean) {
     s.agents[0]!.blocks = [{ t: 'you', h: 4 }, { t: 'tool', h: 5 }, { t: 'model', h: 1.5 }];
   });
   const checked = lv(ctx, 'it opened the page', 'npm test, tsc --noEmit', 'npm test, tsc --noEmit');
-  stat(ctx, ['your laptop', '4 of 4: you say what to change', '4 files', checked]);
+  stat(ctx, ['your laptop', 'round 1 · 4 of 4: you say what to change', '4 files', checked]);
   ctx.say('you', clear
     ? 'Three changes: sort by team, then name. Make unpaid members easy to spot. At the top, show “18 of 25 paid”.'
     : 'Make it better and more modern, add stats, fix it on phones, maybe like a real app.');
   await h.send(route.youToAgent(), 'you', { ms: 440 });
   h.set((s) => { s.agents[0]!.blocks!.push({ t: 'you', h: clear ? 2 : 1.5 }); s.agents[0]!.busy = true; s.agents[0]!.lamp = 'work'; });
+  stat(ctx, ['your laptop', 'round 2 · 2 of 4: it builds', '4 files', checked]);
   const edits = clear ? [1, 3] : [0, 1, 2, 3, 4, 5];
   for (const i of edits) {
     h.set((s) => { s.tools!.on = 'edit'; });
@@ -158,7 +157,7 @@ async function runChange(ctx: Ctx, h: Script, clear: boolean) {
     s.labels!.push(lab(clear ? 'card:b' : 'card:a', clear ? '3 changes' : 'a new look', 'right'));
   });
   ctx.say('agent', clear ? 'Done: sorted, unpaid in red, “18 of 25 paid” at the top.' : 'Done. New design, a stats page, dark mode, and a menu.');
-  stat(ctx, ['your laptop', '3 of 4: you look', clear ? '2 changed' : 'all 6 changed', clear ? checked : 'passes, but is it right?']);
+  stat(ctx, ['your laptop', 'round 2 · 3 of 4: you look', clear ? '4 files, 2 changed' : '6 files: 4 changed, 2 new', clear ? checked : 'passes, but is it right?']);
   await h.wait(1800);
   ctx.say(null, clear
     ? 'Each change is something you can look for in ten seconds.'
