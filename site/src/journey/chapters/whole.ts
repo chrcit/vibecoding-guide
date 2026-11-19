@@ -1,7 +1,8 @@
 // The overview: the picture growing through all nine steps, one short loop each.
 import type { Chapter, Ctx } from '../chapter';
 import { solo, team, lab, worked } from '../presets';
-import { fleet } from '../sim';
+import { fleet, type FleetOpts } from '../sim';
+import { closing } from './team';
 import { route, reverse, BUS_Y } from '../picture';
 import { LINES } from './chat';
 import { job } from './loop';
@@ -10,6 +11,8 @@ import { jobs } from './check';
 import { handed } from './handoff';
 
 const you = lab('you', 'you', 'left');
+/** One run of the team, ending with what came of it. */
+const team9 = (ctx: Ctx, o: FleetOpts, opening: string) => void ctx.scene.run(async (h) => { ctx.say(null, opening); ctx.say(null, closing(await fleet(ctx, h, o), o)); });
 const again = (ctx: Ctx, fn: Parameters<Ctx['scene']['run']>[0], pause = 1400) => void ctx.scene.run(async (h) => { for (;;) { await fn(h); await h.wait(pause); } });
 
 export const whole: Chapter = {
@@ -58,11 +61,11 @@ export const whole: Chapter = {
     },
     parallel: {
       scene: () => team(3, { trees: true, lead: [{ t: 'rules', h: 4 }], labels: [you, lab('project', 'main', 'top', 'wiki/branch/')] }),
-      enter: (ctx) => void ctx.scene.run((h) => fleet(ctx, h, { until: 9 }).then(() => undefined)),
+      enter: (ctx) => team9(ctx, { until: 6, name: 'the agent', clashes: true, flaws: false }, 'Three helpers at once, each in its own copy of the project.'),
     },
     lead: {
       scene: () => team(5, { trees: true, mgate: true, mixed: true, lead: [{ t: 'rules', h: 4 }], labels: [you, lab('a0', 'the lead', 'top', 'wiki/orchestration/'), lab('mgate', 'check', 'top', 'wiki/verification/'), lab('project', 'main', 'top', 'wiki/branch/')] }),
-      enter: (ctx) => void ctx.scene.run((h) => fleet(ctx, h, { gate: true, until: 15 }).then(() => undefined)),
+      enter: (ctx) => team9(ctx, { gate: true, until: 10 }, 'The lead hands out the tasks and reads a short report from each.'),
     },
     fleet: {
       scene: () => {
@@ -70,7 +73,7 @@ export const whole: Chapter = {
         s.focus = ['you', 'a0', 'project', [-88, -254, 30], [88, -254, 30], [-110, BUS_Y, 0]];
         return s;
       },
-      enter: (ctx) => { ctx.scene.speed = 1.5; void ctx.scene.run(async (h) => { const t = await fleet(ctx, h, { gate: true, until: 40 }); ctx.say(null, `${t.landed} tasks landed. ${t.sentBack} were sent back at the gate first. ${t.wrong} wrong ones reached main.`); }); },
+      enter: (ctx) => { ctx.scene.speed = 1.5; team9(ctx, { gate: true, until: 40 }, 'Twenty builders. You read what gets through the check.'); },
     },
   },
 };

@@ -31,7 +31,10 @@
 .j-step[data-active], .j-step:focus-within { opacity: 1; }
 .j-root:not([data-ready]) .j-step { opacity: 1; }
 
-@media (min-width: 60rem) {
+/* Two columns when the page has room for them. The page, not the screen: an open side view takes
+   room away, and then the picture goes back on top of the steps. */
+main:has(> .j-root) { container: journey / inline-size; }
+@container journey (min-width: 60rem) {
   .j-root { display: grid; grid-template-columns: minmax(17rem, 25rem) minmax(0, 1fr); gap: var(--space-6); align-items: start; padding-top: var(--space-3); }
   .j-view {
     grid-column: 2; grid-row: 1; top: calc(var(--header-h) + 0.75rem);
@@ -95,8 +98,8 @@
 .j-stats dd { margin: 0; font-family: var(--mono); font-size: var(--text-s); font-weight: 600; color: var(--ink); }
 .j-key { display: flex; flex-wrap: wrap; gap: 0.125rem 0.875rem; margin: 0; padding: 0; list-style: none; font-size: var(--text-xs); color: var(--muted); }
 .j-key li { display: inline-flex; align-items: center; gap: 0.35rem; }
-.j-key li::before { content: ''; width: 0.75rem; height: 0.75rem; border-radius: 3px; background: var(--t); border: 1px solid color-mix(in oklab, var(--t) 50%, var(--j-shade)); }
-@media (min-width: 60rem) {
+.j-key li::before { content: ''; width: 0.75rem; height: 0.75rem; border-radius: 3px; background: var(--t); border: 1px solid color-mix(in oklab, var(--t) 45%, var(--ink)); }
+@container journey (min-width: 60rem) {
   .j-read { padding: 0.625rem 0.875rem; }
   .j-say { font-size: var(--text-m); }
 }
@@ -226,3 +229,32 @@ html[data-embed] .j-stage { max-height: 36svh; }
 .j-more-body dd { margin: 0; font-family: var(--mono); color: var(--ink); }
 .j-rail-part { flex: none; display: inline-flex; align-items: center; min-height: 2.5rem; padding-inline: 0.5rem; border-radius: 6px; font-size: var(--text-s); font-weight: 600; color: var(--muted); text-decoration: none; white-space: nowrap; }
 .j-rail-part:hover { color: var(--accent); }
+
+/* Switches: each one is on or off by itself, so each shows a box that is ticked or empty. */
+.pick[data-multi] button::before {
+  content: ''; flex: none; width: 0.95rem; height: 0.95rem; border-radius: 3px;
+  border: 1.5px solid var(--rule-strong); background: var(--card);
+}
+.pick[data-multi] button[aria-pressed='true']::before {
+  border-color: var(--accent);
+  background: var(--accent) linear-gradient(var(--accent), var(--accent));
+  box-shadow: inset 0 0 0 2px var(--card);
+}
+.pick[data-multi] button[aria-pressed='false'] { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in oklab, var(--muted) 60%, transparent); }
+
+.j-more-body .j-defs { grid-template-columns: 1fr; gap: 0; }
+.j-more-body .j-defs dt { margin-top: 0.375rem; font-weight: 600; color: var(--ink); }
+.j-more-body .j-defs dd { font-family: var(--sans); color: var(--ink-2); }
+.j-code { margin: 0 0 0.625rem; padding: 0.625rem 0.75rem; border: 1px solid var(--rule); border-radius: var(--radius-s); background: var(--paper-2); font-family: var(--mono); font-size: var(--text-xs); line-height: 1.55; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+.j-more-body .copy-prompt { margin: 0; }
+.j-step p a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 0.2em; }
+.j-step p a:hover { color: var(--accent); }
+.j-lead { margin: 0.75rem 0 0; max-width: 34ch; font-size: var(--text-m); color: var(--ink-2); }
+.j-lead a { color: var(--accent); font-weight: 600; text-underline-offset: 0.2em; }
+.j-more-body a.fact { text-decoration-color: color-mix(in oklab, var(--muted) 40%, transparent); }
+
+/* A model that is working is tinted, paler than the solid tone of something gone wrong. */
+[data-b='busy'] { --t: color-mix(in oklab, var(--accent) 34%, var(--card)); }
+.j-ent[data-busy=''] [data-part='head'] .k-top, .j-ent[data-busy=''] [data-part='head'] .k-fill { fill: color-mix(in oklab, var(--accent) 34%, var(--card)); }
+.j-ent[data-busy=''] [data-part='head'] .k-left { fill: color-mix(in oklab, var(--accent) 44%, var(--card)); }
+.j-ent[data-busy=''] [data-part='head'] .k-right, .j-ent[data-busy=''] [data-part='head'] .k-shadow { fill: color-mix(in oklab, var(--accent) 54%, var(--card)); }

@@ -13,8 +13,14 @@ export interface FleetOpts {
   gate?: boolean;
   /** The lead keeps only a short report from each task. Off: it keeps everything. */
   shortReports?: boolean;
-  /** Stop after this many tasks have landed. Default: keep going. */
+  /** How many tasks there are. Every run hands out exactly this many and then ends. */
   until?: number;
+  /** What the agent you talk to is called in the readout: 'the agent' before it is a lead. */
+  name?: string;
+  /** Side by side, before there is a check: count clashes instead of what the check sent back. */
+  clashes?: boolean;
+  /** Some tasks come back wrong on their own, about one in four. Off: only a clash makes one wrong. */
+  flaws?: boolean;
 }
 export interface Tally { landed: number; sentBack: number; wrong: number; clashes: number; compactions: number }
 
@@ -27,14 +33,15 @@ export async function fleet(ctx: Ctx, h: Script, o: FleetOpts = {}): Promise<Tal
   const tally: Tally = { landed: 0, sentBack: 0, wrong: 0, clashes: 0, compactions: 0 };
   const short = o.shortReports ?? true;
   const workers = scene.state.agents.filter((a) => a.id !== 'a0');
-  const done = () => o.until !== undefined && tally.landed >= o.until;
+  const total = o.until ?? workers.length * 2;
+  const flaws = o.flaws ?? true;
+  let handed = 0;
+  // One readout for chapters 7 to 9: the same names in the same order, counted towards a total.
   const stats = () => ctx.stat([
-    ['agents', workers.length],
-    ['landed on main', tally.landed],
-    ...(o.gate ? [['sent back at the gate', tally.sentBack] as [string, number]] : []),
+    ['tasks on main', `${tally.landed} of ${total}`],
+    o.clashes ? ['clashes', tally.clashes] : ['sent back before main', o.gate ? tally.sentBack : 'no check'],
     ['wrong on main', tally.wrong],
-    ...(o.shared ? [['clashes', tally.clashes] as [string, number]] : []),
-    ['lead’s window', `${Math.round(scene.fill('a0') * 100)}%`],
+    [`${o.name ?? 'the lead'}’s window`, `${Math.round(scene.fill('a0') * 100)}% full`],
   ]);
   const w = (id: string) => (s: typeof scene.state) => s.agents.find((a) => a.id === id)!;
   let writing = 0;
@@ -43,7 +50,8 @@ export async function fleet(ctx: Ctx, h: Script, o: FleetOpts = {}): Promise<Tal
     const me = workers[i]!;
     const id = me.id, at = me.at;
     await h.wait(140 + i * 210);
-    for (let task = 0; !done(); task++) {
+    for (let task = 0; handed < total; task++) {
+      handed++;
       h.set((s) => { s.agents[0]!.busy = true; });
       await h.send(route.agentToWorker(at), 'model');
       h.set((s) => { s.agents[0]!.busy = false; const a = w(id)(s); a.blocks = [{ t: 'model', h: 5 }]; a.lamp = 'work'; a.busy = true; if (a.tree) a.tree = 'own'; });
@@ -52,7 +60,7 @@ export async function fleet(ctx: Ctx, h: Script, o: FleetOpts = {}): Promise<Tal
         await h.wait(420 + ((i * 37 + k * 53) % 260));
         h.set((s) => { w(id)(s).blocks!.push({ t: k % 2 ? 'model' : 'tool', h: 3 + ((i + k) % 4) * 2 }); });
       }
-      let wrong = goesWrong(i, task);
+      let wrong = flaws && goesWrong(i, task);
       h.set((s) => { w(id)(s).busy = false; w(id)(s).lamp = 'wait'; });
       const project = scene.state.project!;
       const gateAt: XY = [124 - 18, BUS_Y];

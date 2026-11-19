@@ -2,23 +2,29 @@
 // (sim.ts) with different switches, so the picture and its rules do not change between them.
 import type { Chapter, Ctx } from '../chapter';
 import { team, lab } from '../presets';
-import { fleet, type FleetOpts } from '../sim';
+import { fleet, type FleetOpts, type Tally } from '../sim';
 import type { Script } from '../scene';
 import { BUS_Y, route, type SceneState, type XY, type Kind } from '../picture';
 
 const lead = () => [{ t: 'rules' as const, h: 4 }, { t: 'you' as const, h: 3 }];
+
+/** What came of a run, in one or two sentences. */
+export function closing(t: Tally, o: FleetOpts) {
+  const who = o.name ?? 'the lead';
+  const parts = [`All ${t.landed} tasks are on main.`];
+  if (o.gate) parts.push(t.sentBack ? `The check sent ${t.sentBack} back first.` : 'The check sent none back.');
+  if (o.clashes) parts.push(t.clashes ? `${t.clashes} overwrote another helper’s edit.` : 'None overwrote another.');
+  parts.push(t.wrong ? `${t.wrong} of them ${t.wrong === 1 ? 'is' : 'are'} wrong, and nothing stopped ${t.wrong === 1 ? 'it' : 'them'}.` : 'None of them is wrong.');
+  if (t.compactions) parts.push(`${who[0]!.toUpperCase() + who.slice(1)}’s window filled and was compacted ${t.compactions === 1 ? 'once' : t.compactions + ' times'}.`);
+  return parts.join(' ');
+}
 
 function go(ctx: Ctx, scene: SceneState, o: FleetOpts) {
   void ctx.scene.run(async (h) => {
     h.set((s) => { Object.assign(s, scene); });
     const t = await fleet(ctx, h, o);
     // Every run ends, and says what came of it.
-    const parts = [`${t.landed} tasks landed on main.`];
-    if (o.gate) parts.push(`${t.sentBack} were sent back at the gate first.`);
-    if (o.shared) parts.push(`${t.clashes} clashed with another agent’s edit.`);
-    parts.push(t.wrong ? `${t.wrong} of them were wrong, and nothing stopped them.` : 'None of them was wrong.');
-    if (t.compactions) parts.push(`The lead’s window filled and was compacted ${t.compactions === 1 ? 'once' : t.compactions + ' times'}.`);
-    ctx.say(null, parts.join(' '));
+    ctx.say(null, closing(t, o));
   });
 }
 
@@ -30,7 +36,7 @@ const side = (n: number, own: boolean) => team(n, {
 const runSide = (ctx: Ctx) => {
   const n = ctx.mem.n ?? 3, own = ctx.mem.own ?? true;
   ctx.say(null, own ? 'Each helper works in its own copy of the project. Finished work is merged into main one piece at a time.' : 'Everyone edits the same files at once.');
-  go(ctx, side(n, own), { shared: !own, until: n * 2 });
+  go(ctx, side(n, own), { shared: !own, until: n * 2, name: 'the agent', clashes: true, flaws: false });
 };
 export const parallel: Chapter = {
   steps: {
@@ -79,7 +85,10 @@ async function playShape(ctx: Ctx, h: Script, shape: Exclude<Shape, 'fan'>) {
   const n = ROLES[shape].length;
   const at = (i: number) => scene.agent(`w${i}`).at;
   let handoffs = 0, caught = 0;
-  const stats = (extra: [string, string | number][] = []) => ctx.stat([['agents', n + 1], ['handoffs', handoffs], ['caught before main', caught], ...extra, ['lead’s window', `${Math.round(scene.fill('a0') * 100)}%`]]);
+  // The same readout as the rest of the chapter. Here there is one task, passed between roles.
+  let landed = 0;
+  const stats = () => ctx.stat([['tasks on main', `${landed} of 1`], ['sent back before main', caught], ['wrong on main', 0], ['the lead’s window', `${Math.round(scene.fill('a0') * 100)}% full`]]);
+  const tally = (how: string) => ctx.say(null, `One task on main after ${handoffs} handoffs. ${how}`);
   const pass = async (path: XY[], kind: Kind) => { await h.send(path, kind); handoffs++; stats(); };
   const give = (i: number, kind: Kind, size: number) => h.set((s) => { (s.agents[i + 1]!.blocks ??= []).push({ t: kind, h: size }); });
   const work = async (i: number, turns: number) => {
@@ -95,6 +104,9 @@ async function playShape(ctx: Ctx, h: Script, shape: Exclude<Shape, 'fan'>) {
     h.set((s) => { (s.project!.commits ??= []).push('ok'); for (const a of s.agents.slice(1)) a.lamp = 'ok'; });
     await h.send([[at(i)[0], BUS_Y], [0, BUS_Y], [0, -20]], 'tool', { ms: 420 });
     h.set((s) => { s.agents[0]!.blocks!.push({ t: 'tool', h: 1.6 }); });
+    landed = 1;
+    stats();
+    await h.wait(1500);
   };
 
   stats();
@@ -116,6 +128,7 @@ async function playShape(ctx: Ctx, h: Script, shape: Exclude<Shape, 'fan'>) {
     await work(1, 1);
     ctx.say('reviewer', 'The export hides them now. Passing it on.');
     await land(1);
+    tally('The reviewer sent it back once: hidden ratings still showed in the export.');
   } else if (shape === 'line') {
     await pass(route.agentToWorker(at(1)), 'model'); give(1, 'model', 4);
     await work(1, 3);
@@ -127,6 +140,7 @@ async function playShape(ctx: Ctx, h: Script, shape: Exclude<Shape, 'fan'>) {
     await work(2, 2);
     ctx.say('reviewer', 'Matches the plan. Nothing to send back.');
     await land(2);
+    tally('The plan named the export, so nothing was sent back.');
   } else {
     h.set((s) => { s.agents[0]!.busy = true; });
     await Promise.all([pass(route.agentToWorker(at(0)), 'model'), pass(route.agentToWorker(at(1)), 'model')]);
@@ -141,10 +155,8 @@ async function playShape(ctx: Ctx, h: Script, shape: Exclude<Shape, 'fan'>) {
     caught++;
     h.set((s) => { s.agents[1]!.blocks = []; s.agents[1]!.lamp = 'off'; });
     await land(2);
-    stats([['built twice, kept', 1]]);
-    return;
+    tally('Built twice, one kept: the first build forgot the export.');
   }
-  stats();
 }
 const runShape = (ctx: Ctx, shape: Shape) => {
   ctx.mem.shape = shape;
@@ -177,7 +189,7 @@ const many = (n: number, gate: boolean) => {
 };
 const runFleet = (ctx: Ctx) => {
   const n = ctx.mem.n ?? 20, gate = ctx.mem.gate ?? true;
-  ctx.say(null, gate ? 'You are not reading twenty windows. You are reading what gets through the gate.' : 'No gate. Whatever a builder calls done lands on main.');
+  ctx.say(null, gate ? 'You are not reading twenty windows. You are reading what gets through the check.' : 'No check. Whatever a builder calls done lands on main.');
   ctx.scene.speed = n > 10 ? 1.5 : 1.2;
   go(ctx, many(n, gate), { gate, until: Math.max(8, n * 2) });
 };

@@ -5,6 +5,7 @@ import { rungs, parts } from '../journey/rungs';
 import { url } from '../lib/nav';
 ---
 <Journey chapter="whole" first="chat" title="From one chat to twenty agents" description="Agentic coding in nine steps and one picture: a chat, a loop, a window that fills, a file that remembers, a check, a helper, a team, a lead, a fleet.">
+  <p class="j-lead">For anyone who wants agents to write software for them, coder or not. Scroll, or <a href={url('start/')}>build your first app now</a>.</p>
   {rungs.filter((r) => r.part === 1).map((r, i, all) => (
     <Step id={r.id} title={`${r.n}. ${r.title}`}>
       <p>{r.line}</p>

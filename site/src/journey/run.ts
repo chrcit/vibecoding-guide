@@ -47,12 +47,9 @@ export function boot(root: HTMLElement) {
     const want = KIND_ORDER.filter((k) => kinds.includes(k));
     if (keyEl.dataset.kinds === want.join()) return;
     keyEl.dataset.kinds = want.join();
-    keyEl.replaceChildren(...want.map((k) => {
-      const li = document.createElement('li');
-      li.dataset.b = k;
-      li.textContent = KIND_NAMES[k];
-      return li;
-    }));
+    const item = (b: string, text: string) => { const li = document.createElement('li'); li.dataset.b = b; li.textContent = text; return li; };
+    // Slabs first, then the tint a model takes while it works.
+    keyEl.replaceChildren(...want.map((k) => item(k, KIND_NAMES[k])), item('busy', 'working'));
   };
 
   let current: HTMLElement | null = null;
@@ -68,6 +65,7 @@ export function boot(root: HTMLElement) {
     ctx.mem = {};
     ctx.say(null, '');
     ctx.stat([]);
+    for (const b of el.querySelectorAll<HTMLElement>('.pick[data-multi] button')) b.setAttribute('aria-pressed', String(b.hasAttribute('data-default')));
     for (const b of el.querySelectorAll<HTMLElement>('[data-default]')) pressOnly(b);
     scene.set(def.scene(ctx), instant);
     def.enter?.(ctx);
@@ -80,10 +78,11 @@ export function boot(root: HTMLElement) {
   }
 
   // The last step whose top has passed the reading line is the one on show.
-  const wide = matchMedia('(min-width: 60rem)');
+  // Two columns or one is decided in the stylesheet, by the room the page has.
+  const wide = () => getComputedStyle(root).display === 'grid';
   function pick() {
     const view = root.querySelector<HTMLElement>('.j-view')!.getBoundingClientRect();
-    const line = wide.matches ? innerHeight * 0.62 : view.bottom + (innerHeight - view.bottom) * 0.55;
+    const line = wide() ? innerHeight * 0.62 : view.bottom + (innerHeight - view.bottom) * 0.55;
     let best: HTMLElement | null = null;
     for (const s of steps) {
       if (!s.offsetParent) continue;
@@ -100,7 +99,8 @@ export function boot(root: HTMLElement) {
 
   function pressOnly(btn: HTMLElement) {
     const group = btn.closest('.pick');
-    if (!group) return;
+    // In a group of switches each button is on or off by itself; its action sets the state.
+    if (!group || group.hasAttribute('data-multi')) return;
     for (const b of group.querySelectorAll('button')) b.setAttribute('aria-pressed', String(b === btn));
   }
   root.addEventListener('click', (e) => {

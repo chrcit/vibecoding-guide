@@ -2,14 +2,17 @@
 import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
 import Next from '../../components/journey/Next.astro';
+import More from '../../components/journey/More.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import { url } from '../../lib/nav';
 ---
 <Journey chapter="handoff" first="alone" title="A second agent" description="An agent can hand part of a job to a helper with an empty window. Only the brief goes in and only a report comes back.">
   <Step id="alone" title="Searching fills its window">
-    <p>A made-up search: it read seven files to find three. All seven stay in the window.</p>
+    <p>A made-up search: the agent reads seven files to find three, and all seven stay in <a href={url('journey/window/')}>its window from step 3</a>.</p>
     <div class="row"><button class="btn ghost" type="button" data-do="alone">Play it again</button></div>
   </Step>
   <Step id="hand" title="Hand the search to a helper">
-    <p>The helper starts empty, gets a brief, and sends back a short report. Its window is thrown away.</p>
+    <p>The second station is a helper. It starts with an empty window, gets a brief, and sends back a short report. Then its window is thrown away.</p>
     <div class="row"><button class="btn ghost" type="button" data-do="hand" data-val="full">Play it again</button></div>
   </Step>
   <Step id="brief" title="The helper knows only the brief">
@@ -18,6 +21,15 @@ import Next from '../../components/journey/Next.astro';
       <button type="button" data-do="hand" data-val="short" data-default aria-pressed="true">A short brief</button>
       <button type="button" data-do="hand" data-val="full" aria-pressed="false">A full brief</button>
     </div>
+    <More title="A brief to copy">
+      <CopyPrompt compact title="A brief for a helper">{`Hand this to a helper. It has seen nothing of our conversation, so the brief must say everything.
+
+Goal: list every file that reads or formats a date.
+Already known: members.ts does. The bug is day and month swapped.
+Look in: src/ only.
+Do not: change any file.
+Send back: the file names, one line each on what it does with dates. Nothing else.`}</CopyPrompt>
+    </More>
     <Next from="handoff" more={[{ href: 'explain/orchestration/', text: 'Ways to split work' }]} />
   </Step>
 </Journey>

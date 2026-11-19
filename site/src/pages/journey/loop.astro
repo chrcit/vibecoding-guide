@@ -2,10 +2,13 @@
 import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
 import Next from '../../components/journey/Next.astro';
+import More from '../../components/journey/More.astro';
+import Fact from '../../components/data/Fact.astro';
+import { url } from '../../lib/nav';
 ---
 <Journey chapter="loop" first="hands" title="It gets hands" description="Tools turn a model's text into actions. Each result goes back into the window and the model goes again, until the job is done.">
   <Step id="hands" title="Tools are its hands">
-    <p>A model can only write text. Tools turn that text into actions: read a file, change it, run a command, search.</p>
+    <p><a href={url('journey/chat/')}>The chat from step 1</a>, with four tools beside the model and your project behind them. A model can only write text. A tool turns that text into an action: search, read a file, change it, run a command.</p>
   </Step>
   <Step id="fix" title="One request, many turns">
     <p>A made-up bug. You ask once. It searches, reads, edits, runs the tests, sees one fail, fixes that and runs them again.</p>
@@ -22,12 +25,16 @@ import Next from '../../components/journey/Next.astro';
     </div>
   </Step>
   <Step id="ask" title="You decide what it may do alone">
-    <p>Every question waits for you.</p>
+    <p>Each question travels down to you, and the loop stands still until you answer.</p>
     <div class="pick">
       <button type="button" data-do="ask" data-val="always" data-default aria-pressed="true">Ask every time</button>
       <button type="button" data-do="ask" data-val="edits" aria-pressed="false">Ask before changes</button>
       <button type="button" data-do="ask" data-val="never" aria-pressed="false">Don’t ask</button>
     </div>
+    <More title="Where this is set">
+      <p><Fact id="harnesses.claudeCode.permissionModes" show="claim" /></p>
+      <p><Fact id="harnesses.codex.sandbox" show="claim" /></p>
+    </More>
     <Next from="loop" />
   </Step>
 </Journey>

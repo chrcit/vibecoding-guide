@@ -17,7 +17,7 @@ interface JobOpts { run: boolean; ask: Ask }
 export async function job(ctx: Ctx, h: Script, o: JobOpts) {
   const { scene } = ctx;
   let turns = 0, calls = 0, asked = 0;
-  const stats = (proof = o.run ? 'not yet' : 'it cannot run the tests') => ctx.stat([['turns of its own', turns], ['tool calls', calls], ...(o.ask !== 'never' ? [['times it asked you', asked] as [string, number]] : []), ['proof it works', proof]]);
+  const stats = (proof = o.run ? 'not yet' : 'it cannot run the tests') => ctx.stat([['turns of its own', turns], ['tool calls', calls], ['times it asked you', asked], ['proof it works', proof]]);
   const a = () => scene.state.agents[0]!;
   const think = async () => {
     h.set((s) => { s.agents[0]!.busy = true; });
@@ -73,8 +73,8 @@ export async function job(ctx: Ctx, h: Script, o: JobOpts) {
   await think();
   h.set((s) => { s.agents[0]!.blocks!.push({ t: 'model', h: 2.4 }); s.agents[0]!.busy = false; s.agents[0]!.lamp = o.run ? 'ok' : 'off'; });
   ctx.say('model', o.run ? 'Fixed. The day and month were swapped. All 12 tests pass.' : 'Fixed. It should work now.');
-  await h.send(reverse(route.youToAgent()), 'model');
   stats(o.run ? 'tests pass' : 'none');
+  await h.send(reverse(route.youToAgent()), 'model');
   void a;
 }
 

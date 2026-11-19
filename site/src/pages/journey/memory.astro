@@ -2,10 +2,14 @@
 import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
 import Next from '../../components/journey/Next.astro';
+import More from '../../components/journey/More.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import Fact from '../../components/data/Fact.astro';
+import { url } from '../../lib/nav';
 ---
 <Journey chapter="memory" first="gone" title="Write it down" description="The window is emptied between sessions. A file in the project is loaded at the start of every one.">
   <Step id="gone" title="The window does not outlive the session">
-    <p>Whatever it worked out yesterday went with yesterday’s window.</p>
+    <p>A new session starts with <a href={url('journey/chat/')}>the empty window from step 1</a>. Whatever the agent worked out yesterday went with yesterday’s window.</p>
   </Step>
   <Step id="file" title="A file does">
     <p>AGENTS.md is a plain file in your project. The harness loads it into the window before your first word, every session.</p>
@@ -13,10 +17,19 @@ import Next from '../../components/journey/Next.astro';
       <button type="button" data-do="session" data-val="with" data-default aria-pressed="true">With the file</button>
       <button type="button" data-do="session" data-val="without" aria-pressed="false">Without</button>
     </div>
+    <More title="Which file each tool reads">
+      <p><Fact id="harnesses.claudeCode.contextFile" show="claim" /></p>
+      <p><Fact id="harnesses.codex.contextFile" show="claim" /></p>
+    </More>
   </Step>
   <Step id="grow" title="Have it write the rule down">
     <p>When it gets something wrong, tell it to add the rule. Then press again, and again.</p>
     <div class="row"><button class="btn" type="button" data-do="teach">Add a rule</button></div>
+    <More title="A prompt for this">
+      <CopyPrompt compact title="Have the agent write the rule down">{`You just wrote the date as month/day. This project uses day.month.year everywhere.
+Add one line to AGENTS.md so this does not happen again: what to do, and why.
+Show me the line before you save it.`}</CopyPrompt>
+    </More>
   </Step>
   <Step id="skills" title="Skills wait on the shelf">
     <p>A skill is a longer instruction file. Only its name is loaded until a job needs it.</p>

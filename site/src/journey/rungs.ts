@@ -17,7 +17,7 @@ export const rungs: Rung[] = [
   { id: 'handoff', n: 6, part: 1, title: 'A second agent', short: 'Handoff', line: 'It hands a piece to a helper with an empty window and gets a short report back.' },
   { id: 'parallel', n: 7, part: 1, title: 'Side by side', short: 'Parallel', line: 'Several at once, each in its own copy of the project.' },
   { id: 'lead', n: 8, part: 1, title: 'A lead', short: 'Lead', line: 'One agent plans, briefs, reviews and merges. The others build.' },
-  { id: 'fleet', n: 9, part: 1, title: 'Twenty in a loop', short: 'Fleet', line: 'A queue, a fleet and a gate. You watch the gate.' },
+  { id: 'fleet', n: 9, part: 1, title: 'Twenty in a loop', short: 'Fleet', line: 'A queue, a fleet and a check before main. You read what gets through.' },
   { id: 'meter', n: 10, part: 2, title: 'What it draws from', short: 'Meter', line: 'Every turn is counted, against a plan’s allowance or on a bill per token.' },
   { id: 'review', n: 11, part: 2, title: 'A second model', short: 'Review', line: 'One model builds, another looks for what is wrong, and the work goes round until nothing is found.' },
   { id: 'proof', n: 12, part: 2, title: 'Proof you can read', short: 'Proof', line: 'The work comes back with a screenshot, a test run and a short summary.' },

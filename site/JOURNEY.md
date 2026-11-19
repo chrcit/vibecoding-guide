@@ -58,6 +58,19 @@ the accent is something that went wrong.
   place on the floor plan, never into one chapter.
 - What is said under the picture is what the people and programs in it said. Numbers under it are
   counted from what just happened.
+- One of a step's two sentences says what the reader is looking at, using the label on the part.
+  Ten test readers found the steps short enough and the pictures one sentence short.
+- The first step of a chapter says where its parts were met before, with a link ("the check from
+  step 5"). Readers took each chapter for a separate page until it did.
+- One readout per chapter: the same names in the same order on every step, a count shown towards
+  its total ("4 of 6"), a window as "22% full". Every run hands out a fixed number of tasks, ends,
+  and closes with one sentence that says what came of it.
+- A control answers in the same tick: it changes the line under the picture before the script
+  plays. Switches that are each on or off go in `<div class="pick" data-multi>`; a plain `.pick` is
+  one of several.
+- The part in front of you or of main is called the check in text, as on its label.
+- Each chapter gives one thing to do, in a `<More>`: a prompt to copy, the commands, or what a
+  named tool does, from a verified fact.
 - Made-up jobs are fine and are called made-up. Token counts, window sizes, prices and limits come
   from `src/data` through the page (`data` prop), with `<Verified>` in the foot.
 - A term the reader might not know is a label on the picture that opens its wiki page in the side

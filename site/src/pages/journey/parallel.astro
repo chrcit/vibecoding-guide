@@ -2,20 +2,31 @@
 import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
 import Next from '../../components/journey/Next.astro';
+import More from '../../components/journey/More.astro';
+import Fact from '../../components/data/Fact.astro';
+import { url } from '../../lib/nav';
 ---
 <Journey chapter="parallel" first="three" title="Side by side" description="Several agents can work at once if each has its own copy of the project. Their finished work is merged into the main branch one piece at a time.">
   <Step id="three" title="Three at once, one folder">
-    <p>A made-up run of small tasks. They overwrite each other’s files.</p>
+    <p><a href={url('journey/handoff/')}>The helper from step 6</a>, three of them at once, all in one folder. In this made-up run they overwrite each other’s files.</p>
   </Step>
   <Step id="copies" title="Give each its own copy">
-    <p>Each works in a copy of the project. Finished work is merged into main one piece at a time.</p>
+    <p>Each helper now stands on its own copy of the project. Finished work is merged into main one piece at a time.</p>
     <div class="pick">
       <button type="button" data-do="own" data-val="own" data-default aria-pressed="true">A copy each</button>
       <button type="button" data-do="own" data-val="shared" aria-pressed="false">One shared folder</button>
     </div>
+    <More title="The commands">
+      <p>Git calls such a copy a worktree. For a made-up task called search:</p>
+      <pre class="j-code"><code>{`git worktree add ../club-search -b search
+# the helper works in ../club-search
+git merge search
+git worktree remove ../club-search`}</code></pre>
+      <p><Fact id="harnesses.claudeCode.subagentWorktree" show="claim" /></p>
+    </More>
   </Step>
   <Step id="more" title="How many?">
-    <p>Every result still has to be merged and looked at.</p>
+    <p>More helpers finish more tasks. Main still takes one merge at a time, and every report lands in the agent’s window.</p>
     <div class="controls">
       <label class="control"><span>Helpers <output>5</output></span>
         <input type="range" min="1" max="5" step="1" value="5" data-bind="n" />

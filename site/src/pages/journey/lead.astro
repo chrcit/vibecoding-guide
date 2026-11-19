@@ -2,17 +2,20 @@
 import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
 import Next from '../../components/journey/Next.astro';
+import More from '../../components/journey/More.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import { url } from '../../lib/nav';
 import Opinion from '../../components/site/Opinion.astro';
 ---
 <Journey chapter="lead" first="roles" title="A lead" description="One agent plans, writes briefs, reviews and merges, and the others build. The lead's window holds reports, not the work.">
   <Step id="roles" title="One plans, the others build">
-    <p>The agent you talk to stops building. It writes the briefs, hands them out and collects what comes back.</p>
+    <p><a href={url('journey/parallel/')}>The agent from step 7</a> stops building. From here on it is the lead: it writes the briefs, hands them out and collects what comes back.</p>
     <Opinion date="2026-11-18">
       <p>Claude is better at design, and the current class of Fable 5.2 and Opus 5.5 is better at high-level decisions. That is what I put in the lead’s seat.</p>
     </Opinion>
   </Step>
   <Step id="shapes" title="Other ways to split one job">
-    <p>The same request, handed round differently. Whoever judges the work is a different model from whoever built it.</p>
+    <p>One made-up request, handed round four ways. The tinted station runs a different model: whoever judges the work did not build it.</p>
     <div class="pick">
       <button type="button" data-do="shape" data-val="pair" data-default aria-pressed="true">Build, then review</button>
       <button type="button" data-do="shape" data-val="line" aria-pressed="false">Plan, build, review</button>
@@ -21,11 +24,16 @@ import Opinion from '../../components/site/Opinion.astro';
     </div>
   </Step>
   <Step id="gate" title="A check before main">
-    <p>Nothing a builder calls done lands on main until it has passed.</p>
+    <p><a href={url('journey/check/')}>The check from step 5</a>, moved in front of main. Nothing a builder calls done lands until it has passed.</p>
     <div class="pick">
       <button type="button" data-do="gate" data-val="on" data-default aria-pressed="true">With the check</button>
       <button type="button" data-do="gate" data-val="off" aria-pressed="false">Without</button>
     </div>
+    <More title="A rule for the lead">
+      <CopyPrompt compact title="What the lead does before a merge">{`Before you merge a builder's branch into main: run the tests on that branch and open the page it changed.
+If either fails, send it back to the same builder with the output.
+Do not fix it yourself, and do not merge to make the queue shorter.`}</CopyPrompt>
+    </More>
   </Step>
   <Step id="reports" title="What the lead reads">
     <p>If every builder sends back everything it did, the lead’s window fills with other agents’ work.</p>
@@ -33,6 +41,10 @@ import Opinion from '../../components/site/Opinion.astro';
       <button type="button" data-do="short" data-val="all" data-default aria-pressed="true">Everything</button>
       <button type="button" data-do="short" data-val="short" aria-pressed="false">Short reports</button>
     </div>
+    <More title="What to ask builders for">
+      <CopyPrompt compact title="A short report">{`Report in five lines: what you changed, how you checked it, what you did not check, anything I have to decide.
+Do not paste the diff or the logs. I will open them if I need them.`}</CopyPrompt>
+    </More>
     <Next from="lead" more={[{ href: 'explain/orchestration/', text: 'Ways to split work' }, { href: 'models/', text: 'Which model where' }]} />
   </Step>
 </Journey>
