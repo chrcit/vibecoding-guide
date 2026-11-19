@@ -23,15 +23,16 @@ const nextPart = next ? parts[next.part - 1]! : null;
       <span>{nextPart.blurb}</span>
     </a>
   ) : (
-    <a class="j-next" href={url('library/')}>
-      <span>That is the whole picture</span>
-      <b>Open the Concept &amp; Lesson Library</b>
-      <span>Jump back to any of the 21 interactive lessons, search concepts, or compare models.</span>
+    <a class="j-next" href={url('start/')}>
+      <span>After the last lesson</span>
+      <b>The first hour</b>
+      <span>Build one small real thing on your laptop, checked before it counts.</span>
     </a>
   )}
-  {more.length > 0 && (
+  {(more.length > 0 || !next) && (
     <ul class="j-more">
       {more.map((m) => <li><a href={url(m.href)} data-side={m.side ? '' : undefined}>{m.text}</a></li>)}
+      {!next && <li><a href={url('library/')}>The library: every lesson and term</a></li>}
     </ul>
   )}
 </div>

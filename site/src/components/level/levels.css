@@ -214,9 +214,16 @@ html[data-level='engineer'] .level-current[data-when='engineer'] { display: inli
   color: var(--ink);
 }
 .level-offer[hidden] { display: none; }
-/* On a phone the offer sits at the bottom, clear of the page's first picture. */
+/* On a phone the offer is one row just under the header, over the lesson rail, so it never covers
+   the text being read; scrolling, a choice or the close button puts it away. */
 @media (max-width: 34rem) {
-  .level-offer { top: auto !important; bottom: max(0.75rem, env(safe-area-inset-bottom)); left: var(--gutter); right: var(--gutter) !important; width: auto; }
+  .level-offer {
+    top: calc(var(--header-h) + 0.25rem) !important; left: 0.5rem; right: 0.5rem !important; width: auto;
+    padding: 0.4rem 0.4rem 0.4rem 0.5rem; border-radius: var(--radius); box-shadow: var(--shadow-pop);
+  }
+  .level-offer .level-offer-choices { flex-wrap: nowrap; gap: 0.3rem; margin-right: 2.4rem; }
+  .level-offer .level-offer-choices button { flex: 1 1 0; min-width: 0; min-height: 2.5rem; padding: 0 0.35rem; white-space: nowrap; font-size: var(--text-xs); }
+  .level-offer-close { top: 50%; transform: translateY(-50%); }
 }
 @media (prefers-reduced-motion: no-preference) {
   .level-offer:not([hidden]) { animation: level-pop 220ms cubic-bezier(0.2, 0.7, 0.2, 1); }
@@ -257,6 +264,12 @@ html[data-level='engineer'] .level-current[data-when='engineer'] { display: inli
 
 /* The level picker: what a level changes, and the flash after a switch (LevelPicker.astro). */
 .level-shows { display: block; margin-top: 0.15rem; font-size: var(--text-xs); color: var(--muted); }
+/* On a phone the panel keeps what a level changes and drops the longer self-description, so it
+   covers less of the page; the description is still in the first-visit offer's names. */
+@media (max-width: 34rem) {
+  .level-option > span:not(.level-shows) { display: none; }
+  .level-option .level-shows { font-size: var(--text-s); color: var(--ink-2); }
+}
 .level-said {
   position: fixed; z-index: 60; top: calc(var(--header-h) + 0.5rem); right: max(var(--gutter), calc((100vw - var(--full)) / 2));
   max-width: min(24rem, calc(100vw - 2 * var(--gutter))); margin: 0; padding: 0.55rem 0.8rem;
