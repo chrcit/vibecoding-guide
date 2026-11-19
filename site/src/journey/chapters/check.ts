@@ -1,68 +1,75 @@
-// Chapter 9 (Part 2): Make it prove it. Verification gates catch mistakes before "done" reaches you.
-import type { Chapter, Ctx } from '../chapter';
-import { byLevel } from '../chapter';
+// Lesson 9: make it prove it. A check between the agent and you sends broken work back.
+// What the check is depends on the reader's level: for plain, the agent runs the app and looks;
+// for technical and engineer, a type check, unit tests and a browser check, each catching one kind
+// of wrong. One kind gets through every check: what nobody wrote down. The six jobs are made up.
+import type { Chapter, Ctx, Level } from '../chapter';
 import type { Script } from '../scene';
 import { solo, lab } from '../presets';
+import { termLabel } from '../terms';
 import { route, reverse, SPOT, type XY } from '../picture';
 
-type CheckId = 'tests' | 'look' | 'review';
-interface Job { name: string; flaw?: CheckId; says?: Record<'plain' | 'technical' | 'engineer', string> }
-const JOBS: Job[] = [
+export type CheckId = 'run' | 'phone' | 'types' | 'tests' | 'browser' | 'spec';
+type Flaw = 'types' | 'logic' | 'layout' | 'spec';
+interface Job { name: string; flaw?: Flaw }
+export const JOBS: Job[] = [
   { name: 'Sort members by rating' },
-  {
-    name: 'Fix the date bug',
-    flaw: 'tests',
-    says: {
-      plain: 'automated check: 1 of 12 checks failed on empty dates',
-      technical: 'vitest + tsc: 1 of 12 unit tests failed (parseDate throws on null)',
-      engineer: 'unit suite + strict null check: regression on ISO boundary input',
-    },
-  },
-  { name: 'Add a search box' },
-  {
-    name: 'Make the list fit a phone',
-    flaw: 'look',
-    says: {
-      plain: 'phone screenshot: the table spills off the right edge',
-      technical: 'headless browser at 390 px: horizontal overflow (+68 px)',
-      engineer: 'viewport E2E assertion at 390 px: scrollWidth > clientWidth',
-    },
-  },
-  { name: 'Export to CSV' },
-  {
-    name: 'Let members hide their rating',
-    flaw: 'review',
-    says: {
-      plain: 'second model: hidden ratings still leak into the CSV download',
-      technical: 'second-model diff review: csvExport.ts ignores hideRating flag',
-      engineer: 'cross-model security review: authorization invariant bypassed in export serializer',
-    },
-  },
+  { name: 'Rename “paid” to “paidOn”', flaw: 'types' },
+  { name: 'Fix the date bug', flaw: 'logic' },
+  { name: 'Make the list fit a phone', flaw: 'layout' },
+  { name: 'Export the list to CSV' },
+  { name: 'Let members hide their rating', flaw: 'spec' },
 ];
-const NAMES = (ctx: Ctx): Record<CheckId, string> => ({
-  tests: byLevel(ctx.level, { plain: 'automated checks', technical: 'typecheck & unit tests', engineer: 'type & unit test gate' }),
-  look: byLevel(ctx.level, { plain: 'a screenshot', technical: 'browser screenshot check', engineer: 'visual E2E check' }),
-  review: byLevel(ctx.level, { plain: 'a second model', technical: 'second-model diff review', engineer: 'adversarial model review' }),
-});
+/** The checks a reader at this level has, switched on by default in the lesson's last steps. */
+export const LEVEL_CHECKS: Record<Level, CheckId[]> = {
+  plain: ['run', 'phone'],
+  technical: ['types', 'tests', 'browser'],
+  engineer: ['types', 'tests', 'browser'],
+};
+/** The check that stands first, on its own. */
+const FIRST: Record<Level, CheckId[]> = { plain: ['run'], technical: ['types', 'tests'], engineer: ['types', 'tests'] };
+
+const NAME: Record<CheckId, string> = {
+  run: 'it runs the app',
+  phone: 'it looks on a phone',
+  types: 'tsc --noEmit',
+  tests: 'npm test',
+  browser: 'browser check at 390 px',
+  spec: 'a test from your rule',
+};
+/** Which check catches which kind of wrong, and what it says when it does. */
+const CATCH: Record<CheckId, Partial<Record<Flaw, string>>> = {
+  run: { types: 'The member list page is blank: it crashed on load.', logic: 'The card shows 3 December. It should be 3 March.' },
+  phone: { layout: 'On a phone the table runs off the right edge.' },
+  types: { types: 'members.ts(14,9): Property “paid” does not exist on type “Member”.' },
+  tests: { logic: '1 of 12 tests fails: parseDate("03.03.2026") gives 3 December.' },
+  browser: { layout: 'At 390 px the page is 458 px wide: the table overflows.' },
+  spec: { spec: 'exportCsv: a hidden rating appears in the file. The test fails.' },
+};
+const SLIPS: Record<Flaw, string> = {
+  types: 'the list page crashes',
+  logic: 'the dates are wrong',
+  layout: 'the table spills off a phone',
+  spec: 'hidden ratings are in the CSV',
+};
+export const checkNames = (c: CheckId[]) => (c.length ? c.map((x) => NAME[x]).join(' · ') : 'none');
+
 const toGate: XY[] = [[0, 22], [0, SPOT.gate[1] - 10]];
 const gateToYou: XY[] = [[0, SPOT.gate[1] + 10], [0, 94]];
 
 const base = (gate: boolean) => solo({
-  tools: true,
-  project: true,
-  gate,
-  labels: [lab('you', 'you', 'left'), lab('a0', 'the model', 'top', 'wiki/model/'), ...(gate ? [lab('gate', 'check', 'top', 'wiki/verification/')] : [])],
+  tools: true, project: true, gate,
+  labels: [lab('you', 'you', 'left'), termLabel('a0', 'agent', 'top', 'the agent'), ...(gate ? [termLabel('gate', 'check')] : [])],
 });
 
 export async function jobs(ctx: Ctx, h: Script, checks: CheckId[], count = JOBS.length) {
   let said = 0, wrong = 0, caught = 0;
+  const slipped: string[] = [];
   const gate = checks.length > 0;
-  const names = NAMES(ctx);
   const stats = () => ctx.stat([
-    ['checks on', checks.length ? checks.map((c) => names[c]).join(', ') : 'none'],
-    ['said “done”', said],
-    ['caught before reaching you', caught],
-    ['slipped through broken', wrong],
+    ['the check', checkNames(checks)],
+    ['said “done”', `${said} of ${count}`],
+    ['sent back by the check', gate ? caught : 'no check'],
+    ['reached you broken', wrong],
   ]);
   h.set((s) => { Object.assign(s, base(gate)); });
   stats();
@@ -73,16 +80,17 @@ export async function jobs(ctx: Ctx, h: Script, checks: CheckId[], count = JOBS.
     await h.wait(480);
     h.set((s) => { const a = s.agents[0]!; a.blocks!.push({ t: 'tool', h: 3 }, { t: 'model', h: 1.4 }); a.busy = false; });
     let flawed = !!job.flaw;
+    const by = job.flaw ? checks.find((c) => CATCH[c][job.flaw!]) : undefined;
     if (gate) {
       await h.send(toGate, flawed ? 'bad' : 'model', { ms: 300 });
-      if (flawed && checks.includes(job.flaw!)) {
+      if (flawed && by) {
         h.set((s) => { s.gates![0]!.lamp = 'bad'; });
-        ctx.say('check', job.says![ctx.level]);
+        ctx.say('check', CATCH[by][job.flaw!]!);
         caught++;
         stats();
         await h.send(reverse(toGate), 'bad', { ms: 300 });
         h.set((s) => { const a = s.agents[0]!; a.blocks!.push({ t: 'bad', h: 2.4 }); a.busy = true; });
-        await h.wait(560);
+        await h.wait(700);
         h.set((s) => { const a = s.agents[0]!; a.blocks!.push({ t: 'tool', h: 2.4 }); a.busy = false; });
         await h.send(toGate, 'model', { ms: 300 });
         flawed = false;
@@ -93,79 +101,46 @@ export async function jobs(ctx: Ctx, h: Script, checks: CheckId[], count = JOBS.
       await h.send(reverse(route.youToAgent()), flawed ? 'bad' : 'model', { ms: 440 });
     }
     said++;
-    if (flawed) wrong++;
+    if (flawed) { wrong++; slipped.push(SLIPS[job.flaw!]); }
     h.set((s) => { s.agents[0]!.lamp = 'off'; if (s.gates![0]) s.gates![0]!.lamp = 'off'; });
-    ctx.say('model', 'Done.');
+    ctx.say('agent', 'Done.');
     stats();
     await h.wait(380);
   }
-  ctx.say(null, wrong
-    ? `${wrong} of ${said} were broken, yet all ${said} arrived marked “done”.`
-    : `All ${said} that reached you were right. ${caught} were caught and fixed automatically by ${checks.map((c) => names[c]).join(', ')}.`);
+  ctx.say(null, !gate
+    ? `${wrong} of ${said} were broken, and all ${said} arrived as “done”.`
+    : wrong
+      ? `The check sent ${caught} back. ${wrong} still reached you: ${slipped.join(', ')}. No check you had looks for that.`
+      : `The check sent ${caught} back, and the agent fixed them. All ${said} that reached you work.`);
 }
 
 const play = (ctx: Ctx) => void ctx.scene.run((h) => jobs(ctx, h, ctx.mem.checks ?? []));
 
 export const check: Chapter = {
   steps: {
-    done: {
-      scene: () => base(false),
-      enter: (ctx) => {
-        ctx.model(
-          'No check gate.',
-          byLevel(ctx.level, {
-            plain: 'An agent sounds equally confident when something works and when it is quietly broken. Never take “done” at face value without a check.',
-            technical: 'Without a deterministic gate (typecheck + unit tests), broken edge cases and regressions reach your review queue disguised as finished work.',
-            engineer: 'Unverified agent outputs shift error detection onto expensive human review—insert automated oracles before any change crosses the boundary to you.',
-          }),
-        );
-        ctx.mem.checks = [];
-        ctx.scene.speed = 1.4;
-        play(ctx);
-      },
-    },
-    tests: {
-      scene: () => base(true),
-      enter: (ctx) => {
-        ctx.model(
-          'Typecheck & automated test gate.',
-          byLevel(ctx.level, {
-            plain: 'Put an automatic check in the middle: when a calculation or rule breaks, the agent sees the failure and fixes it before telling you it is done.',
-            technical: 'Require `tsc --noEmit` and unit tests (`vitest` / `pytest`) to pass before completion—logic bugs bounce straight back into the agent loop automatically.',
-            engineer: 'Fast deterministic type + unit gates turn silent logic regressions into self-healing inner loops at near-zero human cost.',
-          }),
-        );
-        ctx.mem.checks = ['tests'];
-        ctx.scene.speed = 1.4;
-        play(ctx);
-      },
-    },
-    more: {
-      scene: () => base(true),
-      enter: (ctx) => {
-        ctx.model(
-          'Layered checks catch different classes of bugs.',
-          byLevel(ctx.level, {
-            plain: 'Tests catch broken logic, screenshots catch broken layout on phones, and a second model catches subtle privacy or requirement misses.',
-            technical: 'Unit tests miss CSS overflow; visual screenshots miss silent data leaks; cross-model diff review catches spec/auth gaps. Stack all three for real confidence.',
-            engineer: 'Defense in depth across orthogonal failure classes: static types + unit/integration suites (logic), headless visual assertions (UI), adversarial diff review (invariants & security).',
-          }),
-        );
-        ctx.mem.checks = ['tests', 'look', 'review'];
-        ctx.scene.speed = 1.6;
-        play(ctx);
-      },
-    },
+    done: { scene: () => base(false), enter: (ctx) => { ctx.mem.checks = []; ctx.scene.speed = 1.4; play(ctx); } },
+    tests: { scene: () => base(true), enter: (ctx) => { ctx.mem.checks = FIRST[ctx.level]; ctx.scene.speed = 1.4; play(ctx); } },
+    more: { scene: () => base(true), enter: (ctx) => { ctx.mem.checks = [...LEVEL_CHECKS[ctx.level]]; ctx.scene.speed = 1.6; play(ctx); } },
+    spec: { scene: () => base(true), enter: (ctx) => { ctx.mem.checks = [...LEVEL_CHECKS[ctx.level]]; ctx.scene.speed = 1.6; play(ctx); } },
   },
   actions: {
     toggle: (ctx, val, el) => {
       const set = new Set<CheckId>(ctx.mem.checks ?? []);
-      if (set.has(val as CheckId)) set.delete(val as CheckId); else set.add(val as CheckId);
-      ctx.mem.checks = [...set];
-      el.setAttribute('aria-pressed', String(set.has(val as CheckId)));
+      const id = val as CheckId;
+      if (set.has(id)) set.delete(id); else set.add(id);
+      // Keep the level's order, so the readout reads the same way every time.
+      ctx.mem.checks = [...LEVEL_CHECKS[ctx.level], 'spec' as CheckId].filter((c) => set.has(c));
+      el.setAttribute('aria-pressed', String(set.has(id)));
+      ctx.say(null, set.has(id) ? `On: ${NAME[id]}. Running the six jobs again.` : `Off: ${NAME[id]}. Running the six jobs again.`);
       ctx.scene.speed = 1.8;
       play(ctx);
     },
-    play: (ctx) => play(ctx),
+    spec: (ctx, _val, el) => {
+      ctx.mem.checks = [...LEVEL_CHECKS[ctx.level], 'spec'];
+      el.setAttribute('aria-pressed', 'true');
+      ctx.say(null, 'A new check: a hidden rating must never appear in the CSV. Running the six jobs again.');
+      ctx.scene.speed = 1.8;
+      play(ctx);
+    },
   },
 };

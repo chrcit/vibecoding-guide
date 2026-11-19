@@ -386,3 +386,7 @@ html[data-embed] .j-stage { max-height: 36svh; }
 /* On a narrow page the note and the colour key sit under the step's text (run.ts placeExtras). */
 .j-step-extra { display: grid; gap: 0.5rem; margin-top: 0.75rem; }
 .j-step-extra .j-model { padding: 0.5rem 0 0; font-size: var(--text-s); }
+
+/* Lesson 7: what does not fit the window, drawn on top of the cap (Agent.spill in picture.ts). */
+.j-svg .k-solid[data-over] { opacity: 0.8; }
+.j-svg .k-solid[data-over] .k-edge { stroke: var(--accent); stroke-width: 1.6px; stroke-dasharray: 3 2; }

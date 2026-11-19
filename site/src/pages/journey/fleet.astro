@@ -3,36 +3,46 @@ import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
 import Next from '../../components/journey/Next.astro';
 import More from '../../components/journey/More.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
-import { url } from '../../lib/nav';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
+import Term from '../../components/journey/Term.astro';
 ---
-<Journey chapter="fleet" first="twenty" title="Twenty in a loop" description="A lead, a queue of tasks, up to twenty builders and a check in front of the main branch. You read what gets through the check.">
-  <Step id="twenty" title="Twenty agents, one loop">
-    <p>Put everything together: <a href={url('journey/lead/')}>a lead</a>, <a href={url('journey/parallel/')}>a separate copy for each builder</a>, and <a href={url('journey/check/')}>a check</a> before main. Each builder fills its own window, sends its finished branch to the check, and starts the next task fresh.</p>
+<Journey chapter="fleet" first="twenty" title="Twenty in a loop" description="A lead, a list of forty tasks, up to twenty helpers in their own copies and a check in front of main. You decide what gets built and read what gets through the check.">
+  <Step id="twenty" title="Twenty helpers, one loop">
+    <p>The lead and the check from <LessonRef id="lead" />, now with twenty helpers and a list of forty made-up tasks. Each helper takes a task, fills its own window, sends its branch to the check and starts the next task empty.</p>
     <div class="controls">
-      <label class="control"><span>Builders <output>20</output></span>
-        <input type="range" min="1" max="20" step="1" value="20" data-bind="n" />
+      <label class="control"><span>Helpers <output>20</output></span>
+        <input type="range" min="1" max="20" step="1" value="20" data-bind="n" aria-label="How many helpers" />
       </label>
     </div>
     <More title="A brief for the lead">
       <CopyPrompt compact title="Start a lead">{`You are the lead. Do not build anything yourself.
-Split the work in tasks.md into tasks one builder can finish alone. Start each builder in its own worktree with a brief: the goal, the files, what not to touch, how to check it.
-When a builder reports, run the tests on its branch. Merge what passes, one branch at a time. Send the rest back.
+Split the work in tasks.md into tasks one helper can finish alone. Start each helper in its own worktree with a brief: the goal, the files, what not to touch, how to check it.
+When a helper reports, run the check on its branch. Merge what passes, one branch at a time. Send the rest back.
 Keep one line per task in status.md. Stop and ask me when two tasks need the same file or the decision is mine.`}</CopyPrompt>
     </More>
   </Step>
   <Step id="nogate" title="Take the check away">
-    <p>Suppose one task in four comes back with a bug. Without the check in front of main, every one of those ships straight to your main branch.</p>
+    <p>In this run one task in four comes back broken. Without the check, each one lands on main: watch the red marks on the plate.</p>
     <div class="pick">
       <button type="button" data-do="gate" data-val="off" data-default aria-pressed="true">No check</button>
       <button type="button" data-do="gate" data-val="on" aria-pressed="false">With the check</button>
     </div>
   </Step>
   <Step id="yours" title="What is left for you">
-    <p>Deciding what gets built, and reviewing what makes it through the check. You are not supposed to read twenty agent windows.</p>
-    <Next from="fleet" more={[{ href: 'models/', text: 'Which model where' }, { href: 'journey/meter/#many', text: 'What a fleet costs' }]} />
+    <p>Two things: deciding what goes on the list, and reading what gets through the check. Every helper turn counted below reads a whole window again, and <LessonRef id="meter" /> puts a price on them.</p>
+    <ForLevel is="engineer"><p>Throughput is set by the check and the merge order, one branch at a time, more than by the number of helpers.</p></ForLevel>
+    <More title="What a fleet draws" level="technical">
+      <p><Fact id="harnesses.claudeCode.agentTeamSize" show="claim" /></p>
+      <p><Fact id="harnesses.claudeCode.subagentUsage" show="claim" /></p>
+    </More>
+    <Next from="fleet" more={[{ href: 'journey/meter/', text: 'Next: Cost, lesson 14' }, { href: 'models/', text: 'Which model where' }]} />
   </Step>
   <Fragment slot="foot">
-    <p>The fleet simulation and its 1-in-4 defect rate are illustrative examples.</p>
+    <p>The fleet, its forty tasks and the one-in-four failure rate are made up; which tasks fail is fixed, so a run reads the same each time.</p>
+    <Verified ids={['harnesses.claudeCode.agentTeamSize', 'harnesses.claudeCode.subagentUsage']} />
   </Fragment>
 </Journey>

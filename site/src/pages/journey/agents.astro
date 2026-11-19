@@ -9,16 +9,15 @@ import { url } from '../../lib/nav';
   chapter="whole"
   first="chat"
   title="Part 2 · From one chat to twenty agents"
-  description="Part two of the interactive guide: one chat, the tool loop, context windows and context rot, AGENTS.md memory, automated checks, helpers, parallel worktrees, leads and fleets."
+  description="Part two of the guide: one chat, the tool loop, the window and context rot, the instruction file, checks, helpers, worktrees, a lead and a fleet of twenty."
 >
-  <p class="j-lead">Nine interactive steps growing one picture—from a stateless chat box up to twenty parallel agents guarded by automated checks.</p>
   <PartSwitch active={2} />
 
   {rungs.filter((r) => r.part === 2).map((r, i, all) => (
     <OverviewStep rung={r}>
       {i === all.length - 1 && (
         <a class="j-next" href={url(parts[2]!.href)}>
-          <span>Part three · Steps {parts[2]!.range}</span>
+          <span>Part three · lessons {parts[2]!.range}</span>
           <b>{parts[2]!.title}</b>
           <span>{parts[2]!.blurb}</span>
         </a>

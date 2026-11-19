@@ -1,6 +1,6 @@
 // Overview of Part 2 (The agents): the picture growing through steps 5–13, with level-aware mental-model notes.
 import type { Chapter, Ctx } from '../chapter';
-import { solo, team, lab, worked } from '../presets';
+import { solo, team, lab } from '../presets';
 import { fleet, type FleetOpts } from '../sim';
 import { closing } from './team';
 import { route, reverse, BUS_Y } from '../picture';
@@ -9,7 +9,8 @@ import { termLabel } from '../terms';
 import { LINES } from './chat';
 import { job } from './loop';
 import { session } from './memory';
-import { jobs } from './check';
+import { jobs, LEVEL_CHECKS } from './check';
+import { ask, windowView } from './window';
 import { handed } from './handoff';
 
 const you = lab('you', 'you', 'left');
@@ -22,7 +23,7 @@ const note = (ctx: Ctx, id: string) => { const r = rung(id); ctx.model(`${r.n}. 
 export const whole: Chapter = {
   steps: {
     chat: {
-      scene: () => solo({ labels: [you, lab('a0', 'the model', 'top', 'wiki/model/'), lab('tank:a0', 'its window', 'left', 'wiki/context-window/')] }),
+      scene: () => solo({ labels: [you, termLabel('a0', 'model', 'top', 'the model'), termLabel('tank:a0', 'window', 'left', 'its window')] }),
       enter: (ctx) => {
         note(ctx, 'chat');
         let i = 0;
@@ -41,51 +42,45 @@ export const whole: Chapter = {
       },
     },
     loop: {
-      scene: () => solo({ tools: true, project: true, labels: [you, lab('tools', 'tools', 'top', 'wiki/tool-call/'), lab('project', 'your project')] }),
+      scene: () => solo({ tools: true, project: true, labels: [you, termLabel('tools', 'tools'), termLabel('project', 'project')] }),
       enter: (ctx) => { note(ctx, 'loop'); ctx.scene.speed = 1.8; again(ctx, (h) => job(ctx, h, { run: true, ask: 'never' })); },
     },
     window: {
-      scene: () => solo({ tools: true, project: true, blocks: worked(20), focus: ['a0', 'tools'], labels: [lab('tank:a0', 'its window', 'left', 'wiki/context-window/')] }),
+      scene: () => windowView(),
       enter: (ctx) => {
         note(ctx, 'window');
-        again(ctx, async (h) => {
-          h.set((s) => { s.agents[0]!.blocks = worked(20); s.agents[0]!.lamp = 'off'; });
-          for (let i = 0; i < 6; i++) { await h.wait(420); h.set((s) => { s.agents[0]!.blocks!.push({ t: i % 2 ? 'bad' : 'tool', h: 3 + (i % 3) }); }); }
-          h.set((s) => { s.agents[0]!.lamp = 'bad'; });
-          ctx.say(null, 'Cluttered with old logs—attention rots long before 100%.');
-          await h.wait(1100);
-          h.set((s) => { s.agents[0]!.blocks = [{ t: 'rules', h: 4 }, { t: 'you', h: 3 }]; s.agents[0]!.lamp = 'ok'; });
-          ctx.say(null, 'Fresh thread: clean window, sharp output.');
-        }, 2000);
+        const mixes = ['job', 'log'] as const;
+        let i = 0;
+        again(ctx, (h) => ask(ctx, h, mixes[i++ % 2]!), 2200);
       },
     },
     memory: {
-      scene: () => solo({ tools: true, project: { rules: 'plain' }, labels: [you, lab('rules', 'AGENTS.md', 'bottom', 'wiki/instruction-file/')] }),
+      scene: () => solo({ tools: true, project: { rules: 'plain' }, labels: [you, termLabel('rules', 'instructions', 'bottom')] }),
       enter: (ctx) => { note(ctx, 'memory'); again(ctx, (h) => session(ctx, h, { rules: true }), 1800); },
     },
     check: {
       scene: () => solo({ tools: true, project: true, gate: true, labels: [you, termLabel('gate', 'check')] }),
-      enter: (ctx) => { note(ctx, 'check'); ctx.scene.speed = 1.6; again(ctx, (h) => jobs(ctx, h, ['tests', 'look', 'review'], 4)); },
+      enter: (ctx) => { note(ctx, 'check'); ctx.scene.speed = 1.6; again(ctx, (h) => jobs(ctx, h, LEVEL_CHECKS[ctx.level])); },
     },
     handoff: {
       scene: () => team(1, { lead: [{ t: 'rules', h: 4 }] }),
       enter: (ctx) => { note(ctx, 'handoff'); again(ctx, (h) => handed(ctx, h), 1800); },
     },
     parallel: {
-      scene: () => team(3, { trees: true, lead: [{ t: 'rules', h: 4 }], labels: [you, lab('project', 'main', 'top', 'wiki/branch/')] }),
-      enter: (ctx) => { note(ctx, 'parallel'); team9(ctx, { until: 6, name: 'the agent', clashes: true, flaws: false }, 'Three helpers at once, each in its own worktree.'); },
+      scene: () => team(3, { trees: true, lead: [{ t: 'rules', h: 4 }], labels: [you, termLabel('project', 'main')] }),
+      enter: (ctx) => { note(ctx, 'parallel'); team9(ctx, { until: 6, name: 'the agent', clashes: true, flaws: false }, 'Three helpers, each in its own copy of the project.'); },
     },
     lead: {
-      scene: () => team(5, { trees: true, mgate: true, mixed: true, lead: [{ t: 'rules', h: 4 }], labels: [you, lab('a0', 'the lead', 'top', 'wiki/orchestration/'), termLabel('mgate', 'check'), termLabel('project', 'main')] }),
-      enter: (ctx) => { note(ctx, 'lead'); team9(ctx, { gate: true, until: 10 }, 'The lead hands out tasks, checks results, and reports back cleanly.'); },
+      scene: () => team(5, { trees: true, mgate: true, mixed: true, lead: [{ t: 'rules', h: 4 }], labels: [you, termLabel('a0', 'lead', 'top', 'the lead'), termLabel('mgate', 'check'), termLabel('project', 'main')] }),
+      enter: (ctx) => { note(ctx, 'lead'); team9(ctx, { gate: true, until: 12 }, 'The lead hands out tasks and merges what passes the check.'); },
     },
     fleet: {
       scene: () => {
-        const s = team(20, { trees: true, mgate: true, gate: true, mixed: true, lead: [{ t: 'rules', h: 4 }], labels: [you, lab('a0', 'the lead', 'top', 'wiki/orchestration/'), lab('mgate', 'check', 'top', 'wiki/verification/'), lab('project', 'main', 'top', 'wiki/branch/')] });
+        const s = team(20, { trees: true, mgate: true, gate: true, mixed: true, lead: [{ t: 'rules', h: 4 }], labels: [you, termLabel('a0', 'lead', 'top', 'the lead'), termLabel('mgate', 'check'), termLabel('project', 'main')] });
         s.focus = ['you', 'a0', 'project', [-88, -254, 30], [88, -254, 30], [-110, BUS_Y, 0]];
         return s;
       },
-      enter: (ctx) => { note(ctx, 'fleet'); ctx.scene.speed = 1.5; team9(ctx, { gate: true, until: 40 }, 'Twenty builders. Automated checks filter the work; you review what passes.'); },
+      enter: (ctx) => { note(ctx, 'fleet'); ctx.scene.speed = 1.5; team9(ctx, { gate: true, until: 40 }, 'Twenty helpers, forty tasks, one check in front of main.'); },
     },
   },
 };

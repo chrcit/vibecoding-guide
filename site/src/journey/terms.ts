@@ -60,8 +60,7 @@ export const TERMS = {
   'context-rot': {
     word: 'context rot',
     def: 'A model answers worse as its window fills with things that do not matter to the task, long before the window is full.',
-    wiki: 'context-window',
-    own: false,
+    wiki: 'context-rot',
     retire: ['window fatigue', 'attention dilution (plain level)'],
   },
   token: {
