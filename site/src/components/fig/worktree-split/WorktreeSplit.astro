@@ -1,0 +1,74 @@
+---
+/*
+ * Fig. 34, "A worktree each still meets the others at the merge". Goes inside a board tile.
+ * Idea: two agents in one folder overwrite each other while they work; a worktree each keeps their
+ * changes apart until the merge, where edits to the same lines still collide, and some things a
+ * worktree never separates.
+ * Elements: two agents on the bakery site (holiday hours, Sunday hours), the file they both edit,
+ * one folder or two worktrees on their own branches, the merge, what stays shared.
+ * States: one folder, a worktree each, a worktree each with the same lines edited.
+ * Data: none. Interaction: a pick of three.
+ */
+import Figure from '../Figure.astro';
+
+const states = [
+  { name: 'One folder', says: 'Both agents save into the same hours.js. The second save quietly undoes half of the first, and neither agent knows.' },
+  { name: 'A worktree each', says: 'Each agent has its own copy on its own branch. Nothing collides while they work, and the two changes merge cleanly.' },
+  { name: 'Same lines', says: 'Separate copies still meet at the merge. Both changed the same lines, so you settle the conflict by hand.' },
+];
+---
+<div class="wt" data-wt data-state="0" data-states={JSON.stringify(states)}>
+  <div class="pick wt-pick" role="group" aria-label="Where the two agents work">
+    {states.map((s, i) => <button type="button" data-wt-pick={i} aria-pressed={i === 0 ? 'true' : 'false'}>{s.name}</button>)}
+  </div>
+  <Figure bare n={34} title="A worktree each still meets the others at the merge" alt="Two agents on the bakery site, one fixing holiday hours and one Sunday hours, both saving into the same hours.js in one folder. The second save overwrites the first.">
+    <div class="wt-draw" aria-hidden="true">
+      <div class="wt-agents"><span>Agent A · holiday hours</span><span>Agent B · Sunday hours</span></div>
+      <div class="wt-one"><span class="wt-file">hours.js</span><span class="wt-bang">B’s save overwrites A’s</span></div>
+      <div class="wt-two">
+        <span class="wt-file">hours.js <small>t3/holiday</small></span>
+        <span class="wt-file">hours.js <small>t3/sunday</small></span>
+      </div>
+      <div class="wt-merge"><span class="wt-ok">Merge: clean</span><span class="wt-clash">Merge: conflict, for you</span></div>
+      <div class="wt-shared">Still shared: the database, the dev server’s port</div>
+    </div>
+    <Fragment slot="readout">{states[0]!.says}</Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .wt { display: grid; gap: 0.75rem; }
+  .wt-pick { width: 100%; }
+  .wt-pick button { flex: 1 1 auto; }
+  .wt-draw { display: grid; gap: 0.5rem; font-size: var(--text-xs); }
+  .wt-agents, .wt-two, .wt-merge { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .wt-agents span { padding: 0.35rem 0.5rem; border-radius: var(--radius-s); background: color-mix(in oklab, var(--ink) 52%, var(--card)); color: var(--card); text-align: center; font-weight: 600; }
+  .wt-file { display: block; padding: 0.4rem 0.5rem; border: 1px solid var(--rule-strong); border-radius: var(--radius-s); background: var(--paper); font-family: var(--mono); text-align: center; color: var(--ink); }
+  .wt-file small { display: block; font-size: var(--text-xs); color: var(--muted); }
+  .wt-one { display: grid; gap: 0.35rem; justify-items: center; }
+  .wt-one .wt-file { width: 60%; border-color: var(--accent); }
+  .wt-bang { color: var(--accent); font-weight: 600; }
+  .wt-merge span { grid-column: 1 / -1; padding: 0.35rem; text-align: center; border-radius: var(--radius-s); font-weight: 600; }
+  .wt-ok { background: color-mix(in oklab, var(--green) 16%, var(--card)); color: var(--green); }
+  .wt-clash { background: color-mix(in oklab, var(--accent) 14%, var(--card)); color: var(--accent); }
+  .wt-shared { padding: 0.35rem 0.5rem; border: 1px dashed var(--rule-strong); border-radius: var(--radius-s); color: var(--muted); text-align: center; }
+  .wt-two, .wt-merge, .wt-shared { display: none; }
+  .wt:not([data-state='0']) .wt-one { display: none; }
+  .wt:not([data-state='0']) .wt-two, .wt:not([data-state='0']) .wt-merge { display: grid; }
+  .wt:not([data-state='0']) .wt-shared { display: block; }
+  .wt[data-state='1'] .wt-clash, .wt[data-state='2'] .wt-ok { display: none; }
+  .wt .fig[data-bare] .fig-readout { min-height: 0; font-family: var(--sans); font-size: var(--text-s); color: var(--ink); }
+</style>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-wt]')) {
+    const states: { says: string }[] = JSON.parse(root.dataset.states!);
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-wt-pick]')];
+    const readout = root.querySelector<HTMLElement>('[data-fig-readout]')!;
+    for (const b of buttons) b.addEventListener('click', () => {
+      root.dataset.state = b.dataset.wtPick!;
+      for (const x of buttons) x.setAttribute('aria-pressed', String(x === b));
+      readout.textContent = states[Number(b.dataset.wtPick)]!.says;
+    });
+  }
+</script>

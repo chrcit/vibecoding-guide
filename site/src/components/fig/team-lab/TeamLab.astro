@@ -1,0 +1,308 @@
+---
+/*
+ * Fig. 30, the orchestration lab. Goes inside a board tile (it brings no frame of its own).
+ *
+ * Idea: the same job, done by the same kinds of agents and one person, comes out very differently
+ * depending on how the team is organised, how separable the work is and how fast the person reviews.
+ * Elements: six ways to organise (a pick with a drawing of each shape), a timeline of who is
+ * working, checking, redoing, waiting for the person or blocked on another agent, the numbers the
+ * run produces, and the controls: agents, separability, job size, review time, model class per role.
+ * Data: none from src/data. Every number is from the model in ./model.ts, whose assumptions are
+ * listed in the long read (explain/orchestration/read/#model).
+ * Interaction: every control redraws at once. Picking a way or a preset replays the run left to
+ * right; under reduced motion it shows the end state. The script announces the new finding.
+ * It also sends an `acg-lab` event with the run, for the tiles around it.
+ * Alt text: the first state, plan, build, review with four builders.
+ */
+import Figure from '../Figure.astro';
+import Stat from '../../board/Stat.astro';
+import { url } from '../../../lib/nav';
+import { drawTimeline, glyph } from './draw';
+import { CLASSES, DEFAULT, PATTERNS, PRESETS, describe, hours, simulate, times } from './model';
+
+interface Props {
+  n?: number;
+  /** Side-view targets for each lane group and each way, as site paths. */
+  roles: Record<string, string>;
+  ways: Record<string, string>;
+}
+const { n = 30, roles, ways } = Astro.props;
+const targets = Object.fromEntries(Object.entries(roles).map(([k, v]) => [k, url(v)]));
+const wayLinks = Object.fromEntries(Object.entries(ways).map(([k, v]) => [k, url(v)]));
+const run = simulate(DEFAULT);
+const svg = drawTimeline(run, 900, targets);
+const st = run.stats;
+const first = PATTERNS.find((p) => p.id === DEFAULT.pattern)!;
+const sepWord = (v: number) => (v < 0.15 ? 'Tangled' : v < 0.4 ? 'Mostly tangled' : v < 0.65 ? 'Mixed' : v < 0.9 ? 'Mostly separate' : 'Independent');
+const legend = [
+  ['work', 'Working'],
+  ['redo', 'Redoing'],
+  ['check', 'Planning or checking'],
+  ['wait', 'Waiting for you'],
+  ['blocked', 'Blocked on an agent'],
+  ['you-review', 'You, busy'],
+] as const;
+---
+<div class="lab" data-lab data-targets={JSON.stringify(targets)} data-ways={JSON.stringify(wayLinks)} data-presets={JSON.stringify(PRESETS)}>
+  <div class="lab-main">
+    <div class="pick lab-ways" role="group" aria-label="How the team is organised">
+      {PATTERNS.map((p) => (
+        <button type="button" data-way={p.id} aria-pressed={p.id === DEFAULT.pattern ? 'true' : 'false'}>
+          <Fragment set:html={glyph(p.id)} />
+          <span>{p.name}</span>
+        </button>
+      ))}
+    </div>
+    <Figure
+      bare
+      n={n}
+      title="One job, six ways to run the team"
+      alt="A timeline of one job. You brief a planner, read its plan, then four builders work in parallel while a reviewer agent checks each piece before it comes to you. Some builders sit blocked waiting for pieces they depend on. The run finishes about three times sooner than one agent alone."
+    >
+      <div class="lab-chart" data-chart set:html={svg} />
+      <ul class="lab-legend" aria-hidden="true">
+        {legend.map(([k, name]) => <li><i data-k={k}></i>{name}</li>)}
+      </ul>
+      <Fragment slot="readout"><a class="explain" data-way-link href={wayLinks[first.id]} data-side>{first.name}</a>: <span data-finding>{describe(run).replace(/^./, (c) => c.toLowerCase())}</span></Fragment>
+    </Figure>
+  </div>
+
+  <div class="lab-side">
+    <dl class="stats lab-stats">
+      <Stat name="Time to finish" id="finish">{hours(st.finish)}</Stat>
+      <Stat name="Your time" id="you" tone="accent">{hours(st.you)}</Stat>
+      <Stat name="Waiting for you" id="waiting">{hours(st.waiting)}</Stat>
+      <Stat name="Tokens vs one agent" id="tokens">{times(st.tokensVsSolo)}</Stat>
+      <Stat name="Conflicts" id="conflicts">{String(st.conflicts)}</Stat>
+      <Stat name="Uncaught mistakes" id="through">{String(Math.round(st.through))}</Stat>
+    </dl>
+
+    <div class="controls lab-controls" data-controls>
+      <label class="control">
+        <span>Agents <output data-out="agents">{DEFAULT.agents}</output></span>
+        <input type="range" min="1" max="16" step="1" value={DEFAULT.agents} data-in="agents" />
+      </label>
+      <label class="control">
+        <span>Work <output data-out="separable">{sepWord(DEFAULT.separable)}</output></span>
+        <input type="range" min="0" max="100" step="5" value={DEFAULT.separable * 100} data-in="separable" aria-valuetext={sepWord(DEFAULT.separable)} />
+      </label>
+      <label class="control">
+        <span>Job size <output data-out="pieces">{hours(DEFAULT.pieces * 30)}</output></span>
+        <input type="range" min="1" max="64" step="1" value={DEFAULT.pieces} data-in="pieces" />
+      </label>
+      <label class="control">
+        <span>Your review, per result <output data-out="review">{DEFAULT.review} min</output></span>
+        <input type="range" min="1" max="40" step="1" value={DEFAULT.review} data-in="review" />
+      </label>
+      <fieldset class="lab-classes">
+        <legend><a class="explain" href={url('models/')} data-side>Model class</a></legend>
+        {(['planner', 'builder', 'reviewer'] as const).map((role) => (
+          <label class="control">
+            <span>{role === 'planner' ? 'Planner or lead' : role === 'builder' ? 'Builders' : 'Reviewer'}</span>
+            <select data-in={role}>
+              {CLASSES.map((c) => <option value={c.id} selected={DEFAULT[role] === c.id}>{c.name}</option>)}
+            </select>
+          </label>
+        ))}
+      </fieldset>
+    </div>
+  </div>
+</div>
+
+<style is:global>
+  .lab { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; gap: 1rem 1.5rem; align-items: start; }
+  @container (max-width: 50rem) { .lab { grid-template-columns: minmax(0, 1fr); } }
+  .lab-main { min-width: 0; display: grid; gap: 0.75rem; }
+
+  .lab-ways { display: flex; width: 100%; }
+  .lab-ways button { flex: 1 1 9rem; flex-direction: column; gap: 0.1rem; min-height: 4.25rem; padding: 0.35rem 0.5rem; white-space: normal; text-align: center; line-height: 1.2; }
+  .lab-ways .glyph { display: block; overflow: visible; }
+  .glyph .g-lines path { stroke: var(--rule-strong); stroke-width: 1.5; fill: none; }
+  .glyph .g-lines path.g-dim { stroke-dasharray: 2 2; }
+  .glyph .g-agent { fill: var(--card); stroke: var(--ink-2); stroke-width: 1.4; }
+  .glyph .g-dim { fill: var(--card); stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 2 1.5; }
+  .glyph .g-you { fill: var(--accent); }
+  .lab-ways button[aria-pressed='true'] .g-lines path { stroke: var(--ink-2); }
+  @container (max-width: 34rem) {
+    .lab-ways button { flex-basis: calc(50% - 0.25rem); }
+  }
+
+  .lab-chart { position: relative; min-height: 390px; }
+  .lab-chart .tl-svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .tl-grid { stroke: var(--rule); stroke-width: 1; }
+  .tl-axis { stroke: var(--rule-strong); stroke-width: 1; }
+  .tl-lane { stroke: var(--rule); stroke-width: 1; stroke-dasharray: 1 4; }
+  .tl-tick, .tl-mark, .tl-name, .tl-count { font-family: var(--mono); font-size: 13px; fill: var(--muted); }
+  .tl-name { fill: var(--ink); font-family: var(--sans); font-weight: 600; }
+  .tl-name.tl-you { fill: var(--accent); }
+  .tl-mark-done { fill: var(--ink); font-weight: 600; }
+  .tl-brace { stroke: var(--rule-strong); stroke-width: 1.5; }
+  .tl-hit { fill: transparent; }
+  .tl-group { outline: none; }
+  .tl-group:hover .tl-name, .tl-group:focus-visible .tl-name { fill: var(--accent); text-decoration: underline; }
+  .tl-group:focus-visible .tl-hit { stroke: var(--focus); stroke-width: 2; }
+  .tl-done { stroke: var(--ink); stroke-width: 1.5; }
+  .tl-solo { stroke: var(--muted); stroke-width: 1.25; stroke-dasharray: 4 3; }
+  .tl-cover { fill: var(--card); }
+  .tl-head { stroke: var(--accent); stroke-width: 2; }
+  .tl-cover, .tl-head { display: none; }
+  .lab-chart[data-playing] .tl-cover, .lab-chart[data-playing] .tl-head { display: inline; }
+
+  .tl-bar, .lab-legend i { fill: var(--lab-c); background: var(--lab-c); }
+  [data-k='work'] { --lab-c: color-mix(in oklab, var(--ink) 52%, var(--card)); }
+  [data-k='redo'] { --lab-c: var(--blue); }
+  [data-k='check'] { --lab-c: var(--green); }
+  [data-k='plan'] { --lab-c: color-mix(in oklab, var(--green) 60%, var(--card)); }
+  [data-k='wait'] { --lab-c: color-mix(in oklab, var(--accent) 40%, var(--card)); }
+  [data-k='blocked'] { --lab-c: transparent; }
+  .tl-bar[data-k='blocked'] { stroke: var(--rule-strong); stroke-width: 1; stroke-dasharray: 3 2; }
+  .lab-legend i[data-k='blocked'] { box-shadow: inset 0 0 0 1px var(--rule-strong); background: repeating-linear-gradient(90deg, var(--rule-strong) 0 3px, transparent 3px 5px) top / 100% 1px no-repeat, repeating-linear-gradient(90deg, var(--rule-strong) 0 3px, transparent 3px 5px) bottom / 100% 1px no-repeat; box-shadow: none; border-left: 1px solid var(--rule-strong); border-right: 1px solid var(--rule-strong); }
+  [data-k='you-brief'] { --lab-c: color-mix(in oklab, var(--accent) 55%, var(--card)); }
+  [data-k='you-review'] { --lab-c: var(--accent); }
+  [data-k='you-merge'] { --lab-c: color-mix(in oklab, var(--accent) 70%, var(--ink)); }
+
+  .lab-legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin: 0; padding: 0; list-style: none; font-size: var(--text-xs); color: var(--muted); }
+  .lab-legend li { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .lab-legend i { display: inline-block; width: 1.1rem; height: 0.7rem; border-radius: 2px; }
+
+  .lab .fig[data-bare] .fig-foot { margin-top: 0.5rem; }
+  .lab .fig[data-bare] .fig-readout { min-height: 2.9em; font-family: var(--sans); font-size: var(--text-m); line-height: 1.4; color: var(--ink); max-width: 70ch; }
+  .lab .fig-readout .explain { font-weight: 650; }
+
+  .lab-side { display: grid; gap: 1rem; min-width: 0; }
+  .lab-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @container (max-width: 50rem) { .lab-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @container (max-width: 30rem) { .lab-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .lab-stats .stat-value { transition: color var(--dur) ease; }
+  .lab-controls { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.35rem; }
+  @container (max-width: 50rem) and (min-width: 34rem) { .lab-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem 1rem; } }
+  .lab-classes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; margin: 0.25rem 0 0; padding: 0; border: 0; min-width: 0; grid-column: 1 / -1; }
+  .lab-classes legend { padding: 0; margin-bottom: 0.25rem; font-size: var(--text-xs); color: var(--muted); }
+  .lab-classes .control > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+  .lab-classes select { width: 100%; }
+  .lab-controls .control:has(input:disabled), .lab-classes .control:has(select:disabled) { opacity: 0.45; }
+</style>
+
+<script>
+  import { drawTimeline } from './draw';
+  import { describe, hours, pattern, simulate, times, type ModelClass, type PatternId, type Preset, type Settings, DEFAULT } from './model';
+
+  const root = document.querySelector<HTMLElement>('[data-lab]');
+  if (root) {
+    const targets: Record<string, string> = JSON.parse(root.dataset.targets!);
+    const ways: Record<string, string> = JSON.parse(root.dataset.ways!);
+    const presets: Preset[] = JSON.parse(root.dataset.presets!);
+    const chart = root.querySelector<HTMLElement>('[data-chart]')!;
+    const finding = root.querySelector<HTMLElement>('[data-finding]')!;
+    const wayLink = root.querySelector<HTMLAnchorElement>('[data-way-link]')!;
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-way]')];
+    const inputs = Object.fromEntries([...root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-in]')].map((el) => [el.dataset.in!, el]));
+    const outs = Object.fromEntries([...root.querySelectorAll<HTMLOutputElement>('[data-out]')].map((el) => [el.dataset.out!, el]));
+    const stat = (id: string) => root.querySelector<HTMLElement>(`[data-stat="${id}"]`)!;
+    const presetButtons = [...document.querySelectorAll<HTMLButtonElement>('[data-lab-preset]')];
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    const sepWord = (v: number) => (v < 0.15 ? 'Tangled' : v < 0.4 ? 'Mostly tangled' : v < 0.65 ? 'Mixed' : v < 0.9 ? 'Mostly separate' : 'Independent');
+
+    let s: Settings = { ...DEFAULT };
+    let width = 0;
+    let playing = 0;
+
+    const read = (): Settings => ({
+      pattern: s.pattern,
+      agents: Number(inputs.agents!.value),
+      separable: Number(inputs.separable!.value) / 100,
+      pieces: Number(inputs.pieces!.value),
+      review: Number(inputs.review!.value),
+      planner: inputs.planner!.value as ModelClass,
+      builder: inputs.builder!.value as ModelClass,
+      reviewer: inputs.reviewer!.value as ModelClass,
+    });
+    const write = (v: Settings) => {
+      inputs.agents!.value = String(v.agents);
+      inputs.separable!.value = String(Math.round(v.separable * 100));
+      inputs.pieces!.value = String(v.pieces);
+      inputs.review!.value = String(v.review);
+      inputs.planner!.value = v.planner;
+      inputs.builder!.value = v.builder;
+      inputs.reviewer!.value = v.reviewer;
+    };
+
+    function play() {
+      const cover = chart.querySelector<SVGRectElement>('[data-cover]');
+      const head = chart.querySelector<SVGPathElement>('[data-head]');
+      if (!cover || !head || reduced.matches) return;
+      const w = Number(cover.getAttribute('width'));
+      const ms = 2200;
+      window.clearTimeout(playing);
+      chart.setAttribute('data-playing', '');
+      for (const el of [cover, head]) {
+        el.style.transition = 'none';
+        el.style.transform = 'translateX(0px)';
+      }
+      void chart.getBoundingClientRect();
+      for (const el of [cover, head]) {
+        el.style.transition = `transform ${ms}ms linear`;
+        el.style.transform = `translateX(${w}px)`;
+      }
+      playing = window.setTimeout(() => chart.removeAttribute('data-playing'), ms);
+    }
+
+    function render(animate = false) {
+      s = read();
+      const p = pattern(s.pattern);
+      const run = simulate(s);
+      width = chart.clientWidth || 900;
+      chart.innerHTML = drawTimeline(run, width, targets);
+      if (!animate) { window.clearTimeout(playing); chart.removeAttribute('data-playing'); }
+      const st = run.stats;
+      stat('finish').textContent = hours(st.finish);
+      stat('you').textContent = hours(st.you);
+      stat('waiting').textContent = hours(st.waiting);
+      stat('tokens').textContent = times(st.tokensVsSolo);
+      stat('conflicts').textContent = String(st.conflicts);
+      stat('through').textContent = String(Math.round(st.through));
+      finding.textContent = describe(run).replace(/^./, (c) => c.toLowerCase());
+      wayLink.textContent = p.name;
+      wayLink.href = ways[s.pattern]!;
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.way === s.pattern));
+      // Controls a way does not use are shown but disabled.
+      (inputs.agents as HTMLInputElement).disabled = !p.uses.agents;
+      outs.agents!.textContent = p.uses.agents ? String(s.pattern === 'best' ? Math.max(2, s.agents - (s.agents % 2)) : s.agents) : '1';
+      (inputs.planner as HTMLSelectElement).disabled = !p.uses.planner;
+      (inputs.reviewer as HTMLSelectElement).disabled = !p.uses.reviewer;
+      outs.separable!.textContent = sepWord(s.separable);
+      inputs.separable!.setAttribute('aria-valuetext', sepWord(s.separable));
+      outs.pieces!.textContent = hours(s.pieces * 30);
+      inputs.pieces!.setAttribute('aria-valuetext', hours(s.pieces * 30));
+      outs.review!.textContent = `${s.review} min`;
+      inputs.review!.setAttribute('aria-valuetext', `${s.review} minutes`);
+      const match = presets.find((x) => JSON.stringify(x.settings) === JSON.stringify(s));
+      for (const b of presetButtons) b.setAttribute('aria-pressed', String(match?.id === b.dataset.labPreset));
+      if (animate) play();
+      document.dispatchEvent(new CustomEvent('acg-lab', { detail: { settings: s, run } }));
+    }
+
+    let frame = 0;
+    const soon = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(() => render(false)); };
+    for (const el of Object.values(inputs)) el.addEventListener('input', soon);
+    for (const b of buttons) b.addEventListener('click', () => {
+      s = { ...read(), pattern: b.dataset.way as PatternId };
+      render(true);
+    });
+    for (const b of presetButtons) b.addEventListener('click', () => {
+      const x = presets.find((q) => q.id === b.dataset.labPreset)!;
+      s = { ...x.settings };
+      write(s);
+      render(true);
+    });
+    // Another tile can ask for a way: <button data-lab-way="lead">.
+    document.addEventListener('acg-lab-way', (e) => {
+      s = { ...read(), pattern: (e as CustomEvent<PatternId>).detail };
+      render(true);
+    });
+    new ResizeObserver(() => { if (Math.abs((chart.clientWidth || 0) - width) > 2) render(false); }).observe(chart);
+    render(false);
+    // Tiles whose scripts load after this one hear the first run too.
+    setTimeout(() => render(false), 0);
+  }
+</script>

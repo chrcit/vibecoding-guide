@@ -1,19 +1,37 @@
 ---
-// Review page for the orchestration explainer's figures. Routed at /dev/fig-orchestration/ in
-// `pnpm dev`. Fig. 12 takes no data: its costs are relative and in words.
+// Review page for the orchestration board's figures. Routed at /dev/fig-orchestration/ in
+// `pnpm dev`. Figs. 30 to 34 are on /explain/orchestration/; their numbers come from the model in
+// fig/team-lab/model.ts, not from src/data. Fig. 12 is no longer on any page.
 import Base from '../layouts/Base.astro';
+import TeamLab from '../components/fig/team-lab/TeamLab.astro';
+import PersonQueue from '../components/fig/person-queue/PersonQueue.astro';
+import SpawnContext from '../components/fig/spawn-context/SpawnContext.astro';
+import BlindSpots from '../components/fig/blind-spots/BlindSpots.astro';
+import WorktreeSplit from '../components/fig/worktree-split/WorktreeSplit.astro';
 import TeamShapes from '../components/fig/team-shapes/TeamShapes.astro';
+const READ = 'explain/orchestration/read/';
+const roles = { you: READ, planner: READ, lead: READ, builders: READ, reviewer: READ };
+const ways = { solo: READ, review: READ, plan: READ, parallel: READ, lead: READ, best: READ };
 ---
 <Base title="Figures: orchestration" description="Development-only review page for the orchestration figures." noindex>
   <div class="fig-review">
     <h1>Figures: orchestration</h1>
-    <p>Fig. 12 as it appears on /explain/orchestration/. It shows no prices or limits.</p>
+    <section class="tile"><TeamLab roles={roles} ways={ways} /></section>
+    <div class="row">
+      <section class="tile"><PersonQueue /></section>
+      <section class="tile"><SpawnContext /></section>
+      <section class="tile"><BlindSpots /></section>
+      <section class="tile"><WorktreeSplit /></section>
+    </div>
+    <p>Fig. 12, the earlier six shapes, kept until the lead removes it.</p>
     <TeamShapes />
   </div>
 </Base>
 
 <style>
-  .fig-review { max-width: 46rem; margin: 2rem auto 4rem; padding: 0 var(--gutter); }
-  h1 { margin: 0 0 0.5rem; }
+  .fig-review { max-width: 90rem; margin: 2rem auto 4rem; padding: 0 var(--gutter); display: grid; gap: 1rem; }
+  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr)); gap: 1rem; }
+  .tile { container-type: inline-size; padding: 1rem; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--card); }
+  h1 { margin: 0; }
   p { color: var(--muted); margin: 0; }
 </style>

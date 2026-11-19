@@ -1,22 +1,22 @@
 ---
 // Explainer C2: the orchestration layer. Threads, subagents, nesting, mixing model sizes, handing
 // work across providers, worktrees, what it costs on a plan, what goes wrong, and Fig. 12.
-import Article from '../../layouts/Article.astro';
-import Deeper from '../../components/level/Deeper.astro';
-import Fact from '../../components/data/Fact.astro';
-import Verified from '../../components/data/Verified.astro';
-import Note from '../../components/site/Note.astro';
-import Opinion from '../../components/site/Opinion.astro';
-import Estimate from '../../components/site/Estimate.astro';
-import Term from '../../components/site/Term.astro';
-import CopyPrompt from '../../components/site/CopyPrompt.astro';
-import Embed from '../../components/site/Embed.astro';
-import Card from '../../components/site/Card.astro';
-import CardGrid from '../../components/site/CardGrid.astro';
-import TeamShapes from '../../components/fig/team-shapes/TeamShapes.astro';
-import { estimates, opinions } from '../../data/observations';
-import { links } from '../../data/links';
-import { url } from '../../lib/nav';
+import Article from '../../../layouts/Article.astro';
+import Deeper from '../../../components/level/Deeper.astro';
+import Fact from '../../../components/data/Fact.astro';
+import Verified from '../../../components/data/Verified.astro';
+import Note from '../../../components/site/Note.astro';
+import Opinion from '../../../components/site/Opinion.astro';
+import Estimate from '../../../components/site/Estimate.astro';
+import Term from '../../../components/site/Term.astro';
+import CopyPrompt from '../../../components/site/CopyPrompt.astro';
+import Embed from '../../../components/site/Embed.astro';
+import Card from '../../../components/site/Card.astro';
+import CardGrid from '../../../components/site/CardGrid.astro';
+import * as M from '../../../components/fig/team-lab/model';
+import { estimates, opinions } from '../../../data/observations';
+import { links } from '../../../data/links';
+import { url } from '../../../lib/nav';
 
 const fanout = estimates['theo-2026-10-09-haiku-fanout'];
 const runaway = estimates['theo-2026-11-16-council-runaway'];
@@ -30,8 +30,9 @@ const headings = [
   { depth: 2, slug: 'across-providers', text: 'Handing work to another lab’s model' },
   { depth: 2, slug: 'worktrees', text: 'Separate copies of the code' },
   { depth: 2, slug: 'cost', text: 'What a team costs on a $20 plan' },
-  { depth: 2, slug: 'six-shapes', text: 'Six shapes a team can take' },
+  { depth: 2, slug: 'six-ways', text: 'Six ways to run a team' },
   { depth: 2, slug: 'what-goes-wrong', text: 'What goes wrong' },
+  { depth: 2, slug: 'model', text: 'How the model works' },
   { depth: 2, slug: 'related', text: 'Related pages' },
 ];
 
@@ -54,6 +55,8 @@ const factIds = [
   'harnesses.codex.subagentModel',
   'harnesses.codex.maxThreads',
   'harnesses.codex.subagentResults',
+  'harnesses.claudeCode.codeReview',
+  't3code.manyModels',
   't3code.handoff',
   't3code.handoffCap',
   't3code.handoffLeavesOut',
@@ -86,7 +89,7 @@ of its output. Do not change any files.
 """`;
 ---
 <Article
-  title="Orchestration"
+  title="Orchestration: the long read"
   description="Threads, subagents, nested helpers, mixing model sizes and providers, worktrees, and what a team of agents costs on a $20 plan."
   section="explain"
   headings={headings}
@@ -94,13 +97,6 @@ of its output. Do not change any files.
   prev={{ href: 'explain/verification/', title: 'Verification' }}
   next={{ href: 'explain/skills/', title: 'Skills' }}
 >
-  <p>
-    Orchestration is the word for running more than one agent and deciding who does what. It is where people get lost,
-    because the tools offer a lot of ways to do it, and it is where the bill grows, because every extra agent spends from
-    the same pot. This page goes from the simplest arrangement to the most complicated, and ends with a default that works
-    for most people most of the time: one thread, then two, before any team.
-  </p>
-
   <h2 id="one-thread">One thread, one task</h2>
   <p>
     A <Term def="One conversation with one agent about one task. You can start as many as you like, and each one knows only what was said in it.">thread</Term>
@@ -330,20 +326,48 @@ Then make the change yourself, run the tests and show me the diff. If the subage
     </p>
   </Deeper>
 
-  <h2 id="six-shapes">Six shapes a team can take</h2>
+  <h2 id="six-ways">Six ways to run a team</h2>
   <p>
-    The arrangements above come down to six shapes. The figure uses the same pieces for each, you, a handful of agents and the work
-    each one holds, so the difference you see is the structure.
+    The board runs one job each of these ways, with the same agents and the same person, so the difference you see is the
+    structure.
   </p>
-  <TeamShapes />
-  <ul>
-    <li>Solo: one agent, one task. The default and the baseline for cost. It fails when the job outgrows one conversation.</li>
-    <li>Parallel threads: separate conversations you coordinate. About one solo run per thread. It fails when the reviewing piles up or two threads edit the same files.</li>
-    <li>A lead with helpers: one agent hands side jobs to subagents and gets summaries back. The lead plus each helper. It fails when a summary drops the detail that mattered.</li>
-    <li>A pipeline: one agent writes, the next reviews, the next runs the checks. A little more than one run per stage. It fails when an early mistake is trusted all the way down.</li>
-    <li>A council: several models answer or review the same thing and one judges. One run per member, every round. It fails when the members never agree and the rounds go on.</li>
-    <li>Nested teams: helpers with helpers of their own. The most expensive shape, and the one that loses the most detail on the way back.</li>
-  </ul>
+  <h3 id="way-solo">One agent</h3>
+  <p>
+    One thread, one task, and you brief and review each result. It is the baseline for time and for tokens, and the right
+    start for almost anything. It fails when the job outgrows one conversation.
+  </p>
+  <h3 id="way-review">Build, then review</h3>
+  <p>
+    A builder makes each change and a second agent reviews it before it reaches you. A reviewer from another lab, or at least a
+    different model, catches more than a fresh copy of the builder, which shares its blind spots.
+    <Fact id="harnesses.claudeCode.codeReview" show="claim" />
+  </p>
+  <h3 id="way-plan">Plan, build, review</h3>
+  <p>
+    One agent writes a plan that splits the job, several build the pieces, and one reviews them. You read the plan once instead
+    of writing a brief for every piece. Every builder follows the plan faithfully, so a wrong plan is built several times over:
+    a cheap planner can waste good builders.
+  </p>
+  <h3 id="way-parallel">Parallel worktrees</h3>
+  <p>
+    Several threads, each on its own task in its own worktree, with nobody coordinating them but you. It costs about one solo
+    run per thread. It fails when you cannot review as fast as they finish, or when the pieces touch the same code and collide
+    when you merge them.
+  </p>
+  <h3 id="way-lead">Lead and subagents</h3>
+  <p>
+    One agent hands pieces to subagents, each starting with a fresh context, and gathers their summaries. You talk only to the
+    lead, and at the end you review one large combined change. It fails when a summary leaves out the detail that mattered.
+  </p>
+  <h3 id="way-best">Two models, keep one</h3>
+  <p>
+    The same task goes to two models and you keep the better result. <Fact id="t3code.manyModels" show="claim" /> It doubles the
+    tokens and the reading. It catches the mistakes only one of the two made, and none of those both made.
+  </p>
+  <p>
+    A council, where several models answer and one judges, and nested teams, where helpers start helpers, are variations on
+    these. Nesting has its own section above; councils come up below.
+  </p>
 
   <h2 id="what-goes-wrong">What goes wrong</h2>
   <p>
@@ -382,6 +406,32 @@ Then make the change yourself, run the tests and show me the diff. If the subage
       shape of the work is only known once it starts.
     </p>
   </Deeper>
+
+  <h2 id="model">How the model works</h2>
+  <p>
+    The lab on the board and the smaller pictures around it run a simulation, not a measurement. A job is split into pieces of
+    {M.PIECE_MIN} minutes of work each. Every minute, each agent works on a piece, redoes one, checks one, waits for you, or waits
+    for a piece another agent has not finished. You handle one thing at a time, first come first served: a brief, a review, a
+    merge. Tangled work means more pieces depend on others and more changes collide. Randomness is replaced by fixed sequences,
+    so the same settings always give the same run; the count of uncaught mistakes is the expected number, rounded.
+  </p>
+  <p>The numbers that are not controls are these assumptions:</p>
+  <ul>
+    <li>Speed per piece, against a middle-class model: large {M.SPEED.large}×, small {M.SPEED.small}× the time.</li>
+    <li>Chance of a mistake in one build: large {M.MISTAKE.large}, middle {M.MISTAKE.middle}, small {M.MISTAKE.small}. A redo takes {M.REDO} of a build and makes mistakes at {M.REDO} of the rate.</li>
+    <li>Chance a plan gets one piece’s brief wrong: large {M.PLAN_MISS.large}, middle {M.PLAN_MISS.middle}, small {M.PLAN_MISS.small}.</li>
+    <li>Chance an agent reviewer catches a mistake: large {M.CATCH.large}, middle {M.CATCH.middle}, small {M.CATCH.small}; times {M.SAME_MODEL} when it is the same class as the builder; times {M.PLAN_CATCH} for a wrong brief, because it checks against the plan.</li>
+    <li>The lead reads summaries, so its catch rate is times {M.SUMMARY_CATCH}.</li>
+    <li>You catch up to {M.PERSON_MAX} of mistakes, more the longer you look: {M.PERSON_MAX} × (1 − e<sup>−minutes/{M.PERSON_PACE}</sup>). In one large combined change, times {M.BIG_DIFF}; reading a plan before it is built, times {M.PLAN_READ}.</li>
+    <li>Minutes: an agent review {M.AGENT_REVIEW_MIN}, planning {M.PLAN_MIN} per piece, the lead reading a report {M.LEAD_CHECK_MIN}, a subagent starting up {M.SPAWN_MIN}, you writing a brief {M.PROMPT_MIN}, you sorting out a conflict {M.MERGE_MIN}, comparing two results {M.COMPARE} reviews. Model class multiplies the agents’ times.</li>
+    <li>Collisions: on fully tangled work with three or more other pieces in flight, {M.OVERLAP} of changes collide; half that when a plan or a lead divides the work. Of K pieces, about K<sup>{M.CHAIN_FLOOR}</sup> can run at once on tangled work and all K on independent work.</li>
+    <li>Tokens, in units of one build: a redo {M.T_REDO}, an agent review {M.T_REVIEW}, planning {M.T_PLAN} per piece, the lead reading a report {M.T_CHECK}, and {M.T_START} for every fresh context. A thread pays that once; a subagent pays it every time it is started.</li>
+    <li>For money on the cost tile: {M.UNIT_TOKENS.toLocaleString('en-GB')} tokens per unit, {M.OUTPUT_SHARE * 100}% of them output, at list prices with no caching.</li>
+  </ul>
+  <p>
+    Change any of these and the shapes of the results hold: more agents stop helping once you are the queue, tangled work leaves
+    agents blocked, and checks by the same model miss what the builder missed. The exact hours do not hold.
+  </p>
 
   <h2 id="related">Related pages</h2>
   <CardGrid>
