@@ -111,6 +111,8 @@
       }
       state = as;
       render();
+      // Keyboard readers land in the panel; Escape or Close sends them back to what opened it.
+      if (from && from.matches(':focus-visible')) panel.querySelector<HTMLElement>('[data-sv-close]')?.focus({ preventScroll: true });
     };
     const close = () => {
       state = null;
@@ -150,7 +152,7 @@
       open(to, el);
     });
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && state && state !== 'min' && (state === 'max' || !backdrop.hidden || panel.contains(document.activeElement))) {
+      if (event.key === 'Escape' && state && state !== 'min' && (state === 'max' || !backdrop.hidden || panel.contains(document.activeElement) || document.activeElement === trigger)) {
         close();
         return;
       }

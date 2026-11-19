@@ -17,7 +17,7 @@ interface JobOpts { run: boolean; ask: Ask }
 export async function job(ctx: Ctx, h: Script, o: JobOpts) {
   const { scene } = ctx;
   let turns = 0, calls = 0, asked = 0;
-  const stats = () => ctx.stat([['turns of its own', turns], ['tool calls', calls], ...(o.ask !== 'never' ? [['times it asked you', asked] as [string, number]] : [])]);
+  const stats = (proof = o.run ? 'not yet' : 'it cannot run the tests') => ctx.stat([['turns of its own', turns], ['tool calls', calls], ...(o.ask !== 'never' ? [['times it asked you', asked] as [string, number]] : []), ['proof it works', proof]]);
   const a = () => scene.state.agents[0]!;
   const think = async () => {
     h.set((s) => { s.agents[0]!.busy = true; });
@@ -57,6 +57,7 @@ export async function job(ctx: Ctx, h: Script, o: JobOpts) {
   };
 
   h.set((s) => { Object.assign(s, { ...base(), labels: s.labels }); s.tools!.off = o.run ? [] : ['run']; });
+  stats();
   ctx.say('you', 'The dates on the member list are wrong.');
   await h.send(route.youToAgent(), 'you');
   h.set((s) => { s.agents[0]!.blocks!.push({ t: 'you', h: 2.4 }); });
@@ -73,7 +74,7 @@ export async function job(ctx: Ctx, h: Script, o: JobOpts) {
   h.set((s) => { s.agents[0]!.blocks!.push({ t: 'model', h: 2.4 }); s.agents[0]!.busy = false; s.agents[0]!.lamp = o.run ? 'ok' : 'off'; });
   ctx.say('model', o.run ? 'Fixed. The day and month were swapped. All 12 tests pass.' : 'Fixed. It should work now.');
   await h.send(reverse(route.youToAgent()), 'model');
-  ctx.stat([['turns of its own', turns], ['tool calls', calls], ...(o.ask !== 'never' ? [['times it asked you', asked] as [string, number]] : []), ['proof it works', o.run ? 'tests pass' : 'none']]);
+  stats(o.run ? 'tests pass' : 'none');
   void a;
 }
 
@@ -96,6 +97,6 @@ export const loop: Chapter = {
   actions: {
     play: (ctx) => play(ctx),
     ask: (ctx, val) => { ctx.mem.ask = val as Ask; play(ctx); },
-    run: (ctx, val) => { ctx.mem.run = val === 'on'; play(ctx); },
+    run: (ctx, val) => { ctx.mem.run = val === 'on'; ctx.scene.speed = 2; play(ctx); },
   },
 };

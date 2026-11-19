@@ -13,7 +13,7 @@ import Next from '../../components/journey/Next.astro';
     </div>
   </Step>
   <Step id="nogate" title="Take the gate away">
-    <p>About one task in four comes back wrong. Without the gate, those land on main.</p>
+    <p>In this made-up fleet one task in four comes back wrong. Without the gate, those land on main.</p>
     <div class="pick">
       <button type="button" data-do="gate" data-val="off" data-default aria-pressed="true">No gate</button>
       <button type="button" data-do="gate" data-val="on" aria-pressed="false">With the gate</button>
@@ -21,6 +21,6 @@ import Next from '../../components/journey/Next.astro';
   </Step>
   <Step id="yours" title="What is left for you">
     <p>Deciding what gets built, and reading what the gate lets through.</p>
-    <Next from="fleet" more={[{ href: 'models/', text: 'Which model where' }, { href: 'explain/plans-and-api/', text: 'What a fleet costs' }]} />
+    <Next from="fleet" more={[{ href: 'models/', text: 'Which model where' }, { href: 'journey/meter/', text: 'What a fleet costs' }]} />
   </Step>
 </Journey>
