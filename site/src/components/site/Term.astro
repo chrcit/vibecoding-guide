@@ -93,8 +93,11 @@ const id = 'term-' + Math.random().toString(36).slice(2, 9);
     white-space: normal;
   }
   .term[data-open] .term-def { display: block; animation: term-in var(--dur) var(--ease-out); }
+  /* Hover shows the definition after a short pause, and a hover-opened definition never takes
+     the pointer, so it cannot block a control under it (a reader could not open the box below a
+     term). Opened by click, tap or keyboard it takes the pointer, so its link works. */
   @media (hover: hover) {
-    .term:hover .term-def { display: block; }
+    .term:hover:not([data-open]) .term-def { display: block; pointer-events: none; animation: term-in var(--dur) var(--ease-out) 350ms both; }
   }
   .term-text { display: block; }
   .term-more { display: inline-block; margin-top: 0.375rem; font-family: var(--sans); font-size: var(--text-s); font-weight: 600; color: inherit; text-decoration: underline; text-underline-offset: 0.2em; }

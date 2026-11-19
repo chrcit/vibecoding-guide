@@ -529,7 +529,10 @@ export function picture(s: SceneState, frame: Frame, prev?: SceneState): Picture
 
   const labels: PlacedLabel[] = [];
   for (const lab of s.labels ?? []) {
-    const p = typeof lab.at === 'string' ? anchorOf(s, lab.at) : lab.at;
+    let p = typeof lab.at === 'string' ? anchorOf(s, lab.at) : lab.at;
+    // A label below a part hangs from the part's foot, not from its top (where it would sit on
+    // the drawing itself).
+    if (p && typeof lab.at === 'string' && (lab.place ?? 'top') === 'bottom') p = [p[0], p[1], 0];
     if (!p) continue;
     const [x, y] = k.iso(p, P);
     const t = lab.term ? resolveTerm(lab.term, frame.level ?? 'plain', lab.text) : lab;
@@ -562,7 +565,7 @@ export interface SceneState {
   /** Part one: devices and servers on the floor. */
   gear?: Gear[];
 }
-const GEAR_H: Record<Gear['kind'], number> = { laptop: 16, desktop: 24, phone: 15, server: 28, db: 18 };
+const GEAR_H: Record<Gear['kind'], number> = { laptop: 16, desktop: 24, phone: 21, server: 28, db: 18 };
 
 function gearMarkup(g: Gear) {
   return once('gear:' + g.kind, () => {
@@ -581,8 +584,10 @@ function gearMarkup(g: Gear) {
           S(k.box({ x: 17, y: -9, w: 8, d: 17, r: 1.2 }, 0, 22, P)) +
           lamp(21, 6, 22);
       case 'phone':
-        return k.halo({ x: -5, y: -3, w: 10, d: 6, r: 2 }, 0, P) +
-          S(k.box({ x: -4, y: -1, w: 8, d: 1.4, r: 0.7 }, 0, 14, P), { 'data-part': 'screen', crease: false });
+        // A phone standing on a small stand, broad side to the viewer, big enough to read as one.
+        return k.halo({ x: -7, y: -4, w: 14, d: 8, r: 2 }, 0, P) +
+          S(k.box({ x: -5, y: -3, w: 10, d: 6, r: 1.5 }, 0, 1.2, P), { tone: 'base', crease: false }) +
+          S(k.box({ x: -5.5, y: -0.9, w: 11, d: 1.8, r: 0.9 }, 1.2, 20, P), { 'data-part': 'screen', crease: false });
       case 'server':
         return k.halo({ x: -11, y: -11, w: 22, d: 22, r: 3 }, 0, P) +
           S(k.box({ x: -10, y: -10, w: 20, d: 20, r: 2 }, 0, 9, P)) +

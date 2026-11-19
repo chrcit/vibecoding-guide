@@ -52,10 +52,9 @@ export const TERMS = {
   },
   window: {
     word: 'window',
-    def: 'Everything the model can see while it writes: your messages, its replies, files it opened, results of commands. What is not in the window does not exist for it.',
+    def: 'Everything the model can see while it writes, also called its context window: your messages, its replies, files it opened, results of commands. What is not in the window does not exist for it.',
     wiki: 'context-window',
-    retire: ['context (as a noun for the window)', 'memory', 'the pile'],
-    label: { technical: 'context window' },
+    retire: ['context (as a noun for the window)', 'context window (as a picture label)', 'memory', 'the pile'],
   },
   'context-rot': {
     word: 'context rot',
