@@ -7,6 +7,7 @@ import Explain from '../../../components/board/Explain.astro';
 import Verified from '../../../components/data/Verified.astro';
 import TeamLab from '../../../components/fig/team-lab/TeamLab.astro';
 import { PRESETS } from '../../../components/fig/team-lab/model';
+import PersonQueue from '../../../components/fig/person-queue/PersonQueue.astro';
 
 const READ = 'explain/orchestration/read/';
 // TODO wiki: orchestration, parallel-work, subagent, review, worktree. Until the wiki is merged
@@ -39,6 +40,11 @@ const factIds: string[] = ['harnesses.claudeCode.subagents'];
       {PRESETS.map((p) => <button type="button" data-lab-preset={p.id} aria-pressed="false">{p.name}</button>)}
     </div>
     <TeamLab roles={roles} ways={ways} />
+  </Tile>
+
+  <Tile title="You are the queue" span={4} side={`${READ}#several-threads`}>
+    <PersonQueue />
+    <Explain slot="foot" to={`${READ}#model`}>Modelled, not measured</Explain>
   </Tile>
 
   <Verified slot="foot" ids={factIds} />
