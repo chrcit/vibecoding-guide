@@ -9,6 +9,9 @@ import { getLevel } from '../lib/levels';
 const KIND_NAMES: Record<Kind, string> = { rules: 'instructions', you: 'you', model: 'the model', tool: 'tool results', sum: 'summary', bad: 'problem' };
 const KIND_ORDER: Kind[] = ['rules', 'you', 'model', 'tool', 'sum', 'bad'];
 
+/** The first number in a readout value ("3 of 6" is 3, "$0.42" is 0.42); NaN when there is none. */
+const firstNumber = (v: string) => { const m = v.replace(/,/g, '').match(/-?\d+(\.\d+)?/); return m ? Number(m[0]) : NaN; };
+
 export function boot(root: HTMLElement) {
   const chapter = chapters[root.dataset.chapter ?? ''];
   const stage = root.querySelector<HTMLElement>('.j-stage');
@@ -51,10 +54,19 @@ export function boot(root: HTMLElement) {
       modelEl.hidden = false;
     },
     stat(pairs) {
-      statEl.replaceChildren(...pairs.map(([name, value]) => {
+      // A counter that goes down within a step was restarted by a control: flash the readout.
+      const before = lastStat;
+      lastStat = new Map(pairs.map(([n, v]) => [n, String(v)]));
+      const restarted = pairs.some(([n, v]) => {
+        const was = before.get(n);
+        return was !== undefined && !/%/.test(String(v)) && firstNumber(String(v)) < firstNumber(was);
+      });
+      if (restarted) { statEl.removeAttribute('data-reset'); void statEl.offsetWidth; statEl.setAttribute('data-reset', ''); }
+      statEl.replaceChildren(...pairs.map(([name, value, tag]) => {
         const d = document.createElement('div');
         const dt = document.createElement('dt'); dt.textContent = name;
         const dd = document.createElement('dd'); dd.textContent = String(value);
+        if (tag) { const t = document.createElement('span'); t.className = 'j-tag'; t.textContent = tag; dd.append(' ', t); }
         d.append(dt, dd);
         return d;
       }));
@@ -70,6 +82,7 @@ export function boot(root: HTMLElement) {
   };
 
   let current: HTMLElement | null = null;
+  let lastStat = new Map<string, string>();
   function activate(el: HTMLElement, instant = false) {
     if (el === current) return;
     current?.removeAttribute('data-active');
@@ -87,6 +100,8 @@ export function boot(root: HTMLElement) {
     if (note) ctx.model(note.part, note.text[ctx.level]);
     else ctx.model('', '');
     ctx.stat([]);
+    lastStat = new Map();
+    statEl.removeAttribute('data-reset');
     for (const b of el.querySelectorAll<HTMLElement>('.pick[data-multi] button')) b.setAttribute('aria-pressed', String(b.hasAttribute('data-default')));
     for (const b of el.querySelectorAll<HTMLElement>('[data-default]')) pressOnly(b);
     scene.set(def.scene(ctx), instant);

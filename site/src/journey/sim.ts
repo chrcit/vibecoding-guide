@@ -37,10 +37,11 @@ export async function fleet(ctx: Ctx, h: Script, o: FleetOpts = {}): Promise<Tal
   const flaws = o.flaws ?? true;
   let handed = 0;
   // One readout for the parallel, lead and fleet lessons: the same names in the same order, counted towards a total.
+  // Counters over this run, each named with what it counts; the window is a gauge.
   const stats = () => ctx.stat([
-    ['tasks on main', `${tally.landed} of ${total}`],
-    o.clashes ? ['clashes', tally.clashes] : ['sent back before main', o.gate ? tally.sentBack : 'no check'],
-    ['wrong on main', tally.wrong],
+    ['tasks on main, this run', `${tally.landed} of ${total}`, 'made-up'],
+    o.clashes ? ['clashes, this run', tally.clashes] : ['sent back by the check, this run', o.gate ? tally.sentBack : 'no check'],
+    ['wrong on main, this run', tally.wrong],
     [`${o.name ?? 'the lead'}’s window`, `${Math.round(scene.fill('a0') * 100)}% full`],
   ]);
   const w = (id: string) => (s: typeof scene.state) => s.agents.find((a) => a.id === id)!;

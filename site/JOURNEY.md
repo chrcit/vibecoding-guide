@@ -88,6 +88,12 @@ only through `termLabel()` (below), so the word, the definition and the page agr
 - One readout per chapter: the same names in the same order on every step, a count shown towards
   its total ("4 of 6"), a window as "22% full". Every run hands out a fixed number of tasks, ends,
   and closes with one sentence that says what came of it.
+- A readout name says what is counted and over what: "tasks on main, this run", "tokens read, all
+  turns", "agents waiting for you, this hour". A counter only goes up within a run; a control that
+  restarts the run sets it back to 0, and the readout flashes so the reader sees it (`run.ts`).
+  The assumption behind a number goes beside it as a tag, `ctx.stat([[name, value, 'made-up']])`:
+  "made-up", "cache on", "Opus 5.5 prices". The `StatPair` comment in `chapter.ts` has the rules.
+  The numbers in the text and the line under the picture are the readout's numbers.
 - A control answers in the same tick: it changes the line under the picture before the script
   plays. Switches that are each on or off go in `<div class="pick" data-multi>`; a plain `.pick` is
   one of several.
