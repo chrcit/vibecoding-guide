@@ -1,0 +1,133 @@
+---
+/*
+ * What each plan includes: a compact matrix built from the lab's catalogue (src/data/plans.ts and
+ * models.ts). One table per lab behind a .pick. A plan's name loads it into the lab; the last column
+ * opens the row's sources in the side view. Where the data says nothing, the cell says "not stated";
+ * where the provider publishes no size, "not published".
+ */
+import { catalogue, CLAUDE_MODELS, GPT_MODELS } from './from-data';
+import type { Access, PlanInfo } from './model';
+import { anchor } from '../../../lib/facts';
+import { url } from '../../../lib/nav';
+
+const cat = catalogue();
+const name = (id: string) => cat.models.find((m) => m.id === id)!.name.replace(/^Claude /, '');
+const num = (n: number) => n.toLocaleString('en-GB');
+
+type Cell = { text: string; tone?: 'no' | 'unknown' | 'yes' | 'warn' };
+function access(a: Access | undefined): Cell {
+  switch (a?.kind) {
+    case 'included': return { text: 'Yes', tone: 'yes' };
+    case 'apps': return { text: 'Apps only', tone: 'no' };
+    case 'credits': return { text: 'Credits', tone: 'warn' };
+    case 'share': return { text: `${a.percent}% of week`, tone: 'yes' };
+    case 'range': return { text: `${num(a.lo)}–${num(a.hi)}`, tone: 'yes' };
+    case 'desktop': return { text: 'Desktop app', tone: 'yes' };
+    case 'no': return { text: 'No', tone: 'no' };
+    default: return { text: 'Not stated', tone: 'unknown' };
+  }
+}
+function windowCell(p: PlanInfo): Cell {
+  const w = p.window;
+  if (w.kind === 'none') return { text: 'None', tone: 'yes' };
+  if (w.kind === 'messages') return { text: 'Message estimates', tone: 'yes' };
+  if (w.kind === 'elsewhere') return { text: 'Not in our data', tone: 'unknown' };
+  if (w.times && w.times > 1) return { text: `${w.times}× Pro`, tone: 'yes' };
+  return { text: 'Not published', tone: 'unknown' };
+}
+const week = (p: PlanInfo): Cell => (p.weekTimes && p.weekTimes > 1 ? { text: `${p.weekTimes}× Pro`, tone: 'yes' } : { text: 'Not published', tone: 'unknown' });
+const credit = (p: PlanInfo): Cell => (p.apiCredit === undefined ? { text: 'Not stated', tone: 'unknown' } : p.apiCredit === null ? { text: 'None', tone: 'no' } : { text: `$${num(p.apiCredit)}`, tone: 'yes' });
+
+const tables = [
+  { id: 'claude', label: 'Claude', agent: 'Claude Code', models: CLAUDE_MODELS as string[], modelHead: 'Models in Claude Code' },
+  { id: 'chatgpt', label: 'ChatGPT', agent: 'Codex', models: GPT_MODELS as string[], modelHead: 'Codex messages per five hours' },
+];
+---
+<div class="pm" data-plan-matrix>
+  <div class="pick" role="group" aria-label="Which lab">
+    {tables.map((t, i) => <button type="button" data-pm={t.id} aria-pressed={i === 0 ? 'true' : 'false'}>{t.label}</button>)}
+  </div>
+  {tables.map((t, i) => (
+    <div class="pm-wrap" data-pm-table={t.id} hidden={i !== 0}>
+      <table class="pm-table">
+        <thead>
+          <tr>
+            <th rowspan="2" scope="col">Plan</th>
+            <th rowspan="2" scope="col">A month</th>
+            <th rowspan="2" scope="col">{t.agent}</th>
+            <th colspan={t.models.length} scope="colgroup">{t.modelHead}</th>
+            <th rowspan="2" scope="col">Five hours</th>
+            <th rowspan="2" scope="col">Week</th>
+            {t.id === 'claude' && <th rowspan="2" scope="col">API credit</th>}
+            <th rowspan="2" scope="col"><span class="visually-hidden">Sources</span></th>
+          </tr>
+          <tr>{t.models.map((id) => <th scope="col"><a href={url(`models/${id}/`)} data-side>{name(id)}</a></th>)}</tr>
+        </thead>
+        <tbody>
+          {cat.plans.filter((p) => p.provider === t.id).map((p) => {
+            const cells: Cell[] = [
+              ...t.models.map((id) => (p.agent ? access(p.models[id]) : { text: '–', tone: 'no' as const })),
+              windowCell(p), week(p), ...(t.id === 'claude' ? [credit(p)] : []),
+            ];
+            return (
+              <tr data-plan={p.id}>
+                <th scope="row"><button type="button" class="pm-try" data-try={p.id} aria-label={`Load ${p.name} into the lab`}>{p.name.replace(/ \$\d+$/, '')}</button></th>
+                <td class="pm-num">${num(p.price)}</td>
+                <td data-tone={p.agent ? 'yes' : 'no'}>{p.agent ? 'Yes' : 'No'}</td>
+                {cells.map((c) => <td data-tone={c.tone}>{c.text}</td>)}
+                <td><a class="pm-src" href={url(`sources/#${anchor(p.facts[0]!)}`)} data-side aria-label={`Sources for ${p.name}`} title="Sources">
+                  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="2" y="3" width="12" height="10" rx="1.5" /><path d="M9.5 3v10" /></svg>
+                </a></td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  ))}
+</div>
+
+<style is:global>
+  .pm { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
+  .pm .pick { justify-self: start; }
+  .pm-wrap { position: relative; overflow-x: auto; }
+  .pm-table { width: 100%; min-width: 40rem; border-collapse: collapse; font-size: var(--text-s); }
+  .pm-table th, .pm-table td { padding: 0.25rem 0.4rem; border-bottom: 1px solid var(--rule); text-align: left; vertical-align: middle; white-space: nowrap; }
+  .pm-table thead th { font-size: var(--text-xs); font-weight: 600; color: var(--muted); border-bottom-color: var(--rule-strong, var(--rule)); }
+  .pm-table thead a { color: inherit; }
+  .pm-table td { font-family: var(--mono); color: var(--ink); }
+  .pm-table td[data-tone='no'] { color: var(--muted); }
+  .pm-table td[data-tone='unknown'] { color: var(--muted); font-style: italic; font-family: var(--sans); }
+  .pm-table td[data-tone='warn'] { color: var(--accent); }
+  .pm-table tr[data-current] { background: var(--accent-soft); }
+  .pm-try {
+    min-height: 2.5rem; padding: 0 0.25rem; border: 0; background: none; cursor: pointer;
+    font: inherit; font-weight: 600; color: var(--ink); text-align: left;
+    text-decoration: underline dotted var(--accent); text-underline-offset: 0.22em;
+  }
+  .pm-try:hover { color: var(--accent); }
+  .pm-src { display: inline-grid; place-items: center; width: 2.5rem; height: 2.5rem; color: var(--muted); }
+  .pm-src:hover { color: var(--accent); }
+</style>
+
+<script>
+  import type { LabState } from './model';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-plan-matrix]')) {
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-pm]')];
+    const tables = [...root.querySelectorAll<HTMLElement>('[data-pm-table]')];
+    const show = (id: string) => {
+      buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pm === id)));
+      tables.forEach((t) => (t.hidden = t.dataset.pmTable !== id));
+    };
+    buttons.forEach((b) => b.addEventListener('click', () => show(b.dataset.pm!)));
+    for (const t of root.querySelectorAll<HTMLButtonElement>('[data-try]')) {
+      t.addEventListener('click', () => document.dispatchEvent(new CustomEvent('acg:plan-week-set', { detail: { planId: t.dataset.try } })));
+    }
+    document.addEventListener('acg:plan-week', (e) => {
+      const s = (e as CustomEvent<{ state: LabState }>).detail.state;
+      for (const r of root.querySelectorAll<HTMLElement>('tr[data-plan]')) r.toggleAttribute('data-current', r.dataset.plan === s.planId);
+      const prov = s.planId.split('-')[0]!;
+      if (prov === 'claude' || prov === 'chatgpt') show(prov);
+    });
+  }
+</script>

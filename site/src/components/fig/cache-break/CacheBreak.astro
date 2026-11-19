@@ -1,0 +1,105 @@
+---
+/*
+ * Fig. 44, "A long break empties the cache".
+ *
+ * Idea: the cache keeps a thread's prompt for a while after each request. Come back later than that
+ *   and the next turn writes the whole prompt again, at the write price. Claude Code asks for a
+ *   one-hour cache on a plan and a five-minute one on a key.
+ * Elements: a time line of the break with the cache's lifetime shaded; the next turn's price warm and
+ *   cold; the batch discount for work that need not answer at once.
+ * States: plan or key; a break of 0 to 120 minutes.
+ * Data: cache lifetimes, write multiples and the batch discount from src/data/models.ts; prices
+ *   through the lab's catalogue. The prompt length is the lab's assumption.
+ * Interaction: a .pick and a slider.
+ * Alt: the readout says what the next turn costs.
+ */
+import Figure from '../Figure.astro';
+import { catalogue } from '../plan-week/from-data';
+import { nextTurn } from './model';
+
+interface Props { n?: number; modelId: string; ttl: { plan: number; key: number } }
+const { n = 44, modelId, ttl } = Astro.props;
+const cat = catalogue();
+const first = nextTurn(cat, modelId, 'key', 20, ttl);
+const MAX = 120;
+---
+<div class="cb" data-cache-break data-cat={JSON.stringify(cat)} data-model={modelId} data-ttl={JSON.stringify(ttl)}>
+  <div class="controls">
+    <div class="pick" role="group" aria-label="How you pay">
+      <button type="button" data-route="plan" aria-pressed="false">Plan</button>
+      <button type="button" data-route="key" aria-pressed="true">API key</button>
+    </div>
+    <label class="control">
+      <span>Break <output data-cb-out>20 min</output></span>
+      <input type="range" min="0" max={MAX} step="5" value="20" data-cb-break />
+    </label>
+  </div>
+  <Figure n={n} bare title="A long break empties the cache" alt="A time line of a break with the cache's lifetime shaded, and a marker for when you come back.">
+    <div class="cb-line" data-cb-line>
+      <span class="cb-warm" data-cb-warm style={`width:${(ttl.key / MAX) * 100}%`}></span>
+      <span class="cb-mark" data-cb-mark style={`left:${(20 / MAX) * 100}%`}></span>
+      <span class="cb-tick cb-start" style="left:0">0</span>
+      <span class="cb-tick" style="left:50%">1 h</span>
+      <span class="cb-tick cb-end" style="left:100%">2 h</span>
+    </div>
+    <dl class="stats cb-stats">
+      <div class="stat"><dt class="stat-name">Next turn, cache warm</dt><dd class="stat-value" data-cb-warmcost>{first.warm}</dd></div>
+      <div class="stat" data-tone="accent"><dt class="stat-name">Next turn, after this break</dt><dd class="stat-value" data-cb-now>{first.now}</dd></div>
+      <div class="stat"><dt class="stat-name">Batch, not interactive</dt><dd class="stat-value">−{cat.batchDiscount}%</dd></div>
+    </dl>
+    <Fragment slot="readout">{first.say}</Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .cb { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
+  .cb-line { position: relative; height: 3.25rem; margin: 0.25rem 0.75rem 0.75rem; }
+  .cb-line::before { content: ''; position: absolute; left: 0; right: 0; top: 0.875rem; height: 1px; background: var(--fig-line, var(--rule)); }
+  .cb-warm { position: absolute; left: 0; top: 0.375rem; height: 1rem; border-radius: 3px; background: var(--blue-soft); border: 1px solid var(--blue); transition: width 450ms var(--fig-ease, ease); }
+  .cb-mark { position: absolute; top: 0; width: 0; height: 1.75rem; border-left: 2px solid var(--accent); transition: left 300ms var(--fig-ease, ease); }
+  .cb-mark::after { content: ''; position: absolute; top: -4px; left: -6px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+  .cb-tick { position: absolute; top: 2rem; transform: translateX(-50%); font-family: var(--mono); font-size: var(--text-xs); color: var(--muted); white-space: nowrap; }
+  .cb-tick.cb-end { transform: translateX(-100%); }
+  .cb-tick.cb-start { transform: none; }
+  .cb .fig-readout { font-family: var(--sans); font-size: var(--text-s); color: var(--ink); }
+  @media (prefers-reduced-motion: reduce) { .cb-warm, .cb-mark { transition: none; } }
+</style>
+
+<script>
+  import { nextTurn } from './model';
+  import type { Catalogue, LabState } from '../plan-week/model';
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-cache-break]')) {
+    const cat: Catalogue = JSON.parse(root.dataset.cat!);
+    const ttl = JSON.parse(root.dataset.ttl!) as { plan: number; key: number };
+    let model = root.dataset.model!;
+    let route: 'plan' | 'key' = 'key';
+    const input = root.querySelector<HTMLInputElement>('[data-cb-break]')!;
+    const max = Number(input.max);
+    const q = (s: string) => root.querySelector<HTMLElement>(s)!;
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-route]')];
+    let timer = 0;
+    const render = () => {
+      const b = Number(input.value);
+      const r = nextTurn(cat, model, route, b, ttl);
+      q('[data-cb-out]').textContent = b < 60 ? `${b} min` : `${Math.floor(b / 60)} h ${b % 60 ? `${b % 60} min` : ''}`.trim();
+      q('[data-cb-warm]').style.width = `${(Math.min(max, ttl[route]) / max) * 100}%`;
+      q('[data-cb-mark]').style.left = `${(b / max) * 100}%`;
+      q('[data-cb-warmcost]').textContent = r.warm;
+      q('[data-cb-now]').textContent = r.now;
+      clearTimeout(timer);
+      timer = window.setTimeout(() => (q('[data-fig-readout]').textContent = r.say), 350);
+    };
+    input.addEventListener('input', render);
+    buttons.forEach((btn) => btn.addEventListener('click', () => {
+      route = btn.dataset.route as 'plan' | 'key';
+      buttons.forEach((o) => o.setAttribute('aria-pressed', String(o === btn)));
+      render();
+    }));
+    document.addEventListener('acg:plan-week', (e) => {
+      const s = (e as CustomEvent<{ state: LabState }>).detail.state;
+      if (s.modelId !== model) { model = s.modelId; render(); }
+    });
+    render();
+  }
+</script>
