@@ -3,6 +3,7 @@ import Journey from '../layouts/Journey.astro';
 import PartSwitch from '../components/journey/PartSwitch.astro';
 import OverviewStep from '../components/journey/OverviewStep.astro';
 import ForLevel from '../components/level/ForLevel.astro';
+import Term from '../components/journey/Term.astro';
 import { rungs, parts } from '../journey/rungs';
 import { url } from '../lib/nav';
 ---
@@ -13,7 +14,7 @@ import { url } from '../lib/nav';
   description="An interactive visual guide to building software with AI agents—from what AI is and where it runs, to context rot, verification, parallel teams and production workflows."
 >
   <p class="j-lead">
-    <ForLevel is="plain">An interactive guide for anyone who wants AI agents to build real software with them—starting from scratch before your first line of code.</ForLevel>
+    <ForLevel is="plain">An interactive guide for anyone who wants <Term id="agent">AI agents</Term> to build real software with them—starting from scratch before your first line of code.</ForLevel>
     <ForLevel is="technical">An interactive mental model of AI coding agents: foundations, context rot, typechecks, unit tests, review loops, parallel worktrees and cloud execution.</ForLevel>
     <ForLevel is="engineer">An interactive systems guide to agentic engineering: context mechanics, deterministic oracles, architectural boundaries, adversarial review and fleet economics.</ForLevel>
   </p>

@@ -232,6 +232,13 @@ a.j-label { text-decoration: underline dotted var(--muted); text-decoration-thic
 a.j-label::after { content: ''; position: absolute; inset: -0.6rem -0.4rem; }
 a.j-label:hover, a.j-label:focus-visible { text-decoration-style: solid; text-decoration-color: var(--ink); }
 span.j-label { text-decoration: none; }
+/* The definition of a term label, on hover and focus (scene.ts showTip). */
+.j-tip {
+  position: absolute; z-index: 3; max-width: min(19rem, calc(100% - 8px)); padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-s); background: var(--ink); color: var(--paper); box-shadow: var(--shadow-pop);
+  font-family: var(--sans); font-size: var(--text-xs); font-weight: 400; line-height: 1.4; pointer-events: none;
+}
+.j-tip[hidden] { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .j-ent, .j-cam, .j-label, .j-step { transition: none; }

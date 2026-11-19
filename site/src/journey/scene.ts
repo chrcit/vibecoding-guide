@@ -3,6 +3,7 @@
  * pucks along the floor, and runs a chapter's scripts so they can be cut short when the reader
  * scrolls on. Browser only. What is drawn is decided in picture.ts.
  */
+import type { Level } from '../lib/levels';
 import { picture, puckMarkup, flat, type SceneState, type XY, type Kind, type Camera, type Agent, type Block } from './picture';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -30,6 +31,7 @@ export class Scene {
   private labels: HTMLElement;
   private ents = new Map<string, { g: SVGGElement; sig: string; order: number }>();
   private labelEls = new Map<string, HTMLElement>();
+  private tip: HTMLElement;
   private frame = { w: 800, h: 600 };
   private camera: Camera = { s: 1, tx: 0, ty: 0 };
   private token = 0;
@@ -39,6 +41,8 @@ export class Scene {
   speed = 1;
   /** The site's base path, put in front of a label's side-view link. */
   base = '/';
+  /** The reader's level: labels that name a term show that level's word. run.ts keeps it current. */
+  level: Level = 'plain';
 
   constructor(private root: HTMLElement) {
     root.querySelector('.j-svg')?.remove();
@@ -54,7 +58,22 @@ export class Scene {
     this.svg.append(this.cam);
     this.labels = document.createElement('div');
     this.labels.className = 'j-labels';
-    root.append(this.svg, this.labels);
+    // A label made with termLabel() carries its definition: shown in the tip on hover and focus,
+    // and in a hidden span for screen readers. A tap follows the link into the side view.
+    this.tip = document.createElement('div');
+    this.tip.className = 'j-tip';
+    this.tip.setAttribute('aria-hidden', 'true');
+    this.tip.hidden = true;
+    const show = (e: Event) => {
+      const el = (e.target as HTMLElement).closest<HTMLElement>('.j-label[data-def]');
+      if (el) this.showTip(el);
+    };
+    const hide = (e: Event) => { if ((e.target as HTMLElement).closest('.j-label[data-def]')) this.tip.hidden = true; };
+    this.labels.addEventListener('pointerover', (e) => { if ((e as PointerEvent).pointerType === 'mouse') show(e); });
+    this.labels.addEventListener('pointerout', hide);
+    this.labels.addEventListener('focusin', show);
+    this.labels.addEventListener('focusout', hide);
+    root.append(this.svg, this.labels, this.tip);
     this.svg.setAttribute('viewBox', '0 0 800 600');
     this.measure();
     new ResizeObserver(() => { if (this.measure()) this.draw(true); }).observe(root);
@@ -86,7 +105,7 @@ export class Scene {
   }
 
   private draw(instant = false) {
-    const pic = picture(this.state, this.frame, this.drawn);
+    const pic = picture(this.state, { ...this.frame, level: this.level }, this.drawn);
     this.drawn = structuredClone(this.state);
     if (instant || reduced.matches) this.root.setAttribute('data-instant', '');
     const seen = new Set<string>();
@@ -127,7 +146,7 @@ export class Scene {
       if (!el) {
         el = document.createElement(l.side ? 'a' : 'span');
         el.className = 'j-label';
-        el.textContent = l.text;
+        fillLabel(el, l.text, l.def);
         if (l.side) { (el as HTMLAnchorElement).href = this.base + l.side; el.setAttribute('data-side', ''); }
         el.style.opacity = '0';
         this.labels.append(el);
@@ -136,7 +155,7 @@ export class Scene {
         el.style.top = `${(l.y / this.frame.h) * 100}%`;
         void el.offsetWidth;
       } else {
-        if (el.textContent !== l.text) el.textContent = l.text;
+        if (el.dataset.text !== l.text || (el.dataset.def ?? '') !== (l.def ?? '')) fillLabel(el, l.text, l.def);
         if (l.side) (el as HTMLAnchorElement).href = this.base + l.side;
       }
       el.dataset.place = l.place;
@@ -152,6 +171,17 @@ export class Scene {
     }
     this.onKinds?.(pic.kinds);
     if (instant || reduced.matches) requestAnimationFrame(() => requestAnimationFrame(() => this.root.removeAttribute('data-instant')));
+  }
+
+  private showTip(el: HTMLElement) {
+    this.tip.textContent = el.dataset.def ?? '';
+    this.tip.hidden = false;
+    const box = this.root.getBoundingClientRect(), r = el.getBoundingClientRect(), t = this.tip.getBoundingClientRect();
+    const below = r.top - box.top < box.height * 0.55;
+    const x = Math.max(4, Math.min(box.width - t.width - 4, r.left - box.left + r.width / 2 - t.width / 2));
+    const y = below ? r.bottom - box.top + 6 : r.top - box.top - t.height - 6;
+    this.tip.style.left = `${x}px`;
+    this.tip.style.top = `${Math.max(4, y)}px`;
   }
 
   // ---------- scripts ----------
@@ -207,5 +237,20 @@ export class Scene {
   fill(id: string) {
     const a = this.agent(id);
     return (a.blocks ?? []).reduce((n, b) => n + b.h, 0) / (a.cap ?? 60);
+  }
+}
+
+/** A label's text, and its definition in a span only screen readers read (the tip is for sight). */
+function fillLabel(el: HTMLElement, text: string, def?: string) {
+  el.dataset.text = text;
+  if (def) {
+    el.dataset.def = def;
+    const sr = document.createElement('span');
+    sr.className = 'visually-hidden';
+    sr.textContent = `: ${def}`;
+    el.replaceChildren(text, sr);
+  } else {
+    delete el.dataset.def;
+    el.textContent = text;
   }
 }

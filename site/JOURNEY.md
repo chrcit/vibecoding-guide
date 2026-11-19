@@ -86,6 +86,13 @@ only through `termLabel()` (below), so the word, the definition and the page agr
   named tool does, from a verified fact.
 - Made-up jobs are fine and are called made-up. Token counts, window sizes, prices and limits come
   from `src/data` through the page (`data` prop), with `<Verified>` in the foot.
+- One name per thing, from `src/journey/terms.ts`: each term has one word, one plain sentence and a
+  wiki page, and lists the names it retires (builder, worker and subagent are all a helper; the
+  gate is the check; a session is a thread; the board is the tray). Define a term where the lesson
+  first needs it: `<Term id="worktree" />` in step text (`components/journey/Term.astro`: the
+  sentence on hover, focus or tap, and a link into the side view), and `termLabel('mgate', 'check')`
+  or `{ at, term: 'check' }` on the picture (the same sentence on hover and focus). A lesson read
+  cold must make sense: define again in each lesson, never "as we saw".
 - A term the reader might not know is a label on the picture that opens its wiki page in the side
   view. Deeper play lives on a board (`/explain/...`, `/models/`) linked from the chapter's end.
 

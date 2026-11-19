@@ -80,6 +80,7 @@ export function boot(root: HTMLElement) {
     scene.stop();
     scene.speed = 1;
     ctx.level = getLevel();
+    scene.level = ctx.level;
     ctx.mem = {};
     ctx.say(null, '');
     const note = STEP_NOTES[root.dataset.chapter ?? '']?.[el.dataset.step!];
