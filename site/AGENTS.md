@@ -158,6 +158,12 @@ No pendulums, no to-do apps.
 
 This repo is public. No real names of private people, no employers, research topics, hostnames or email addresses. Public figures and projects are credited by name with a link.
 
+## Screenshots and samples
+
+`src/lib/samples.ts` is the catalog of pictures the guide still needs: what each model builds from the first-hour prompts, and screenshots of T3 Code at the moments the guide describes. It also says how a sample is made and where it is saved. Add to it when a page needs a picture you cannot make; do not draw a fake screenshot. A sample is evidence: never retouched, never re-run until it looks better.
+
+The prompts of the first hour live in `src/lib/start.ts`, and nowhere else.
+
 ## Review pages and checks
 
 `pnpm dev` serves review pages under `/dev/` (registered when the server starts, so restart it after adding one). To look at your work in a real browser, use Playwright (`import { chromium } from 'playwright'`) against the dev server and take screenshots at 390px and 1280px, light and dark. Look at them before you say a visual change is done.
