@@ -41,7 +41,7 @@ const pr = { read: d(opus.input), write: d(opus.output), hit: d(opus.cacheRead ?
 <Journey chapter="meter" first="count" data={data} title="What it costs" description="Every turn an agent takes is counted in tokens. On the API each token is on a bill; on a plan they drain an allowance that refills.">
   <Step id="count" title="Every turn is counted">
     <ForLevel is="plain">
-      <p>You just watched twenty agents in <LessonRef id="fleet" />; each works in <Term id="turn">turns</Term>, and on every turn the model reads its whole <Term id="window" /> again. Here is one made-up job, the date fix from <LessonRef id="loop" />, counted in <Term id="token">tokens</Term>.</p>
+      <p>The twenty agents of <LessonRef id="fleet" /> each work in <Term id="turn">turns</Term>, and on every turn the model reads its whole <Term id="window" /> again. Here is one made-up job, the date fix from <LessonRef id="loop" />, counted in <Term id="token">tokens</Term>.</p>
     </ForLevel>
     <ForLevel is="technical">
       <p>Each agent in <LessonRef id="fleet" /> works in <Term id="turn">turns</Term>, and every turn sends the whole <Term id="window" /> as input. On the made-up date fix from <LessonRef id="loop" />, the <code>tsc</code> and test output it reads stays in the window and is read again on every later turn.</p>
