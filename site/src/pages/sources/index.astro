@@ -42,16 +42,16 @@ const reference = Object.values(links).sort((a, b) => a.label.localeCompare(b.la
           <h2>{file.title}</h2>
           <p>{file.about} From <code>src/data/{file.file}.ts</code>.</p>
           <div class="scroll">
-            <table>
+            <table class="facts">
               <thead><tr><th scope="col">Claim</th><th scope="col">Value</th><th scope="col">Status</th><th scope="col">Source</th><th scope="col">Checked</th></tr></thead>
               <tbody>
                 {rows.map((f) => (
                   <tr id={anchor(f.id)}>
                     <td>{f.claim}{f.note && <span class="note"> {f.note}</span>}<code class="id">{f.id}</code></td>
-                    <td class="value">{formatValue(f)}</td>
-                    <td><span class={`status ${f.status}`}>{f.status}</span></td>
-                    <td><a href={f.source}>{host(f.source)}</a></td>
-                    <td class="date"><time datetime={f.verified}>{formatDate(f.verified)}</time></td>
+                    <td class="value" data-label="Value">{formatValue(f)}</td>
+                    <td data-label="Status"><span class={`status ${f.status}`}>{f.status}</span></td>
+                    <td data-label="Source"><a href={f.source}>{host(f.source)}</a></td>
+                    <td class="date" data-label="Checked"><time datetime={f.verified}>{formatDate(f.verified)}</time></td>
                   </tr>
                 ))}
               </tbody>
@@ -123,4 +123,17 @@ const reference = Object.values(links).sort((a, b) => a.label.localeCompare(b.la
   .id { display: block; margin-top: 0.25rem; color: var(--muted); font-size: 0.8125rem; }
   .status.verified { color: var(--green); }
   .status.observation { color: var(--blue); }
+
+  /* On a phone each fact is a small card: the claim, then value, status, source and date as
+     labelled lines, so nothing is cut off and the page never scrolls sideways. */
+  @media (max-width: 40rem) {
+    .scroll:has(> .facts) { overflow-x: visible; }
+    .facts { min-width: 0; width: 100%; }
+    .facts thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .facts tr { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); column-gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--rule); }
+    .facts td { display: grid; grid-template-columns: subgrid; grid-column: 1 / -1; padding: 0.1rem 0; border: 0; min-width: 0; overflow-wrap: anywhere; }
+    .facts td:first-child { display: block; padding: 0 0 0.4rem; }
+    .facts td[data-label]::before { content: attr(data-label); color: var(--muted); }
+    .facts .value { min-width: 0; }
+  }
 </style>

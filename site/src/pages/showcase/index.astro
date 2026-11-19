@@ -7,6 +7,7 @@ import { pieces } from '../../lib/showcase';
 import { url } from '../../lib/nav';
 ---
 <Board title="Showcase" description="Things built by an agent for this guide, running in the page, each with the prompt that started it and an honest account of how it went." section="showcase">
+  <p slot="tools" class="made-up">The bakery, the football club and the contacts in these pieces are made up.</p>
   {pieces.map((p) => (
     <Tile title={p.title} span={6} id={p.slug} flush side={`showcase/${p.category}/#${p.slug}`}>
       <a slot="tools" class="tile-more" href={url(p.path)} aria-label={`Open ${p.title} full screen`} title="Full screen">
@@ -18,5 +19,6 @@ import { url } from '../../lib/nav';
 </Board>
 
 <style>
+  .made-up { margin: 0; font-size: var(--text-s); color: var(--ink-2); }
   .piece { display: block; width: 100%; height: clamp(26rem, 62vh, 40rem); border: 0; border-radius: 0 0 var(--radius) var(--radius); background: var(--paper-2); }
 </style>
