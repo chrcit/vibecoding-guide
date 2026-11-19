@@ -4,6 +4,7 @@
 // the line counts and which jobs are wrong are made up and fixed.
 import { byLevel, type Chapter, type Ctx, type Level } from '../chapter';
 import { STEP_NOTES } from '../notes';
+import { termLabel } from '../terms';
 import type { Script } from '../scene';
 import { solo, lab } from '../presets';
 import { route, reverse, SPOT, type Card, type Kind, type Label, type SceneState } from '../picture';
@@ -45,7 +46,7 @@ const cardLabel = (s: SceneState, id: string, text: string, side?: string): Labe
   return i % 2 ? lab([x, s.tray!.at[1], 16], text, 'top', side) : lab([x, s.tray!.at[1] + 11, 0], text, 'bottom', side);
 };
 
-const BASE_LABELS = (): Label[] => [lab('you', 'you', 'left'), lab('a0', 'the model', 'top', 'wiki/model/'), lab('gate', 'check', 'top', 'wiki/verification/')];
+const BASE_LABELS = (): Label[] => [lab('you', 'you', 'left'), termLabel('a0', 'model', 'top', 'the model'), termLabel('gate', 'check', 'top')];
 const base = (): SceneState => {
   // The tray is what this chapter is about. The project is left out so the camera can come close
   // enough for every card to carry its name.
@@ -56,7 +57,7 @@ const base = (): SceneState => {
 /** Relabel the tray: its cards by name, or the empty tray. */
 function relabel(s: SceneState, names: Record<string, [string, string?]> = {}) {
   const cards = s.tray!.cards;
-  s.labels = [...BASE_LABELS(), ...(cards.length ? cards.map((c) => cardLabel(s, c.id, names[c.id]?.[0] ?? CARDS[c.id as CardId]?.word ?? c.id, names[c.id]?.[1] ?? CARDS[c.id as CardId]?.side)) : [lab('tray', 'the tray', 'bottom')])];
+  s.labels = [...BASE_LABELS(), ...(cards.length ? cards.map((c) => cardLabel(s, c.id, names[c.id]?.[0] ?? CARDS[c.id as CardId]?.word ?? c.id, names[c.id]?.[1] ?? CARDS[c.id as CardId]?.side)) : [termLabel('tray', 'tray', 'bottom', 'the tray')])];
 }
 
 // One readout for the whole lesson, the same five names on every step; counts only go up in a run.
@@ -222,10 +223,10 @@ async function during(ctx: Ctx, h: Script, progress: boolean) {
       if (progress) { const c = s.tray!.cards[0]!; c.fill = (i + 1) / STEPS.length; if (i === 3) { c.b = 'bad'; c.mark = 'bad'; } }
     });
     if (progress) {
-      ctx.say('progress', `Step ${i + 1} of ${STEPS.length}: ${STEPS[i]}.`);
+      ctx.say('progress', `${i + 1} of ${STEPS.length} done: ${STEPS[i]}.`);
       if (i === 3) {
         t.seen = 1; show(ctx, t);
-        ctx.say('progress', `Step 4 of ${STEPS.length}: ${STEPS[3]}. You never asked for that, and you can see it while it works.`);
+        ctx.say('progress', `4 of ${STEPS.length} done: ${STEPS[3]}. You never asked for that, and you can see it while it works.`);
         await h.wait(1800);
       }
     } else {
@@ -293,7 +294,7 @@ async function asking(ctx: Ctx, h: Script, kind: Work) {
   await h.send(route.gateToYou(), 'model', { ms: 380 });
   t.done = 1;
   show(ctx, t);
-  ctx.say(null, kind === 'page' ? 'A page comes back as two screenshots and a link.' : kind === 'script' ? 'A script comes back as rows before and after, and the counts.' : 'A fix comes back as the test that failed, now passing.');
+  ctx.say(null, kind === 'page' ? 'A page comes back as a summary, two screenshots and a link.' : kind === 'script' ? 'A script comes back as a summary, rows before and after, and the counts.' : 'A fix comes back as a summary, the test that failed and now passes, and a screenshot.');
 }
 
 /** One short loop of this chapter, for the part-two overview. */

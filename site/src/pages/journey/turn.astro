@@ -7,6 +7,8 @@ import Fact from '../../components/data/Fact.astro';
 import Verified from '../../components/data/Verified.astro';
 import ForLevel from '../../components/level/ForLevel.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import Term from '../../components/journey/Term.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
 import { PLAN } from '../../journey/chapters/turn';
 import { url } from '../../lib/nav';
 
@@ -26,7 +28,7 @@ const levels = ['plain', 'technical', 'engineer'] as const;
     <p>A made-up job: “Let the club pause a member.” Should a paused member be hidden from the list, or greyed out? You meant greyed out, but you only spoke once, so the agent guesses and builds twelve turns on the guess.</p>
   </Step>
   <Step id="plan" title="Read the plan before the build">
-    <p>Ask for a numbered plan first. The agent stops at the check and waits; step 3 is its guess.</p>
+    <p>Ask for a numbered plan first, as in <Term id="plan-mode" />. The agent stops at the <Term id="check" /> and waits; step 3 is its guess.</p>
     {levels.map((l) => (
       <ForLevel is={l}><ol>{PLAN[l].map((x) => <li>{x}</li>)}</ol></ForLevel>
     ))}
@@ -40,7 +42,7 @@ const levels = ['plain', 'technical', 'engineer'] as const;
     </More>
   </Step>
   <Step id="ask" title="Let it ask during the build">
-    <p>At the fork the agent puts a question on the tray, the plate beside you from <a href={url('journey/proof/')}>Proof you can read</a>, and carries on with the parts that do not depend on it. That one part waits for your answer.</p>
+    <p>At the fork the agent puts a question on the <Term id="tray" /> from <LessonRef id="proof" />, and carries on with the parts that do not depend on it. That one part waits for your answer.</p>
     <div class="row">
       <button class="btn" type="button" data-do="answer">Answer it: greyed out</button>
     </div>

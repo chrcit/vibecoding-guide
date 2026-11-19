@@ -11,6 +11,7 @@ import type { Script } from '../scene';
 import { solo, team, lab } from '../presets';
 import { route, reverse, SPOT, BUS_Y, type Kind, type SceneState, type Meter } from '../picture';
 import { STEP_NOTES } from '../notes';
+import { termLabel } from '../terms';
 
 /** Prices per million tokens, from src/data/models.ts via the page. */
 export interface Price { name: string; input: number; output: number; cacheRead?: number }
@@ -161,7 +162,7 @@ export const usd2 = (n: number) => `$${n.toLocaleString('en-GB', { minimumFracti
 interface Tally { turns: number; read: number; cached: number; stored: number; written: number; usd: number; used: number }
 const zero = (): Tally => ({ turns: 0, read: 0, cached: 0, stored: 0, written: 0, usd: 0, used: 0 });
 type Mode = 'none' | 'api' | 'plan';
-interface ShowOpts { mode: Mode; cache: Cache | 'none'; turns?: string; hour?: boolean }
+interface ShowOpts { mode: Mode; cache: Cache | 'none'; turns?: string; hour?: boolean; jobs?: number }
 /**
  * One readout for the lesson, the same names in the same order on every step. Plain readers see
  * what was read, how much of it came from the cache, what was written and the cost; technical
@@ -169,27 +170,30 @@ interface ShowOpts { mode: Mode; cache: Cache | 'none'; turns?: string; hour?: b
  */
 function show(ctx: Ctx, t: Tally, o: ShowOpts) {
   const on = o.cache === 'on' || o.cache === 'break';
-  const cost = o.mode === 'none' ? 'no meter yet'
-    : o.mode === 'plan' ? `${Math.round(t.used * 100)}% of the allowance`
-    : `${o.hour ? usd2(t.usd) : usd3(t.usd)} · cache ${on ? 'on' : 'off'}`;
+  const costName = o.mode === 'plan' ? 'allowance used' : o.hour ? 'cost of the hour' : 'cost of the job';
+  const cost: [string, string, string?] = o.mode === 'none' ? [costName, 'no meter yet']
+    : o.mode === 'plan' ? [costName, `${Math.round(t.used * 100)}%`, 'made-up rate']
+    : [costName, o.hour ? usd2(t.usd) : usd3(t.usd), on ? 'cache on' : 'cache off'];
   const share = t.read ? Math.round((t.cached / t.read) * 100) : 0;
-  const turns = o.turns ?? `${t.turns} of ${TURNS.length}`;
+  // A plan runs several date fixes on one allowance, and the fleet many at once: count all their turns.
+  const turns = o.turns ?? (o.mode === 'plan' ? `${t.turns}` : `${t.turns} of ${TURNS.length}`);
+  const turnsName = o.turns ? 'turns, all agents' : o.mode === 'plan' ? 'turns, all date fixes' : 'turns of the date fix';
   if (ctx.level === 'plain') {
     ctx.stat([
-      ['turns', turns],
-      ['tokens read', tok(t.read)],
-      ['of those, from the cache', o.cache === 'none' ? 'no cache yet' : on ? `${tok(t.cached)} (${share}%)` : '0 · cache off'],
+      [turnsName, turns],
+      ['tokens read, all turns', tok(t.read)],
+      ['of those, from the cache', o.cache === 'none' ? 'no cache yet' : on ? `${tok(t.cached)} (${share}%)` : '0', ...(o.cache === 'off' ? ['cache off'] : [])] as [string, string, string?],
       ['tokens written', tok(t.written)],
-      ['cost', cost],
+      cost,
     ]);
   } else {
     ctx.stat([
-      ['turns', turns],
-      ['input read', tok(t.read)],
+      [turnsName, turns],
+      ['input read, all turns', tok(t.read)],
       ['cache reads', o.cache === 'none' ? '–' : tok(t.cached)],
       ['cache writes', o.cache === 'none' ? '–' : tok(t.stored)],
       ['output written', tok(t.written)],
-      ['cost', cost],
+      cost,
     ]);
   }
 }
@@ -207,14 +211,14 @@ function sumLine(p: Price, cache: Cache, cw: number, n = 1): string {
 
 // ---------- the picture ----------
 
-const meterLabel = (mode: Mode) => lab([SPOT.meter[0] + 13, SPOT.meter[1] + 13, 0], mode === 'api' ? 'the API' : 'a plan', 'bottom', mode === 'api' ? 'wiki/api/' : 'wiki/subscription-plan/');
+const meterLabel = (mode: Mode) => termLabel([SPOT.meter[0] + 13, SPOT.meter[1] + 13, 0], mode === 'api' ? 'api' : 'plan', 'bottom', mode === 'api' ? 'the API' : 'a plan');
 const base = (ctx: Ctx, mode: Mode, name?: string): SceneState => solo({
   tools: true, project: true,
   blocks: [{ t: 'rules', h: START }],
   meter: mode === 'none' ? undefined : mode,
   labels: [
-    lab('you', 'you', 'left'), lab('a0', name ?? 'the model', 'top', 'wiki/model/'), lab([15, -15, 44], 'its window', 'right', 'wiki/context-window/'),
-    lab('tools', 'tools', 'top', 'wiki/tool-call/'), lab('project', 'your project', 'top'),
+    lab('you', 'you', 'left'), termLabel('a0', 'model', 'top', name ?? 'the model'), termLabel([15, -15, 44], 'window', 'right', 'its window'),
+    termLabel('tools', 'tools'), termLabel('project', 'project', 'top', 'your project'),
     ...(mode === 'none' ? [] : [meterLabel(mode)]),
   ],
 });
@@ -363,8 +367,9 @@ function playPlan(ctx: Ctx, again = false) {
     await playPlanRun(ctx, h, p, fee, view, again);
   });
 }
-async function playPlanRun(ctx: Ctx, h: Script, p: Price, fee: number | undefined, view: ShowOpts, again = false) {
+async function playPlanRun(ctx: Ctx, h: Script, p: Price, fee: number | undefined, base0: ShowOpts, again = false) {
   const t: Tally = ctx.mem.t;
+  const view = base0;
   const done = await job(ctx, h, { mode: 'plan', cache: 'on', p, t, ms: again ? 0.8 : 1 });
   if (done) {
     ctx.mem.jobs++;
@@ -379,7 +384,7 @@ async function playPlanRun(ctx: Ctx, h: Script, p: Price, fee: number | undefine
 
 const TICKS_PER_HOUR = TURNS.length * JOBS_PER_HOUR;
 const fleet = (n: number, mode: 'plan' | 'api'): SceneState => {
-  const s = team(n, { trees: true, lead: [{ t: 'rules', h: 4 }, { t: 'you', h: 3 }], labels: [lab('you', 'you', 'left'), lab('a0', 'the lead', 'top', 'wiki/orchestration/'), lab('project', 'main', 'top', 'wiki/branch/'), meterLabel(mode)] });
+  const s = team(n, { trees: true, lead: [{ t: 'rules', h: 4 }, { t: 'you', h: 3 }], labels: [lab('you', 'you', 'left'), termLabel('a0', 'lead', 'top', 'the lead'), termLabel('project', 'main'), meterLabel(mode)] });
   const m: Meter = { id: 'm0', at: SPOT.meter, mode, level: mode === 'plan' ? 1 : 0 };
   s.meters = [m];
   s.tracks!.push([[SPOT.meter[0] + 14, 0], [-18, 0]]);
@@ -434,7 +439,7 @@ function playMany(ctx: Ctx) {
       t.used = 1;
       show(ctx, t, view());
       const min = Math.max(1, Math.round((tick / TICKS_PER_HOUR) * 60));
-      ctx.say(null, `The allowance ran out after ${min} ${min === 1 ? 'minute' : 'minutes'}, ${tick} turns each. All ${n} stopped mid-job; ${jobs} ${jobs === 1 ? 'job' : 'jobs'} finished. On the API they would have kept going, at ${usd2(hour)} an hour.`);
+      ctx.say(null, `The allowance ran out after ${min} ${min === 1 ? 'minute' : 'minutes'}, ${tick} ${tick === 1 ? 'turn' : 'turns'} each. All ${n} stopped mid-job; ${jobs} ${jobs === 1 ? 'job' : 'jobs'} finished. On the API they would have kept going, at ${usd2(hour)} an hour.`);
     } else {
       h.set((s) => { for (const a of s.agents.slice(1)) a.busy = false; });
       ctx.say(null, mode === 'api'

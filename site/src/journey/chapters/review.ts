@@ -7,6 +7,7 @@ import type { Script } from '../scene';
 import { solo, team, lab } from '../presets';
 import { route, reverse, SPOT, BUS_Y, type XY, type Kind, type SceneState, type Meter } from '../picture';
 import { STEP_NOTES } from '../notes';
+import { termLabel, lessonName } from '../terms';
 
 const names = (ctx: Ctx) => ({
   b: (ctx.data.builder as string | undefined) ?? 'the builder',
@@ -54,12 +55,12 @@ const base = (ctx: Ctx, o: Look = {}): SceneState => {
     tools: true, project: true, gate: true, reviewer: o.reviewer,
     meter: o.meters ? meters : undefined,
     labels: [
-      lab('you', 'you', 'left'), lab('a0', n.b, 'top', 'wiki/model/'), lab('gate', 'check', 'right', 'wiki/verification/'),
-      ...(o.reviewer ? [lab('r0', n.r, 'top', 'wiki/review/')] : []),
+      lab('you', 'you', 'left'), termLabel('a0', 'model', 'top', n.b), termLabel('gate', 'check', 'right'),
+      ...(o.reviewer ? [termLabel('r0', 'review', 'top', n.r)] : []),
       ...(o.meters ? [
         // Short names, one above and one below, so the four labels on the left fit at 390 wide.
-        lab([M_BUILDER[0] + 3, M_BUILDER[1] - 5, 40], `${ctx.data.builderLab ?? 'a'} plan`, 'top', 'wiki/subscription-plan/'),
-        lab([M_REVIEWER[0] + 13, M_REVIEWER[1] + 13, 0], `${ctx.data.reviewerLab ?? 'a'} plan`, 'bottom', 'wiki/subscription-plan/'),
+        termLabel([M_BUILDER[0] + 3, M_BUILDER[1] - 5, 40], 'allowance', 'top', `${ctx.data.builderLab ?? 'its'} allowance`),
+        termLabel([M_REVIEWER[0] + 13, M_REVIEWER[1] + 13, 0], 'allowance', 'bottom', `${ctx.data.reviewerLab ?? 'its'} allowance`),
       ] : []),
     ],
   });
@@ -76,7 +77,7 @@ interface Tally { rounds: number; found: number; fixed: number; taste: number; w
 const tally = (): Tally => ({ rounds: 0, found: 0, fixed: 0, taste: 0, wrong: '–' });
 const show = (ctx: Ctx, t: Tally) => ctx.stat([
   ['rounds of review', t.rounds],
-  ['flaws found, of 3', t.found],
+  ['flaws found', `${t.found} of 3`, 'made-up'],
   ['fixed', t.fixed],
   ['matters of taste', t.taste],
   ['flaws that reached you', t.wrong],
@@ -150,7 +151,7 @@ async function back(ctx: Ctx, h: Script, count: number, by: 'gate' | 'you', tast
     }
   }
   if (by === 'you') {
-    ctx.say('you', 'Pasting the findings into the builder’s thread.');
+    ctx.say('you', `Pasting the findings into ${names(ctx).b}’s thread.`);
     await h.wait(700);
     await h.send(route.youToAgent(), kind, { ms: 420 });
   }
@@ -243,7 +244,7 @@ async function rounds(ctx: Ctx, h: Script, o: RoundOpts = {}) {
 
 const ledScene = (ctx: Ctx): SceneState => {
   const n = names(ctx);
-  const s = team(2, { gate: true, lead: [{ t: 'rules', h: 4 }], labels: [lab('you', 'you', 'left'), lab('a0', 'the lead', 'top', 'wiki/orchestration/'), lab('w0', n.b, 'top', 'wiki/model/'), lab('w1', n.r, 'top', 'wiki/review/'), lab('gate', 'check', 'right', 'wiki/verification/')] });
+  const s = team(2, { gate: true, lead: [{ t: 'rules', h: 4 }], labels: [lab('you', 'you', 'left'), termLabel('a0', 'lead', 'top', 'the lead'), termLabel('w0', 'helper', 'top', n.b), termLabel('w1', 'review', 'top', n.r), termLabel('gate', 'check', 'right')] });
   s.agents[2]!.model = 'b';
   s.agents[0]!.scale = 0.9;
   return s;
@@ -310,9 +311,9 @@ function playHow(ctx: Ctx, how: How) {
   });
 }
 const HOW_SAY: Record<How, string> = {
-  hand: 'Two threads, one per model. You carry what the reviewer finds back to the builder.',
+  hand: 'Two threads, one per model. You carry what the reviewer finds back to the model that wrote the change.',
   handoff: 'One thread. It is handed to the other model to review, then handed back.',
-  lead: 'The lead sends the work across and the findings back, and stops when nothing that breaks is found.',
+  lead: `The lead from ${lessonName('lead')} sends the work across and the findings back, and stops when nothing that breaks is found.`,
 };
 
 const play = (ctx: Ctx, o: RoundOpts) => void ctx.scene.run((h) => rounds(ctx, h, o).then(() => undefined));

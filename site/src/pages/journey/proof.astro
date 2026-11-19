@@ -7,6 +7,8 @@ import Fact from '../../components/data/Fact.astro';
 import Verified from '../../components/data/Verified.astro';
 import ForLevel from '../../components/level/ForLevel.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import Term from '../../components/journey/Term.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
 import { url } from '../../lib/nav';
 
 const ids = ['harnesses.claudeCode.askForEvidence', 't3code.htmlRenders', 't3code.browser'];
@@ -19,10 +21,10 @@ If something could not be checked, say so instead of guessing.`;
 ---
 <Journey chapter="proof" first="word" title="Proof you can read" description="An agent can hand back more than the word done: a summary, a test run, a screenshot and a link to try. Each shows a different way the work can miss what you asked.">
   <Step id="word" title="“Done” is one word">
-    <p>The agent changes 212 lines of code in five files to let members pay online, and <a href={url('journey/check/')}>the check from Make it prove it</a> passes: its tests run green. All that reaches you is “Done.”</p>
+    <p>The agent changes 212 lines of code in five files to let members pay online, and the <Term id="check" /> from <LessonRef id="check" /> passes: its tests run green. All that reaches you is “Done.”</p>
   </Step>
   <Step id="cards" title="Ask for proof with the work">
-    <p>The tray is the plate beside you, where the agent puts what it hands back. Ask for four cards on it: a summary of what changed, the test run, a screenshot, and a link to try it yourself.</p>
+    <p>The <Term id="tray" /> is the plate beside you, where the agent puts what it hands back. Ask for four <Term id="proof-card">proof cards</Term> on it: a summary of what changed, the test run, a screenshot, and a link to try it yourself.</p>
     <More title="Where this comes from">
       <p><Fact id="harnesses.claudeCode.askForEvidence" show="claim" /></p>
     </More>

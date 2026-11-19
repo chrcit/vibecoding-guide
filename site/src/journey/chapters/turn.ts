@@ -4,12 +4,13 @@
 // waiting, which is the lesson.
 import { byLevel, type Chapter, type Ctx, type Level } from '../chapter';
 import { STEP_NOTES } from '../notes';
+import { termLabel } from '../terms';
 import type { Script } from '../scene';
 import { solo, lab } from '../presets';
 import { route, reverse, fileSpot, cardSpot, SPOT, type Label, type SceneState, type XY } from '../picture';
 
 const ASK = 'Let the club pause a member.';
-const labels = (): Label[] => [lab('you', 'you', 'left'), lab('a0', 'the model', 'top', 'wiki/model/'), lab('gate', 'check', 'top', 'wiki/verification/')];
+const labels = (): Label[] => [lab('you', 'you', 'left'), termLabel('a0', 'model', 'top', 'the model'), termLabel('gate', 'check', 'top')];
 const base = (): SceneState => {
   const s = solo({ tools: true, project: true, gate: true, tray: [], labels: labels() });
   s.tray!.gap = 16;
@@ -31,7 +32,8 @@ const planLabels = (step3: string): Label[] => [...labels(), lab('card:p1', 'pla
 
 // One readout for the chapter: the same four names on every step.
 interface Tally { turns: number; wrong: number; open: number; you: number }
-const show = (ctx: Ctx, t: Tally) => ctx.stat([['turns', t.turns], ['on what you did not mean', t.wrong], ['left open', t.open], ['times you came in', t.you]]);
+// Counts only go up within a run; what waits on you is a state, so it is said in words.
+const show = (ctx: Ctx, t: Tally) => ctx.stat([['turns, this run', t.turns], ['turns on what you did not mean', t.wrong], ['waiting on you', t.open ? 'one decision' : 'nothing'], ['times you came in', t.you]]);
 
 /**
  * A door the reader opens with a button. The script awaits `wake`; the button calls `open`. Kept in
@@ -116,7 +118,7 @@ async function plan(ctx: Ctx, h: Script, d: Door) {
   await h.send(route.agentToGate(), 'model', { ms: 360 });
   h.set((s) => { s.gates![0]!.lamp = 'wait'; });
   await h.send(toTray(), 'model', { ms: 380 });
-  h.set((s) => { s.tray!.cards = planCards('wait'); s.labels = [...planLabels('step 3: hide them').filter((l) => l.at !== 'gate'), lab('gate', 'waiting for you', 'top', 'wiki/plan-mode/')]; });
+  h.set((s) => { s.tray!.cards = planCards('wait'); s.labels = [...planLabels('step 3: hide them').filter((l) => l.at !== 'gate'), termLabel('gate', 'plan-mode', 'top', 'waiting for you')]; });
   ctx.say('the model', `Plan: ${PLAN[ctx.level].map((x, i) => `${i + 1}. ${x}`).join(' ')} Go ahead?`);
   if (d.value !== undefined) await h.wait(1400);
   const answer = await d.wake;
@@ -152,6 +154,8 @@ async function asking(ctx: Ctx, h: Script, d: Door) {
   await h.send(toTray(), 'model', { ms: 380 });
   h.set((s) => { s.tray!.cards = [{ id: 'q', mark: 'wait' }]; s.labels = [...labels(), lab('card:q', 'a question', 'right', 'wiki/giving-feedback/')]; });
   ctx.say('the model', 'Hidden from the list, or greyed out? I will carry on with the rest meanwhile.');
+  t.open = 1;
+  show(ctx, t);
   await h.wait(900);
   let answered = false;
   const take = async () => {
@@ -159,6 +163,7 @@ async function asking(ctx: Ctx, h: Script, d: Door) {
     ctx.keep.answered = true;
     ctx.say('you', 'Greyed out.');
     t.you++;
+    t.open = 0;
     show(ctx, t);
     await h.send(reverse(toTray()), 'you', { ms: 380 });
     h.set((s) => { s.tray!.cards = [{ id: 'q', mark: 'ok' }]; s.agents[0]!.blocks!.push({ t: 'you', h: 0.8 }); });
@@ -178,7 +183,6 @@ async function asking(ctx: Ctx, h: Script, d: Door) {
     await d.wake;
     h.check();
     await take();
-    t.open = 0;
   }
   await work(ctx, h, t, 2, false, [2, 3]);
   h.set((s) => { s.tray!.cards = []; s.labels = labels(); });
@@ -196,11 +200,13 @@ async function pin(ctx: Ctx, h: Script, d: Door) {
   await h.send(toTray(), 'tool', { ms: 380 });
   h.set((s) => { s.tray!.cards = [{ id: 'shot', b: 'tool', mark: 'wait' }]; s.labels = [...labels(), lab('card:shot', 'screenshot', 'right', 'wiki/browser-check/')]; });
   ctx.say('the model', 'Here is the list with the new pause badge. Anything off?');
+  t.open = 1;
+  show(ctx, t);
   if (d.value !== undefined) await h.wait(1200);
   const how = await d.wake;
   h.check();
   t.you++;
-  t.open = 1;
+  t.open = 0;
   show(ctx, t);
   if (how === 'type') {
     ctx.say('you', 'The badge looks off.');
@@ -237,7 +243,6 @@ async function pin(ctx: Ctx, h: Script, d: Door) {
     await work(ctx, h, t, 2, false, [3]);
     await h.send(toTray(), 'tool', { ms: 360 });
     h.set((s) => { s.tray!.cards = [{ id: 'shot', b: 'tool', mark: 'ok' }]; s.project!.files![3] = 'ok'; });
-    t.open = 0;
     ctx.say(null, 'The pin carried its place with it. Two turns, on the badge you meant.');
   }
   show(ctx, t);

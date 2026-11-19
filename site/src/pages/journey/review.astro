@@ -7,6 +7,8 @@ import Fact from '../../components/data/Fact.astro';
 import Verified from '../../components/data/Verified.astro';
 import ForLevel from '../../components/level/ForLevel.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import Term from '../../components/journey/Term.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
 import { models } from '../../data/models';
 import { t3code } from '../../data/t3code';
 import { ATTACK, STOP } from '../../journey/chapters/review';
@@ -29,10 +31,10 @@ const ids = [
 ---
 <Journey chapter="review" first="self" data={data} title="A second model" description="One model builds, a different model reviews in a fresh window, and they go round until the real flaws are gone.">
   <Step id="self" title="Asked to check itself, it trusts its own work">
-    <p>{data.builder} builds a made-up feature with three planted flaws, and the tests it wrote pass <a href={url('journey/check/')}>the check from Make it prove it</a>. Asked to review its own work, it reads back through the same window, with the same assumptions, and finds one.</p>
+    <p>{data.builder} builds a made-up feature with three planted flaws, and the tests it wrote pass the <Term id="check" /> from <LessonRef id="check" />. Asked to review its own work, it reads back through the same window, with the same assumptions, and finds one.</p>
   </Step>
   <Step id="second" title="A different model, an empty window">
-    <p>Now {data.reviewer}, a model from {data.reviewerLab}, reviews it in a fresh window that holds only your request and the change. Nothing of the builder’s reasoning comes with it, and it is a different model with different habits: findings go back, get fixed, and the rounds stop when one comes back clean.</p>
+    <p>Now {data.reviewer}, a model from {data.reviewerLab}, does the <Term id="review" /> in a fresh window that holds only your request and the change. None of the first model’s reasoning comes with it, and it is a different model with different habits: findings go back, get fixed, and the rounds stop when one comes back clean.</p>
     <More title="Where this comes from">
       <p><Fact id="harnesses.claudeCode.sameModelReviewer" show="claim" /> <Fact id="harnesses.claudeCode.codeReview" show="claim" /></p>
     </More>
@@ -55,7 +57,7 @@ Diff: <paste the output of git diff>`}</CopyPrompt>
     </More>
   </Step>
   <Step id="rounds" title="Say when to stop">
-    <p>Each model runs on its own plan, and every round uses some of that plan’s allowance: the share of use you get before it pauses (see <a href={url('journey/meter/')}>What it costs</a>). Without a rule the reviewer always finds something more; with one, it stops.</p>
+    <p>Each model runs on its own plan, and every round uses some of that plan’s <Term id="allowance" /> (see <LessonRef id="meter" />). Without a rule the reviewer always finds something more; with one, it stops.</p>
     <div class="pick">
       <button type="button" data-do="rule" data-val="none" data-default aria-pressed="true">No limit</button>
       <button type="button" data-do="rule" data-val="rule" aria-pressed="false">“{STOP}”</button>
@@ -66,13 +68,13 @@ Diff: <paste the output of git diff>`}</CopyPrompt>
   </Step>
   <Step id="how" title="Three ways to run the loop">
     <ForLevel is="plain">
-      <p>Paste the findings between two threads yourself, hand one thread from one model to the other, or let <a href={url('journey/lead/')}>the lead from A lead</a> run the rounds and bring you one report.</p>
+      <p>Paste the findings between two threads yourself, hand one thread from one model to the other, or let the <Term id="lead" /> from <LessonRef id="lead" /> run the rounds and bring you one report.</p>
     </ForLevel>
     <ForLevel is="technical">
       <p>By hand, the reviewer gets exactly what you paste: the task and <code>git diff</code>, plus the test output if you want it checked. A handoff passes a selection of the thread; a lead runs the rounds and reports once.</p>
     </ForLevel>
     <ForLevel is="engineer">
-      <p>In a team this loop runs before a pull request is opened, so a colleague reads a change that has already been attacked. By hand keeps the reviewer’s window cleanest; a handoff is faster but less independent; a lead costs a third window but none of your attention.</p>
+      <p>In a team this loop runs before a <Term id="pull-request" /> is opened, so a colleague reads a change that has already been attacked. By hand keeps the reviewer’s window cleanest; a handoff is faster but less independent; a lead costs a third window but none of your attention.</p>
     </ForLevel>
     <div class="pick">
       <button type="button" data-do="how" data-val="hand" data-default aria-pressed="true">By hand</button>

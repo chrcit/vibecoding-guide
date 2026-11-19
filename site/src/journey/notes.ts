@@ -253,7 +253,7 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
       part: 'A fresh window and a different model.',
       text: {
         plain: 'The reviewer sees only what you asked for and what changed. It has none of the builder’s reasoning and none of its habits.',
-        technical: 'Give the reviewer the task and git diff, nothing else. Findings go back to the builder; repeat until a round finds nothing.',
+        technical: 'Give the reviewer the task and git diff, nothing else. Findings go back to the model that wrote it; repeat until a round finds nothing.',
         engineer: 'Two sources of independence: a clean context and a different model. Each reduces how often builder and reviewer miss the same case.',
       },
     },

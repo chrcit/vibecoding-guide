@@ -6,6 +6,8 @@ import Next from '../../components/journey/Next.astro';
 import Fact from '../../components/data/Fact.astro';
 import Verified from '../../components/data/Verified.astro';
 import ForLevel from '../../components/level/ForLevel.astro';
+import Term from '../../components/journey/Term.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
 import { models, lineup } from '../../data/models';
 import { plans } from '../../data/plans';
 import { sums, usd2, usd3, JOBS_PER_HOUR, JOB_TURNS } from '../../journey/chapters/meter';
@@ -39,17 +41,17 @@ const pr = { read: d(opus.input), write: d(opus.output), hit: d(opus.cacheRead ?
 <Journey chapter="meter" first="count" data={data} title="What it costs" description="Every turn an agent takes is counted in tokens. On the API each token is on a bill; on a plan they drain an allowance that refills.">
   <Step id="count" title="Every turn is counted">
     <ForLevel is="plain">
-      <p>The twenty agents in <a href={url('journey/fleet/')}>Twenty in a loop</a> each work in turns, and on every turn the model reads its whole window again. Here is one made-up job, the date fix from <a href={url('journey/loop/')}>It gets hands</a>, counted turn by turn.</p>
+      <p>You just watched twenty agents in <LessonRef id="fleet" />; each works in <Term id="turn">turns</Term>, and on every turn the model reads its whole <Term id="window" /> again. Here is one made-up job, the date fix from <LessonRef id="loop" />, counted in <Term id="token">tokens</Term>.</p>
     </ForLevel>
     <ForLevel is="technical">
-      <p>Each agent in <a href={url('journey/fleet/')}>Twenty in a loop</a> works in turns, and every turn sends the whole window as input. The made-up date fix from <a href={url('journey/loop/')}>It gets hands</a>: the <code>tsc</code> and test output it reads stays in the window and is read again on every later turn.</p>
+      <p>Each agent in <LessonRef id="fleet" /> works in <Term id="turn">turns</Term>, and every turn sends the whole <Term id="window" /> as input. On the made-up date fix from <LessonRef id="loop" />, the <code>tsc</code> and test output it reads stays in the window and is read again on every later turn.</p>
     </ForLevel>
     <ForLevel is="engineer">
-      <p>Each agent in <a href={url('journey/fleet/')}>Twenty in a loop</a> sends its whole window as input on every turn. On the made-up date fix from <a href={url('journey/loop/')}>It gets hands</a>, input per turn grows with the window, so a job's input grows with the square of its turns.</p>
+      <p>Each agent in <LessonRef id="fleet" /> sends its whole <Term id="window" /> as input on every <Term id="turn" />. On the made-up date fix from <LessonRef id="loop" />, input per turn grows with the window, so a job's input grows with the square of its turns.</p>
     </ForLevel>
   </Step>
   <Step id="api" title="On the API, every token is on a bill">
-    <p>On the API you pay a price per million tokens read and a higher one per million written. Pick a model: the same {JOB_TURNS}-turn date fix runs with the cache off, so the three prices compare like for like.</p>
+    <p>On the <Term id="api" /> you pay a price per million tokens read and a higher one per million written. Pick a model: the same {JOB_TURNS}-turn date fix runs with the cache off, so the three prices compare like for like.</p>
     <div class="pick">
       {picks.map((id, i) => (
         <button type="button" data-do="model" data-val={id} data-default={i === 0 ? '' : undefined} aria-pressed={i === 0 ? 'true' : 'false'}>{priced[id]!.name}</button>
@@ -66,10 +68,10 @@ const pr = { read: d(opus.input), write: d(opus.output), hit: d(opus.cacheRead ?
   </Step>
   <Step id="cache" title="Reading the same thing again costs less">
     <ForLevel is="plain">
-      <p>Claude Code keeps what the model read last turn in a cache, and on {opus.name} reading it from there costs <Fact id="lineup.cacheReadOpusSonnet" /> the normal price, a twentieth. Turn the cache off, or change the effort level halfway and watch one turn miss it.</p>
+      <p>Claude Code keeps what the model read last turn in a <Term id="cache" />, and on {opus.name} reading it from there costs <Fact id="lineup.cacheReadOpusSonnet" /> the normal price, a twentieth. Turn the cache off, or change the effort level halfway and watch one turn miss it.</p>
     </ForLevel>
     <ForLevel is={['technical', 'engineer']}>
-      <p>With prompt caching, the part of the window the last request already sent is billed as a cache read; only the new part is a cache write. Anything that changes the top of the request makes the next turn miss.</p>
+      <p>With the <Term id="cache">prompt cache</Term>, the part of the window the last request already sent is billed as a cache read; only the new part is a cache write. Anything that changes the top of the request makes the next turn miss.</p>
     </ForLevel>
     <div class="pick">
       <button type="button" data-do="cache" data-val="on" data-default aria-pressed="true">Cache on</button>
@@ -82,7 +84,7 @@ const pr = { read: d(opus.input), write: d(opus.output), hit: d(opus.cacheRead ?
     </More>
   </Step>
   <Step id="plan" title="On a plan the price is fixed and the amount is not">
-    <p>Claude Pro costs <Fact id="plans.claude.pro.price" /> a month. Anthropic publishes no figure for how much work that buys, so this page cannot say: the tank here drains at a made-up rate, and refills five hours after your first message.</p>
+    <p>Claude Pro is a <Term id="plan" /> at <Fact id="plans.claude.pro.price" /> a month. Anthropic publishes no figure for how much work its <Term id="allowance" /> buys, so this page cannot say: here it drains at a made-up rate, and refills five hours after your first message.</p>
     <div class="row">
       <button class="btn" type="button" data-do="another">Run another date fix</button>
     </div>
@@ -92,7 +94,7 @@ const pr = { read: d(opus.input), write: d(opus.output), hit: d(opus.cacheRead ?
   </Step>
   <Step id="many" title="Twenty agents draw from one meter">
     <ForLevel is="plain">
-      <p>Back to the fleet. On a plan the agents share one allowance and stop together when it is empty; on the API they keep going and the bill grows with every agent.</p>
+      <p>Back to the <Term id="fleet" />. On a plan the agents share one allowance and stop together when it is empty; on the API they keep going and the bill grows with every agent.</p>
     </ForLevel>
     <ForLevel is="technical">
       <p>Back to the fleet. <Fact id="plans.claude.limits.subagentsDraw" show="claim" /> On the API every agent adds its own turns to the same bill.</p>
@@ -110,7 +112,7 @@ const pr = { read: d(opus.input), write: d(opus.output), hit: d(opus.cacheRead ?
       <button type="button" data-do="mode" data-val="api" aria-pressed="false">The API</button>
     </div>
     <More title="The sum for an hour">
-      <p>Made-up workload: each agent runs the date fix {JOBS_PER_HOUR} times an hour, with the cache on, at {opus.name}’s real prices. One run is {usd3(on.usd)} (the sum is under “Reading the same thing again costs less”), so one agent costs {JOBS_PER_HOUR} × {usd3(on.usd)} = {usd3(on.perAgentHour)} an hour, and {agents} agents {usd2(on.perAgentHour * agents)} an hour: {n(on.cached * runs)} × {pr.hit} + {n(on.stored * runs)} × {pr.store} + {n(on.written * runs)} × {pr.write}, per million. Eight hours: {usd2(on.perAgentHour * agents * 8)}.</p>
+      <p>Made-up workload: each agent runs the date fix {JOBS_PER_HOUR} times an hour, with the cache on, at {opus.name}’s real prices. One run is {usd3(on.usd)} (the sum is in the cache step above), so one agent costs {JOBS_PER_HOUR} × {usd3(on.usd)} = {usd3(on.perAgentHour)} an hour, and {agents} agents {usd2(on.perAgentHour * agents)} an hour: {n(on.cached * runs)} × {pr.hit} + {n(on.stored * runs)} × {pr.store} + {n(on.written * runs)} × {pr.write}, per million. Eight hours: {usd2(on.perAgentHour * agents * 8)}.</p>
     </More>
     <Next from="meter" more={[{ href: 'explain/plans-and-api/', text: 'Plans against the API' }, { href: 'models/', text: 'The models and their prices' }]} />
   </Step>
