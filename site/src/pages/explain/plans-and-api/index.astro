@@ -62,6 +62,8 @@ const evenPlans = [...new Map(cat.plans.filter((p) => p.provider !== 'api' && p.
   description="Run a week of agent work through any Claude or ChatGPT plan and through the API at once: where the plan stops, what the meter says, and where one becomes cheaper than the other."
   section="explain"
 >
+  <a slot="tools" class="pa-see-meter" href={`${import.meta.env.BASE_URL}journey/meter/`}>See it as a picture: the meter</a>
+
   <Tile title="A week on a plan, the same week on the meter" span={8} id="lab" side={READ}>
     <PlanWeek
       sides={{
@@ -245,6 +247,7 @@ const evenPlans = [...new Map(cat.plans.filter((p) => p.provider !== 'api' && p.
 <div hidden data-ests={JSON.stringify(ests)} data-cap={plans.claude.api.startSpendCap.value}></div>
 
 <style>
+  .pa-see-meter { font-size: var(--text-s); min-height: 2.5rem; display: inline-flex; align-items: center; }
   .pa-stack { grid-column: span 12; display: grid; gap: 0.75rem; align-content: start; min-width: 0; }
   .board-grid .pa-stack > :global(.tile.tile) { grid-column: auto; }
   @media (min-width: 760px) { .pa-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
