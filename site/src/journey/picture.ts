@@ -107,6 +107,8 @@ export interface SceneState {
   zones?: Zone[];
   /** More projects than one, for work in several at once. Keys are `p:<id>`. */
   projects?: (Project & { id: string; scale?: number })[];
+  /** Pucks standing still on the floor: work waiting its turn. Keys are `rest:<id>`. */
+  rest?: { id: string; at: XY; b: Kind }[];
   /** Grooves on the floor, as polylines. */
   tracks?: XY[][];
   labels?: Label[];
@@ -424,6 +426,11 @@ export function picture(s: SceneState, frame: Frame, prev?: SceneState): Picture
   for (const m of s.meters ?? []) {
     const [x, y] = at(m.at);
     ents.push({ key: 'meter:' + m.id, order: 100 + Math.round(depth(m.at) + 400) / 10, sig: m.mode + (m.mode === 'plan' ? m.level.toFixed(3) : Math.round(m.level)), html: () => meterMarkup(m), x, y, scale: 1, attrs: { 'data-lamp': m.lamp ?? 'off', 'data-mode': m.mode } });
+  }
+  for (const r of s.rest ?? []) {
+    const [x, y] = at(r.at);
+    kinds.add(r.b);
+    ents.push({ key: 'rest:' + r.id, order: 100 + Math.round(depth(r.at) + 400) / 10 + 0.05, sig: r.b, html: () => puckMarkup(r.b), x, y, scale: 1, attrs: {} });
   }
   if (s.tools) {
     const t = s.tools;

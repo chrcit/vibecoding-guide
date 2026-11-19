@@ -97,13 +97,17 @@ export interface JobsOpts {
   labels?: Label[];
   focus?: SceneState['focus'];
   mgate?: boolean;
+  /** Each job's own copy of the project beside it. Default: on when the jobs share one project. */
+  trees?: boolean;
+  /** The machine slab under each job, around the job's spot: [x, y, w, d]. Default [-24, -28, min(70, gap - 14), 56]. */
+  slab?: [x: number, y: number, w: number, d: number];
 }
 /** Several jobs at once: agents `j0`, `j1`, ... in a row, one of you, and a tray with a card per job. */
 export function jobs(n: number, o: JobsOpts = {}): SceneState {
   const gap = o.gap ?? 58;
   const spots = Array.from({ length: n }, (_, i) => jobSpot(i, n, gap));
   const one = (o.projects ?? 'one') === 'one';
-  const agents: Agent[] = spots.map((at, i) => ({ id: `j${i}`, at, scale: 0.7, blocks: [], tree: one ? 'own' : false }));
+  const agents: Agent[] = spots.map((at, i) => ({ id: `j${i}`, at, scale: 0.7, blocks: [], tree: (o.trees ?? one) ? 'own' : false }));
   const left = Math.min(0, ...spots.map((s) => s[0]));
   const mainAt: XY = [Math.max(SPOT.main[0], spots[n - 1]![0] + 100), BUS_Y];
   const tracks: XY[][] = one
@@ -116,7 +120,7 @@ export function jobs(n: number, o: JobsOpts = {}): SceneState {
     project: one ? { at: mainAt, rules: 'plain', commits: [] } : null,
     projects: one ? [] : spots.map(([x], i) => ({ id: `${i}`, at: [x, -98] as XY, scale: 0.5, rules: 'plain' as const })),
     gates: o.mgate && one ? [{ id: 'mgate', at: [mainAt[0] - 84, BUS_Y], axis: 'x' }] : [],
-    zones: (o.machines ?? []).slice(0, n).map((kind, i) => ({ id: `${i}`, kind, rect: [spots[i]![0] - 24, -28, Math.min(70, gap - 14), 56] as Zone['rect'] })),
+    zones: (o.machines ?? []).slice(0, n).map((kind, i) => ({ id: `${i}`, kind, rect: (o.slab ? [spots[i]![0] + o.slab[0], spots[i]![1] + o.slab[1], o.slab[2], o.slab[3]] : [spots[i]![0] - 24, -28, Math.min(70, gap - 14), 56]) as Zone['rect'] })),
     tray: { at: SPOT.tray, cards: o.cards ?? spots.map((_, i) => ({ id: `j${i}`, mark: 'work' as const })) },
     tracks,
     labels: o.labels ?? [],
