@@ -1,31 +1,29 @@
 ---
 // /explain/verification/: who checks the work, and how to let the agent check itself.
-// Figures 13, 14 and 15. Every product claim comes from src/data/ through <Fact>.
+// The checklist and the prompts come first; the explanation sits in closed <Deeper> blocks.
+// Figures 14 and 15. Every product claim comes from src/data/ through <Fact>.
 import Article from '../../layouts/Article.astro';
 import Deeper from '../../components/level/Deeper.astro';
-import ForLevel from '../../components/level/ForLevel.astro';
 import Fact from '../../components/data/Fact.astro';
 import Verified from '../../components/data/Verified.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
-import Embed from '../../components/site/Embed.astro';
-import Note from '../../components/site/Note.astro';
 import Term from '../../components/site/Term.astro';
-import ThreeJudges from '../../components/fig/three-judges/ThreeJudges.astro';
 import NoiseBias from '../../components/fig/noise-bias/NoiseBias.astro';
 import SummaryDiff from '../../components/fig/summary-diff/SummaryDiff.astro';
 import { links } from '../../data/links';
 import { url } from '../../lib/nav';
 
 const headings = [
-  { depth: 2, slug: 'checking-is-the-job', text: 'Checking is the job now' },
-  { depth: 2, slug: 'let-it-check-itself', text: 'Give the agent a way to check itself' },
-  { depth: 2, slug: 'a-summary-is-a-claim', text: 'A summary is a claim' },
-  { depth: 2, slug: 'a-second-opinion', text: 'A second opinion is cheap' },
-  { depth: 2, slug: 'noise-and-bias', text: 'Running it again: noise and bias' },
-  { depth: 2, slug: 'what-it-may-touch', text: 'Decide what it may touch' },
-  { depth: 2, slug: 'fix-the-room', text: 'Fix the room, not the door' },
   { depth: 2, slug: 'before-you-accept', text: 'Before you accept the work' },
-  { depth: 2, slug: 'related', text: 'Related pages' },
+  { depth: 2, slug: 'prompts', text: 'Two prompts to copy' },
+  { depth: 2, slug: 'a-number', text: 'Checking a number' },
+  { depth: 2, slug: 'why', text: 'Why each check works' },
+  { depth: 3, slug: 'let-it-check-itself', text: 'Give the agent a way to check itself' },
+  { depth: 3, slug: 'a-summary-is-a-claim', text: 'A summary is a claim' },
+  { depth: 3, slug: 'a-second-opinion', text: 'A second opinion is cheap' },
+  { depth: 3, slug: 'noise-and-bias', text: 'Running it again: noise and bias' },
+  { depth: 3, slug: 'what-it-may-touch', text: 'Decide what it may touch' },
+  { depth: 3, slug: 'fix-the-room', text: 'Fix the room, not the door' },
 ];
 
 const factIds = [
@@ -47,23 +45,31 @@ const factIds = [
   'claims.research.selfConsistency',
 ];
 
-const testFirst = `The bakery site shows the normal opening hours on public holidays. On 25 December it should say Closed.
+const testFirst = `The bakery site shows its normal hours on public holidays. On 25 December it should say Closed.
 
-Before you change anything, write a test that sets the date to 25 December 2026 and checks that the page shows Closed. Run it and show me that it fails. Add a second case for an ordinary Tuesday so a fix cannot break normal days.
+Before you change anything, write a test that sets the date to 25 December 2026 and checks that the page shows Closed. Run it and show me that it fails. Add a case for an ordinary Tuesday.
 
-Then fix the bug and run the whole test suite. Paste the command and its output when you are done. If you change anything I did not ask for, list it separately.`;
+Then fix the bug and run the whole test suite. Paste the command and its output. List anything you changed that I did not ask for.`;
 
-const reviewPrompt = `You are reviewing a change you did not write. You have not seen the conversation that produced it, and that is on purpose.
+const reviewPrompt = `Review a change you did not write. You have not seen the conversation that produced it, on purpose.
 
-The goal: on public holidays the bakery site should show Closed; on every other day it should show the usual hours.
+Goal: on public holidays the bakery site shows Closed; on other days it shows the usual hours.
 
-Read the diff on this branch against main, and the holiday list it reads from. Then:
-1. Run the tests and the app. Say what you ran and paste the output.
-2. List anything the diff changes that the goal does not need.
-3. List cases the tests do not cover (holidays that move each year, a holiday on a Sunday, the day after a holiday).
-4. Report only problems that affect correctness. Skip style.
+Read the diff on this branch against main and the holiday list it reads. Then:
+1. Run the tests and the app. Paste what you ran and the output.
+2. List changes the goal does not need.
+3. List cases the tests miss (holidays that move, a holiday on a Sunday, the day after).
+4. Report only problems that affect correctness.
 
-Do not fix anything. If you find nothing wrong, say what you checked, so I can see how far that goes.`;
+Do not fix anything. If you find nothing wrong, say what you checked.`;
+
+const numberCheck = `I changed analysis/halflife.ts. Check it against a known answer before you tell me it works.
+
+data/synthetic.csv was made with a half-life of exactly 12.0 days plus random noise. Run the analysis on it. The result must be 12.0 days, give or take 0.1. Paste the command, the number and its difference from 12.0.
+
+Then make a file with new noise (npx tsx scripts/make-synthetic.ts --half-life 12 --seed 2), run it again and report the same.
+
+If a result is outside 0.1 days, say so and stop. Do not change the tolerance, the reference or the test data.`;
 
 const diff = `--- a/src/hours.ts
 +++ b/src/hours.ts
@@ -87,36 +93,43 @@ const diff = `--- a/src/hours.ts
 ---
 <Article
   title="Verification"
-  description="Writing code got cheap; knowing whether it is right did not. How to let an agent check its own work, why its summary is not evidence, what a second opinion and a rerun can and cannot catch, and how to limit what it may touch."
+  description="Writing code got cheap; knowing whether it is right did not. A checklist before you accept an agent's work, prompts to copy, a worked check for a number, and why a summary, a second opinion and a rerun each catch only some mistakes."
   section="explain"
-  updated="2026-11-18"
+  updated="2026-11-19"
   headings={headings}
   prev={{ href: 'explain/context/', title: 'Context' }}
   next={{ href: 'explain/orchestration/', title: 'Orchestration' }}
 >
-  <h2 id="checking-is-the-job">Checking is the job now</h2>
-  <p>
-    An agent can write in a minute what used to take an afternoon. Knowing whether that minute’s work is right has not got any faster. So when you work with an agent, most of your effort moves from typing to checking: does it run, does it do what you asked, and did anything else change along the way.
-  </p>
-  <p>
-    You cannot read every line of everything an agent writes, and if you are new to code you cannot read any of it. The way out is to make the agent able to check its own work, then spend your attention on the checks rather than on the code. This page is about how to do that, and about the places where a check can fool you.
-  </p>
-  <p>
-    The running example is the holiday hours bug: a bakery’s website shows its normal opening hours on public holidays, and you have asked an agent to fix it.
-  </p>
+  <h2 id="before-you-accept">Before you accept the work</h2>
+  <p>Go through this before you merge, ship or move on:</p>
+  <ol>
+    <li>Did the agent run a check and show you the output or the screenshot?</li>
+    <li>Have you seen it work yourself, on your case and the one next to it?</li>
+    <li>Do you know every file that changed, and why?</li>
+    <li>Did it change anything you did not ask for? Do you want that?</li>
+    <li>Did a fresh reviewer, ideally another model, check it without your opinion?</li>
+    <li>Could you undo it? Is the work saved in version control?</li>
+    <li>Could a new test stop a mistake from this run happening again?</li>
+  </ol>
 
-  <h2 id="let-it-check-itself">Give the agent a way to check itself</h2>
-  <p>
-    An agent works in a loop: it reads, changes something, looks at the result and decides whether it is done. The loop stops when the agent thinks the work is finished. If it has nothing to look at except its own code, “finished” means “looks finished to me”. If it can run something that says pass or fail, it goes round again until the check passes.
-  </p>
-  <p>
-    Anthropic’s own advice for Claude Code puts it in one line: <Fact id="harnesses.claudeCode.checkToRun" /> The check can be almost anything the agent can run and read: a test, opening the page and taking a screenshot, a script that compares the output with what it should be, or simply starting the app and seeing whether it crashes. For the bakery, the check is “set the date to 25 December and look at what the page says”.
-  </p>
-  <p>
-    An agent that can check will tell you what it checked. One that cannot will tell you it is done.
-  </p>
+  <h2 id="prompts">Two prompts to copy</h2>
+  <CopyPrompt title="Ask for the failing test first" id="prompt-test-first">{testFirst}</CopyPrompt>
+  <CopyPrompt title="A review prompt for a fresh agent" id="prompt-review">{reviewPrompt}</CopyPrompt>
 
-  <ThreeJudges />
+  <h2 id="a-number">Checking a number</h2>
+  <ul>
+    <li>The script, <code>analysis/halflife.ts</code>, is made up: it fits a half-life to decay readings.</li>
+    <li>The reference is 12.0 days, the value the test data was made with.</li>
+    <li>The tolerance is 0.1 days either way, set before the run.</li>
+    <li>The rerun uses new noise and has to land inside the same tolerance.</li>
+  </ul>
+  <CopyPrompt title="Check a result against a known answer" id="prompt-number">{numberCheck}</CopyPrompt>
+
+  <h2 id="why">Why each check works</h2>
+  <h3 id="let-it-check-itself">Give the agent a way to check itself</h3>
+  <p>
+    Anthropic’s advice: <Fact id="harnesses.claudeCode.checkToRun" /> Without a run, “fixed” is only a claim (<a href={url('journey/loop/')}>It gets hands</a>), and each check catches one kind of wrong (<a href={url('journey/check/')}>Make it prove it</a>).
+  </p>
 
   <Deeper level="technical" title="Tests as the contract">
     <p>
@@ -125,7 +138,6 @@ const diff = `--- a/src/hours.ts
     <p>
       Pin the inputs. A holiday test that uses today’s date passes or fails depending on when you run it. Fix the date in the test, and add the neighbouring cases (the day after, an ordinary weekday) so a fix that breaks normal days is caught too.
     </p>
-    <CopyPrompt title="Ask for the failing test first">{testFirst}</CopyPrompt>
     <p>
       Make the agent run the app, not only the tests. Starting the dev server and reading the error output catches the class of bug that unit tests never touch: a missing environment variable, a build step that fails, a page that throws on load. For interface work, a screenshot is the check. Ask the agent to open the page in a browser it controls and compare the screenshot with what you expected, and to show you the screenshot.
     </p>
@@ -134,27 +146,16 @@ const diff = `--- a/src/hours.ts
     </p>
   </Deeper>
 
-  <h2 id="a-summary-is-a-claim">A summary is a claim</h2>
+  <h3 id="a-summary-is-a-claim">A summary is a claim</h3>
   <p>
-    At the end of a run the agent writes a summary: what it changed, what it tested, that everything passes. It reads like a report, but it is the agent’s own account of its own work, written by the same model that made any mistake in it. Treat it as a claim to check, never as evidence.
-  </p>
-  <p>
-    The evidence is the <Term def="The list of every line added, removed or changed, file by file. Version control shows it for any change.">diff</Term>, the exact list of what changed, and the running result. The two can disagree. Agents tidy things up on the way past, and a tidy-up that seemed harmless to the agent is often the one that breaks something, precisely because nobody asked for it and so nobody tests it.
+    The agent’s summary is its own account of its work. The evidence is the <Term def="The list of every line added, removed or changed, file by file. Version control shows it for any change.">diff</Term>, the exact list of what changed, and the running result.
   </p>
 
-  <SummaryDiff />
-
-  <p>
-    If you cannot read code, you can still check most of what matters:
-  </p>
-  <ul>
-    <li>Run it yourself. Open the page, click the button, look at the result with your own eyes.</li>
-    <li>Try the case you asked about, and the case next to it. For the bakery, 25 December and 26 December, and an ordinary Tuesday.</li>
-    <li>Ask the agent to list every file it changed and say in one plain sentence why each one changed. A file with no good reason is the thing to ask about.</li>
-    <li>Ask what it changed that you did not ask for. Ask it directly.</li>
-  </ul>
-
-  <Deeper level="technical" title="Reading the diff behind Fig. 15">
+  <Deeper level="technical" title="The summary against the diff">
+    <p>
+      The two can disagree. Agents tidy things up on the way past, and a tidy-up nobody asked for is the one nobody tests.
+    </p>
+    <SummaryDiff />
     <p>
       Here is the change from the figure. The summary mentioned the first two hunks. The third deletes a line from a data file, which no test covers, so “all tests pass” stays true.
     </p>
@@ -164,126 +165,94 @@ const diff = `--- a/src/hours.ts
     </p>
   </Deeper>
 
-  <h2 id="a-second-opinion">A second opinion is cheap</h2>
+  <h3 id="a-second-opinion">A second opinion is cheap</h3>
   <p>
-    Another agent can review the work in a couple of minutes. The trick is to give it a fresh start. A reviewer that has read the whole conversation has also read all the reasoning that led to the mistake, and tends to find it convincing. A reviewer that starts clean sees only the change and the goal.
+    A fresh agent can review the change in minutes. Give it the code and the goal without your verdict, ideally on a model from a different maker.
   </p>
-  <p>
-    Claude Code has this built in. <Fact id="harnesses.claudeCode.codeReview" show="claim" /> Codex has a <code>/review</code> command too. Anthropic’s own guide adds a caution worth keeping. <Fact id="harnesses.claudeCode.sameModelReviewer" show="claim" /> If you can, use a different model as the reviewer, ideally from a different maker.
-  </p>
-  <p>
-    Give the reviewer the code and the goal, not your verdict. “I think this is fine, can you check?” invites agreement. Models lean towards telling people what they already believe, which researchers call sycophancy, so a reviewer handed your conclusion tends to return it.
-  </p>
-  <CopyPrompt title="A review prompt for a fresh agent">{reviewPrompt}</CopyPrompt>
 
-  <Deeper level="engineer" title="Reviewers, judges and where they fail">
+  <Deeper level="technical" title="Built-in review, and why a fresh start">
     <p>
-      Using a model to grade a model works better than it sounds and fails in known ways. <Fact id="claims.research.judgeBiases" show="claim" /> Position bias means the order in which you show two answers moves the verdict; verbosity bias means the longer answer tends to win. Swap the order and run the judgement twice, and prefer short structured verdicts (pass or fail per requirement) over open scores.
+      A reviewer that has read the whole conversation has also read the reasoning that led to the mistake, and tends to find it convincing. Claude Code has a reviewer built in. <Fact id="harnesses.claudeCode.codeReview" show="claim" /> Codex has a <code>/review</code> command too. <Fact id="harnesses.claudeCode.sameModelReviewer" show="claim" />
     </p>
     <p>
-      Self-preference is the one that matters most for review. <Fact id="claims.research.selfPreference" show="claim" /> A model reviewing its own code is the worst case, a different model of the same family is better, and a model from a different maker is better again. The reviewer’s blind spots then overlap less with the author’s.
+      “I think this is fine, can you check?” invites agreement. Models lean towards telling people what they already believe, which researchers call sycophancy, so a reviewer handed your conclusion tends to return it.
     </p>
-    <p>
-      Sycophancy is the failure the prompt above guards against. <Fact id="claims.research.sycophancy" show="claim" /> Strip your opinion from the review prompt, do not tell the reviewer what score you are hoping for, and ask for what it checked as well as what it found.
-    </p>
-    <p>
-      Reviewers also over-report. <Fact id="harnesses.claudeCode.reviewerAlwaysFinds" show="claim" /> Fixing every finding grows abstraction and tests for cases that cannot happen. Ask for findings that affect correctness, ranked, and decide yourself which to act on.
-    </p>
-    <p>
-      For risky changes, make the review adversarial: give one agent the job of breaking the change, with permission to run it, write throwaway tests and try odd inputs, and a clear brief that finding nothing is an acceptable outcome. What it hands back is a failing case you can run, which is easier to judge than an opinion.
-    </p>
+    <Deeper level="engineer" title="Reviewers, judges and where they fail">
+      <p>
+        Using a model to grade a model works better than it sounds and fails in known ways. <Fact id="claims.research.judgeBiases" show="claim" /> Position bias means the order in which you show two answers moves the verdict; verbosity bias means the longer answer tends to win. Swap the order and run the judgement twice, and prefer short structured verdicts (pass or fail per requirement) over open scores.
+      </p>
+      <p>
+        Self-preference is the one that matters most for review. <Fact id="claims.research.selfPreference" show="claim" /> A model reviewing its own code is the worst case, a different model of the same family is better, and a model from a different maker is better again. The reviewer’s blind spots then overlap less with the author’s.
+      </p>
+      <p>
+        Sycophancy is the failure the review prompt guards against. <Fact id="claims.research.sycophancy" show="claim" /> Strip your opinion from the review prompt, do not tell the reviewer what score you are hoping for, and ask for what it checked as well as what it found.
+      </p>
+      <p>
+        Reviewers also over-report. <Fact id="harnesses.claudeCode.reviewerAlwaysFinds" show="claim" /> Fixing every finding grows abstraction and tests for cases that cannot happen. Ask for findings that affect correctness, ranked, and decide yourself which to act on.
+      </p>
+      <p>
+        For risky changes, make the review adversarial: give one agent the job of breaking the change, with permission to run it, write throwaway tests and try odd inputs, and a clear brief that finding nothing is an acceptable outcome. What it hands back is a failing case you can run, which is easier to judge than an opinion.
+      </p>
+    </Deeper>
   </Deeper>
 
-  <h2 id="noise-and-bias">Running it again: noise and bias</h2>
+  <h3 id="noise-and-bias">Running it again: noise and bias</h3>
   <p>
-    Ask the same agent the same thing twice and you can get two different answers. Some of that is <Term def="Random variation between runs of the same task. It averages out if you run it several times.">noise</Term>: each run wanders a little, in a different direction. Running it again, or several times, and comparing the answers deals with noise well.
-  </p>
-  <p>
-    The other kind of error is <Term def="A mistake every run shares, because it comes from the same assumption. More runs repeat it.">bias</Term>: the model gets it wrong the same way every time, because every run starts from the same assumption. Running it again does nothing for bias except make you more confident. Ten agreeing answers are ten copies of one assumption. What finds bias is a judge that does not share the assumption: a test with a known answer, or a model from a different maker.
+    A rerun averages out <Term def="Random variation between runs of the same task. It averages out if you run it several times.">noise</Term> but repeats <Term def="A mistake every run shares, because it comes from the same assumption. More runs repeat it.">bias</Term>. For bias you need a known answer, like the number check above, or a model from another maker.
   </p>
 
-  <NoiseBias />
-
-  <Deeper level="engineer" title="Sampling, voting and why agreement is weak evidence">
+  <Deeper level="technical" title="Noise and bias, drawn">
     <p>
-      Sampling several runs and choosing among them is an established technique. <Fact id="claims.research.selfConsistency" show="claim" /> It works because independent errors scatter while correct answers coincide. It fails exactly where Fig. 14 says: errors from one model on one prompt are not independent. Shared training data, a shared misleading file and a shared ambiguous instruction all correlate the runs, and a vote then measures the strength of the shared assumption.
+      Ask the same agent the same thing twice and you can get two different answers, each wandering a little in a different direction. Comparing several runs deals with that well. Bias is the model getting it wrong the same way every time, because every run starts from the same assumption. Ten agreeing answers are then ten copies of one assumption.
     </p>
-    <p>
-      Two cheap improvements. Vary what can vary: a different model, a reworded prompt, a different starting file. And replace the vote with a verifier where one exists: best-of-n with a test that picks the winner beats best-of-n with a majority, because the test is an independent judge.
-    </p>
-    <p>
-      Do not read confidence as correctness. An agent’s summary sounds equally sure whether the work is right or wrong, and asking it to double-check without new information rarely changes that. <Fact id="claims.research.selfCorrection" show="claim" /> What changes the outcome is external feedback: a failing test, an error message, a screenshot that does not match.
-    </p>
+    <NoiseBias />
+    <Deeper level="engineer" title="Sampling, voting and why agreement is weak evidence">
+      <p>
+        Sampling several runs and choosing among them is an established technique. <Fact id="claims.research.selfConsistency" show="claim" /> It works because independent errors scatter while correct answers coincide. It fails exactly where Fig. 14 says: errors from one model on one prompt are not independent. Shared training data, a shared misleading file and a shared ambiguous instruction all correlate the runs, and a vote then measures the strength of the shared assumption.
+      </p>
+      <p>
+        Two cheap improvements. Vary what can vary: a different model, a reworded prompt, a different starting file. And replace the vote with a verifier where one exists: best-of-n with a test that picks the winner beats best-of-n with a majority, because the test is an independent judge.
+      </p>
+      <p>
+        Do not read confidence as correctness. An agent’s summary sounds equally sure whether the work is right or wrong, and asking it to double-check without new information rarely changes that. <Fact id="claims.research.selfCorrection" show="claim" /> What changes the outcome is external feedback: a failing test, an error message, a screenshot that does not match.
+      </p>
+    </Deeper>
   </Deeper>
 
-  <h2 id="what-it-may-touch">Decide what it may touch</h2>
+  <h3 id="what-it-may-touch">Decide what it may touch</h3>
   <p>
-    Checking after the fact only helps if a mistake can be undone. Before you let an agent run, decide what it may do without asking you. Every coding agent has a setting for this: at the strict end it asks before each edit and each command; at the loose end it does anything it likes. Start strict. Loosen it once you have watched a few runs and know what the agent does with the room it has.
+    Start strict on what the agent may do without asking (<a href={url('journey/loop/')}>It gets hands</a> shows the setting), and save your work in Git first so a bad run costs only the run.
   </p>
-  <p>
-    The other half is the <Term def="How much can go wrong if a run goes wrong: which files, which accounts, which systems it can reach.">blast radius</Term>. An agent working in a copy of your project can only break the copy. An agent with your cloud account, your email or your production database can break those. Keep the second kind of access for when you need it, and never on a run you are not watching.
-  </p>
-  <p>
-    Version control is your undo button. With the project in Git, every state you saved can be brought back, so a bad run costs you the run and nothing else. Save before you start an agent on anything that matters. Anthropic’s guide sums up the whole section: <Fact id="harnesses.claudeCode.bestPractice" /></p>
 
-  <Deeper level="technical" title="Git as the undo button">
+  <Deeper level="technical" title="Blast radius, and Git as the undo button">
+    <p>
+      Every coding agent has a setting for this: at the strict end it asks before each edit and each command; at the loose end it does anything it likes. Loosen it once you have watched a few runs. The other half is the <Term def="How much can go wrong if a run goes wrong: which files, which accounts, which systems it can reach.">blast radius</Term>. An agent working in a copy of your project can only break the copy. An agent with your cloud account, your email or your production database can break those. Anthropic’s guide sums it up: <Fact id="harnesses.claudeCode.bestPractice" />
+    </p>
     <p>
       Commit before every run, or better, give each run its own branch or worktree so it cannot touch the state you trust. The diff against that commit is then the complete record of what the run did, including changes made by shell commands that the harness’s own undo does not track.
     </p>
     <p>
       Claude Code also keeps checkpoints you can rewind to, with a limit worth knowing: <Fact id="harnesses.claudeCode.features" show="claim" /> Use checkpoints for quick retries inside a session and Git for anything you would mind losing.
     </p>
+    <Deeper level="engineer" title="Permission modes, sandboxes and CI">
+      <p>
+        Claude Code’s modes are <Fact id="harnesses.claudeCode.permissionModes" />. <Fact id="harnesses.claudeCode.permissionModes" show="claim" /> <Fact id="harnesses.claudeCode.autoModeDefault" show="claim" /> Deny rules are the deterministic layer: they hold in every mode, so anything that must never happen (reading <code>.env</code>, pushing to <code>main</code>) belongs there rather than in a sentence in the prompt.
+      </p>
+      <p>
+        Codex splits the same question in two. <Fact id="harnesses.codex.sandbox" show="claim" /> <Fact id="harnesses.codex.approvals" show="claim" /> An OS-level sandbox limits what shell commands can reach regardless of what the model decides; a permission prompt only limits what you approve, and approval fatigue sets in fast.
+      </p>
+      <p>
+        The final judge is CI: lint, types, tests and a build on every pull request, in an environment the agent does not control, and a branch rule that blocks the merge when it is red. The checks earlier on this page catch problems sooner; CI is the one the agent cannot skip. Keep it fast, because an agent waiting on slow CI either idles or moves on without the result.
+      </p>
+    </Deeper>
   </Deeper>
 
-  <Deeper level="engineer" title="Permission modes, sandboxes and CI">
-    <p>
-      Claude Code’s modes are <Fact id="harnesses.claudeCode.permissionModes" />. <Fact id="harnesses.claudeCode.permissionModes" show="claim" /> <Fact id="harnesses.claudeCode.autoModeDefault" show="claim" /> Deny rules are the deterministic layer: they hold in every mode, so anything that must never happen (reading <code>.env</code>, pushing to <code>main</code>) belongs there rather than in a sentence in the prompt.
-    </p>
-    <p>
-      Codex splits the same question in two. <Fact id="harnesses.codex.sandbox" show="claim" /> <Fact id="harnesses.codex.approvals" show="claim" /> An OS-level sandbox limits what shell commands can reach regardless of what the model decides; a permission prompt only limits what you approve, and approval fatigue sets in fast.
-    </p>
-    <p>
-      The final judge is CI: lint, types, tests and a build on every pull request, in an environment the agent does not control, and a branch rule that blocks the merge when it is red. The checks earlier on this page catch problems sooner; CI is the one the agent cannot skip. Keep it fast, because an agent waiting on slow CI either idles or moves on without the result.
-    </p>
-  </Deeper>
-
-  <h2 id="fix-the-room">Fix the room, not the door</h2>
+  <h3 id="fix-the-room">Fix the room, not the door</h3>
   <p>
-    When an agent makes a mistake, the easy fix is another line in its instructions: “always check the holiday list format”. That works until the next mistake, and the instructions grow into a list nobody reads. Theo, who builds <a href={links.t3code.url}>T3 Code</a>, describes it as a maze: you can keep giving the agent better directions before it walks in the door, or you can change the room so it is easy to find the way. He argues for the room.
-  </p>
-  <p>
-    In practice that means fixing what let the mistake happen. If the agent broke Boxing Day, the fix is a test for Boxing Day, so the next agent fails loudly instead of quietly. If it misread the date format, the fix is one date format in the code. Each mistake you turn into a check is a mistake no agent makes twice, whoever runs next.
-  </p>
-  <Embed id="TFCDWrEBaFM" title="How Claude Fixes Its Own Code, by Theo" start={950} />
-  <p>
-    The video walks through how review and verification work on a team shipping with agents; the maze comes near the end.
+    When the agent makes a mistake, add a check that would catch it next time: if it broke Boxing Day, add a test for Boxing Day. Theo, who builds <a href={links.t3code.url}>T3 Code</a>, calls this changing the room instead of giving better directions at the door (<a href="https://www.youtube.com/watch?v=TFCDWrEBaFM&t=950s">his video, from 15:50</a>).
   </p>
 
-  <h2 id="before-you-accept">Before you accept the work</h2>
-  <p>Go through this before you merge, ship or move on:</p>
-  <ol>
-    <li>Did the agent run a check, and did it show you the command and the output, or the screenshot?</li>
-    <li>Have you seen it working yourself, on the case you asked about and the one next to it?</li>
-    <li>Do you know every file that changed, and why?</li>
-    <li>Is there anything in the change you did not ask for? If so, do you want it?</li>
-    <li>Did a fresh reviewer, ideally a different model, look at the change and the goal without your opinion attached?</li>
-    <li>If it went wrong, could you undo it? Is the work saved in version control, separate from what you trust?</li>
-    <li>Was there a mistake on the way that a new test or a small code change would stop next time?</li>
-  </ol>
-  <ForLevel is="plain">
-    <Note title="If you only do one thing">
-      Ask the agent: “Show me the page working on 25 December, and list everything you changed that I did not ask for.” Then look at the page yourself.
-    </Note>
-  </ForLevel>
 
-  <h2 id="related">Related pages</h2>
-  <ul>
-    <li><a href={url('explain/context/')}>Context</a>: what the agent knows, and why it decides what the agent can check.</li>
-    <li><a href={url('explain/orchestration/')}>Orchestration</a>: running reviewers and helpers alongside the main agent.</li>
-    <li><a href={url('explain/skills/')}>Skills</a>: turning a review routine into something the agent loads on its own.</li>
-    <li><a href={url('t3-code/')}>T3 Code</a>: diffs, threads and handing a change to another provider for review.</li>
-    <li><a href={url('sources/')}>Sources</a>: every fact on this page with the page it came from.</li>
-  </ul>
 
   <Verified ids={factIds} />
 </Article>
