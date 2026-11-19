@@ -5,8 +5,8 @@ import { solo, lab } from '../presets';
 import { route, reverse, type Kind } from '../picture';
 
 const labels = [
-  lab('you', 'you', 'left'), lab('a0', 'the model'),
-  lab('tools', 'tools', 'top', 'wiki/tool/'), lab('project', 'your project', 'top'),
+  lab('you', 'you', 'left'), lab('a0', 'the model', 'top', 'wiki/model/'),
+  lab('tools', 'tools', 'top', 'wiki/tool-call/'), lab('project', 'your project', 'top'),
 ];
 const base = () => solo({ tools: true, project: true, labels });
 

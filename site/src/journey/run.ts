@@ -12,6 +12,7 @@ export function boot(root: HTMLElement) {
   const stage = root.querySelector<HTMLElement>('.j-stage');
   if (!chapter || !stage) return;
   const scene = new Scene(stage);
+  scene.base = root.dataset.base ?? '/';
   root.setAttribute('data-ready', '');
   const sayEl = root.querySelector<HTMLElement>('.j-say')!;
   const statEl = root.querySelector<HTMLElement>('.j-stats')!;

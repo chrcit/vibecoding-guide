@@ -17,7 +17,7 @@ function go(ctx: Ctx, scene: SceneState, o: FleetOpts) {
 // ----- 7: side by side -----
 const side = (n: number, own: boolean) => team(n, {
   trees: own, lead: lead(),
-  labels: [lab('you', 'you', 'left'), lab('a0', 'the agent'), lab('project', 'main', 'top', 'wiki/main-branch/'), ...(own ? [lab([-88 + 44 * 2 + 30, -98, 4], 'its own copy', 'right', 'wiki/worktree/')] : [])],
+  labels: [lab('you', 'you', 'left'), lab('a0', 'the agent', 'top', 'wiki/agent/'), lab('project', 'main', 'top', 'wiki/branch/'), ...(own ? [lab([-88 + 44 * 2 + 30, -98, 4], 'its own copy', 'right', 'wiki/worktree/')] : [])],
 });
 const runSide = (ctx: Ctx) => {
   const n = ctx.mem.n ?? 3, own = ctx.mem.own ?? true;
@@ -37,7 +37,7 @@ export const parallel: Chapter = {
 // ----- 8: a lead -----
 const led = (gate: boolean) => team(5, {
   trees: true, mgate: gate, mixed: true, lead: lead(),
-  labels: [lab('you', 'you', 'left'), lab('a0', 'the lead', 'top', 'wiki/orchestration/'), lab('project', 'main'), ...(gate ? [lab('mgate', 'check', 'top', 'wiki/verification/')] : []), lab([-88, -98 + 4, 50], 'builders', 'left')],
+  labels: [lab('you', 'you', 'left'), lab('a0', 'the lead', 'top', 'wiki/orchestration/'), lab('project', 'main', 'top', 'wiki/branch/'), ...(gate ? [lab('mgate', 'check', 'top', 'wiki/verification/')] : []), lab([-88, -98 + 4, 50], 'builders', 'left')],
 });
 const runLead = (ctx: Ctx) => {
   const gate = ctx.mem.gate ?? true, short = ctx.mem.short ?? true;
@@ -60,7 +60,7 @@ export const leadCh: Chapter = {
 const many = (n: number, gate: boolean) => {
   const s = team(n, {
     trees: true, mgate: gate, gate: true, mixed: true, lead: lead(),
-    labels: [lab('you', 'you', 'left'), lab('a0', 'the lead'), lab('project', 'main'), ...(gate ? [lab('mgate', 'check')] : [])],
+    labels: [lab('you', 'you', 'left'), lab('a0', 'the lead', 'top', 'wiki/orchestration/'), lab('project', 'main', 'top', 'wiki/branch/'), ...(gate ? [lab('mgate', 'check', 'top', 'wiki/verification/')] : [])],
   });
   // Frame the whole floor from the start, so adding agents does not move the camera.
   s.focus = ['you', 'a0', 'project', [-88, -254, 30], [88, -254, 30], [-110, BUS_Y, 0]];

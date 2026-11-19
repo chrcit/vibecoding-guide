@@ -36,8 +36,9 @@ export class Scene {
   private drawn?: SceneState;
   /** Called after every draw with the kinds of slab in view, for the key under the drawing. */
   onKinds?: (kinds: Kind[]) => void;
-  /** Called when a label that opens the side view is pressed. */
   speed = 1;
+  /** The site's base path, put in front of a label's side-view link. */
+  base = '/';
 
   constructor(private root: HTMLElement) {
     root.querySelector('.j-svg')?.remove();
@@ -127,7 +128,7 @@ export class Scene {
         el = document.createElement(l.side ? 'a' : 'span');
         el.className = 'j-label';
         el.textContent = l.text;
-        if (l.side) { (el as HTMLAnchorElement).href = l.side; el.setAttribute('data-side', ''); }
+        if (l.side) { (el as HTMLAnchorElement).href = this.base + l.side; el.setAttribute('data-side', ''); }
         el.style.opacity = '0';
         this.labels.append(el);
         this.labelEls.set(l.key, el);

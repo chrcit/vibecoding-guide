@@ -65,7 +65,7 @@
 
 /* ---------- the nine steps, as a rail ---------- */
 
-.j-rail { display: flex; align-items: center; gap: 0.25rem; min-width: 0; font-size: var(--text-xs); }
+.j-rail { display: flex; align-items: center; gap: 0.25rem; min-width: 0; font-size: var(--text-xs); container-type: inline-size; }
 .j-rail ol { display: flex; flex: 1 1 auto; min-width: 0; gap: 0.125rem; margin: 0; padding: 0; list-style: none; }
 .j-rail li { flex: none; }
 .j-rail a {
@@ -79,7 +79,7 @@
 .j-rail-name { display: none; }
 .j-rail a[aria-current='page'] .j-rail-name, .j-rail a[data-here] .j-rail-name { display: inline; }
 @media (min-width: 60rem) { .j-rail a { min-width: 2rem; padding: 0 0.45rem; } }
-@media (min-width: 80rem) { .j-rail-name { display: inline; } .j-rail a { padding: 0 0.55rem; } }
+@container (min-width: 43rem) { .j-rail-name { display: inline; } .j-rail a { padding: 0 0.55rem; } }
 
 /* ---------- under the picture ---------- */
 

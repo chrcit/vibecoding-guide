@@ -8,7 +8,7 @@ import { route, reverse, SLOTS } from '../picture';
 const AT = SLOTS[0]!;
 const start = () => [{ t: 'rules' as const, h: 4 }, { t: 'you' as const, h: 2.4 }];
 const base = (helper: boolean) => {
-  const s = team(helper ? 1 : 0, { lead: start(), labels: [lab('you', 'you', 'left'), lab('a0', 'the agent'), ...(helper ? [lab('w0', 'a helper', 'top', 'wiki/subagent/')] : [])] });
+  const s = team(helper ? 1 : 0, { lead: start(), labels: [lab('you', 'you', 'left'), lab('a0', 'the agent', 'top', 'wiki/agent/'), ...(helper ? [lab('w0', 'a helper', 'top', 'wiki/subagent/')] : [])] });
   s.agents[0]!.scale = 1;
   if (helper) s.agents[1]!.scale = 0.85;
   s.project = null;

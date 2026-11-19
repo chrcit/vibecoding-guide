@@ -14,7 +14,7 @@ const again = (ctx: Ctx, fn: Parameters<Ctx['scene']['run']>[0], pause = 1400) =
 export const whole: Chapter = {
   steps: {
     chat: {
-      scene: () => solo({ labels: [you, lab('a0', 'the model'), lab('tank:a0', 'its window', 'left')] }),
+      scene: () => solo({ labels: [you, lab('a0', 'the model', 'top', 'wiki/model/'), lab('tank:a0', 'its window', 'left', 'wiki/context-window/')] }),
       enter: (ctx) => again(ctx, async (h) => {
         h.set((s) => { if (s.agents[0]!.blocks!.length >= 12) s.agents[0]!.blocks = []; });
         await h.send(route.youToAgent(), 'you');
@@ -25,11 +25,11 @@ export const whole: Chapter = {
       }, 700),
     },
     loop: {
-      scene: () => solo({ tools: true, project: true, labels: [you, lab('tools', 'tools'), lab('project', 'your project')] }),
+      scene: () => solo({ tools: true, project: true, labels: [you, lab('tools', 'tools', 'top', 'wiki/tool-call/'), lab('project', 'your project')] }),
       enter: (ctx) => { ctx.scene.speed = 1.8; again(ctx, (h) => job(ctx, h, { run: true, ask: 'never' })); },
     },
     window: {
-      scene: () => solo({ tools: true, project: true, blocks: worked(20), focus: ['a0', 'tools'], labels: [lab('tank:a0', 'its window', 'left')] }),
+      scene: () => solo({ tools: true, project: true, blocks: worked(20), focus: ['a0', 'tools'], labels: [lab('tank:a0', 'its window', 'left', 'wiki/context-window/')] }),
       enter: (ctx) => again(ctx, async (h) => {
         h.set((s) => { s.agents[0]!.blocks = worked(20); s.agents[0]!.lamp = 'off'; });
         for (let i = 0; i < 6; i++) { await h.wait(420); h.set((s) => { s.agents[0]!.blocks!.push({ t: i % 2 ? 'model' : 'tool', h: 3 + (i % 3) }); }); }
@@ -40,11 +40,11 @@ export const whole: Chapter = {
       }, 2200),
     },
     memory: {
-      scene: () => solo({ tools: true, project: { rules: 'plain' }, labels: [you, lab('rules', 'AGENTS.md', 'bottom')] }),
+      scene: () => solo({ tools: true, project: { rules: 'plain' }, labels: [you, lab('rules', 'AGENTS.md', 'bottom', 'wiki/instruction-file/')] }),
       enter: (ctx) => again(ctx, (h) => session(ctx, h, { rules: true }), 1800),
     },
     check: {
-      scene: () => solo({ tools: true, project: true, gate: true, labels: [you, lab('gate', 'check')] }),
+      scene: () => solo({ tools: true, project: true, gate: true, labels: [you, lab('gate', 'check', 'top', 'wiki/verification/')] }),
       enter: (ctx) => { ctx.scene.speed = 1.6; again(ctx, (h) => jobs(ctx, h, ['tests', 'look', 'review'], 4)); },
     },
     handoff: {
@@ -52,16 +52,16 @@ export const whole: Chapter = {
       enter: (ctx) => again(ctx, (h) => handed(ctx, h), 1800),
     },
     parallel: {
-      scene: () => team(3, { trees: true, lead: [{ t: 'rules', h: 4 }], labels: [you, lab('project', 'main')] }),
+      scene: () => team(3, { trees: true, lead: [{ t: 'rules', h: 4 }], labels: [you, lab('project', 'main', 'top', 'wiki/branch/')] }),
       enter: (ctx) => void ctx.scene.run((h) => fleet(ctx, h, {})),
     },
     lead: {
-      scene: () => team(5, { trees: true, mgate: true, mixed: true, lead: [{ t: 'rules', h: 4 }], labels: [you, lab('a0', 'the lead'), lab('mgate', 'check'), lab('project', 'main')] }),
+      scene: () => team(5, { trees: true, mgate: true, mixed: true, lead: [{ t: 'rules', h: 4 }], labels: [you, lab('a0', 'the lead', 'top', 'wiki/orchestration/'), lab('mgate', 'check', 'top', 'wiki/verification/'), lab('project', 'main', 'top', 'wiki/branch/')] }),
       enter: (ctx) => void ctx.scene.run((h) => fleet(ctx, h, { gate: true })),
     },
     fleet: {
       scene: () => {
-        const s = team(20, { trees: true, mgate: true, gate: true, mixed: true, lead: [{ t: 'rules', h: 4 }], labels: [you, lab('a0', 'the lead'), lab('mgate', 'check'), lab('project', 'main')] });
+        const s = team(20, { trees: true, mgate: true, gate: true, mixed: true, lead: [{ t: 'rules', h: 4 }], labels: [you, lab('a0', 'the lead', 'top', 'wiki/orchestration/'), lab('mgate', 'check', 'top', 'wiki/verification/'), lab('project', 'main', 'top', 'wiki/branch/')] });
         s.focus = ['you', 'a0', 'project', [-88, -254, 30], [88, -254, 30], [-110, BUS_Y, 0]];
         return s;
       },

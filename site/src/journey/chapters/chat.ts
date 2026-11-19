@@ -8,7 +8,7 @@ const LINES: [string, string][] = [
   ['A list of members with their ratings.', 'I can make that. Who is on it?'],
   ['What is my name?', 'Sam.'],
 ];
-const labels = [lab('you', 'you', 'left'), lab('a0', 'the model'), lab('tank:a0', 'its window', 'left', 'wiki/context-window/')];
+const labels = [lab('you', 'you', 'left'), lab('a0', 'the model', 'top', 'wiki/model/'), lab('tank:a0', 'its window', 'left', 'wiki/context-window/')];
 const base = (blocks = [] as { t: 'you' | 'model'; h: number }[]) => solo({ blocks, labels });
 const said = (n: number) => LINES.slice(0, n).flatMap(() => [{ t: 'you' as const, h: 3 }, { t: 'model' as const, h: 3 }]);
 

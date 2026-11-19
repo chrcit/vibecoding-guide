@@ -11,7 +11,7 @@ export const sections = [
   { id: 'explain', label: 'Explainers', path: 'explain/', ready: true },
   { id: 'models', label: 'Models', path: 'models/', ready: true },
   { id: 't3-code', label: 'T3 Code', path: 't3-code/', ready: true },
-  { id: 'wiki', label: 'Wiki', path: 'wiki/', ready: false },
+  { id: 'wiki', label: 'Wiki', path: 'wiki/', ready: true },
   { id: 'essays', label: 'Essays', path: 'essays/', ready: true },
   { id: 'showcase', label: 'Showcase', path: 'showcase/', ready: true },
   { id: 'reference', label: 'Reference', path: 'guide/', ready: true },

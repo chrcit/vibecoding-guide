@@ -19,7 +19,7 @@ const NAMES: Record<CheckId, string> = { tests: 'tests', look: 'a screenshot', r
 const toGate: XY[] = [[0, 22], [0, SPOT.gate[1] - 10]];
 const gateToYou: XY[] = [[0, SPOT.gate[1] + 10], [0, 94]];
 
-const base = (gate: boolean) => solo({ tools: true, project: true, gate, labels: [lab('you', 'you', 'left'), lab('a0', 'the model'), ...(gate ? [lab('gate', 'check', 'top', 'wiki/verification/')] : [])] });
+const base = (gate: boolean) => solo({ tools: true, project: true, gate, labels: [lab('you', 'you', 'left'), lab('a0', 'the model', 'top', 'wiki/model/'), ...(gate ? [lab('gate', 'check', 'top', 'wiki/verification/')] : [])] });
 
 export async function jobs(ctx: Ctx, h: Script, checks: CheckId[], count = JOBS.length) {
   let said = 0, wrong = 0, caught = 0;

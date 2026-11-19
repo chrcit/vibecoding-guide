@@ -9,7 +9,7 @@ const pile = (usedK: number): Block[] => Array.from({ length: Math.round(usedK /
 const fmt = (k: number) => (k >= 1000 ? `${(k / 1000).toFixed(k % 1000 ? 1 : 0)}M` : `${Math.round(k)}k`);
 
 const view = (blocks: Block[], cap: number) => {
-  const s = solo({ tools: true, project: true, blocks, focus: ['a0'], zoomMax: 6.5, labels: [lab('a0', 'the model'), lab('tank:a0', 'its window', 'left', 'wiki/context-window/')] });
+  const s = solo({ tools: true, project: true, blocks, focus: ['a0'], zoomMax: 6.5, labels: [lab('a0', 'the model', 'top', 'wiki/model/'), lab('tank:a0', 'its window', 'left', 'wiki/context-window/')] });
   s.agents[0]!.cap = cap;
   return s;
 };

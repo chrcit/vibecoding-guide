@@ -4,7 +4,7 @@ import type { Script } from '../scene';
 import { solo, lab, worked } from '../presets';
 import { route, reverse, rulesSpot, type XY } from '../picture';
 
-const labels = [lab('you', 'you', 'left'), lab('a0', 'the model'), lab('rules', 'AGENTS.md', 'bottom', 'wiki/agents-md/'), lab('project', 'your project')];
+const labels = [lab('you', 'you', 'left'), lab('a0', 'the model', 'top', 'wiki/model/'), lab('rules', 'AGENTS.md', 'bottom', 'wiki/instruction-file/'), lab('project', 'your project')];
 const base = (rules: boolean, size = 4, skills = 0) => {
   const s = solo({ tools: true, project: { rules: rules ? 'plain' : 'none', skills }, labels: skills ? [...labels, lab('skills', 'skills', 'bottom', 'wiki/skill/')] : labels });
   s.agents[0]!.blocks = [];
