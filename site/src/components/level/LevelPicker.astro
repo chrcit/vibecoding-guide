@@ -113,10 +113,7 @@ import './levels.css';
     const said = picker.querySelector<HTMLElement>('.level-said')!;
     let timer = 0;
     onLevel((level) => {
-      said.textContent = `${levelInfo[level].label}: ${levelInfo[level].shows}`;
-      said.hidden = false;
       clearTimeout(timer);
-      timer = window.setTimeout(() => (said.hidden = true), 4000);
       requestAnimationFrame(() => {
         const changed = [
           ...document.querySelectorAll<HTMLElement>(`main [data-for-level~="${level}"]:not([data-for-level~="plain"][data-for-level~="technical"][data-for-level~="engineer"])`),
@@ -124,6 +121,13 @@ import './levels.css';
         ].filter((el) => el.offsetParent);
         for (const el of changed) { el.removeAttribute('data-level-new'); void el.offsetWidth; el.setAttribute('data-level-new', ''); }
         setTimeout(() => changed.forEach((el) => el.removeAttribute('data-level-new')), 1600);
+        // Labels on the picture that took a new word flash themselves (scene.ts); count them too.
+        const labels = document.querySelectorAll('main .j-label[data-level-new]').length;
+        const n = changed.length + labels;
+        const here = n ? `${n} ${n === 1 ? 'thing' : 'things'} changed on this page.` : 'This page reads the same at every level.';
+        said.textContent = `${levelInfo[level].label}. ${levelInfo[level].shows} ${here}`;
+        said.hidden = false;
+        timer = window.setTimeout(() => (said.hidden = true), 6500);
       });
     });
   });

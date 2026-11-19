@@ -2,7 +2,8 @@
 /*
   The top of a part overview (/journey/foundations/, /journey/agents/, /journey/week/): the three
   parts and the library, where this part picks up, what it builds, its lessons as small pictures
-  that play (each leads to its step further down this page), and where to start.
+  that play (each opens its lesson; the one whose overview step is on show is outlined), and where
+  to start.
 */
 import { parts, rungs } from '../../journey/rungs';
 import { url } from '../../lib/nav';
@@ -33,7 +34,7 @@ const first = mine[0]!;
   {part.recap && <p class="j-recap">{part.recap}</p>}
   <p class="j-builds">{part.blurb}</p>
   <ol class="j-strip" aria-label={`The ${mine.length} lessons of part ${active}`} data-count={mine.length}>
-    {mine.map((r) => <li><Thumb id={r.id} href={`#${r.id}`} /></li>)}
+    {mine.map((r) => <li><Thumb id={r.id} /></li>)}
   </ol>
   <a class="j-start" href={url(`journey/${first.id}/`)}>Start with {first.short}, lesson {first.n} <span aria-hidden="true">→</span></a>
 </div>
