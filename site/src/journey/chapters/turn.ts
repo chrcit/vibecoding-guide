@@ -1,8 +1,9 @@
-// Chapter 13: your turn. One made-up job with a fork in it: "Let the club pause a member". Should a
+// Lesson 17: your turn. One made-up job with a fork in it: "Let the club pause a member". Should a
 // paused member be hidden from the list, or greyed out? You meant greyed out. The reader plays you:
 // at each door the script stops and waits for a button, and if nobody presses it the picture stays
 // waiting, which is the lesson.
-import type { Chapter, Ctx } from '../chapter';
+import { byLevel, type Chapter, type Ctx, type Level } from '../chapter';
+import { STEP_NOTES } from '../notes';
 import type { Script } from '../scene';
 import { solo, lab } from '../presets';
 import { route, reverse, fileSpot, cardSpot, SPOT, type Label, type SceneState, type XY } from '../picture';
@@ -15,6 +16,18 @@ const base = (): SceneState => {
   return s;
 };
 const toTray = (): XY[] => route.agentToTray({ at: SPOT.tray, cards: [] });
+const note = (ctx: Ctx, step: string) => { const n = STEP_NOTES.turn?.[step]; if (n) ctx.model(n.part, n.text[ctx.level]); };
+/** Where the window stands, for a label on what just arrived in it. */
+const WINDOW_AT: [number, number, number] = [15, -15, 44];
+
+/** The plan, as the agent writes it: four numbered steps; step 3 is the guess. Shown on the page too. */
+export const PLAN: Record<Level, string[]> = {
+  plain: ['Add a “paused” setting to each member.', 'Add a Pause button.', 'Hide paused members from the list.', 'Add tests.'],
+  technical: ['Add paused: boolean to Member in members.ts.', 'Add a Pause button to MemberRow.tsx.', 'Filter paused members out of the list query.', 'Tests in members.test.ts; run tsc --noEmit and npm test.'],
+  engineer: ['Migration: members.paused, boolean, default false.', 'Pause action, treasurer only, checked on the server.', 'List query excludes paused members.', 'Tests for the query, the permission and the migration; tsc and npm test in CI.'],
+};
+const planCards = (mark3: 'wait' | 'ok' | 'bad') => [1, 2, 3, 4].map((i) => ({ id: `p${i}`, b: i === 3 && mark3 === 'bad' ? 'bad' as const : 'model' as const, mark: i === 3 ? mark3 : undefined }));
+const planLabels = (step3: string): Label[] => [...labels(), lab('card:p1', 'plan', 'left'), lab('card:p3', step3, 'right', 'wiki/plan-mode/')];
 
 // One readout for the chapter: the same four names on every step.
 interface Tally { turns: number; wrong: number; open: number; you: number }
@@ -92,7 +105,6 @@ async function once(ctx: Ctx, h: Script) {
 }
 
 // ----- plan: a door before the build -----
-const PLAN = 'Plan: 1 a paused flag. 2 a pause button. 3 hide paused members from the list. 4 tests. Go ahead?';
 async function plan(ctx: Ctx, h: Script, d: Door) {
   h.set((s) => { Object.assign(s, base()); });
   const t: Tally = { turns: 0, wrong: 0, open: 0, you: 0 };
@@ -102,17 +114,21 @@ async function plan(ctx: Ctx, h: Script, d: Door) {
   await h.wait(700);
   h.set((s) => { busy(s, false); s.agents[0]!.blocks!.push({ t: 'model', h: 1.4 }); });
   await h.send(route.agentToGate(), 'model', { ms: 360 });
-  h.set((s) => { s.gates![0]!.lamp = 'wait'; s.labels = [...labels().filter((l) => l.at !== 'gate'), lab('gate', 'the plan, waiting', 'right', 'wiki/plan-mode/')]; });
-  ctx.say('the model', PLAN);
+  h.set((s) => { s.gates![0]!.lamp = 'wait'; });
+  await h.send(toTray(), 'model', { ms: 380 });
+  h.set((s) => { s.tray!.cards = planCards('wait'); s.labels = [...planLabels('step 3: hide them').filter((l) => l.at !== 'gate'), lab('gate', 'waiting for you', 'top', 'wiki/plan-mode/')]; });
+  ctx.say('the model', `Plan: ${PLAN[ctx.level].map((x, i) => `${i + 1}. ${x}`).join(' ')} Go ahead?`);
   if (d.value !== undefined) await h.wait(1400);
   const answer = await d.wake;
   h.check();
   t.you++;
   show(ctx, t);
   const change = answer === 'change';
+  ctx.keep.plan = answer;
   ctx.say('you', change ? 'Step 3: keep them in the list, greyed out.' : 'Go ahead.');
+  h.set((s) => { s.tray!.cards = planCards(change ? 'ok' : 'bad'); s.labels = planLabels(change ? 'step 3: grey them out' : 'step 3: hide them'); });
   await h.send(reverse(route.gateToYou()), 'you', { ms: 380 });
-  h.set((s) => { s.gates![0]!.lamp = 'ok'; s.labels = labels(); });
+  h.set((s) => { s.gates![0]!.lamp = 'ok'; });
   await h.send(reverse(route.agentToGate()), change ? 'you' : 'model', { ms: 320 });
   h.set((s) => { s.gates![0]!.lamp = 'off'; if (change) s.agents[0]!.blocks!.push({ t: 'you', h: 1 }); });
   await work(ctx, h, t, 12, !change);
@@ -120,7 +136,7 @@ async function plan(ctx: Ctx, h: Script, d: Door) {
   await h.wait(700);
   if (!change) markFiles(h, 'bad');
   ctx.say(null, change
-    ? 'You read the plan once, before the build. All twelve turns went to what you meant.'
+    ? 'You changed step 3 before any file was touched. All twelve turns went to what you meant.'
     : 'You let step 3 through. Twelve turns built paused members hidden, and you meant greyed out.');
   finish(ctx);
 }
@@ -140,6 +156,7 @@ async function asking(ctx: Ctx, h: Script, d: Door) {
   let answered = false;
   const take = async () => {
     answered = true;
+    ctx.keep.answered = true;
     ctx.say('you', 'Greyed out.');
     t.you++;
     show(ctx, t);
@@ -173,7 +190,7 @@ async function asking(ctx: Ctx, h: Script, d: Door) {
 // ----- pin: a door on the result -----
 async function pin(ctx: Ctx, h: Script, d: Door) {
   h.set((s) => { Object.assign(s, base()); s.project!.files = ['ok', 'ok', 'ok', 'ok', '', '']; });
-  const t: Tally = { turns: 12, wrong: 0, open: 0, you: 1 };
+  const t: Tally = { turns: 0, wrong: 0, open: 0, you: 0 };
   show(ctx, t);
   await h.wait(300);
   await h.send(toTray(), 'tool', { ms: 380 });
@@ -189,7 +206,13 @@ async function pin(ctx: Ctx, h: Script, d: Door) {
     ctx.say('you', 'The badge looks off.');
     h.set((s) => { s.tray!.cards[0]!.mark = undefined; });
     await h.send(route.youToAgent(), 'you', { ms: 420 });
-    h.set((s) => { s.agents[0]!.blocks!.push({ t: 'you', h: 0.8 }); });
+    h.set((s) => { s.agents[0]!.blocks!.push({ t: 'you', h: 0.8 }); s.labels = [...labels(), lab('card:shot', 'screenshot', 'right', 'wiki/browser-check/'), lab(WINDOW_AT, 'in its window: five words', 'right')]; });
+    ctx.say(null, byLevel(ctx.level, {
+      plain: 'In its window: “The badge looks off.” Nothing says which badge.',
+      technical: 'In its window: “The badge looks off.” The screen has two badges, “paid” and “paused”.',
+      engineer: 'In its window: one sentence, no element and no coordinates. Two badges match.',
+    }));
+    await h.wait(1600);
     ctx.say('the model', 'Made the “paid” badge smaller.');
     await work(ctx, h, t, 3, true, [5]);
     await h.send(toTray(), 'tool', { ms: 360 });
@@ -203,7 +226,13 @@ async function pin(ctx: Ctx, h: Script, d: Door) {
     });
     await h.wait(1300);
     await h.send(reverse(toTray()), 'you', { ms: 520 });
-    h.set((s) => { s.tray!.cards = [{ id: 'shot', b: 'tool' }]; s.labels = [...labels(), lab('card:shot', 'screenshot', 'right', 'wiki/browser-check/')]; s.agents[0]!.blocks!.push({ t: 'you', h: 0.8 }); });
+    h.set((s) => { s.tray!.cards = [{ id: 'shot', b: 'tool' }]; s.labels = [...labels(), lab('card:shot', 'screenshot', 'right', 'wiki/browser-check/'), lab(WINDOW_AT, 'in its window: your pin and its place', 'right')]; s.agents[0]!.blocks!.push({ t: 'you', h: 2 }); });
+    ctx.say(null, byLevel(ctx.level, {
+      plain: 'In its window: your note, the screenshot, and the spot you pinned on it.',
+      technical: 'In its window: your note, the screenshot, and the element under the pin: the “paused” badge in MemberRow.',
+      engineer: 'In its window: note, screenshot, pin coordinates and the element under them (span.badge-paused in MemberRow). No search needed.',
+    }));
+    await h.wait(1800);
     ctx.say('the model', 'Your pin is on the pause badge in the member row. Moving it after the name.');
     await work(ctx, h, t, 2, false, [3]);
     await h.send(toTray(), 'tool', { ms: 360 });
@@ -272,12 +301,12 @@ export async function demo(ctx: Ctx, h: Script) {
   await h.wait(600);
   h.set((s) => { busy(s, false); });
   await h.send(route.agentToGate(), 'model', { ms: 340 });
-  h.set((s) => { s.gates![0]!.lamp = 'wait'; s.labels = [...labels().filter((l) => l.at !== 'gate'), lab('gate', 'the plan, waiting', 'right')]; });
+  h.set((s) => { s.gates![0]!.lamp = 'wait'; s.tray!.cards = planCards('wait'); s.labels = [...planLabels('step 3: hide them').filter((l) => l.at !== 'gate'), lab('gate', 'waiting for you', 'top')]; });
   ctx.say('the model', 'Step 3: hide paused members from the list. Go ahead?');
   await h.wait(1800);
   ctx.say('you', 'Step 3: keep them in the list, greyed out.');
   await h.send(reverse(route.gateToYou()), 'you', { ms: 380 });
-  h.set((s) => { s.gates![0]!.lamp = 'ok'; s.labels = labels(); });
+  h.set((s) => { s.gates![0]!.lamp = 'ok'; s.tray!.cards = planCards('ok'); s.labels = planLabels('step 3: grey them out'); });
   await h.send(reverse(route.agentToGate()), 'you', { ms: 320 });
   h.set((s) => { s.gates![0]!.lamp = 'off'; busy(s, true); });
   await h.wait(1400);
@@ -301,11 +330,12 @@ const answer = (ctx: Ctx, fn: Waiting, val: string) => {
 
 export const turn: Chapter = {
   steps: {
-    once: { scene: () => base(), enter: (ctx) => void ctx.scene.run((h) => once(ctx, h)) },
-    plan: { scene: () => base(), enter: (ctx) => start(ctx, plan) },
-    ask: { scene: () => base(), enter: (ctx) => start(ctx, asking) },
-    pin: { scene: () => { const s = base(); s.project!.files = ['ok', 'ok', 'ok', 'ok', '', '']; return s; }, enter: (ctx) => start(ctx, pin) },
-    build: { scene: () => base(), enter: (ctx) => void ctx.scene.run((h) => build(ctx, h)) },
+    once: { scene: () => base(), enter: (ctx) => { note(ctx, 'once'); void ctx.scene.run((h) => once(ctx, h)); } },
+    // A choice the reader made stays made: coming back to the step replays it with that answer.
+    plan: { scene: () => base(), enter: (ctx) => { note(ctx, 'plan'); start(ctx, plan, ctx.keep.plan); } },
+    ask: { scene: () => base(), enter: (ctx) => { note(ctx, 'ask'); start(ctx, asking, ctx.keep.answered ? 'greyed' : undefined); } },
+    pin: { scene: () => { const s = base(); s.project!.files = ['ok', 'ok', 'ok', 'ok', '', '']; return s; }, enter: (ctx) => { note(ctx, 'pin'); start(ctx, pin, ctx.keep.pin); } },
+    build: { scene: () => base(), enter: (ctx) => { note(ctx, 'build'); void ctx.scene.run((h) => build(ctx, h)); } },
   },
   actions: {
     plan: (ctx, val) => {
@@ -317,6 +347,7 @@ export const turn: Chapter = {
       answer(ctx, asking, 'greyed');
     },
     pin: (ctx, val) => {
+      ctx.keep.pin = val;
       ctx.say('you', val === 'type' ? 'The badge looks off.' : 'This badge sits on top of the name.');
       answer(ctx, pin, val);
     },
