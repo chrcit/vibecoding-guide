@@ -11,7 +11,7 @@ import Chevron from './Chevron.astro';
 import './levels.css';
 ---
 <div class="level-picker" data-level-picker>
-  <button class="level-picker-button" type="button" aria-expanded="false" aria-controls="level-panel">
+  <button class="level-picker-button" type="button" aria-expanded="false" aria-controls="level-panel" aria-label="Reading level" title="Reading level">
     <span class="level-sr">Reading level: </span>
     {LEVELS.map((id) => (
       <span class="level-current" data-when={id}><LevelGlyph level={id} /><span class="level-picker-label">{levelInfo[id].label}</span></span>
@@ -44,7 +44,12 @@ import './levels.css';
     const radios = [...panel.querySelectorAll<HTMLInputElement>('input[type="radio"]')];
     let pointerChoice = false;
 
-    const check = (level: Level) => radios.forEach((r) => (r.checked = r.value === level));
+    // The button is named in words at every width (on a phone it shows only the glyph).
+    const check = (level: Level) => {
+      radios.forEach((r) => (r.checked = r.value === level));
+      button.setAttribute('aria-label', `Reading level: ${levelInfo[level].label}. Change`);
+    };
+    check(getLevel());
 
     // Keep the panel inside the viewport whatever sits to the right of the button.
     const place = () => {
@@ -118,13 +123,18 @@ import './levels.css';
         const changed = [
           ...document.querySelectorAll<HTMLElement>(`main [data-for-level~="${level}"]:not([data-for-level~="plain"][data-for-level~="technical"][data-for-level~="engineer"])`),
           ...document.querySelectorAll<HTMLElement>('main .j-model:not([hidden])'),
-        ].filter((el) => el.offsetParent);
+        ].filter((el) => {
+          // Only what the reader can see now: a count of things changed off screen means nothing.
+          if (!el.offsetParent) return false;
+          const r = el.getBoundingClientRect();
+          return r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
+        });
         for (const el of changed) { el.removeAttribute('data-level-new'); void el.offsetWidth; el.setAttribute('data-level-new', ''); }
         setTimeout(() => changed.forEach((el) => el.removeAttribute('data-level-new')), 1600);
         // Labels on the picture that took a new word flash themselves (scene.ts); count them too.
         const labels = document.querySelectorAll('main .j-label[data-level-new]').length;
         const n = changed.length + labels;
-        const here = n ? `${n} ${n === 1 ? 'thing' : 'things'} changed on this page.` : 'This page reads the same at every level.';
+        const here = n ? `${n} ${n === 1 ? 'thing' : 'things'} on screen changed.` : 'Nothing on screen changes at this level.';
         said.textContent = `${levelInfo[level].label}. ${levelInfo[level].shows} ${here}`;
         said.hidden = false;
         timer = window.setTimeout(() => (said.hidden = true), 6500);

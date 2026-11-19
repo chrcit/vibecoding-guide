@@ -71,6 +71,16 @@ const base = (ctx: Ctx, o: Look = {}): SceneState => {
   return s;
 };
 
+/** Spend some of a model's allowance, and say on its label how much is left, so the drain shows. */
+function spend(s: SceneState, id: 'b' | 'r', amount: number) {
+  const m = s.meters?.find((x) => x.id === id);
+  if (!m) return;
+  m.level = Math.max(0, m.level - amount);
+  const labs = (s.labels ?? []).filter((l) => l.term === 'allowance');
+  const l = labs[id === 'b' ? 0 : 1];
+  if (l) l.text = `${(l.text ?? '').replace(/: \d+% left$/, '')}: ${Math.round(m.level * 100)}% left`;
+}
+
 // ---------- the readout ----------
 
 /** One readout for the lesson; every count only goes up within a run. */
@@ -107,12 +117,12 @@ async function build(ctx: Ctx, h: Script, t: Tally) {
 /** The builder takes findings back in and fixes them. */
 async function fix(ctx: Ctx, h: Script, found: number[], t: Tally, drain = 0, taste = false) {
   const n = names(ctx);
-  h.set((s) => { const a = s.agents[0]!; a.busy = true; for (const _ of found) a.blocks!.push({ t: taste ? 'model' : 'bad', h: 1.6 }); if (drain) s.meters!.find((m) => m.id === 'b')!.level -= drain; });
+  h.set((s) => { const a = s.agents[0]!; a.busy = true; for (const _ of found) a.blocks!.push({ t: taste ? 'model' : 'bad', h: 1.6 }); if (drain) spend(s, 'b', drain); });
   await h.wait(520);
   h.set((s) => { const a = s.agents[0]!; a.busy = false; a.blocks!.push({ t: 'tool', h: 2 }); s.tools!.on = null; });
   if (!taste) t.fixed += found.length;
   show(ctx, t);
-  ctx.say(n.b, taste ? 'Changed it.' : found.map((i) => FIXED[i]).join(' '));
+  if (!(taste && ctx.scene.speed >= 4)) ctx.say(n.b, taste ? 'Changed it.' : found.map((i) => FIXED[i]).join(' '));
   await h.wait(taste ? 500 : 800);
 }
 
@@ -129,13 +139,15 @@ async function sendAcross(ctx: Ctx, h: Script, extra: Kind[] = []) {
 /** The reviewer reads what it was sent and says what it found. */
 async function look(ctx: Ctx, h: Script, found: number[] | string[], t: Tally, o: { drain?: number; attack?: boolean } = {}) {
   const n = names(ctx);
-  h.set((s) => { const r = s.agents.find((a) => a.id === 'r0')!; r.busy = true; r.scan = true; r.lamp = 'work'; if (o.drain) s.meters!.find((m) => m.id === 'r')!.level -= o.drain; });
+  h.set((s) => { const r = s.agents.find((a) => a.id === 'r0')!; r.busy = true; r.scan = true; r.lamp = 'work'; if (o.drain) spend(s, 'r', o.drain); });
   await h.wait(1000);
   const real = found.length > 0 && typeof found[0] === 'number';
   h.set((s) => { const r = s.agents.find((a) => a.id === 'r0')!; r.busy = false; r.scan = false; r.lamp = real ? 'bad' : found.length ? 'off' : 'ok'; r.blocks!.push({ t: real ? 'bad' : 'model', h: 1.6 }); });
   if (real) t.found += found.length; else t.taste += found.length;
   show(ctx, t);
   const lines = found.map((f) => (typeof f === 'number' ? FLAWS[f] + (o.attack ? ' ' + CHECKS[f] : '') : f));
+  // In the fast taste-only rounds the line under the picture keeps saying what is going on.
+  if (!real && found.length && ctx.scene.speed >= 4) return;
   ctx.say(n.r, !found.length ? 'Nothing found that breaks.' : !real ? lines.join(' ') : (found.length === 1 ? 'One problem. ' : `${found.length} problems. `) + lines.join(' '));
 }
 
@@ -198,7 +210,7 @@ async function rounds(ctx: Ctx, h: Script, o: RoundOpts = {}) {
   const n = names(ctx);
   h.set((s) => { Object.assign(s, base(ctx, { reviewer: true, meters: o.meters })); });
   const t = tally();
-  if (o.meters) h.set((s) => { s.meters!.find((m) => m.id === 'b')!.level -= 0.12; });
+  if (o.meters) h.set((s) => { spend(s, 'b', 0.12); spend(s, 'r', 0); });
   await build(ctx, h, t);
   if (o.polite || o.attack) {
     ctx.say('you', o.polite ? 'Review this.' : ATTACK);
@@ -212,8 +224,13 @@ async function rounds(ctx: Ctx, h: Script, o: RoundOpts = {}) {
     : ROUNDS;
   for (const found of plan) {
     const isTaste = typeof found[0] === 'string';
-    // Once only taste is left, the rounds run faster: the point is that they do not stop.
-    if (isTaste && !o.polite) ctx.scene.speed = 1.8;
+    // Once only taste is left, the rounds run fast and the point is said at once: they do not stop,
+    // and both allowances drain. The reader should not have to wait for round ten to get it.
+    if (isTaste && !o.polite && ctx.scene.speed < 4) {
+      ctx.scene.speed = 4.5;
+      ctx.say(null, `The real flaws are fixed. From here it finds only matters of taste, and with no rule it does not stop: watch both allowances drain.`);
+      await h.wait(1200);
+    }
     await sendAcross(ctx, h, o.handoff ? ['model', 'tool', 'model'] : []);
     t.rounds++;
     show(ctx, t);

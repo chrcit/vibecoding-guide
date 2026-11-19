@@ -17,19 +17,19 @@ import Term from '../../components/journey/Term.astro';
 
   <Step id="tests" title="Put a check in the way">
     <ForLevel is="plain">
-      <p>The gate is the <Term id="check" />: before it says done, the agent runs the app and clicks through it. Broken work goes back to the agent instead of on to you.</p>
+      <p>The posts between the agent and you are the <Term id="check" />: before it says done, the agent runs the app and clicks through it. Broken work goes back to the agent instead of on to you.</p>
       <More title="A prompt for this">
         <CopyPrompt compact title="Ask it to check before it says done">{`Before you tell me it is done:\n1. Start the app and click through what you changed.\n2. Tell me what you clicked and what you saw.\n3. If anything is wrong, fix it first.`}</CopyPrompt>
       </More>
     </ForLevel>
     <ForLevel is="technical">
-      <p>The gate is the <Term id="check" />: <code>tsc --noEmit &amp;&amp; npm test</code>, run by the agent before it reports. A red result goes back into its loop.</p>
+      <p>The posts between the agent and you are the <Term id="check" />: <code>tsc --noEmit &amp;&amp; npm test</code>, run by the agent before it reports. A red result goes back into its loop.</p>
       <More title="A prompt for this" level="technical">
         <CopyPrompt compact title="Done means green">{`Before reporting done:\n1. Run tsc --noEmit and npm test. Paste the last lines of each.\n2. Add a test that fails without your change.\n3. If the UI changed, run the browser check at 390 px and 1280 px.`}</CopyPrompt>
       </More>
     </ForLevel>
     <ForLevel is="engineer">
-      <p>The gate is the <Term id="check" />, one command the agent must run green before it reports: types and unit tests first, because they are fast and give the same answer every time.</p>
+      <p>The posts between the agent and you are the <Term id="check" />, one command the agent must run green before it reports: types and unit tests first, because they are fast and give the same answer every time.</p>
       <More title="One command" level="engineer">
         <pre class="j-code"><code>{`// package.json
 "scripts": {

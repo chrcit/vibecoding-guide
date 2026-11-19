@@ -28,7 +28,11 @@ import Term from '../../components/journey/Term.astro';
         <pre class="j-code"><code>{`git worktree add ../club-search -b search   # a copy on its own branch
 cd ../club-search && claude                 # one agent per copy
 git switch main && git merge search          # when its tests pass
-git worktree remove ../club-search`}</code></pre>
+git worktree remove ../club-search
+git branch -d search                          # the branch outlives the copy`}</code></pre>
+      </ForLevel>
+      <ForLevel is="engineer">
+        <p>Where it breaks: one branch can be checked out in one worktree only; each copy needs its own install and its own dev-server port; two copies that touch the same file still conflict at the merge, so split tasks by file.</p>
       </ForLevel>
       <p><Fact id="harnesses.claudeCode.features" show="claim" /></p>
       <p><Fact id="harnesses.claudeCode.subagentWorktree" show="claim" /></p>
