@@ -1,11 +1,83 @@
 ---
 import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
+import More from '../../components/journey/More.astro';
 import Next from '../../components/journey/Next.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import { models, lineup } from '../../data/models';
+import { plans } from '../../data/plans';
+
+// The three models the reader can pick, with their list prices per million tokens. The job and its
+// token counts are made up in the script; every price comes from here.
+const picks = ['claude-opus-5-5', 'claude-fable-5-2', 'gpt-6-2-sol'] as const;
+const short = (name: string) => name.replace(/^Claude /, '');
+const priced = Object.fromEntries(picks.map((id) => {
+  const p = models[id].price as { input: { value: number }; output: { value: number }; cacheRead?: { value: number } };
+  return [id, { name: short(models[id].name), input: p.input.value, output: p.output.value, cacheRead: p.cacheRead?.value }];
+}));
+const data = { models: priced, cacheWrite: lineup.cacheWrite5m.value, proPrice: plans.claude.pro.price.value };
+const priceIds = picks.flatMap((id) => ['input', 'output', ...('cacheRead' in models[id].price ? ['cacheRead'] : [])].map((f) => `models.${id}.price.${f}`));
+const ids = [
+  ...priceIds, 'lineup.cacheWrite5m', 'lineup.cacheBreakers', 'lineup.claudeCodeCacheTtl', 'plans.claude.pro.price',
+  'plans.claude.limits.wholeConversation', 'plans.claude.limits.whatUsageMeans', 'plans.claude.limits.fiveHour', 'plans.claude.limits.weekly',
+  'plans.claude.limits.sharedAcrossModels', 'plans.claude.limits.usageCredits', 'plans.claude.limits.subagentsDraw',
+];
 ---
-<Journey chapter="meter" first="first" title="What it draws from" description="Every turn an agent takes is counted in tokens. A plan gives you an allowance that drains and refills; the API sends a bill per token.">
-  <Step id="first" title="What it draws from">
-    <p>This chapter is being built.</p>
-    <Next from="meter" />
+<Journey chapter="meter" first="turn" data={data} title="What it draws from" description="Every turn an agent takes is counted in tokens. A plan gives you an allowance that drains and refills; the API sends a bill per token.">
+  <Step id="turn" title="Every turn is counted">
+    <p>Each turn the model reads its whole window again and writes a little. A made-up job: the date fix from chapter 2.</p>
   </Step>
+  <Step id="api" title="On the API, every token is on a bill">
+    <p>The same job at real prices. A coin is five cents.</p>
+    <div class="pick">
+      {picks.map((id, i) => (
+        <button type="button" data-do="model" data-val={id} data-default={i === 0 ? '' : undefined} aria-pressed={i === 0 ? 'true' : 'false'}>{priced[id]!.name}</button>
+      ))}
+    </div>
+    <More title="The prices">
+      <dl>
+        {picks.map((id) => (
+          <div><dt>{priced[id]!.name}</dt><dd><Fact id={`models.${id}.price.input`} /> read, <Fact id={`models.${id}.price.output`} /> written, per million tokens</dd></div>
+        ))}
+      </dl>
+    </More>
+  </Step>
+  <Step id="cache" title="Reading the same thing again costs less" level="technical">
+    <p>What the window held last turn can come from a cache, at a fraction of the price. Change anything early in the window and it misses.</p>
+    <div class="pick">
+      <button type="button" data-do="cache" data-val="on" data-default aria-pressed="true">Cache on</button>
+      <button type="button" data-do="cache" data-val="off" aria-pressed="false">Cache off</button>
+      <button type="button" data-do="cache" data-val="break" aria-pressed="false">Change effort halfway</button>
+    </div>
+    <More title="What breaks it" level="technical">
+      <p>A cached read on {priced['claude-opus-5-5']!.name} costs <Fact id="models.claude-opus-5-5.price.cacheRead" /> a million. <Fact id="lineup.cacheBreakers" show="claim" /></p>
+    </More>
+  </Step>
+  <Step id="plan" title="On a plan the price is fixed and the amount is not">
+    <p>Each job drains the allowance; when it is empty the model stops until the limit resets. The drain here is made up: the real figure is <Fact id="plans.claude.limits.whatUsageMeans" />.</p>
+    <div class="row">
+      <button class="btn" type="button" data-do="another">Run another job</button>
+    </div>
+    <More title="The limits">
+      <p><Fact id="plans.claude.limits.fiveHour" show="claim" /> <Fact id="plans.claude.limits.weekly" show="claim" /> <Fact id="plans.claude.limits.usageCredits" show="claim" /></p>
+    </More>
+  </Step>
+  <Step id="many" title="Twenty agents draw from one tank">
+    <p>Every agent draws on the same plan, or adds to the same bill. The jobs are made up; the prices are real.</p>
+    <div class="controls">
+      <label class="control"><span>Agents <output>20</output></span>
+        <input type="range" min="1" max="20" step="1" value="20" data-bind="n" />
+      </label>
+    </div>
+    <div class="pick">
+      <button type="button" data-do="mode" data-val="plan" data-default aria-pressed="true">A plan</button>
+      <button type="button" data-do="mode" data-val="api" aria-pressed="false">The API</button>
+    </div>
+    <Next from="meter" more={[{ href: 'explain/plans-and-api/', text: 'Plans against the API' }, { href: 'models/', text: 'The models and their prices' }]} />
+  </Step>
+  <Fragment slot="foot">
+    <p>The job, its token counts and how fast it drains a plan are made up. The prices are list prices per million tokens; with the cache, new tokens are written at <Fact id="lineup.cacheWrite5m" /> the input price. A coin is five cents for one job and a dollar for the fleet.</p>
+    <Verified ids={ids} />
+  </Fragment>
 </Journey>
