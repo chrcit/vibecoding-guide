@@ -2,7 +2,7 @@
 // turn: every turn reads the whole window again and writes a little. On the API those tokens are
 // multiplied by the real prices the page hands over; on a plan they drain an allowance at a made-up
 // rate, because the provider publishes no figure for it.
-import type { Chapter, Ctx } from '../chapter';
+import { byLevel, type Chapter, type Ctx, type Level } from '../chapter';
 import type { Script } from '../scene';
 import { solo, team, lab } from '../presets';
 import { route, reverse, SPOT, BUS_Y, type Kind, type SceneState, type Meter } from '../picture';
@@ -18,16 +18,124 @@ const cached = (ctx: Ctx): Price => { const p = price(ctx); return p?.cacheRead 
 
 const START = 18; // instructions and tool definitions, in the window before you say anything
 const ASK = 0.3;
-interface Turn { says: string; tool?: string; file?: number; w: number; r: number; kind?: Kind; result?: string }
+interface Turn { says: Record<Level, string>; tool?: string; file?: number; w: number; r: number; kind?: Kind; result?: Record<Level, string> }
 const TURNS: Turn[] = [
-  { says: 'Search the project for “date”.', tool: 'search', file: 1, w: 0.3, r: 2, result: '2 files mention dates' },
-  { says: 'Read members.ts.', tool: 'read', file: 1, w: 0.2, r: 6, result: '84 lines of members.ts' },
-  { says: 'Change how the date is read.', tool: 'edit', file: 1, w: 0.9, r: 0.5, result: 'members.ts changed' },
-  { says: 'Run the tests.', tool: 'run', w: 0.15, r: 4, kind: 'bad', result: '1 of 12 tests fails' },
-  { says: 'Fix the day and month order.', tool: 'edit', file: 1, w: 0.6, r: 0.5, result: 'members.ts changed' },
-  { says: 'Run the tests again.', tool: 'run', w: 0.15, r: 2.5, result: '12 of 12 tests pass' },
-  { says: 'Fixed. The day and month were swapped. All 12 tests pass.', w: 0.4, r: 0 },
+  {
+    says: {
+      plain: 'Find where the member list formats dates.',
+      technical: 'Search the repo for date formatting helpers.',
+      engineer: 'Locate date parsing and formatting module boundaries.',
+    },
+    tool: 'search', file: 1, w: 0.3, r: 2,
+    result: {
+      plain: 'Found 2 files handling dates',
+      technical: '2 matches: members.ts, dates.test.ts',
+      engineer: '2 files: members.ts (UI + parser coupled), dates.test.ts',
+    },
+  },
+  {
+    says: {
+      plain: 'Open the member list file.',
+      technical: 'Read members.ts and its date parser.',
+      engineer: 'Inspect members.ts to verify input format and type contract.',
+    },
+    tool: 'read', file: 1, w: 0.2, r: 6,
+    result: {
+      plain: 'Read 84 lines of the member list',
+      technical: '84 lines of members.ts (6,000 tokens added to window)',
+      engineer: '84 lines read; inline string split instead of ISO parser',
+    },
+  },
+  {
+    says: {
+      plain: 'Fix how the date is shown.',
+      technical: 'Update parseDate() in members.ts.',
+      engineer: 'Extract typed parseMemberDate(iso: string) helper in members.ts.',
+    },
+    tool: 'edit', file: 1, w: 0.9, r: 0.5,
+    result: {
+      plain: 'Updated the member list',
+      technical: 'members.ts updated',
+      engineer: 'members.ts updated (pure parser separated from render)',
+    },
+  },
+  {
+    says: {
+      plain: 'Check whether the dates look right now.',
+      technical: 'Run tsc --noEmit and vitest on dates.test.ts.',
+      engineer: 'Run strict typecheck and unit test suite across date edge cases.',
+    },
+    tool: 'run', w: 0.15, r: 4, kind: 'bad',
+    result: {
+      plain: 'Check failed: 3 March still showed as 03/03 swapped',
+      technical: 'tsc passed; 1 of 12 unit tests fails (day/month swapped)',
+      engineer: 'tsc clean; 1/12 unit test fails on DD/MM vs MM/DD boundary',
+    },
+  },
+  {
+    says: {
+      plain: 'Swap the day and month into the right order.',
+      technical: 'Fix the day/month capture order in parseDate().',
+      engineer: 'Fix day/month destructuring and add explicit ISO guard.',
+    },
+    tool: 'edit', file: 1, w: 0.6, r: 0.5,
+    result: {
+      plain: 'Updated the member list again',
+      technical: 'members.ts updated',
+      engineer: 'members.ts updated',
+    },
+  },
+  {
+    says: {
+      plain: 'Check the dates again.',
+      technical: 'Re-run tsc --noEmit and all 12 unit tests.',
+      engineer: 'Re-run typecheck and full unit suite to verify no regressions.',
+    },
+    tool: 'run', w: 0.15, r: 2.5,
+    result: {
+      plain: 'All dates match (12 of 12 checks pass)',
+      technical: 'tsc clean; 12 of 12 unit tests pass',
+      engineer: 'tsc clean; 12/12 unit tests pass in 140 ms',
+    },
+  },
+  {
+    says: {
+      plain: 'Fixed. The member list now shows day then month, and all 12 checks pass.',
+      technical: 'Fixed. Swapped day/month in parseDate(); tsc clean and 12 of 12 unit tests pass.',
+      engineer: 'Fixed. Extracted typed date parser, resolved DD/MM bug, tsc + 12/12 unit tests green.',
+    },
+    w: 0.4, r: 0,
+  },
 ];
+
+const MODEL_NOTES: Record<'turn' | 'api' | 'cache' | 'plan' | 'many', Record<Level, [string, string]>> = {
+  turn: {
+    plain: ['Added to the model · The token counter:', 'Sits on the context window from step 3. Every back-and-forth step re-reads the entire conversation so far, which is why reading piles up much faster than writing.'],
+    technical: ['Added to the model · Token accounting:', 'Attaches to the context window from step 3. Every tool call—file reads, tsc output, unit test logs—stays in the window and is re-read as input tokens on every subsequent turn.'],
+    engineer: ['Added to the model · Quadratic input growth:', 'Each turn pays O(window) input tokens. Keeping modules focused and test logs concise directly shrinks the read footprint on every turn of the loop.'],
+  },
+  api: {
+    plain: ['Added to the model · The API meter:', 'Sits beside the model and prices every token directly. Switching models changes the bill per feature, even when the job takes the exact same steps.'],
+    technical: ['Added to the model · Pay-per-token API:', 'Multiplies every input read (files, typecheck + test logs) and output write by the model’s list price. Cheaper models lower cost per test-fix loop if they still pass verification.'],
+    engineer: ['Added to the model · API unit economics:', 'Maps token volume to real $/PR. Because input tokens dominate (80%+ of cost), model choice and context discipline matter far more than reply verbosity.'],
+  },
+  cache: {
+    plain: ['Added to the model · Prompt cache:', 'Remembers the part of the conversation the model already read on the previous turn, so repeat reads cost a fraction—unless you change settings mid-job.'],
+    technical: ['Added to the model · Prefix caching:', 'Reuses the unchanged top of the window (instructions, tool schemas, earlier file reads) at ~10% of input cost. Toggling effort or editing top-level instructions busts the cache.'],
+    engineer: ['Added to the model · Cache prefix stability:', 'Determines whether long verification loops stay cheap. Keep AGENTS.md, tool schemas, and effort level stable mid-thread so cache hits stay near 90% across test cycles.'],
+  },
+  plan: {
+    plain: ['Added to the model · The plan tank:', 'Replaces the coin stack with a fixed-price allowance that drains as features run and refills on a timer—so heavy bursts pause instead of running up a surprise bill.'],
+    technical: ['Added to the model · Subscription quota:', 'Draws every read, edit, typecheck, and test turn from a rolling five-hour and weekly cap. Predictable monthly cost, but long retry loops consume quota fast.'],
+    engineer: ['Added to the model · Fixed-cap vs metered runtime:', 'Plans trade burst throughput for cost predictability. Good for interactive single-thread engineering; metered API or hybrid routing is needed when quota pauses block CI or fleets.'],
+  },
+  many: {
+    plain: ['Added to the model · Shared fleet meter:', 'Connects every agent in the step 9 fleet to one tank or one bill. Twenty agents finishing features at once multiply how fast your allowance empties.'],
+    technical: ['Added to the model · Parallel token burn:', 'Each parallel worker carries its own context window, file reads, and unit-test runs—all billed to the same plan or API key. Concurrency scales cost linearly.'],
+    engineer: ['Added to the model · Fleet cost architecture:', 'Twenty concurrent worktrees amplify both throughput and token spend. Route routine typecheck/test loops to lighter models and reserve frontier models for architecture and review.'],
+  },
+};
+
 type Cache = 'off' | 'on' | 'break';
 /** What turn i reads and writes, and what it costs at a price. `break` misses the cache at turn 4. */
 function bill(p: Price, cache: Cache, cacheWrite: number) {
@@ -69,8 +177,8 @@ type Mode = 'none' | 'api' | 'plan';
 function show(ctx: Ctx, t: Tally, mode: Mode) {
   ctx.stat([
     ['turns', t.turns],
-    ['tokens read, all turns', tok(t.read)],
-    ['tokens written', tok(t.written)],
+    [ctx.level === 'plain' ? 'tokens read, all turns' : 'input tokens read', tok(t.read)],
+    [ctx.level === 'plain' ? 'tokens written' : 'output tokens', tok(t.written)],
     ['what it cost', mode === 'none' ? 'no meter yet' : mode === 'api' ? usd(t.usd) : `${Math.round(t.used * 100)}% of the allowance`],
   ]);
 }
@@ -97,15 +205,19 @@ const DRAIN = 0.27;
 interface JobOpts { mode: Mode; cache: Cache; p: Price; t: Tally; ms?: number; intro?: string }
 /** Play the job once. Returns false if the allowance ran out part-way. */
 async function job(ctx: Ctx, h: Script, o: JobOpts): Promise<boolean> {
-  const { scene } = ctx;
+  const { scene, level } = ctx;
   const cw: number = ctx.data.cacheWrite ?? 1;
   const turns = bill(o.p, o.cache, cw);
   const readAll = turns.reduce((n, t) => n + t.read, 0);
   const who = o.mode === 'none' ? 'model' : o.p.name;
   const ms = o.ms ?? 1;
   h.set((s) => { const a = s.agents[0]!; a.blocks = [{ t: 'rules', h: START }]; a.lamp = 'off'; s.project!.files = ['', '', '', '', '', '']; });
-  if (o.intro) { ctx.say(null, o.intro); show(ctx, o.t, o.mode); await h.wait(1500 * ms); }
-  ctx.say('you', 'The dates on the member list are wrong.');
+  if (o.intro) { ctx.say(null, o.intro); show(ctx, o.t, o.mode); await h.wait(1200 * ms); }
+  ctx.say('you', byLevel(level, {
+    plain: 'The dates on the member list are in the wrong order.',
+    technical: 'Fix the swapped day/month dates in members.ts and make sure tsc and the date unit tests pass.',
+    engineer: 'Fix the DD/MM parsing bug in members.ts, separate the parser from rendering, and verify with strict tsc + unit tests.',
+  }));
   show(ctx, o.t, o.mode);
   await h.send(route.youToAgent(), 'you', { ms: 420 * ms });
   h.set((s) => { s.agents[0]!.blocks!.push({ t: 'you', h: ASK }); s.agents[0]!.lamp = 'work'; });
@@ -114,10 +226,14 @@ async function job(ctx: Ctx, h: Script, o: JobOpts): Promise<boolean> {
     // The model reads its whole window, from the bottom up.
     h.set((s) => { const a = s.agents[0]!; a.busy = true; a.scan = true; });
     if (o.cache === 'break' && i === 3) {
-      ctx.say(null, 'Effort changed: the cache misses, and the whole window goes in at full price again.');
+      ctx.say(null, byLevel(level, {
+        plain: 'Settings changed mid-job: the cache misses, so the whole conversation is billed at full price again.',
+        technical: 'Effort changed at turn 4: prefix cache misses, and the full window is re-billed as uncached input.',
+        engineer: 'Prefix invalidated at turn 4 (effort change): full window written back to cache at cache-write rate.',
+      }));
       h.set((s) => { s.agents[0]!.lamp = 'bad'; });
     }
-    await h.wait(620 * ms);
+    await h.wait(560 * ms);
     if (o.mode === 'plan') {
       const left = (scene.state.meters![0]!.level) - (DRAIN * b.read) / readAll;
       if (left <= 0) {
@@ -133,19 +249,19 @@ async function job(ctx: Ctx, h: Script, o: JobOpts): Promise<boolean> {
     if (o.mode === 'api') h.set((s) => { s.meters![0]!.level = o.t.usd / COIN; });
     show(ctx, o.t, o.mode);
     h.set((s) => { const a = s.agents[0]!; a.scan = false; a.busy = false; a.lamp = 'work'; a.blocks!.push({ t: 'model', h: turn.w }); });
-    ctx.say(who, turn.says);
+    ctx.say(who, turn.says[level]);
     if (!turn.tool) break;
     const tools = scene.state.tools!, project = scene.state.project!;
-    await h.send(route.agentToTool(tools, turn.tool), 'model', { ms: 360 * ms });
+    await h.send(route.agentToTool(tools, turn.tool), 'model', { ms: 340 * ms });
     h.set((s) => { s.tools!.on = turn.tool!; });
     if (turn.file != null) {
-      await h.send(route.toolToFile(tools, turn.tool, project, turn.file).slice(1), 'model', { ms: 340 * ms });
+      await h.send(route.toolToFile(tools, turn.tool, project, turn.file).slice(1), 'model', { ms: 320 * ms });
       h.set((s) => { s.project!.files![turn.file!] = turn.tool === 'edit' ? 'edit' : 'read'; });
-    } else await h.wait(300 * ms);
-    await h.send(reverse(route.agentToTool(tools, turn.tool)), turn.kind ?? 'tool', { ms: 360 * ms });
+    } else await h.wait(280 * ms);
+    await h.send(reverse(route.agentToTool(tools, turn.tool)), turn.kind ?? 'tool', { ms: 340 * ms });
     h.set((s) => { s.tools!.on = null; s.agents[0]!.blocks!.push({ t: turn.kind ?? 'tool', h: turn.r }); });
-    ctx.say('tool', turn.result!);
-    await h.wait(260 * ms);
+    ctx.say('tool', turn.result![level]);
+    await h.wait(240 * ms);
   }
   h.set((s) => { s.agents[0]!.lamp = 'ok'; });
   await h.send(reverse(route.youToAgent()), 'model', { ms: 420 * ms });
@@ -156,25 +272,33 @@ const readShare = (p: Price) => { const b = bill(p, 'off', 1); const r = b.reduc
 
 // ---------- steps ----------
 
+function setModelNote(ctx: Ctx, key: keyof typeof MODEL_NOTES) {
+  const [part, text] = MODEL_NOTES[key][ctx.level];
+  ctx.model(part, text);
+}
+
 function playTurn(ctx: Ctx) {
+  setModelNote(ctx, 'turn');
   void ctx.scene.run(async (h) => {
     const t = zero();
     await job(ctx, h, { mode: 'none', cache: 'off', p: price(ctx), t });
-    ctx.say(null, `${t.turns} turns read ${tok(t.read)} tokens between them and wrote ${tok(t.written)}.`);
+    ctx.say(null, `${t.turns} turns read ${tok(t.read)} input tokens between them and wrote ${tok(t.written)} output tokens.`);
   });
 }
 
 function playApi(ctx: Ctx, intro?: string) {
+  setModelNote(ctx, 'api');
   const p = price(ctx);
   void ctx.scene.run(async (h) => {
     h.set((s) => { Object.assign(s, base(ctx, 'api', p.name)); });
     const t = zero();
-    await job(ctx, h, { mode: 'api', cache: 'off', p, t, intro });
-    ctx.say(null, `${t.turns} turns at ${p.name}’s prices: ${usd(t.usd)}. ${readShare(p)}% of that is reading.`);
+    await job(ctx, h, { mode: 'api', cache: 'off', p, t, intro, ms: intro ? 0.85 : 1 });
+    ctx.say(null, `Same ${t.turns}-turn date fix at ${p.name}’s prices: ${usd(t.usd)} (${readShare(p)}% is input reading).`);
   });
 }
 
 function playCache(ctx: Ctx, intro?: string) {
+  setModelNote(ctx, 'cache');
   const p = cached(ctx), cache: Cache = ctx.mem.cache ?? 'on', cw: number = ctx.data.cacheWrite ?? 1;
   void ctx.scene.run(async (h) => {
     h.set((s) => { Object.assign(s, base(ctx, 'api', p.name)); });
@@ -183,11 +307,12 @@ function playCache(ctx: Ctx, intro?: string) {
     const off = usd(jobCost(p, 'off', cw)), on = usd(jobCost(p, 'on', cw));
     ctx.say(null, cache === 'off' ? `No cache: ${off}. The same job with the cache: ${on}.`
       : cache === 'on' ? `With the cache: ${on}. Without it: ${off}.`
-      : `One miss at turn four: ${usd(t.usd)}, against ${on} with no miss and ${off} with no cache.`);
+      : `One cache miss at turn 4: ${usd(t.usd)}, against ${on} with no miss and ${off} with no cache.`);
   });
 }
 
 function playPlan(ctx: Ctx, again = false) {
+  setModelNote(ctx, 'plan');
   const p = price(ctx, MODEL_IDS[0]);
   const fee: number | undefined = ctx.data.proPrice;
   void ctx.scene.run(async (h) => {
@@ -222,6 +347,7 @@ const fleet = (n: number, mode: 'plan' | 'api'): SceneState => {
   return s;
 };
 function playMany(ctx: Ctx) {
+  setModelNote(ctx, 'many');
   const n: number = ctx.mem.n ?? 20, mode: 'plan' | 'api' = ctx.mem.mode ?? 'plan';
   const p = cached(ctx), cw: number = ctx.data.cacheWrite ?? 1;
   const turns = bill(p, 'on', cw);
@@ -278,6 +404,7 @@ function playMany(ctx: Ctx) {
 
 /** One short loop of this chapter, for the part-two overview: a job drains the last of a plan. */
 export async function demo(ctx: Ctx, h: Script) {
+  setModelNote(ctx, 'plan');
   const p: Price = price(ctx, MODEL_IDS[0]) ?? { name: 'the model', input: 0, output: 0 };
   h.set((s) => { Object.assign(s, base(ctx, 'plan', p.name)); s.meters![0]!.level = 0.42; });
   const t = zero();
@@ -299,12 +426,12 @@ export const meter: Chapter = {
     model: (ctx, val) => {
       ctx.mem.model = val;
       const p = price(ctx);
-      playApi(ctx, `${p.name}: $${p.input} per million tokens read, $${p.output} per million written.`);
+      playApi(ctx, `${p.name}: $${p.input} per million input tokens, $${p.output} per million output tokens.`);
     },
     cache: (ctx, val) => {
       ctx.mem.cache = val as Cache;
       const p = cached(ctx);
-      playCache(ctx, val === 'off' ? `No cache: every token read costs $${p.input} a million.` : val === 'on' ? `With the cache: what was read before costs $${p.cacheRead} a million.` : 'This time you change the effort level halfway through.');
+      playCache(ctx, val === 'off' ? `No cache: every input token costs $${p.input} a million.` : val === 'on' ? `With the cache: repeated input costs $${p.cacheRead} a million.` : 'This time you change the effort level halfway through.');
     },
     another: (ctx) => {
       if (!ctx.mem.t) { playPlan(ctx); return; }

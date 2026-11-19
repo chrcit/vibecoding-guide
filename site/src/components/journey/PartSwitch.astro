@@ -1,0 +1,26 @@
+---
+/*
+  Part switcher bar shown at the top of Guide overview pages (/, /journey/foundations/,
+  /journey/agents/, /journey/week/) so readers can jump fluidly between all 3 parts or
+  open the full Concept & Lesson Library.
+*/
+import { parts } from '../../journey/rungs';
+import { url } from '../../lib/nav';
+
+interface Props {
+  active: 1 | 2 | 3;
+}
+const { active } = Astro.props;
+---
+<nav class="j-parts" aria-label="Guide parts">
+  {parts.map((p) => (
+    <a class="j-part-card" href={url(p.href)} aria-current={p.n === active ? 'page' : undefined}>
+      <span class="j-part-meta">Part {p.n} · Steps {p.range}</span>
+      <strong>{p.title}</strong>
+    </a>
+  ))}
+  <a class="j-part-card j-part-lib" href={url('library/')}>
+    <span class="j-part-meta">Fluid browser</span>
+    <strong>Concept &amp; Lesson Library →</strong>
+  </a>
+</nav>

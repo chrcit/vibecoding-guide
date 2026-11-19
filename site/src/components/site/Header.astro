@@ -14,7 +14,7 @@ import LevelPicker from '../level/LevelPicker.astro';
 interface Props { section?: SectionId; progress?: boolean }
 const { section, progress = false } = Astro.props;
 const items = sections.filter((s) => s.ready);
-const many = items.length > 3;
+const many = items.length > 4;
 ---
 <header class="topbar" data-topbar data-many={many ? '' : undefined}>
   <div class="bar">

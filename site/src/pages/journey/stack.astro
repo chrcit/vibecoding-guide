@@ -1,0 +1,88 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import Step from '../../components/journey/Step.astro';
+import Next from '../../components/journey/Next.astro';
+import More from '../../components/journey/More.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
+import { url } from '../../lib/nav';
+---
+<Journey
+  chapter="stack"
+  first="git"
+  title="Git, GitHub and the cloud"
+  description="The easy bridge into real software foundations: Git as unlimited undo, GitHub and branches, static vs dynamic cloud hosting, and choosing server specs."
+>
+  <Step id="git" title="Git: your unlimited undo button">
+    <ForLevel is="plain">
+      <p>Before you ask an agent to make a big change, take a snapshot—called a <strong>commit</strong>. If the new version looks worse or breaks something, you jump straight back in one second. Try it:</p>
+    </ForLevel>
+    <ForLevel is="technical">
+      <p>Think of <code>git commit</code> as a checkpoint before every agent turn. Clean commits make <code>git diff</code> readable and let you revert broken edits instantly without untangling files by hand.</p>
+    </ForLevel>
+    <ForLevel is="engineer">
+      <p>Version control is the transaction log that makes autonomous agents safe: isolate every logical change on a clean HEAD, inspect diffs, and use <code>git bisect</code> or revert whenever verification fails.</p>
+    </ForLevel>
+    <div class="pick" role="group" aria-label="Git action">
+      <button type="button" data-do="git" data-val="break" data-default>Agent breaks layout</button>
+      <button type="button" data-do="git" data-val="undo">Undo to last commit</button>
+    </div>
+  </Step>
+
+  <Step id="github" title="GitHub and branches">
+    <ForLevel is="plain">
+      <p><strong>Git</strong> lives on your computer. <strong>GitHub</strong> is the safe online copy of your project. A <strong>branch</strong> is a side copy where an agent can build a new feature without touching the live version until you say it looks good.</p>
+    </ForLevel>
+    <ForLevel is="technical">
+      <p>Push feature branches to GitHub so automated checks (typecheck + unit tests) and preview links run on every <a href={url('wiki/pull-request/')} data-side>pull request</a> before anything merges into <code>main</code>.</p>
+    </ForLevel>
+    <ForLevel is="engineer">
+      <p>Enforce branch protection on <code>main</code>, require passing CI checks before merge, and map one agent task to one branch/worktree so review and rollback remain atomic.</p>
+    </ForLevel>
+  </Step>
+
+  <Step id="hosting" title="Static vs dynamic cloud hosting">
+    <p>When you are ready to put your app on the internet so anyone can open a link, you choose between two worlds. Toggle them:</p>
+    <div class="pick" role="group" aria-label="Hosting type">
+      <button type="button" data-do="hosting" data-val="static" data-default>Static site</button>
+      <button type="button" data-do="hosting" data-val="dynamic">Dynamic server + database</button>
+    </div>
+    <ForLevel is="plain">
+      <p><strong>Static hosting</strong> (like GitHub Pages or Cloudflare Pages) serves ready-made pages straight from a global network—often free, super fast, and nothing to break. Pick <strong>dynamic hosting</strong> only when users need logins, accounts, payments or shared saved data.</p>
+    </ForLevel>
+    <ForLevel is="technical">
+      <p>Static sites deploy pre-built HTML/CSS/JS bundles to a CDN with zero backend runtime. Dynamic hosting runs your backend server (Node, Python, Go), connects to a persistent database (Postgres, SQLite) and stores private API keys in environment variables.</p>
+    </ForLevel>
+    <ForLevel is="engineer">
+      <p>Default to static/edge-rendered architectures unless server-side authorization, durable relational state or secret-bearing third-party calls genuinely demand a stateful backend—every extra moving part multiplies maintenance and agent verification complexity.</p>
+    </ForLevel>
+    <More title="Frontend, backend, auth & non-negotiable web rules">
+      <dl class="j-defs">
+        <dt><a href={url('wiki/frontend/')} data-side>Frontend</a> vs <a href={url('wiki/backend/')} data-side>backend</a></dt>
+        <dd>The frontend runs in the visitor’s browser (anyone can inspect it). The backend runs on your server where private logic and database writes live.</dd>
+        <dt><a href={url('wiki/authentication/')} data-side>Auth</a> &amp; <a href={url('wiki/authorization/')} data-side>permissions</a></dt>
+        <dd>Authentication checks <em>who</em> you are; authorization checks <em>what</em> you may touch—always enforce both on the server, never only by hiding a button.</dd>
+        <dt><a href={url('wiki/secrets/')} data-side>Secrets</a> &amp; <a href={url('wiki/input-validation/')} data-side>validation</a></dt>
+        <dd>Keep API keys in <code>.env</code> (listed in <code>.gitignore</code>), validate every user input on the server, and check mobile layout + <a href={url('wiki/accessibility/')} data-side>accessibility</a> before shipping.</dd>
+      </dl>
+    </More>
+  </Step>
+
+  <Step id="specs" title="Servers and cloud specs: don’t overbuy on day one">
+    <p>Cloud dashboards throw dozens of machine sizes at you. Compare the three real tiers most projects ever need:</p>
+    <div class="pick" role="group" aria-label="Server size tier">
+      <button type="button" data-do="spec" data-val="hobby" data-default>Starter / Free</button>
+      <button type="button" data-do="spec" data-val="small">Small always-on box</button>
+      <button type="button" data-do="spec" data-val="scaled">Multi-instance cloud</button>
+    </div>
+    <ForLevel is="plain">
+      <p>Start on the free or $5 tier while you build and share with friends. A modest $10–$20/month cloud box handles far more real users than most people expect.</p>
+    </ForLevel>
+    <ForLevel is="technical">
+      <p>A single 1–2 vCPU, 2 GB RAM server plus managed Postgres (with daily backups) comfortably serves thousands of daily users. Add staging environments, read replicas and worker queues only when measured traffic demands them.</p>
+    </ForLevel>
+    <ForLevel is="engineer">
+      <p>Keep compute stateless from day one (object storage for uploads, managed DB for state, env vars for config) so you can start on a tiny single node and scale vertically or horizontally without re-architecting.</p>
+    </ForLevel>
+    <Next from="stack" more={[{ href: 'wiki/version-control/', text: 'Version control', side: true }, { href: 'wiki/how-the-web-works/', text: 'How the web works', side: true }, { href: 'wiki/deployment/', text: 'Deployment', side: true }]} />
+  </Step>
+</Journey>

@@ -496,7 +496,7 @@ export function picture(s: SceneState, frame: Frame, prev?: SceneState): Picture
     if (!p) continue;
     const [x, y] = k.iso(p, P);
     labels.push({
-      key: (typeof lab.at === 'string' ? lab.at : lab.at.join(',')) + '|' + lab.text,
+      key: (typeof lab.at === 'string' ? lab.at : lab.at.join(',')) + '|' + (lab.side ? 'a' : 's'),
       text: lab.text, place: lab.place ?? 'top', side: lab.side,
       x: x * cam.s + cam.tx, y: y * cam.s + cam.ty,
     });

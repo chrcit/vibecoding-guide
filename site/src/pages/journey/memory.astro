@@ -3,18 +3,27 @@ import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
 import Next from '../../components/journey/Next.astro';
 import More from '../../components/journey/More.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
 import Fact from '../../components/data/Fact.astro';
 import { url } from '../../lib/nav';
 ---
-<Journey chapter="memory" first="gone" title="Write it down" description="The window is emptied between sessions. A file in the project is loaded at the start of every one.">
+<Journey chapter="memory" first="gone" title="Write it down" description="The window is emptied between sessions. A short instruction file in the project is loaded at the start of every one.">
   <Step id="gone" title="The window does not outlive the session">
-    <p>A new session starts with <a href={url('journey/chat/')}>the empty window from step 1</a>. Whatever the agent worked out yesterday went with yesterday’s window.</p>
+    <p>A new session starts with <a href={url('journey/chat/')}>an empty window</a>. That clears away <a href={url('journey/window/#rot')}>context rot</a>—but anything the agent figured out yesterday disappears too unless you wrote it down.</p>
   </Step>
-  <Step id="file" title="A file does">
-    <p>AGENTS.md is a plain file in your project. The harness loads it into the window before your first word, every session.</p>
+  <Step id="file" title="A short file in your project does">
+    <ForLevel is="plain">
+      <p><code>AGENTS.md</code> is a plain text file in your project folder. The agent reads it automatically before your first message—put your style, date format and plain rules there once.</p>
+    </ForLevel>
+    <ForLevel is="technical">
+      <p><code>AGENTS.md</code> loads into every new session before your prompt. Put your package manager (<code>pnpm</code>), exact check commands (<code>tsc --noEmit</code>, <code>vitest run</code>), and folder layout there so the agent never guesses.</p>
+    </ForLevel>
+    <ForLevel is="engineer">
+      <p>Treat <code>AGENTS.md</code> as the architectural preamble for every fresh context: record stack decisions, module boundaries, invariants, verification scripts and forbidden shortcuts—never walls of tutorial prose.</p>
+    </ForLevel>
     <div class="pick">
-      <button type="button" data-do="session" data-val="with" data-default aria-pressed="true">With the file</button>
+      <button type="button" data-do="session" data-val="with" data-default aria-pressed="true">With AGENTS.md</button>
       <button type="button" data-do="session" data-val="without" aria-pressed="false">Without</button>
     </div>
     <More title="Which file each tool reads">
@@ -22,18 +31,28 @@ import { url } from '../../lib/nav';
       <p><Fact id="harnesses.codex.contextFile" show="claim" /></p>
     </More>
   </Step>
-  <Step id="grow" title="Have it write the rule down">
-    <p>When it gets something wrong, tell it to add the rule. Then press again, and again.</p>
+  <Step id="grow" title="Keep it crisp—add a rule only when it matters">
+    <p>When the agent repeats a mistake, tell it to add one short rule. Press the button several times to see what happens if the file grows bloated:</p>
     <div class="row"><button class="btn" type="button" data-do="teach">Add a rule</button></div>
-    <More title="A prompt for this">
-      <CopyPrompt compact title="Have the agent write the rule down">{`You just wrote the date as month/day. This project uses day.month.year everywhere.
-Add one line to AGENTS.md so this does not happen again: what to do, and why.
-Show me the line before you save it.`}</CopyPrompt>
-    </More>
+    <ForLevel is="plain">
+      <More title="A prompt for this">
+        <CopyPrompt compact title="Add a plain rule to AGENTS.md">{`You wrote the date as month/day. This project uses day.month.year everywhere.\nAdd one short line to AGENTS.md so every future session knows. Show me the line first.`}</CopyPrompt>
+      </More>
+    </ForLevel>
+    <ForLevel is="technical">
+      <More title="Starter AGENTS.md for tests & types">
+        <CopyPrompt compact title="Technical AGENTS.md skeleton">{`# Project rules\n- Package manager: pnpm (never npm).\n- Before reporting done, run: pnpm tsc --noEmit && pnpm test.\n- Add a unit test for every bug fix and pure logic change.`}</CopyPrompt>
+      </More>
+    </ForLevel>
+    <ForLevel is="engineer">
+      <More title="Starter AGENTS.md for architecture & stack">
+        <CopyPrompt compact title="Engineer AGENTS.md skeleton">{`# Architecture & verification\n- Stack: strict TypeScript, Vite, Vitest. Zero unapproved runtime deps.\n- Boundaries: pure domain logic in src/domain/ (no DOM or DB imports); UI reads via typed selectors.\n- Gate: pnpm verify (tsc --noEmit && vitest run && lint) must pass before any commit or PR.`}</CopyPrompt>
+      </More>
+    </ForLevel>
   </Step>
-  <Step id="skills" title="Skills wait on the shelf">
-    <p>A skill is a longer instruction file. Only its name is loaded until a job needs it.</p>
+  <Step id="skills" title="Skills wait on the shelf until needed">
+    <p>A <a href={url('wiki/skill/')} data-side>skill</a> is a specialist checklist (UI polish, security audit, PDF export). Only its name and one-line trigger sit in the window—the full playbook loads only on the job that needs it.</p>
     <div class="row"><button class="btn" type="button" data-do="skill">Ask for a PDF</button></div>
-    <Next from="memory" more={[{ href: 'explain/skills/', text: 'Skills' }, { href: 'explain/connectors/', text: 'Connectors' }]} />
+    <Next from="memory" more={[{ href: 'wiki/instruction-file/', text: 'Instruction files', side: true }, { href: 'library/', text: 'Browse starter skills in the Library' }]} />
   </Step>
 </Journey>

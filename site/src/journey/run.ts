@@ -1,8 +1,10 @@
 // Wires a journey page together: the picture, the steps that scroll past it, and their controls.
 import { Scene } from './scene';
 import { chapters } from './chapters';
+import { STEP_NOTES } from './notes';
 import type { Ctx } from './chapter';
 import type { Kind } from './picture';
+import { getLevel } from '../lib/levels';
 
 const KIND_NAMES: Record<Kind, string> = { rules: 'instructions', you: 'you', model: 'the model', tool: 'tool results', sum: 'summary', bad: 'problem' };
 const KIND_ORDER: Kind[] = ['rules', 'you', 'model', 'tool', 'sum', 'bad'];
@@ -14,17 +16,24 @@ export function boot(root: HTMLElement) {
   const scene = new Scene(stage);
   scene.base = root.dataset.base ?? '/';
   root.setAttribute('data-ready', '');
-  for (const d of root.querySelectorAll<HTMLDetailsElement>('details[data-open-for]')) {
-    if ((d.dataset.openFor ?? '').split(' ').includes(document.documentElement.dataset.level ?? 'plain')) d.open = true;
-  }
+  const syncDetails = () => {
+    const level = getLevel();
+    for (const d of root.querySelectorAll<HTMLDetailsElement>('details[data-open-for]')) {
+      d.open = (d.dataset.openFor ?? '').split(' ').includes(level);
+    }
+  };
+  syncDetails();
   const sayEl = root.querySelector<HTMLElement>('.j-say')!;
   const statEl = root.querySelector<HTMLElement>('.j-stats')!;
+  const modelEl = root.querySelector<HTMLElement>('.j-model');
   const keyEl = root.querySelector<HTMLElement>('.j-key')!;
   const steps = [...root.querySelectorAll<HTMLElement>('[data-step]')];
   const dataEl = root.querySelector<HTMLScriptElement>('script[data-journey-data]');
+  const isOverview = root.dataset.chapter === 'foundations' || root.dataset.chapter === 'whole' || root.dataset.chapter === 'week';
 
   const ctx: Ctx = {
     scene,
+    level: getLevel(),
     mem: {},
     keep: {},
     data: dataEl ? JSON.parse(dataEl.textContent || '{}') : {},
@@ -32,6 +41,14 @@ export function boot(root: HTMLElement) {
       sayEl.replaceChildren();
       if (who) { const b = document.createElement('b'); b.textContent = who; sayEl.append(b, ' '); }
       sayEl.append(text);
+    },
+    model(part, text) {
+      if (!modelEl) return;
+      if (!part && !text) { modelEl.replaceChildren(); modelEl.hidden = true; return; }
+      modelEl.replaceChildren();
+      if (part) { const b = document.createElement('b'); b.textContent = part; modelEl.append(b, ' '); }
+      modelEl.append(text);
+      modelEl.hidden = false;
     },
     stat(pairs) {
       statEl.replaceChildren(...pairs.map(([name, value]) => {
@@ -62,19 +79,25 @@ export function boot(root: HTMLElement) {
     if (!def) return;
     scene.stop();
     scene.speed = 1;
+    ctx.level = getLevel();
     ctx.mem = {};
     ctx.say(null, '');
+    const note = STEP_NOTES[name]?.[el.dataset.step!];
+    if (note) ctx.model(note.part, note.text[ctx.level]);
+    else ctx.model('', '');
     ctx.stat([]);
     for (const b of el.querySelectorAll<HTMLElement>('.pick[data-multi] button')) b.setAttribute('aria-pressed', String(b.hasAttribute('data-default')));
     for (const b of el.querySelectorAll<HTMLElement>('[data-default]')) pressOnly(b);
     scene.set(def.scene(ctx), instant);
     def.enter?.(ctx);
-    root.querySelectorAll<HTMLElement>('[data-rung-link]').forEach((a) => {
-      const here = a.dataset.rungLink === el.dataset.step;
-      a.toggleAttribute('data-here', here);
-      const list = a.closest('ol');
-      if (here && list && list.scrollWidth > list.clientWidth) list.scrollLeft = a.offsetLeft - list.offsetLeft - (list.clientWidth - a.offsetWidth) / 2;
-    });
+    if (isOverview) {
+      root.querySelectorAll<HTMLElement>('[data-rung-link]').forEach((a) => {
+        const here = a.dataset.rungLink === el.dataset.step;
+        a.toggleAttribute('data-here', here);
+        const list = a.closest('ol');
+        if (here && list && list.scrollWidth > list.clientWidth) list.scrollLeft = a.offsetLeft - list.offsetLeft - (list.clientWidth - a.offsetWidth) / 2;
+      });
+    }
   }
 
   // The last step whose top has passed the reading line is the one on show.
@@ -94,7 +117,12 @@ export function boot(root: HTMLElement) {
   const onScroll = () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; pick(); }); };
   addEventListener('scroll', onScroll, { passive: true });
   addEventListener('resize', onScroll);
-  document.addEventListener('acg:level', onScroll);
+  document.addEventListener('acg:level', () => {
+    ctx.level = getLevel();
+    syncDetails();
+    if (current) { const el = current; current = null; activate(el, true); }
+    else onScroll();
+  });
   pick();
 
   function pressOnly(btn: HTMLElement) {

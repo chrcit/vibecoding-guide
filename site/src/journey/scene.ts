@@ -135,6 +135,9 @@ export class Scene {
         el.style.left = `${(l.x / this.frame.w) * 100}%`;
         el.style.top = `${(l.y / this.frame.h) * 100}%`;
         void el.offsetWidth;
+      } else {
+        if (el.textContent !== l.text) el.textContent = l.text;
+        if (l.side) (el as HTMLAnchorElement).href = this.base + l.side;
       }
       el.dataset.place = l.place;
       el.style.left = `${(l.x / this.frame.w) * 100}%`;

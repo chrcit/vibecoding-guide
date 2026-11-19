@@ -11,7 +11,7 @@ interface Props { id: string; title: string; level?: 'technical' | 'engineer' }
 const { id, title, level } = Astro.props;
 const forLevel = level === 'engineer' ? 'engineer' : level === 'technical' ? 'technical engineer' : undefined;
 ---
-<section class="j-step" data-step={id} data-for-level={forLevel}>
+<section class="j-step" id={id} data-step={id} data-for-level={forLevel}>
   <h2>{title}</h2>
   <slot />
 </section>

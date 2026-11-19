@@ -3,18 +3,20 @@ export const url = (p: string) => {
   return base + p.replace(/^\//, '');
 };
 
-// Top-level sections. Shared wiring owned by the lead: a section appears in the
-// header only once its landing page exists, so flip `ready` when it ships.
+// Top-level sections. The interactive guide is now the site; legacy sections stay
+// live at their URLs and are catalogued under /archive/ so zero links break.
 export const sections = [
   { id: 'guide', label: 'Guide', path: '', ready: true },
-  { id: 'start', label: 'Start', path: 'start/', ready: true },
-  { id: 'explain', label: 'Explainers', path: 'explain/', ready: true },
+  { id: 'library', label: 'Library', path: 'library/', ready: true },
   { id: 'models', label: 'Models', path: 'models/', ready: true },
-  { id: 't3-code', label: 'T3 Code', path: 't3-code/', ready: true },
-  { id: 'wiki', label: 'Wiki', path: 'wiki/', ready: true },
-  { id: 'essays', label: 'Essays', path: 'essays/', ready: true },
-  { id: 'showcase', label: 'Showcase', path: 'showcase/', ready: true },
-  { id: 'reference', label: 'Reference', path: 'guide/', ready: true },
+  { id: 'archive', label: 'Archive', path: 'archive/', ready: true },
+  { id: 'start', label: 'Start', path: 'start/', ready: false },
+  { id: 'explain', label: 'Explainers', path: 'explain/', ready: false },
+  { id: 't3-code', label: 'T3 Code', path: 't3-code/', ready: false },
+  { id: 'wiki', label: 'Wiki', path: 'wiki/', ready: false },
+  { id: 'essays', label: 'Essays', path: 'essays/', ready: false },
+  { id: 'showcase', label: 'Showcase', path: 'showcase/', ready: false },
+  { id: 'reference', label: 'Reference', path: 'guide/', ready: false },
 ] as const;
 export type SectionId = (typeof sections)[number]['id'];
 

@@ -2,11 +2,23 @@
 // the picture stay the same from the first chapter to the last.
 import type { Scene } from './scene';
 import type { SceneState } from './picture';
+import type { Level } from '../lib/levels';
+
+export type { Level };
+
+/** Pick a value for the current reader level (plain = Vibe coding, technical, engineer). */
+export function byLevel<T>(level: Level, variants: Record<Level, T>): T {
+  return variants[level];
+}
 
 export interface Ctx {
   scene: Scene;
+  /** Current reader level: 'plain' (Vibe coding), 'technical', or 'engineer'. */
+  level: Level;
   /** One line under the drawing: who spoke and what they said. Pass null for a plain note. */
   say(who: string | null, text: string): void;
+  /** Persistent note under the drawing explaining how this guide element joins the mental model. */
+  model(part: string, text: string): void;
   /** The numbers under the drawing, as name and value pairs. */
   stat(pairs: [string, string | number][]): void;
   /** The chapter's own state. Emptied when the reader moves to another step. */

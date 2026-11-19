@@ -3,37 +3,49 @@ import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
 import Next from '../../components/journey/Next.astro';
 import More from '../../components/journey/More.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
 import { url } from '../../lib/nav';
 ---
-<Journey chapter="check" first="done" title="Make it prove it" description="An agent reports done whether or not the work is right. A check between the agent and you sends wrong work back.">
+<Journey chapter="check" first="done" title="Make it prove it" description="An agent reports done whether or not the work is right. Automated checks between the agent and you bounce broken work straight back.">
   <Step id="done" title="It says “done” either way">
-    <p>Run six example tasks through <a href={url('journey/loop/')}>the agent loop from step 2</a>. Three come out broken (shown in orange), yet all six arrive on your desk marked “done”.</p>
+    <p>Run six example tasks through <a href={url('journey/loop/')}>the agent loop</a>. Three come out broken (shown in orange), yet all six arrive on your desk marked “done”.</p>
   </Step>
-  <Step id="tests" title="Put a check in the way">
-    <p>Put a check between the agent and you. Anything that fails the tests goes straight back to the agent instead of reaching you.</p>
-    <More title="A prompt for this">
-      <CopyPrompt compact title="Ask for proof with the work">{`Before you tell me it is done:
-1. Run the tests and paste the last lines of the output.
-2. If the change shows on screen, open the page at phone width, take a screenshot and say what you see.
-3. List what you could not check.`}</CopyPrompt>
-    </More>
+  <Step id="tests" title="Put an automated check in the way">
+    <ForLevel is="plain">
+      <p>Put a check between the agent and you. Whenever something breaks, the check bounces it straight back to the agent to fix before you ever have to look.</p>
+      <More title="A prompt for this">
+        <CopyPrompt compact title="Ask for proof with the work">{`Before you tell me it is done:\n1. Run the project's checks and paste the result.\n2. Open the page at phone width, take a screenshot and confirm nothing overflows.\n3. Tell me what I should click to try it myself.`}</CopyPrompt>
+      </More>
+    </ForLevel>
+    <ForLevel is="technical">
+      <p>Wire <code>tsc --noEmit</code> and automated unit tests (<code>vitest run</code> / <code>pytest</code>) as a mandatory gate. Broken types or failing assertions bounce straight back into the loop automatically.</p>
+      <More title="A prompt for this">
+        <CopyPrompt compact title="Verification gate prompt">{`Before reporting done:\n1. Run tsc --noEmit and the full unit test suite; paste the final summary line.\n2. Add a regression unit test covering the change or bug fix.\n3. If UI changed, inspect a 390 px and 1280 px screenshot and fix any overflow.`}</CopyPrompt>
+      </More>
+    </ForLevel>
+    <ForLevel is="engineer">
+      <p>Treat verification as a first-class architectural asset: fast strict typechecking, deterministic unit/integration suites and headless browser checks turn open-ended generation into a self-correcting inner loop.</p>
+      <More title="A prompt for this">
+        <CopyPrompt compact title="Contract-level verification prompt">{`Do not report completion until:\n1. Strict typecheck, lint and unit/integration suites are all green (include command output).\n2. New invariants and boundary cases have deterministic unit tests.\n3. Any UI surface passes headless viewport checks (390 px + desktop) with zero console errors.\n4. List any assumptions or gaps automated checks did not cover.`}</CopyPrompt>
+      </More>
+    </ForLevel>
   </Step>
-  <Step id="more" title="Each check catches one kind of mistake">
-    <p>Now three checks stand between the agent and you. Turn any one of them off and watch which bug slips through.</p>
+  <Step id="more" title="Each check catches a different kind of miss">
+    <p>Now three checks stand between the agent and you. Turn any one off and watch which bug slips right through:</p>
     <div class="pick" data-multi role="group" aria-label="Checks that are switched on">
-      <button type="button" data-do="toggle" data-val="tests" data-default aria-pressed="true">Tests</button>
-      <button type="button" data-do="toggle" data-val="look" data-default aria-pressed="true">A screenshot</button>
-      <button type="button" data-do="toggle" data-val="review" data-default aria-pressed="true">A second model</button>
+      <button type="button" data-do="toggle" data-val="tests" data-default aria-pressed="true">Types &amp; unit tests</button>
+      <button type="button" data-do="toggle" data-val="look" data-default aria-pressed="true">Browser screenshot</button>
+      <button type="button" data-do="toggle" data-val="review" data-default aria-pressed="true">Second model</button>
     </div>
-    <More title="What each check is">
+    <More title="What each layer catches">
       <dl class="j-defs">
-        <dt>Tests</dt><dd>A command the agent runs. It passes or fails.</dd>
-        <dt>A screenshot</dt><dd>The agent opens the page in a browser and inspects what rendered.</dd>
-        <dt>A second model</dt><dd>Another model reviews the change with fresh eyes, without seeing how it was built.</dd>
+        <dt>Types &amp; unit tests</dt><dd>Fast commands (<code>tsc --noEmit</code>, unit suite) that prove logic, edge cases and type contracts.</dd>
+        <dt>Browser screenshot</dt><dd>Opens the rendered page at phone and desktop widths to catch broken layouts and overlap.</dd>
+        <dt>Second model</dt><dd>A fresh model reads only the brief and diff to catch privacy leaks, missed rules and architectural flaws.</dd>
       </dl>
     </More>
-    <Next from="check" more={[{ href: 'explain/verification/', text: 'Checking the work' }]} />
+    <Next from="check" more={[{ href: 'wiki/verification/', text: 'Verification', side: true }, { href: 'journey/proof/', text: 'Proof you can read (step 16)' }]} />
   </Step>
   <Fragment slot="foot">
     <p>The six tasks and failure types above are illustrative examples.</p>

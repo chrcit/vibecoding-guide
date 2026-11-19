@@ -1,0 +1,77 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import Step from '../../components/journey/Step.astro';
+import Next from '../../components/journey/Next.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
+import { url } from '../../lib/nav';
+---
+<Journey
+  chapter="ai"
+  first="predict"
+  title="What AI can do"
+  description="Behind the scenes of how AI models work, voice/images/video/decisions, and what actually changes between Chat, Work and Coding Agent modes."
+>
+  <Step id="predict" title="How it actually works behind the scenes">
+    <ForLevel is="plain">
+      <p>An AI model is not a person remembering your past chats in the background. Every time you press send, it reads everything currently in the window and predicts the most useful next words, one piece at a time.</p>
+      <p>That one fact explains almost everything later in this guide: clear notes and fresh windows beat long, messy conversations every time.</p>
+    </ForLevel>
+    <ForLevel is="technical">
+      <p>Under the hood, a large language model is a stateless function over tokens. Every turn sends the entire conversation prefix back to the model, which predicts the next token conditioned on everything currently in the <a href={url('wiki/context-window/')} data-side>context window</a>.</p>
+      <p>Because there is no hidden mutable database inside the model, the quality of the output is bounded by the signal-to-noise ratio of what sits in that window.</p>
+    </ForLevel>
+    <ForLevel is="engineer">
+      <p>Transformer inference is an autoregressive pass over a serialized token prefix with no persistent weight updates between turns. Any appearance of memory, workspace awareness or agency is engineered by the surrounding harness: what files it injects, what tool outputs it appends, and what it drops.</p>
+    </ForLevel>
+  </Step>
+
+  <Step id="senses" title="Voice, images, video and thinking through decisions">
+    <p>Before you ever touch code, modern models work across far more than typed text. Pick a capability to see where it shines:</p>
+    <div class="pick" role="group" aria-label="AI capability">
+      <button type="button" data-do="sense" data-val="voice" data-default>Voice &amp; transcription</button>
+      <button type="button" data-do="sense" data-val="image">Images &amp; screenshots</button>
+      <button type="button" data-do="sense" data-val="video">Video &amp; demos</button>
+      <button type="button" data-do="sense" data-val="decide">Decisions &amp; trade-offs</button>
+    </div>
+    <ForLevel is="plain">
+      <p>You can talk on your phone while walking, drop in a screenshot of a layout you like, or ask the AI to list pros and cons before you commit to building anything.</p>
+    </ForLevel>
+    <ForLevel is="technical">
+      <p>Voice transcription turns fast spoken walkthroughs into concrete markdown specs; screenshots and short screen recordings turn vague UI bugs into exact reproduction cases; reasoning passes expose edge cases before you open an editor.</p>
+    </ForLevel>
+    <ForLevel is="engineer">
+      <p>Treat multimodal inputs as high-bandwidth spec capture: transcribe spoken domain knowledge into concise requirements, feed rendered browser screenshots into visual regression checks, and spend reasoning budget on architecture and data-model trade-offs up front.</p>
+    </ForLevel>
+  </Step>
+
+  <Step id="modes" title="Chat vs Work vs Coding Agent">
+    <p>People often say “I tried AI and it couldn’t build my app” because they used <strong>Chat mode</strong> for a <strong>Coding Agent</strong> job. Switch between the three modes and watch what changes:</p>
+    <div class="pick" role="group" aria-label="AI mode">
+      <button type="button" data-do="mode" data-val="chat" data-default>Chat mode</button>
+      <button type="button" data-do="mode" data-val="work">Work mode</button>
+      <button type="button" data-do="mode" data-val="agent">Coding agent</button>
+    </div>
+    <ForLevel is="plain">
+      <p><strong>Chat</strong> answers questions and drafts text. <strong>Work</strong> reads documents, searches the web and helps you make decisions. A <strong>coding agent</strong> sits right next to your project folder so it can edit files, run the app and fix mistakes on its own.</p>
+    </ForLevel>
+    <ForLevel is="technical">
+      <p>Chat makes you the manual copy-paste bridge. Work mode adds search, file readers and connectors for specs and docs. Coding agent mode wires the model to your local filesystem, shell, git repo, typechecker and unit test suite.</p>
+    </ForLevel>
+    <ForLevel is="engineer">
+      <p>The architectural leap from Chat/Work to Coding Agent is a closed execution loop: structured tool calls against real repository state plus deterministic verification feedback from compilers, tests and browsers.</p>
+    </ForLevel>
+  </Step>
+
+  <Step id="bridge" title="Why code is different from normal chat">
+    <ForLevel is="plain">
+      <p>With an essay or email, AI can sound confident while being subtly wrong, and only a human notices. With software, the code actually <em>runs</em>—if a button breaks or a total adds up wrong, a check catches it right away and sends the error straight back to be fixed.</p>
+    </ForLevel>
+    <ForLevel is="technical">
+      <p>Software has an objective oracle: <code>tsc --noEmit</code>, automated unit tests, linters and real browser checks convert hallucinations into concrete error messages the agent reads and fixes in the next turn.</p>
+    </ForLevel>
+    <ForLevel is="engineer">
+      <p>Executable verification is why coding agents outperform open-ended text generation on long tasks: every compiler error, failing assertion or schema mismatch grounds the next token distribution in reality.</p>
+    </ForLevel>
+    <Next from="ai" more={[{ href: 'wiki/agent/', text: 'What makes a model an agent', side: true }, { href: 'wiki/voice-input/', text: 'Using voice input', side: true }]} />
+  </Step>
+</Journey>

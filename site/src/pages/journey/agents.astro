@@ -1,0 +1,28 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import PartSwitch from '../../components/journey/PartSwitch.astro';
+import OverviewStep from '../../components/journey/OverviewStep.astro';
+import { rungs, parts } from '../../journey/rungs';
+import { url } from '../../lib/nav';
+---
+<Journey
+  chapter="whole"
+  first="chat"
+  title="Part 2 · From one chat to twenty agents"
+  description="Part two of the interactive guide: one chat, the tool loop, context windows and context rot, AGENTS.md memory, automated checks, helpers, parallel worktrees, leads and fleets."
+>
+  <p class="j-lead">Nine interactive steps growing one picture—from a stateless chat box up to twenty parallel agents guarded by automated checks.</p>
+  <PartSwitch active={2} />
+
+  {rungs.filter((r) => r.part === 2).map((r, i, all) => (
+    <OverviewStep rung={r}>
+      {i === all.length - 1 && (
+        <a class="j-next" href={url(parts[2]!.href)}>
+          <span>Part three · Steps {parts[2]!.range}</span>
+          <b>{parts[2]!.title}</b>
+          <span>{parts[2]!.blurb}</span>
+        </a>
+      )}
+    </OverviewStep>
+  ))}
+</Journey>
