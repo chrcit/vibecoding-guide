@@ -1,0 +1,17 @@
+---
+/*
+  One step of a journey chapter: a heading, a sentence or two, and at most one control.
+  The picture beside it changes when the step reaches the middle of the screen.
+  Props:
+    id       names the step in the chapter's script (journey/chapters/<chapter>.ts)
+    title    what happens, in a few words
+    level?   'technical' | 'engineer': an extra step for readers at or above that level
+*/
+interface Props { id: string; title: string; level?: 'technical' | 'engineer' }
+const { id, title, level } = Astro.props;
+const forLevel = level === 'engineer' ? 'engineer' : level === 'technical' ? 'technical engineer' : undefined;
+---
+<section class="j-step" data-step={id} data-for-level={forLevel}>
+  <h2>{title}</h2>
+  <slot />
+</section>

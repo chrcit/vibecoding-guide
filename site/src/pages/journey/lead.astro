@@ -1,0 +1,29 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import Step from '../../components/journey/Step.astro';
+import Next from '../../components/journey/Next.astro';
+import Opinion from '../../components/site/Opinion.astro';
+---
+<Journey chapter="lead" first="roles" title="A lead" description="One agent plans, writes briefs, reviews and merges, and the others build. The lead's window holds reports, not the work.">
+  <Step id="roles" title="One plans, the others build">
+    <p>The agent you talk to stops building. It writes the briefs, hands them out and collects what comes back.</p>
+    <Opinion date="2026-11-18">
+      <p>Claude is better at design, and the current class of Fable 5.2 and Opus 5.5 is better at high-level decisions. That is what I put in the lead’s seat.</p>
+    </Opinion>
+  </Step>
+  <Step id="gate" title="A check before main">
+    <p>Nothing a builder calls done lands on main until it has passed.</p>
+    <div class="pick">
+      <button type="button" data-do="gate" data-val="on" data-default aria-pressed="true">With the check</button>
+      <button type="button" data-do="gate" data-val="off" aria-pressed="false">Without</button>
+    </div>
+  </Step>
+  <Step id="reports" title="What the lead reads">
+    <p>If every builder sends back everything it did, the lead’s window fills with other agents’ work.</p>
+    <div class="pick">
+      <button type="button" data-do="short" data-val="all" data-default aria-pressed="true">Everything</button>
+      <button type="button" data-do="short" data-val="short" aria-pressed="false">Short reports</button>
+    </div>
+    <Next from="lead" more={[{ href: 'explain/orchestration/', text: 'Ways to split work' }, { href: 'models/', text: 'Which model where' }]} />
+  </Step>
+</Journey>

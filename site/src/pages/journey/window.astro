@@ -1,0 +1,63 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import Step from '../../components/journey/Step.astro';
+import Next from '../../components/journey/Next.astro';
+import Verified from '../../components/data/Verified.astro';
+import { models } from '../../data/models';
+
+// Window sizes come from the model data: each model's own window, and the smaller one a harness
+// uses by default where the data records it.
+const sizes = new Map<number, string[]>();
+const ids: string[] = [];
+for (const [key, m] of Object.entries(models) as [string, any][]) {
+  if (!m.current) continue;
+  for (const [field, f] of [['context', m.context], ['harnessContext', m.harnessContext]] as const) {
+    if (!f) continue;
+    const k = Math.round(f.value / 1000);
+    sizes.set(k, [...(sizes.get(k) ?? []), field === 'context' ? m.name : `${m.name} in its own harness`]);
+    ids.push(`models.${key}.${field}`);
+  }
+}
+const windows = [...sizes].sort((a, b) => b[0] - a[0]).map(([k, names]) => ({ k, label: `${k >= 1000 ? k / 1000 + 'M' : k + 'k'} tokens`, names }));
+---
+<Journey chapter="window" first="pile" title="The window fills" description="Everything an agent reads stays in its window and is read again on every turn. When the window is full, the pile is swapped for a summary.">
+  <Step id="pile" title="Nothing leaves the window">
+    <p>That one fix is all still in there, and all of it is read again on every turn.</p>
+  </Step>
+  <Step id="long" title="Keep working">
+    <p>Drag to run the session longer. Pick a smaller window and the same work fills more of it.</p>
+    <div class="controls">
+      <label class="control"><span>In the window <output>150k</output></span>
+        <input type="range" min="0" max="1000" step="25" value="150" data-bind="used" data-unit="k" />
+      </label>
+      <label class="control"><span>Window</span>
+        <select data-bind="cap">
+          {windows.map((w) => <option value={w.k}>{w.label}</option>)}
+        </select>
+      </label>
+    </div>
+  </Step>
+  <Step id="full" title="Full">
+    <p>The next turn does not fit until something is dropped.</p>
+  </Step>
+  <Step id="compact" title="Two ways to make room">
+    <p>Compaction swaps the pile for a summary the model writes of it. A new thread starts empty with a note you write.</p>
+    <div class="row">
+      <button class="btn" type="button" data-do="compact">Compact</button>
+      <button class="btn ghost" type="button" data-do="fresh">New thread</button>
+      <button class="btn ghost" type="button" data-do="reset">Undo</button>
+    </div>
+  </Step>
+  <Step id="paste" title="One paste">
+    <p>Paste a long log and see what it costs.</p>
+    <div class="row">
+      <button class="btn" type="button" data-do="paste">Paste a long log</button>
+      <button class="btn ghost" type="button" data-do="reset">Undo</button>
+    </div>
+    <Next from="window" more={[{ href: 'explain/context/', text: 'Push the window further' }]} />
+  </Step>
+  <Fragment slot="foot">
+    <p>Window sizes: {windows.map((w) => `${w.label} (${w.names.join(', ')})`).join('; ')}. The pile is drawn to scale against the window you pick; a slab is 25k tokens.</p>
+    <Verified ids={ids} />
+  </Fragment>
+</Journey>

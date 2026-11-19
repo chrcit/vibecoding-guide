@@ -1,0 +1,26 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import Step from '../../components/journey/Step.astro';
+import Next from '../../components/journey/Next.astro';
+---
+<Journey chapter="memory" first="gone" title="Write it down" description="The window is emptied between sessions. A file in the project is loaded at the start of every one.">
+  <Step id="gone" title="The window does not outlive the session">
+    <p>Whatever it worked out yesterday went with yesterday’s window.</p>
+  </Step>
+  <Step id="file" title="A file does">
+    <p>AGENTS.md is a plain file in your project. The harness loads it into the window before your first word, every session.</p>
+    <div class="pick">
+      <button type="button" data-do="session" data-val="with" data-default aria-pressed="true">With the file</button>
+      <button type="button" data-do="session" data-val="without" aria-pressed="false">Without</button>
+    </div>
+  </Step>
+  <Step id="grow" title="Have it write the rule down">
+    <p>When it gets something wrong, tell it to add the rule. Then press again, and again.</p>
+    <div class="row"><button class="btn" type="button" data-do="teach">Add a rule</button></div>
+  </Step>
+  <Step id="skills" title="Skills wait on the shelf">
+    <p>A skill is a longer instruction file. Only its name is loaded until a job needs it.</p>
+    <div class="row"><button class="btn" type="button" data-do="skill">Ask for a PDF</button></div>
+    <Next from="memory" more={[{ href: 'explain/skills/', text: 'Skills' }, { href: 'explain/connectors/', text: 'Connectors' }]} />
+  </Step>
+</Journey>

@@ -1,0 +1,26 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import Step from '../../components/journey/Step.astro';
+import Next from '../../components/journey/Next.astro';
+---
+<Journey chapter="chat" first="two" title="One chat" description="A chat is a model and a window. The window holds everything the model can see, and nothing carries over to the next chat.">
+  <Step id="two" title="Two parts">
+    <p>A model, and a window. The window holds everything the model can see.</p>
+  </Step>
+  <Step id="send" title="Say something">
+    <p>Your words go into the window. So does its answer.</p>
+    <div class="row"><button class="btn" type="button" data-do="send">Send the next message</button></div>
+  </Step>
+  <Step id="reread" title="It reads all of it, every time">
+    <p>The model keeps nothing between turns. It knows your name because your name is still in the window.</p>
+    <div class="row"><button class="btn ghost" type="button" data-do="ask">Ask again</button></div>
+  </Step>
+  <Step id="fresh" title="A new chat is an empty window">
+    <p>Start one, then ask.</p>
+    <div class="row">
+      <button class="btn" type="button" data-do="newchat">New chat</button>
+      <button class="btn ghost" type="button" data-do="ask">Ask “What is my name?”</button>
+    </div>
+    <Next from="chat" />
+  </Step>
+</Journey>

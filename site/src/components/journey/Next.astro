@@ -1,0 +1,28 @@
+---
+/* The card at the end of a chapter: the next step of the journey, and where to push further. */
+import { url } from '../../lib/nav';
+import { after } from '../../journey/rungs';
+interface Props { from: string; more?: { href: string; text: string; side?: boolean }[] }
+const { from, more = [] } = Astro.props;
+const next = after(from);
+---
+<div class="j-end">
+  {next ? (
+    <a class="j-next" href={url(`journey/${next.id}/`)}>
+      <span>Next, {next.n} of 9</span>
+      <b>{next.title}</b>
+      <span>{next.line}</span>
+    </a>
+  ) : (
+    <a class="j-next" href={url('start/')}>
+      <span>That is the whole picture</span>
+      <b>Build something in an hour</b>
+      <span>Set up the tools and go round the loop yourself.</span>
+    </a>
+  )}
+  {more.length > 0 && (
+    <ul class="j-more">
+      {more.map((m) => <li><a href={url(m.href)} data-side={m.side ? '' : undefined}>{m.text}</a></li>)}
+    </ul>
+  )}
+</div>

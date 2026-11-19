@@ -1,0 +1,26 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import Step from '../../components/journey/Step.astro';
+import Next from '../../components/journey/Next.astro';
+---
+<Journey chapter="fleet" first="twenty" title="Twenty in a loop" description="A lead, a queue of tasks, up to twenty builders and a gate in front of the main branch. You read what gets through the gate.">
+  <Step id="twenty" title="Twenty agents, one loop">
+    <p>The lead hands out tasks. Each builder fills its own window, sends its result to the gate and starts the next with an empty one.</p>
+    <div class="controls">
+      <label class="control"><span>Builders <output>20</output></span>
+        <input type="range" min="1" max="20" step="1" value="20" data-bind="n" />
+      </label>
+    </div>
+  </Step>
+  <Step id="nogate" title="Take the gate away">
+    <p>About one task in four comes back wrong. Without the gate, those land on main.</p>
+    <div class="pick">
+      <button type="button" data-do="gate" data-val="off" data-default aria-pressed="true">No gate</button>
+      <button type="button" data-do="gate" data-val="on" aria-pressed="false">With the gate</button>
+    </div>
+  </Step>
+  <Step id="yours" title="What is left for you">
+    <p>Deciding what gets built, and reading what the gate lets through.</p>
+    <Next from="fleet" more={[{ href: 'models/', text: 'Which model where' }, { href: 'explain/plans-and-api/', text: 'What a fleet costs' }]} />
+  </Step>
+</Journey>
