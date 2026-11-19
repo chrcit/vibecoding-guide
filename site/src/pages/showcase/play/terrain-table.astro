@@ -592,7 +592,7 @@
       const HOME = { theta: 0.75, phi: 0.98, radius: 23 };
       const cam = { ...HOME };
       const goal = { ...cam };
-      const LIMITS = { phiMin: 0.28, phiMax: 1.42, rMin: 9, rMax: 34 };
+      const LIMITS = { phiMin: 0.28, phiMax: 1.42, rMin: 9, rMax: 52 };
       const target = new THREE.Vector3(0, -0.4, 0);
       const clampGoal = () => {
         goal.phi = Math.min(LIMITS.phiMax, Math.max(LIMITS.phiMin, goal.phi));
@@ -644,6 +644,10 @@
         camera.aspect = w / h;
         // Narrow screens: pull back so the whole table fits.
         camera.fov = w / h < 0.8 ? 48 : 36;
+        // The home distance follows the shape of the window; if the visitor has not zoomed, follow it.
+        const fit = w / h < 0.8 ? 34 : w / h < 1.25 ? 30 : 27;
+        if (Math.abs(goal.radius - HOME.radius) < 1e-3) { goal.radius = fit; cam.radius = fit; }
+        HOME.radius = fit;
         // On wide screens the controls sit on the right, so centre the table in the space left of them.
         if (w > 760) camera.setViewOffset(w, h, Math.min(170, w * 0.12), 0, w, h);
         else if (h > 420) camera.setViewOffset(w, h, 0, Math.min(90, h * 0.12), w, h);
