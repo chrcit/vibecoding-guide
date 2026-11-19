@@ -6,6 +6,12 @@
     id       names the step in the chapter's script (journey/chapters/<chapter>.ts)
     title    what happens, in a few words
     level?   'technical' | 'engineer': an extra step for readers at or above that level
+
+  Different text per level inside one step: ForLevel (components/level/ForLevel.astro).
+    <p>Run the check.<ForLevel is={['technical', 'engineer']} inline> It runs <code>tsc --noEmit</code> and <code>npm test</code>.</ForLevel></p>
+    <ForLevel is="plain"><p>…</p></ForLevel><ForLevel is={['technical', 'engineer']}><p>…</p></ForLevel>
+  Inside a <p> use `inline` (a <div> there breaks the paragraph). The chapter script reads the same
+  level as ctx.level, and the whole step re-runs when the reader changes it.
 */
 interface Props { id: string; title: string; level?: 'technical' | 'engineer' }
 const { id, title, level } = Astro.props;
