@@ -69,7 +69,7 @@ async function hour(ctx: Ctx, h: Script, o: Opts) {
   const run = desk({ jobs: n, stop: stopOf(o), minutes: T });
   h.set((s) => { Object.assign(s, floor(o)); });
   let finished = 0, waited = 0, idle = 0;
-  const stats = (t: number) => ctx.stat([['minute', `${t} of ${T}`], ['jobs finished', finished], ['agents waiting for you', fmtMin(waited)], ['you waiting for them', fmtMin(idle)]]);
+  const stats = (t: number) => ctx.stat([['made-up minute', `${t} of ${T}`], ['jobs finished so far', finished], ['agents waiting for you, so far', fmtMin(waited)], ['you waiting for them, so far', fmtMin(idle)]]);
   stats(0);
   let merging: Promise<void> = Promise.resolve();
   const okUntil: number[] = Array(n).fill(-1);

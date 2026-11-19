@@ -1,11 +1,47 @@
 ---
 import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
+import More from '../../components/journey/More.astro';
 import Next from '../../components/journey/Next.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import { url } from '../../lib/nav';
 ---
-<Journey chapter="grow" first="first" title="The project grows" description="Every job adds to the project and leaves something behind. Clean-ups and refactors are jobs you schedule.">
-  <Step id="first" title="The project grows">
-    <p>This chapter is being built.</p>
-    <Next from="grow" />
+<Journey chapter="grow" first="adds" title="The project grows" description="Every job adds to the project and leaves something behind. Clean-ups and refactors are jobs you schedule.">
+  <Step id="adds" title="Every job adds something">
+    <p>Each made-up job makes a tile of your project from <a href={url('journey/loop/')}>step 2</a> taller and lands a commit on main, past the check from <a href={url('journey/check/')}>step 5</a>.</p>
+    <p>The blue slabs are what a job reads before its first edit, by a made-up rule: more project, more reading.</p>
+  </Step>
+  <Step id="junk" title="And leaves something behind">
+    <p>The grey hatched layers on the tiles are what jobs left behind: copies, code nothing calls. The blue slabs grow faster, because a job has to read dead code to learn that it is dead.</p>
+  </Step>
+  <Step id="clean" title="A clean-up is a job">
+    <p>A clean-up reads everything once and takes the hatched layers off, with the check green before and after. The jobs after it read less.</p>
+    <div class="row">
+      <button class="btn" type="button" data-do="clean">Run a clean-up</button>
+    </div>
+    <More title="A prompt for this">
+      <p>Tests first: they are what tells you a removal broke nothing.</p>
+      <CopyPrompt compact title="A clean-up pass">Run the tests and tell me they pass before you change anything. Then find what is unused or duplicated in this project: dead code, copies, files nothing imports, tests for things that are gone. List it, with how you know each item is unused, and wait for me. Then remove one kind at a time and run the tests after each.</CopyPrompt>
+    </More>
+  </Step>
+  <Step id="refactor" title="A refactor changes the shape and nothing else">
+    <p>The tall tiles are spread into even ones: the same code in a new shape. Without tests one tile turns red, the check has nothing to run, and the break reaches main.</p>
+    <div class="pick">
+      <button type="button" data-do="tests" data-val="on" data-default aria-pressed="true">With tests</button>
+      <button type="button" data-do="tests" data-val="off" aria-pressed="false">Without</button>
+    </div>
+    <More title="A prompt for this">
+      <p>Tests first, because they are the only thing that can tell a new shape from a new behaviour.</p>
+      <CopyPrompt compact title="A refactor with tests first">Before you change anything, run the tests and tell me what they cover in the part you will touch. If something there has no test, write one and show me it passes. Then split the part into smaller files without changing behaviour, running the tests after each move. If a test fails, stop and tell me.</CopyPrompt>
+    </More>
+  </Step>
+  <Step id="rhythm" title="Put it in the loop">
+    <p>Twenty made-up jobs, with a clean-up after every few. The rarer the clean-ups, the taller the blue slabs of the twentieth job.</p>
+    <div class="controls">
+      <label class="control"><span>A clean-up every <output>5 jobs</output></span>
+        <input type="range" min="2" max="11" step="1" value="5" data-bind="every" aria-valuetext="5 jobs" />
+      </label>
+    </div>
+    <Next from="grow" more={[{ href: 'wiki/test/', text: 'Tests', side: true }, { href: 'wiki/review/', text: 'Review', side: true }]} />
   </Step>
 </Journey>
