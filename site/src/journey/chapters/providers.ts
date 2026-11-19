@@ -114,7 +114,7 @@ function runReach(ctx: Ctx, how: Reach) {
       ctx.say(how === 't3' ? 'both' : 'Opus 5.5', how === 't3' ? 'Two answers to the same job, one from each maker, side by side.' : 'Done. The list has an “Unpaid” button; I tried it.');
     }
     await h.wait(1800);
-    ctx.say(null, how === 'api' ? 'Every token went on the bill: more work, more coins.'
+    ctx.say(null, how === 'api' ? 'Every token went on the bill: more work, a bigger bill.'
       : how === 't3' ? 'One window on your screen, two providers behind it, each on your own login.'
       : how === 'app' ? 'The app is the quickest way in. It cannot touch your files.'
       : 'Same plan as the app, now working on a folder on your laptop.');

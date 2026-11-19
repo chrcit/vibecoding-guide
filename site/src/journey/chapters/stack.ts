@@ -141,14 +141,14 @@ async function runBranch(ctx: Ctx, h: Script, branch: boolean) {
     await h.send([[0, -20], [0, BUS_Y], [SPOT.main[0] - 46, BUS_Y]], 'bad', { ms: 700 });
     h.set((s) => { s.project!.commits!.push('bad'); });
     ctx.say('agent', 'Done, it is on main.');
-    stat(ctx, [4, 4, 'broken for everyone: dates show as “NaN”', '–']);
+    stat(ctx, [4, 4, lv(ctx, 'broken for everyone: the dates are blank', 'broken for everyone: dates show as “NaN”'), '–']);
     await h.wait(1600);
     ctx.say(null, 'The change went straight to the version people use, mistake and all.');
     return;
   }
   await h.send(route.agentToMgate(), 'bad', { ms: 600 });
   h.set((s) => { s.gates![0]!.lamp = 'bad'; });
-  ctx.say('check', lv(ctx, 'Tried the page: dates show as “NaN”.', 'CI: npm test failed: formatDate(undefined) returned "NaN".'));
+  ctx.say('check', lv(ctx, 'Tried the page: the dates are blank.', 'CI: npm test failed: formatDate(undefined) returned "NaN".'));
   stat(ctx, [3, 3, 'works (main untouched)', '–']);
   await h.wait(1200);
   await h.send(reverse(route.agentToMgate()), 'bad', { ms: 600 });
