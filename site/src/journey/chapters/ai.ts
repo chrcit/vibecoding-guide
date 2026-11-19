@@ -253,7 +253,7 @@ export const aiCh: Chapter = {
     predict: { scene: () => chatScene(), enter: (ctx) => void ctx.scene.run((h) => runPredict(ctx, h, false)) },
     inputs: { scene: () => chatScene(true), enter: (ctx) => runInput(ctx, 'voice') },
     modes: { scene: () => chatScene(true), enter: (ctx) => runMode(ctx, 'chat') },
-    code: { scene: () => chatScene(), enter: (ctx) => void ctx.scene.run((h) => runCode(ctx, h, 'letter')) },
+    code: { scene: () => chatScene(), enter: (ctx) => void ctx.scene.run((h) => runCode(ctx, h, 'page')) },
   },
   actions: {
     list: (ctx, val) => void ctx.scene.run((h) => runPredict(ctx, h, val === 'in')),

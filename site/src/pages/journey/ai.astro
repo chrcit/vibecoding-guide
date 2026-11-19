@@ -30,7 +30,7 @@ const ids = ['claims.research.speechFaster', 'harnesses.claudeCode.voice', 't3co
       <button type="button" data-do="input" data-val="decide" aria-pressed="false">A decision</button>
     </div>
     <More title="Talking instead of typing">
-      <p>In a study, speaking was about <Fact id="claims.research.speechFaster" />× as fast as typing on a phone. The coding tools have it too: <code><Fact id="harnesses.claudeCode.voice" /></code> in Claude Code, <kbd><Fact id="t3code.voice.shortcut" /></kbd> in T3 Code.</p>
+      <p>In a study, speaking was about <Fact id="claims.research.speechFaster" /> as fast as typing on a phone. The coding tools have it too: <code><Fact id="harnesses.claudeCode.voice" /></code> in Claude Code, <kbd><Fact id="t3code.voice.shortcut" /></kbd> in T3 Code.</p>
     </More>
   </Step>
 
@@ -55,8 +55,8 @@ const ids = ['claims.research.speechFaster', 'harnesses.claudeCode.voice', 't3co
   <Step id="code" title="Code can be run">
     <p>A letter can be wrong and only you will notice. A page can be tried, so a <Term id="check" /> can catch the mistake and send it back before you see it.</p>
     <div class="pick" role="group" aria-label="What it writes">
-      <button type="button" data-do="what" data-val="letter" data-default aria-pressed="true">A letter to members</button>
-      <button type="button" data-do="what" data-val="page" aria-pressed="false">The member list page</button>
+      <button type="button" data-do="what" data-val="page" data-default aria-pressed="true">The member list page</button>
+      <button type="button" data-do="what" data-val="letter" aria-pressed="false">A letter to members</button>
     </div>
     <Next from="ai" more={[{ href: 'wiki/model/', text: 'Model', side: true }, { href: 'wiki/context-window/', text: 'Context window', side: true }, { href: 'explain/voice/', text: 'Voice input, in depth' }]} />
   </Step>

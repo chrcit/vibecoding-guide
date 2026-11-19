@@ -30,7 +30,7 @@ git restore .                     # throw those changes away</code></pre>
   </Step>
 
   <Step id="github" title="GitHub keeps a copy online">
-    <p>Pushing sends your commits to GitHub, a website that keeps a copy of your project. Then lose the laptop.</p>
+    <p>Pushing sends your commits to GitHub, a website that keeps a copy of your project. Then the laptop is left on a train.</p>
     <div class="pick" role="group" aria-label="Pushed to GitHub?">
       <button type="button" data-do="pushed" data-val="yes" data-default aria-pressed="true">Pushed</button>
       <button type="button" data-do="pushed" data-val="no" aria-pressed="false">Never pushed</button>
@@ -76,11 +76,11 @@ git switch main &amp;&amp; git merge paid-date   # or the Merge button</code></p
     </More>
   </Step>
 
-  <Step id="specs" title="Specs: how big a server">
-    <p>A server's specs are its processor cores, memory and disk. Grow the club and watch the smallest server.</p>
+  <Step id="specs" title="How big a server">
+    <p>A rented server comes in sizes: processor cores, memory and disk, together called its specs. Grow the club and watch the smallest one.</p>
     <div class="control">
       <label for="members">Members</label>
-      <input id="members" type="range" min="0" max="3" step="1" value="0" data-bind="members" aria-valuetext="40 members" />
+      <input id="members" type="range" min="0" max="3" step="1" value="0" data-bind="members" aria-label="Club members" aria-valuetext="40 members" />
     </div>
     <Next from="stack" more={[{ href: 'wiki/version-control/', text: 'Version control', side: true }, { href: 'wiki/deployment/', text: 'Deployment', side: true }, { href: 'wiki/database/', text: 'Database', side: true }]} />
   </Step>

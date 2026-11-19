@@ -23,7 +23,7 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
     inputs: {
       part: 'All of it becomes window.',
       text: {
-        plain: 'Talking is the quickest way to give it a lot of detail. It can misread a photo or a voice note, so a good answer asks when it is unsure, as with row 9.',
+        plain: 'Talking is the quickest way to give it a lot of detail. It can misread a photo or a voice note, so a good answer asks when it is unsure (try the photo).',
         technical: 'Speech is transcribed to text; images and recordings are turned into tokens too and take room in the window. A long recording fills it faster than a page of text.',
         engineer: 'Same window, same price per token, same chance of misreading. Ask it to list what it could not read rather than trusting a clean-looking result.',
       },

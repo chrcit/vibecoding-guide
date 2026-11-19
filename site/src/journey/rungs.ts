@@ -134,7 +134,7 @@ export const rungs: Rung[] = [
       { id: 'github', label: 'The copy online' },
       { id: 'branch', label: 'Branch and pull request' },
       { id: 'hosting', label: 'Static or server' },
-      { id: 'specs', label: 'Specs' },
+      { id: 'specs', label: 'How big a server' },
     ],
     concepts: [
       { slug: 'version-control', label: 'Version control' },
