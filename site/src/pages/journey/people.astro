@@ -1,11 +1,52 @@
 ---
 import Journey from '../../layouts/Journey.astro';
 import Step from '../../components/journey/Step.astro';
+import More from '../../components/journey/More.astro';
 import Next from '../../components/journey/Next.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import { url } from '../../lib/nav';
 ---
-<Journey chapter="people" first="first" title="Other people" description="A pull request, a colleague’s review, a client and users: the people around the main branch, and how what they say becomes the next job.">
-  <Step id="first" title="Other people">
-    <p>This chapter is being built.</p>
-    <Next from="people" />
+<Journey chapter="people" first="pr" title="Other people" description="A pull request, a colleague’s review, a client and users: the people around the main branch, and how what they say becomes the next job.">
+  <Step id="pr" title="A pull request is a change that waits">
+    <p>The agent’s change runs along the bus to the <a href={url('journey/parallel/')}>gate before main from step 7</a> and waits there with a blue lamp, while its proof lands on the <a href={url('journey/proof/')}>tray from step 12</a>. Nothing reaches main until a person has read it.</p>
+    <More title="A prompt for this">
+      <CopyPrompt compact title="Write the pull request for a person">Open a pull request for this change, written for someone who has not seen this thread:
+1. What changed and why, in three lines.
+2. How you checked it: the commands you ran and what they printed, and screenshots of anything visible.
+3. What to look at first, by file.
+4. What you did not check.</CopyPrompt>
+    </More>
+  </Step>
+  <Step id="peer" title="A colleague reads it">
+    <p>Ten agents send changes; each waits in the queue on the bus until the colleague at the gate has read it, and a comment goes back to its agent as a dark puck. One reader cannot keep up with big changes and no proof; the rates are made up.</p>
+    <div class="pick" role="group" aria-label="What reaches the colleague">
+      <button type="button" data-do="size" data-val="big" data-default aria-pressed="true">Big, no proof</button>
+      <button type="button" data-do="size" data-val="proof" aria-pressed="false">Big, with proof</button>
+      <button type="button" data-do="size" data-val="small" aria-pressed="false">Small, with proof</button>
+    </div>
+  </Step>
+  <Step id="client" title="A client looks at the thing, not the code">
+    <p>The client in front of main gets a link, and what they ask for travels back to you and into the agent’s window as the next job. A client judges what they can try.</p>
+    <div class="pick" role="group" aria-label="What the client gets">
+      <button type="button" data-do="link" data-val="link" data-default aria-pressed="true">A link to try</button>
+      <button type="button" data-do="link" data-val="code" aria-pressed="false">The code</button>
+    </div>
+    <More title="What to send">
+      <p>Send a link to a running copy of the change (often called a preview) and one line on what to try. A client cannot judge a diff.</p>
+    </More>
+  </Step>
+  <Step id="users" title="Users find what nobody tested">
+    <p>A user’s report comes back as a red puck, and you hand it to the agent as the brief. A fix that comes with a test turns the gate red when the same mistake returns.</p>
+    <div class="pick" role="group" aria-label="How the fix lands">
+      <button type="button" data-do="test" data-val="with" data-default aria-pressed="true">Fix with a test</button>
+      <button type="button" data-do="test" data-val="without" aria-pressed="false">Fix without</button>
+    </div>
+  </Step>
+  <Step id="loop" title="The widest loop">
+    <p>After the first job, every brief that lands in the agent’s window came from the client or from users. The widest loop in the picture runs through people.</p>
+    <div class="row">
+      <button class="btn ghost" type="button" data-do="again">Run it again</button>
+    </div>
+    <Next from="people" more={[{ href: 'wiki/pull-request/', text: 'Pull requests', side: true }, { href: 'wiki/review/', text: 'Reviewing a change', side: true }]} />
   </Step>
 </Journey>
