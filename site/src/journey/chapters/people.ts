@@ -24,7 +24,7 @@ const scene = (people: Who[], n = 0): SceneState => {
       lab('you', 'you', 'left'),
       ...(n ? [] : [termLabel('a0', 'agent', 'top', 'the agent')]),
       termLabel('mgate', 'check'),
-      termLabel([GATE_X - 52, BUS_Y + 2, 2], 'pull-request', 'left', 'pull requests wait here'),
+      termLabel([GATE_X - 62, BUS_Y, 0], 'pull-request', 'bottom', 'pull requests'),
       termLabel('main', 'main', 'bottom'),
       ...(people.includes('peer') ? [lab('peer', 'a colleague', 'right', 'wiki/review/')] : []),
       ...(people.includes('client') ? [lab('client', 'a client', 'left', 'wiki/preview-deployment/')] : []),
