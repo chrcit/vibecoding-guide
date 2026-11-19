@@ -118,11 +118,17 @@ export function boot(root: HTMLElement) {
   const onScroll = () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; pick(); }); };
   addEventListener('scroll', onScroll, { passive: true });
   addEventListener('resize', onScroll);
+  // A change of level re-runs the step on show: its picture (labels that name a term pick their
+  // word for the level), its script (ctx.level), the line under the picture, the readout and the
+  // note. A step only for higher levels may have just been hidden: then the one now in view runs.
   document.addEventListener('acg:level', () => {
     ctx.level = getLevel();
     syncDetails();
-    if (current) { const el = current; current = null; activate(el, true); }
-    else onScroll();
+    const el = current;
+    current = null;
+    el?.removeAttribute('data-active');
+    if (el?.offsetParent) activate(el, true);
+    else pick();
   });
   pick();
 

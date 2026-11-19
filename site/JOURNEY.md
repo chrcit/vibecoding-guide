@@ -65,6 +65,13 @@ only through `termLabel()` (below), so the word, the definition and the page agr
 - Name real things. A station is labelled "Opus 5.5" or "GPT-6.2 Sol" when the step is about those
   two, with the names read from `src/data/models.ts`, and the line under the picture is spoken by
   that name. The guide still does not say one is better than the other.
+- Levels decide the output. plain sees what got done and what to do next; technical also sees the
+  type check, the tests, the commands and the files; engineer also sees architecture, invariants,
+  failure modes and cost. Three places carry it: the step text (`<Step level>` for a whole step,
+  `<ForLevel is inline>` inside one), the script (`ctx.level`, `byLevel(ctx.level, {...})` for
+  the line under the picture, the readout and the note), and the picture (a label that names a
+  term picks its word per level: the check reads "check", "typecheck · tests", "tsc --noEmit ·
+  npm test"). Changing the level re-runs the step on show; nothing has to listen for it.
 - Every chapter lets the reader break the thing it teaches: take a tool away, drop the gate, send a
   thin brief, share one folder. Show what happens; do not warn about it.
 - A part keeps its place and its meaning in every chapter. New parts go into `picture.ts` with a
