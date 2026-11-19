@@ -320,7 +320,7 @@ const agentsMd = `# Commands
 
   <h2 id="how-the-model-works">How the model works</h2>
   <p>
-    The board's window lab is a model, not a measurement. Window sizes, the compaction point, prices, the size of a skill
+    The board's window lab is a model. Window sizes, the compaction point, prices, the size of a skill
     description, the skill listing budget and the number of files re-read after compaction come from the sources listed at
     the foot of the board. Everything else is an assumption, sized the way sessions tend to run, and set here so you can
     check it:
@@ -335,10 +335,15 @@ const agentsMd = `# Commands
     <li>Codex's compaction point is not in the sources, so the model uses Claude Code's share of the window, {Math.round(DEFAULT_COMPACT_SHARE * 1000) / 10}%.</li>
     <li>The agent reads its files and loads its skills at the start, then works turn by turn. The cost of a turn assumes everything but that turn's new tokens is read from the cache.</li>
   </ul>
-  <p>
-    The other tiles use the same sizes. The same-request examples are written to show the kind of guess an agent makes, not
-    recorded from a run.
-  </p>
+  <p>The other tiles reuse those sizes, with a few more of their own:</p>
+  <ul>
+    <li>A new thread against a long one: each task reads ten files at its start and works with typical tool results; the instruction file is 120 lines.</li>
+    <li>The cache prefix: three connectors with their tools loaded up front, the harness and a 120-line file in front of the conversation.</li>
+    <li>Compaction and tool results: the sizes of the results are illustrative; the server log is set to the cap Claude Code puts on one tool result.</li>
+    <li>A subagent: the main thread holds 80,000 tokens before the search, and the subagent sends back an answer of 1,500.</li>
+    <li>The instruction file sorter: the line counts are illustrative.</li>
+    <li>The same request with and without context: the guesses are written to show the kind of guess an agent makes, and the sizes of the pieces of context are estimates. None of it is recorded from a run.</li>
+  </ul>
 
   <h2 id="related">Related pages</h2>
   <ul>
