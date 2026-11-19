@@ -183,7 +183,7 @@ function show(ctx: Ctx, t: Tally, o: ShowOpts) {
       [turnsName, turns],
       ['tokens read, all turns', tok(t.read)],
       ['of those, from the cache', o.cache === 'none' ? 'no cache yet' : on ? `${tok(t.cached)} (${share}%)` : '0', ...(o.cache === 'off' ? ['cache off'] : [])] as [string, string, string?],
-      ['tokens written', tok(t.written)],
+      ['written by the model', tok(t.written)],
       cost,
     ]);
   } else {
@@ -341,7 +341,7 @@ function playCache(ctx: Ctx, intro?: string) {
     const share = Math.round((t.cached / t.read) * 100);
     if (ctx.level === 'plain') {
       ctx.say(null, cache === 'off' ? `Cache off: ${usd3(t.usd)}. The same job with the cache on: ${usd3(on.usd)}.`
-        : cache === 'on' ? `Cache on: ${usd3(t.usd)}, with ${share}% of what it read coming from the cache. Cache off: ${usd3(off.usd)}.`
+        : cache === 'on' ? `Cache on: ${usd3(t.usd)}. ${share}% of what it read came from the cache; the other ${tok(t.stored)} tokens were read new and stored in it. Cache off: ${usd3(off.usd)}.`
         : `One missed turn: ${usd3(t.usd)}, against ${usd3(on.usd)} with no miss. Still less than ${usd3(off.usd)} with the cache off.`);
     } else {
       ctx.say(null, `Cache ${cache === 'off' ? 'off' : 'on'}${cache === 'break' ? ', one miss' : ''}: ${sumLine(p, cache, cw)} = ${usd3(t.usd)}.${cache === 'on' ? ` ${share}% of reads hit the cache.` : ''}`);
@@ -373,7 +373,7 @@ async function playPlanRun(ctx: Ctx, h: Script, p: Price, fee: number | undefine
   const done = await job(ctx, h, { mode: 'plan', cache: 'on', p, t, ms: again ? 0.8 : 1 });
   if (done) {
     ctx.mem.jobs++;
-    ctx.say(null, `Date fix ${ctx.mem.jobs} done: ${Math.round((1 - t.used) * 100)}% of the allowance left${fee != null ? `, and the bill is still $${fee} for the month` : ''}. The drain rate is made up.`);
+    ctx.say(null, `Date fix ${ctx.mem.jobs} done: ${Math.round((1 - t.used) * 100)}% of the allowance left${fee != null ? `, and the bill is still $${fee} for the month` : ''}. Made-up rate: one date fix uses ${Math.round(DRAIN * 100)}%, spread over its turns by how much each reads.`);
   } else {
     ctx.say(null, `The allowance ran out part-way through date fix ${ctx.mem.jobs + 1}. The model stops until the limit resets.`);
   }
@@ -439,7 +439,7 @@ function playMany(ctx: Ctx) {
       t.used = 1;
       show(ctx, t, view());
       const min = Math.max(1, Math.round((tick / TICKS_PER_HOUR) * 60));
-      ctx.say(null, `The allowance ran out after ${min} ${min === 1 ? 'minute' : 'minutes'}, ${tick} ${tick === 1 ? 'turn' : 'turns'} each. All ${n} stopped mid-job; ${jobs} ${jobs === 1 ? 'job' : 'jobs'} finished. On the API they would have kept going, at ${usd2(hour)} an hour.`);
+      ctx.say(null, `The allowance ran out after ${min} ${min === 1 ? 'minute' : 'minutes'}, ${tick} ${tick === 1 ? 'turn' : 'turns'} each. All ${n} stopped mid-job; ${jobs} ${jobs === 1 ? 'job' : 'jobs'} finished. Each agent drains it at the same made-up rate as one date fix, so ${n} drain it ${n} times as fast. On the API they would have kept going, at ${usd2(hour)} an hour.`);
     } else {
       h.set((s) => { for (const a of s.agents.slice(1)) a.busy = false; });
       ctx.say(null, mode === 'api'

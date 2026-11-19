@@ -79,7 +79,7 @@ const pr = { read: d(opus.input), write: d(opus.output), hit: d(opus.cacheRead ?
       <button type="button" data-do="cache" data-val="break" aria-pressed="false">Change effort halfway</button>
     </div>
     <More title="The sum, and what breaks the cache">
-      <p>On {opus.name} a cache read costs <Fact id="models.claude-opus-5-5.price.cacheRead" /> per million and a cache write <Fact id="lineup.opusCacheWrite5m" /> (<Fact id="lineup.cacheWrite5m" /> the <Fact id="models.claude-opus-5-5.price.input" /> input price). With the cache on: {n(on.cached)} from the cache × {pr.hit} + {n(on.stored)} stored × {pr.store} + {n(on.written)} written × {pr.write}, per million = {usd3(on.usd)}. {Math.round((on.cached / on.read) * 100)}% of the {n(on.read)} tokens read came from the cache.</p>
+      <p>On {opus.name} a cache read costs <Fact id="models.claude-opus-5-5.price.cacheRead" /> per million and a cache write <Fact id="lineup.opusCacheWrite5m" /> (<Fact id="lineup.cacheWrite5m" /> the <Fact id="models.claude-opus-5-5.price.input" /> input price). With the cache on: {n(on.cached)} from the cache × {pr.hit} + {n(on.stored)} read new and stored × {pr.store} + {n(on.written)} written × {pr.write}, per million = {usd3(on.usd)}. {Math.round((on.cached / on.read) * 100)}% of the {n(on.read)} tokens read came from the cache.</p>
       <p><Fact id="lineup.cacheBreakers" show="claim" /> <ForLevel is={['technical', 'engineer']} inline><Fact id="lineup.claudeCodeCacheTtl" show="claim" /></ForLevel></p>
     </More>
   </Step>

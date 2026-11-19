@@ -336,7 +336,7 @@ export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
     plan: {
       part: 'A plan is the cheapest place to steer.',
       text: {
-        plain: 'Reading four lines before any file changes takes seconds. Changing step 3 here costs nothing; changing it after costs twelve turns.',
+        plain: 'Reading four lines before any file changes takes seconds. Changing step 3 here costs one reply; changing it after the build costs twelve turns built on the guess.',
         technical: 'Ask for the files, the types and the tests in the plan, and say: do not start until I say go.',
         engineer: 'Plan review is design review: settle the data model, permissions and test strategy before the loop runs on its own.',
       },

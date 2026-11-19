@@ -28,7 +28,7 @@ const levels = ['plain', 'technical', 'engineer'] as const;
     <p>A made-up job: “Let the club pause a member.” Should a paused member be hidden from the list, or greyed out? You meant greyed out, but you only spoke once, so the agent guesses and builds twelve turns on the guess.</p>
   </Step>
   <Step id="plan" title="Read the plan before the build">
-    <p>Ask for a numbered plan first, as in <Term id="plan-mode" />. The agent stops at the <Term id="check" /> and waits; step 3 is its guess.</p>
+    <p>Ask for a numbered plan first. The agent stops at the <Term id="check" /> and waits, as in <Term id="plan-mode" />; step 3 is its guess.</p>
     {levels.map((l) => (
       <ForLevel is={l}><ol>{PLAN[l].map((x) => <li>{x}</li>)}</ol></ForLevel>
     ))}
@@ -51,7 +51,7 @@ const levels = ['plain', 'technical', 'engineer'] as const;
     </More>
   </Step>
   <Step id="pin" title="Point at the result">
-    <p>The screen has two badges, “paid” and “paused”. Typed, “the badge looks off” leaves the agent to guess which; pinned on the screenshot, your note reaches its window with the place it points at.</p>
+    <p>The screen has two badges, “paid” and “paused”. Typed, “the badge looks off” leaves the agent to guess which; pinned on the screenshot, your note reaches its window with the screenshot and the spot you pinned.</p>
     <div class="pick">
       <button type="button" data-do="pin" data-val="type" aria-pressed="false">Type “the badge looks off”</button>
       <button type="button" data-do="pin" data-val="pin" aria-pressed="false">Pin a note on the badge</button>

@@ -166,7 +166,7 @@ async function asking(ctx: Ctx, h: Script, d: Door) {
     t.open = 0;
     show(ctx, t);
     await h.send(reverse(toTray()), 'you', { ms: 380 });
-    h.set((s) => { s.tray!.cards = [{ id: 'q', mark: 'ok' }]; s.agents[0]!.blocks!.push({ t: 'you', h: 0.8 }); });
+    h.set((s) => { s.tray!.cards = [{ id: 'q', mark: 'ok' }]; s.labels = [...labels(), lab('card:q', 'answered: greyed out', 'right', 'wiki/giving-feedback/')]; s.agents[0]!.blocks!.push({ t: 'you', h: 0.8 }); });
   };
   for (let i = 0; i < 6; i++) {
     if (d.value !== undefined && !answered) await take();
@@ -212,7 +212,7 @@ async function pin(ctx: Ctx, h: Script, d: Door) {
     ctx.say('you', 'The badge looks off.');
     h.set((s) => { s.tray!.cards[0]!.mark = undefined; });
     await h.send(route.youToAgent(), 'you', { ms: 420 });
-    h.set((s) => { s.agents[0]!.blocks!.push({ t: 'you', h: 0.8 }); s.labels = [...labels(), lab('card:shot', 'screenshot', 'right', 'wiki/browser-check/'), lab(WINDOW_AT, 'in its window: five words', 'right')]; });
+    h.set((s) => { s.agents[0]!.blocks!.push({ t: 'you', h: 0.8 }); s.labels = [...labels(), lab('card:shot', 'screenshot', 'right', 'wiki/browser-check/'), lab(WINDOW_AT, 'in its window: four words', 'left')]; });
     ctx.say(null, byLevel(ctx.level, {
       plain: 'In its window: “The badge looks off.” Nothing says which badge.',
       technical: 'In its window: “The badge looks off.” The screen has two badges, “paid” and “paused”.',
@@ -232,7 +232,7 @@ async function pin(ctx: Ctx, h: Script, d: Door) {
     });
     await h.wait(1300);
     await h.send(reverse(toTray()), 'you', { ms: 520 });
-    h.set((s) => { s.tray!.cards = [{ id: 'shot', b: 'tool' }]; s.labels = [...labels(), lab('card:shot', 'screenshot', 'right', 'wiki/browser-check/'), lab(WINDOW_AT, 'in its window: your pin and its place', 'right')]; s.agents[0]!.blocks!.push({ t: 'you', h: 2 }); });
+    h.set((s) => { s.tray!.cards = [{ id: 'shot', b: 'tool' }]; s.labels = [...labels(), lab('card:shot', 'screenshot', 'right', 'wiki/browser-check/'), lab(WINDOW_AT, 'in its window: note, screenshot, spot', 'left')]; s.agents[0]!.blocks!.push({ t: 'you', h: 2 }); });
     ctx.say(null, byLevel(ctx.level, {
       plain: 'In its window: your note, the screenshot, and the spot you pinned on it.',
       technical: 'In its window: your note, the screenshot, and the element under the pin: the “paused” badge in MemberRow.',
@@ -266,7 +266,7 @@ async function build(ctx: Ctx, h: Script) {
     s.tray!.cards = [{ id: 'review', b: 'tool', mark: 'new' }];
     s.project!.files = ['', '', '', '', '', 'ok'];
     const [x, y] = notesAt(s);
-    s.labels = [...labels(), lab('card:review', 'review page', 'right', 'wiki/giving-feedback/'), lab([x, y, 6], 'notes file', 'right')];
+    s.labels = [...labels(), lab('card:review', 'review page', 'right', 'wiki/giving-feedback/'), lab([x, y, 6], 'notes file', 'bottom')];
   });
   ctx.say('the model', 'The review page is up. It lists the three screens the last job changed.');
   await h.wait(1600);
@@ -293,7 +293,7 @@ async function build(ctx: Ctx, h: Script) {
   ctx.say('the model', 'Read the notes file: two comments. Fixing both.');
   await work(ctx, h, t, 4, false, [1, 2]);
   await done(ctx, h, false, 'Done. Both notes are fixed, and the review page shows the two screens again.');
-  ctx.say(null, 'The review page stays on the tray for every job after this one. You wrote two notes where you saw the problem, and it read them without being asked.');
+  ctx.say(null, 'The review page stays on the tray for every job after this one. The two notes went into the notes file, and it read them at the start of its next turn without being asked.');
   finish(ctx);
 }
 
