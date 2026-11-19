@@ -42,6 +42,19 @@ A slab and a puck share colours: what travels across the floor is what lands in 
 you, pale is the model, blue is a tool result, green is instructions, hatched grey is a summary,
 the accent is something that went wrong.
 
+One meaning per colour, in the picture, the readout and the legend (`journey.css`, top comment):
+
+| Colour | Means | Never |
+| --- | --- | --- |
+| accent (orange-red) | something went wrong: a failed check, a wrong file, a bad commit | "working", "new", "look here" |
+| amber (`--j-work`) | busy right now: a model thinking, a tool in use, a file being edited, a job's lamp while it runs | a problem |
+| blue | waits for you (a lamp, a card); a tool's result (a slab) | |
+| green | passed (a lamp, a commit); instructions (a slab) | |
+
+A label with a dotted underline opens something: its wiki page in the side view, with the term's
+definition on hover or focus. A label without one is a name and nothing more. Give a label a link
+only through `termLabel()` (below), so the word, the definition and the page agree.
+
 ## Rules for a chapter
 
 - The picture carries the idea. A step is a heading, at most two short sentences and at most one
