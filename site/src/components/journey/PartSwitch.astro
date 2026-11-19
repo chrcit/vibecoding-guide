@@ -15,7 +15,7 @@ const { active } = Astro.props;
 <nav class="j-parts" aria-label="Guide parts">
   {parts.map((p) => (
     <a class="j-part-card" href={url(p.href)} aria-current={p.n === active ? 'page' : undefined}>
-      <span class="j-part-meta">Part {p.n} · Steps {p.range}</span>
+      <span class="j-part-meta">Part {p.n} · Lessons {p.range}</span>
       <strong>{p.title}</strong>
     </a>
   ))}

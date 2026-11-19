@@ -42,6 +42,19 @@ A slab and a puck share colours: what travels across the floor is what lands in 
 you, pale is the model, blue is a tool result, green is instructions, hatched grey is a summary,
 the accent is something that went wrong.
 
+One meaning per colour, in the picture, the readout and the legend (`journey.css`, top comment):
+
+| Colour | Means | Never |
+| --- | --- | --- |
+| accent (orange-red) | something went wrong: a failed check, a wrong file, a bad commit | "working", "new", "look here" |
+| amber (`--j-work`) | busy right now: a model thinking, a tool in use, a file being edited, a job's lamp while it runs | a problem |
+| blue | waits for you (a lamp, a card); a tool's result (a slab) | |
+| green | passed (a lamp, a commit); instructions (a slab) | |
+
+A label with a dotted underline opens something: its wiki page in the side view, with the term's
+definition on hover or focus. A label without one is a name and nothing more. Give a label a link
+only through `termLabel()` (below), so the word, the definition and the page agree.
+
 ## Rules for a chapter
 
 - The picture carries the idea. A step is a heading, at most two short sentences and at most one
@@ -52,6 +65,13 @@ the accent is something that went wrong.
 - Name real things. A station is labelled "Opus 5.5" or "GPT-6.2 Sol" when the step is about those
   two, with the names read from `src/data/models.ts`, and the line under the picture is spoken by
   that name. The guide still does not say one is better than the other.
+- Levels decide the output. plain sees what got done and what to do next; technical also sees the
+  type check, the tests, the commands and the files; engineer also sees architecture, invariants,
+  failure modes and cost. Three places carry it: the step text (`<Step level>` for a whole step,
+  `<ForLevel is inline>` inside one), the script (`ctx.level`, `byLevel(ctx.level, {...})` for
+  the line under the picture, the readout and the note), and the picture (a label that names a
+  term picks its word per level: the check reads "check", "typecheck · tests", "tsc --noEmit ·
+  npm test"). Changing the level re-runs the step on show; nothing has to listen for it.
 - Every chapter lets the reader break the thing it teaches: take a tool away, drop the gate, send a
   thin brief, share one folder. Show what happens; do not warn about it.
 - A part keeps its place and its meaning in every chapter. New parts go into `picture.ts` with a
@@ -60,11 +80,20 @@ the accent is something that went wrong.
   counted from what just happened.
 - One of a step's two sentences says what the reader is looking at, using the label on the part.
   Ten test readers found the steps short enough and the pictures one sentence short.
-- The first step of a chapter says where its parts were met before, with a link ("the check from
-  step 5"). Readers took each chapter for a separate page until it did.
+- The first step of a chapter says where its parts were met before, with a link by the lesson's
+  name: `the check from <LessonRef id="check" />` reads "the check from Check, lesson 9"
+  (`components/journey/LessonRef.astro`; `lessonName(id)` in a script). Never "step 3" or
+  "chapter 7": numbers move, and a reader landing cold does not know them. Readers took each
+  chapter for a separate page until it did. The last step hands over to the next lesson (`<Next>`).
 - One readout per chapter: the same names in the same order on every step, a count shown towards
   its total ("4 of 6"), a window as "22% full". Every run hands out a fixed number of tasks, ends,
   and closes with one sentence that says what came of it.
+- A readout name says what is counted and over what: "tasks on main, this run", "tokens read, all
+  turns", "agents waiting for you, this hour". A counter only goes up within a run; a control that
+  restarts the run sets it back to 0, and the readout flashes so the reader sees it (`run.ts`).
+  The assumption behind a number goes beside it as a tag, `ctx.stat([[name, value, 'made-up']])`:
+  "made-up", "cache on", "Opus 5.5 prices". The `StatPair` comment in `chapter.ts` has the rules.
+  The numbers in the text and the line under the picture are the readout's numbers.
 - A control answers in the same tick: it changes the line under the picture before the script
   plays. Switches that are each on or off go in `<div class="pick" data-multi>`; a plain `.pick` is
   one of several.
@@ -73,6 +102,13 @@ the accent is something that went wrong.
   named tool does, from a verified fact.
 - Made-up jobs are fine and are called made-up. Token counts, window sizes, prices and limits come
   from `src/data` through the page (`data` prop), with `<Verified>` in the foot.
+- One name per thing, from `src/journey/terms.ts`: each term has one word, one plain sentence and a
+  wiki page, and lists the names it retires (builder, worker and subagent are all a helper; the
+  gate is the check; a session is a thread; the board is the tray). Define a term where the lesson
+  first needs it: `<Term id="worktree" />` in step text (`components/journey/Term.astro`: the
+  sentence on hover, focus or tap, and a link into the side view), and `termLabel('mgate', 'check')`
+  or `{ at, term: 'check' }` on the picture (the same sentence on hover and focus). A lesson read
+  cold must make sense: define again in each lesson, never "as we saw".
 - A term the reader might not know is a label on the picture that opens its wiki page in the side
   view. Deeper play lives on a board (`/explain/...`, `/models/`) linked from the chapter's end.
 

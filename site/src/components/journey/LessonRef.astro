@@ -1,0 +1,23 @@
+---
+/*
+  A link to another lesson by its name: "Check, lesson 9". Use it wherever a lesson points back or
+  ahead ("the check from <LessonRef id="check" />"); never write "step 3" or "chapter 7", since
+  numbers move and a reader landing cold does not know them.
+
+    <LessonRef id="check" />                 Check, lesson 9
+    <LessonRef id="proof" step="cards" />    Proof, lesson 16, landing on that step
+    <LessonRef id="check">the check</LessonRef>   your words, linked; the title names the lesson
+
+  In a chapter script: lessonName('check') from terms.ts gives the same words as plain text.
+*/
+import { rung } from '../../journey/rungs';
+import { lessonName } from '../../journey/terms';
+import { url } from '../../lib/nav';
+interface Props { id: string; step?: string }
+const { id, step } = Astro.props;
+const r = rung(id);
+if (!r) throw new Error(`LessonRef: no lesson "${id}"`);
+const href = url(`journey/${id}/`) + (step ? `#${step}` : '');
+const own = Astro.slots.has('default');
+---
+<a class="j-ref" href={href} title={own ? lessonName(id) : undefined}>{own ? <slot /> : lessonName(id)}</a>
