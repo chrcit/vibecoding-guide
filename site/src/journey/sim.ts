@@ -44,7 +44,6 @@ export async function fleet(ctx: Ctx, h: Script, o: FleetOpts = {}): Promise<Tal
     [`${o.name ?? 'the lead'}’s window`, `${Math.round(scene.fill('a0') * 100)}% full`],
   ]);
   const w = (id: string) => (s: typeof scene.state) => s.agents.find((a) => a.id === id)!;
-  let writing = 0;
 
   const life = async (i: number) => {
     const me = workers[i]!;
@@ -80,10 +79,10 @@ export async function fleet(ctx: Ctx, h: Script, o: FleetOpts = {}): Promise<Tal
         h.set((s) => { const g = s.gates!.find((x) => x.id === 'mgate'); if (g) g.lamp = 'ok'; });
         await h.send([gateAt, [project.at[0] - 46, BUS_Y]], 'model', { ms: 300 });
       } else {
-        writing++;
-        const clash = !!o.shared && writing > 1;
-        await h.send(route.workerToMain(at, project), wrong ? 'bad' : 'model');
-        writing--;
+        // Which writes land on top of another is fixed, not timed: about one in three when the
+        // folder is shared, so the run reads the same at any speed and with motion reduced.
+        const clash = !!o.shared && workers.length > 1 && (i * 5 + task * 2) % 3 === 0;
+        await h.send(route.workerToMain(at, project), wrong || clash ? 'bad' : 'model');
         if (clash) { tally.clashes++; wrong = true; h.set((s) => { const f = (s.project!.files ??= ['', '', '', '', '', '']); f[(i + task) % 6] = 'bad'; }); }
       }
       if (wrong) tally.wrong++;

@@ -43,3 +43,15 @@ const { title, description, section, progress = false, noindex = false, type = '
     <SideView />
   </body>
 </html>
+
+<script>
+  // A slider's label often holds its live value in an <output>. An output is labelable, so the
+  // label names the output and leaves the slider without a name. Name it from the label's own words.
+  for (const el of document.querySelectorAll<HTMLInputElement | HTMLSelectElement>('label input, label select')) {
+    if (el.labels?.length || el.hasAttribute('aria-label') || el.hasAttribute('aria-labelledby')) continue;
+    const label = el.closest('label')!.cloneNode(true) as HTMLElement;
+    label.querySelectorAll('output, input, select').forEach((n) => n.remove());
+    const name = label.textContent?.replace(/\s+/g, ' ').trim();
+    if (name) el.setAttribute('aria-label', name);
+  }
+</script>

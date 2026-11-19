@@ -24,7 +24,7 @@ const base = (gate: boolean) => solo({ tools: true, project: true, gate, labels:
 export async function jobs(ctx: Ctx, h: Script, checks: CheckId[], count = JOBS.length) {
   let said = 0, wrong = 0, caught = 0;
   const gate = checks.length > 0;
-  const stats = () => ctx.stat([['said “done”', said], ['caught before it reached you', caught], ['wrong, and you were told “done”', wrong]]);
+  const stats = () => ctx.stat([['checks on', checks.length ? checks.map((c) => NAMES[c]).join(', ') : 'none'], ['said “done”', said], ['caught before it reached you', caught], ['wrong, and you were told “done”', wrong]]);
   h.set((s) => { Object.assign(s, base(gate)); });
   stats();
   for (const job of JOBS.slice(0, count)) {
