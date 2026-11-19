@@ -71,7 +71,7 @@ const legend = [
     <dl class="stats lab-stats">
       <Stat name="Time to finish" id="finish">{hours(st.finish)}</Stat>
       <Stat name="Your time" id="you" tone="accent">{hours(st.you)}</Stat>
-      <Stat name="Waiting for you" id="waiting">{hours(st.waiting)}</Stat>
+      <Stat name="Agents’ waiting, summed" id="waiting">{hours(st.waiting)}</Stat>
       <Stat name="Tokens vs one agent" id="tokens">{times(st.tokensVsSolo)}</Stat>
       <Stat name="Conflicts" id="conflicts">{String(st.conflicts)}</Stat>
       <Stat name="Uncaught mistakes" id="through">{String(Math.round(st.through))}</Stat>

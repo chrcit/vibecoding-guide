@@ -14,6 +14,7 @@ import BlindSpots from '../../../components/fig/blind-spots/BlindSpots.astro';
 import WorktreeSplit from '../../../components/fig/worktree-split/WorktreeSplit.astro';
 import { DEFAULT, PATTERNS, PRESETS, UNIT_TOKENS, OUTPUT_SHARE } from '../../../components/fig/team-lab/model';
 import { PROMPTS } from '../../../components/orchestration/prompts';
+import { BRIEF, COMMANDS, FOLDERS } from './_setup';
 import { fact, formatValue } from '../../../lib/facts';
 import { models } from '../../../data/models';
 import { url } from '../../../lib/nav';
@@ -79,18 +80,24 @@ const factIds = [
     <TeamLab roles={roles} ways={ways} />
   </Tile>
 
-  <Tile title="You are the queue" span={4} side={`${READ}#several-threads`}>
-    <PersonQueue />
-    <Explain slot="foot" to={`${READ}#model`}>Modelled, not measured</Explain>
+  <Tile title="A brief for one agent" span={6} side={`${READ}#subagents`} id="brief">
+    <CopyPrompt title="A brief for one agent" id="prompt-brief" compact>{BRIEF}</CopyPrompt>
   </Tile>
 
-  <Tile title="A subagent knows only what you pass it" span={4} side={`${READ}#subagents`}>
-    <SpawnContext />
+  <Tile title="A folder per agent, merged one at a time" span={6} side={`${READ}#worktrees`} id="worktrees">
+    <pre class="wt-folders" aria-label="Folder layout"><code>{FOLDERS}</code></pre>
+    <CopyPrompt title="Worktree and merge commands" id="worktree-commands" compact>{COMMANDS}</CopyPrompt>
   </Tile>
 
-  <Tile title="A second model catches what the first cannot see" span={4} side={`${READ}#across-providers`}>
-    <BlindSpots />
-    <Explain slot="foot" to={`${READ}#model`}>Modelled, not measured</Explain>
+  <Tile title="Start each way with a prompt" span={5} id="prompts">
+    <div class="pick pr-pick" role="group" aria-label="Way to run the team">
+      {PATTERNS.map((p) => <button type="button" data-pr={p.id} aria-pressed={p.id === DEFAULT.pattern ? 'true' : 'false'}>{p.name}</button>)}
+    </div>
+    {PATTERNS.map((p) => (
+      <div class="pr-one" data-pr-show={p.id} hidden={p.id !== DEFAULT.pattern}>
+        <CopyPrompt title={PROMPTS[p.id].title} id={`prompt-${p.id}`}>{PROMPTS[p.id].text}</CopyPrompt>
+      </div>
+    ))}
   </Tile>
 
   <Tile title="Where each tool does this" span={7} side="t3-code/">
@@ -122,15 +129,18 @@ const factIds = [
     </div>
   </Tile>
 
-  <Tile title="Start each way with a prompt" span={5} id="prompts">
-    <div class="pick pr-pick" role="group" aria-label="Way to run the team">
-      {PATTERNS.map((p) => <button type="button" data-pr={p.id} aria-pressed={p.id === DEFAULT.pattern ? 'true' : 'false'}>{p.name}</button>)}
-    </div>
-    {PATTERNS.map((p) => (
-      <div class="pr-one" data-pr-show={p.id} hidden={p.id !== DEFAULT.pattern}>
-        <CopyPrompt title={PROMPTS[p.id].title} id={`prompt-${p.id}`}>{PROMPTS[p.id].text}</CopyPrompt>
-      </div>
-    ))}
+  <Tile title="You are the queue" span={4} side={`${READ}#several-threads`}>
+    <PersonQueue />
+    <Explain slot="foot" to={`${READ}#model`}>Modelled, not measured</Explain>
+  </Tile>
+
+  <Tile title="A subagent knows only what you pass it" span={4} side={`${READ}#subagents`}>
+    <SpawnContext />
+  </Tile>
+
+  <Tile title="A second model catches what the first cannot see" span={4} side={`${READ}#across-providers`}>
+    <BlindSpots />
+    <Explain slot="foot" to={`${READ}#model`}>Modelled, not measured</Explain>
   </Tile>
 
   <Tile title="What each role costs" span={4} level="engineer" side={`${READ}#cost`}>
@@ -190,6 +200,10 @@ const factIds = [
     .hx-row { grid-template-columns: minmax(0, 1fr); gap: 0.2rem; }
   }
 
+  .wt-folders { margin: 0 0 0.75rem; font-size: var(--text-xs); }
+  :global(#worktrees .copy-prompt), :global(#brief .copy-prompt) { margin: 0; }
+  /* Commands keep one per line and scroll sideways inside their box. */
+  :global(#worktrees .copy-prompt .text) { white-space: pre; overflow-x: auto; overflow-wrap: normal; }
   .pr-pick { margin-bottom: 0.75rem; }
   .pr-pick button { padding: 0 0.6rem; }
   .pr-one :global(.copy-prompt) { margin: 0; }
