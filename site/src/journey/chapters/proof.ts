@@ -1,20 +1,38 @@
-// Chapter 12: proof you can read. The check is green every time in this chapter: it has caught
-// what a machine can catch (chapter 5). What is left is whether the work is what you asked for,
-// and only you can judge that. The cards on the tray beside you are how you judge it at a glance.
-// The jobs, the line counts and which jobs are wrong are made up and fixed.
-import type { Chapter, Ctx } from '../chapter';
+// Lesson 16: proof you can read. The check catches what a machine can check (a type error, a failing
+// test), as in "Make it prove it". What is left is whether the work is what you asked for, and only
+// you can judge that. The cards on the tray beside you are how you judge it at a glance. The jobs,
+// the line counts and which jobs are wrong are made up and fixed.
+import { byLevel, type Chapter, type Ctx, type Level } from '../chapter';
+import { STEP_NOTES } from '../notes';
 import type { Script } from '../scene';
 import { solo, lab } from '../presets';
 import { route, reverse, SPOT, type Card, type Kind, type Label, type SceneState } from '../picture';
 
 type CardId = 'sum' | 'tests' | 'shot' | 'link';
-interface Kindof { word: string; b: Kind; q: string; side?: string }
+interface Kindof { word: string; b: Kind; q: string; says: Record<Level, string>; side?: string }
 const CARDS: Record<CardId, Kindof> = {
-  sum: { word: 'summary', b: 'model', q: 'What did it change, and what did it leave out?', side: 'wiki/definition-of-done/' },
-  tests: { word: 'test run', b: 'tool', q: 'What was checked, and what was not?', side: 'wiki/test/' },
-  shot: { word: 'screenshot', b: 'tool', q: 'What does it look like?', side: 'wiki/browser-check/' },
-  link: { word: 'link', b: 'tool', q: 'Does it work when you use it?', side: 'wiki/preview-deployment/' },
+  sum: { word: 'summary', b: 'model', q: 'What did it change, and what did it leave out?', side: 'wiki/definition-of-done/', says: {
+    plain: 'Members can pay their fee online from the list. Not done: refunds.',
+    technical: 'Added a Pay button, a payments table and a /pay route; 212 lines in 5 files. Not done: refunds.',
+    engineer: 'New payments table with a unique (member, season) key, /pay route behind the session check; 212 lines in 5 files. Not done: refunds, webhook retries.',
+  } },
+  tests: { word: 'test run', b: 'tool', q: 'What was checked, and what was not?', side: 'wiki/test/', says: {
+    plain: '31 checks ran, 31 passed. Paying twice was tested; a failed card was not.',
+    technical: 'npm test: 31 passed, 0 failed. tsc --noEmit: clean. Not covered: a declined card.',
+    engineer: 'tsc --noEmit clean; vitest 31/31, including a double-payment test. Not covered: a declined card, concurrent requests.',
+  } },
+  shot: { word: 'screenshot', b: 'tool', q: 'What does it look like?', side: 'wiki/browser-check/', says: {
+    plain: 'The list with a Pay button beside each unpaid member, at phone width.',
+    technical: 'The member list at 390 px: a Pay button on each unpaid row.',
+    engineer: 'The member list at 390 px and 1440 px, taken by a headless browser after the build.',
+  } },
+  link: { word: 'link', b: 'tool', q: 'Does it work when you use it?', side: 'wiki/preview-deployment/', says: {
+    plain: 'A link to a copy of the site with test payments. Try paying.',
+    technical: 'A preview link to this branch, with the payment provider in test mode.',
+    engineer: 'A preview deploy of this branch against a test payment account; the same link goes in the pull request.',
+  } },
 };
+const note = (ctx: Ctx, step: string) => { const n = STEP_NOTES.proof?.[step]; if (n) ctx.model(n.part, n.text[ctx.level]); };
 const ORDER: CardId[] = ['sum', 'tests', 'shot', 'link'];
 const toTray = () => route.agentToTray({ at: SPOT.tray, cards: [] });
 const GAP = 18;
@@ -41,9 +59,16 @@ function relabel(s: SceneState, names: Record<string, [string, string?]> = {}) {
   s.labels = [...BASE_LABELS(), ...(cards.length ? cards.map((c) => cardLabel(s, c.id, names[c.id]?.[0] ?? CARDS[c.id as CardId]?.word ?? c.id, names[c.id]?.[1] ?? CARDS[c.id as CardId]?.side)) : [lab('tray', 'the tray', 'bottom')])];
 }
 
-// One readout for the whole chapter, the same four names on every step.
-interface Tally { done: number; came: string; seen: number; missed: number | string }
-const show = (ctx: Ctx, t: Tally) => ctx.stat([['said “done”', t.done], ['came with it', t.came], ['not what you asked, seen', t.seen], ['not what you asked, missed', t.missed]]);
+// One readout for the whole lesson, the same five names on every step; counts only go up in a run.
+interface Tally { done: number; came: string; check: number; seen: number; missed: number | string }
+const tally = (came = 'nothing yet'): Tally => ({ done: 0, came, check: 0, seen: 0, missed: 0 });
+const show = (ctx: Ctx, t: Tally) => ctx.stat([
+  ['said “done”', t.done],
+  ['came with it', t.came],
+  ['caught by the check', t.check],
+  ['not what you asked: seen on a card', t.seen],
+  ['not what you asked: reached you as “done”', t.missed],
+]);
 
 const work = (s: SceneState, on: boolean) => { const a = s.agents[0]!; a.busy = on; a.lamp = on ? 'work' : 'off'; };
 
@@ -84,27 +109,28 @@ const clear = (h: Script) => h.set((s) => { s.tray!.cards = []; relabel(s); s.ga
 // ----- word: one pale puck, nothing to look at -----
 async function word(ctx: Ctx, h: Script) {
   h.set((s) => { Object.assign(s, base()); });
-  const t: Tally = { done: 0, came: 'nothing yet', seen: 0, missed: 0 };
+  const t = tally();
   show(ctx, t);
   await build(ctx, h, 'Let members pay their fee online.', 8);
+  ctx.say('check', byLevel(ctx.level, { plain: 'The tests pass.', technical: 'tsc --noEmit clean; npm test 31 of 31.', engineer: 'tsc --noEmit clean; vitest 31/31; lint clean.' }));
   await pass(h);
   await h.send(route.gateToYou(), 'model', { ms: 420 });
   ctx.say('the model', 'Done.');
-  Object.assign(t, { done: 1, came: 'one word', missed: '?' });
+  Object.assign(t, { done: 1, came: 'one word', missed: 'you can’t tell' });
   show(ctx, t);
   await h.wait(1300);
-  ctx.say(null, 'One word for 212 changed lines. To know whether it is what you asked for, you would read all 212.');
+  ctx.say(null, 'One word for 212 changed lines of code in 5 files. The check says the tests pass; whether it is what you asked for, you would only know by reading all 212.');
 }
 
 // ----- cards: the same job, with proof -----
 async function cards(ctx: Ctx, h: Script) {
   h.set((s) => { Object.assign(s, base()); });
-  const t: Tally = { done: 0, came: 'nothing yet', seen: 0, missed: 0 };
+  const t = tally();
   show(ctx, t);
   await build(ctx, h, 'Let members pay their fee online. Show me it works.', 8);
   await pass(h);
   for (const id of ORDER) {
-    ctx.say(CARDS[id].word, CARDS[id].q);
+    ctx.say(CARDS[id].word, CARDS[id].says[ctx.level]);
     await land(h, { id, b: CARDS[id].b });
     t.came = `${ORDER.indexOf(id) + 1} card${id === 'sum' ? '' : 's'}`;
     show(ctx, t);
@@ -114,25 +140,38 @@ async function cards(ctx: Ctx, h: Script) {
   await h.send(route.gateToYou(), 'model', { ms: 420 });
   t.done = 1;
   show(ctx, t);
-  ctx.say(null, 'Four cards, each answering one question at a glance. The 212 changed lines are still there if a card makes you want to read them.');
+  ctx.say(null, 'Four cards on the tray: what changed, what was tested, what it looks like, and a link to try it. The 212 lines are still there if a card makes you want to read them.');
 }
 
 // ----- catch: six jobs, all green at the check -----
-interface Job { ask: string; wrong?: CardId; says?: string }
+interface Job { ask: string; wrong?: CardId; says?: string; check?: string }
 const JOBS: Job[] = [
   { ask: 'Sort the list by surname.' },
   { ask: 'Show who has not paid.', wrong: 'tests', says: 'The test it wrote is called “lists members who have paid”. It passes.' },
   { ask: 'Email the unpaid a reminder.', wrong: 'sum', says: 'Added a reminder email that goes to every member.' },
-  { ask: 'Add a phone column.' },
+  { ask: 'Add a phone column.', check: 'members.ts: type error, phone may be undefined.' },
   { ask: 'Put the club badge on the list.', wrong: 'shot', says: 'The badge is on the login page. The list has none.' },
   { ask: 'Let members change their own email.', wrong: 'link', says: 'Signed in as a member: “Not allowed”. Only the admin can save it.' },
 ];
 async function catching(ctx: Ctx, h: Script, on: CardId[]) {
   h.set((s) => { Object.assign(s, base()); });
-  const t: Tally = { done: 0, came: on.length ? `${on.length} card${on.length > 1 ? 's' : ''}` : 'one word', seen: 0, missed: 0 };
+  const t = tally(on.length ? `${on.length} card${on.length > 1 ? 's' : ''}` : 'one word');
   show(ctx, t);
   for (const job of JOBS) {
     await build(ctx, h, job.ask, 3, true);
+    if (job.check) {
+      // What a machine can check, the check catches: the lamp goes red and the work goes back.
+      await h.send(route.agentToGate(), 'model', { ms: 240 });
+      h.set((s) => { s.gates![0]!.lamp = 'bad'; });
+      ctx.say('check', job.check);
+      t.check++;
+      show(ctx, t);
+      await h.wait(1300);
+      await h.send(reverse(route.agentToGate()), 'bad', { ms: 260 });
+      h.set((s) => { s.gates![0]!.lamp = 'off'; work(s, true); s.agents[0]!.blocks!.push({ t: 'bad', h: 1 }); });
+      await h.wait(420);
+      h.set((s) => { work(s, false); });
+    }
     await pass(h, true);
     if (on.length) {
       await h.send(toTray(), 'tool', { ms: 280 });
@@ -163,15 +202,15 @@ async function catching(ctx: Ctx, h: Script, on: CardId[]) {
   }
   const missed = t.missed as number;
   ctx.say(null, missed
-    ? `The check was green six times out of six. ${missed === 1 ? 'One job was' : `${missed} jobs were`} not what you asked for and reached you as “done” anyway.`
-    : `The check was green six times out of six. All ${t.seen} jobs that were not what you asked for showed it on a card before they reached you.`);
+    ? `The check caught the type error. ${missed === 1 ? 'One job' : `${missed} jobs`} that passed it ${missed === 1 ? 'was' : 'were'} still not what you asked for and reached you as “done”.`
+    : `The check caught the type error, which a machine can see. The ${t.seen} jobs that were not what you asked for passed it, and each showed on a card before it reached you.`);
 }
 
 // ----- during: a long job, with or without a progress file -----
 const STEPS = ['Read the member list', 'Add a photo column', 'Resize uploads', 'Change the login so photos load faster', 'Add the upload button', 'Show photos on the list', 'Write the tests', 'Run the tests', 'Fix one failing test', 'Write the summary'];
 async function during(ctx: Ctx, h: Script, progress: boolean) {
   h.set((s) => { Object.assign(s, base()); if (progress) { s.tray!.cards = [{ id: 'progress', fill: 0 }]; relabel(s, { progress: ['progress'] }); } });
-  const t: Tally = { done: 0, came: progress ? 'a progress file' : 'nothing until the end', seen: 0, missed: 0 };
+  const t = tally(progress ? 'a progress file' : 'nothing until the end');
   show(ctx, t);
   ctx.say('you', 'Add member photos to the list.');
   await h.send(route.youToAgent(), 'you', { ms: 420 });
@@ -200,8 +239,8 @@ async function during(ctx: Ctx, h: Script, progress: boolean) {
   if (!progress) t.missed = 1;
   show(ctx, t);
   ctx.say(null, progress
-    ? 'You saw the wrong turn at step 4 of 10, while it was still working, and did not have to stop it to look.'
-    : 'Ten steps with nothing to look at, then “Done.” The login change it made at step 4 came with it.');
+    ? 'You saw the wrong turn at the 4th of its 10 steps, while it was still working, and did not have to stop it to look.'
+    : 'Ten steps with nothing to look at, then “Done.” The login change it made at the 4th step came with it.');
 }
 
 // ----- ask: the kind of work decides the cards -----
@@ -228,7 +267,7 @@ const ASKS: Record<Work, { ask: string; cards: { id: string; b: Kind; word: stri
 async function asking(ctx: Ctx, h: Script, kind: Work) {
   h.set((s) => { Object.assign(s, base()); });
   const job = ASKS[kind];
-  const t: Tally = { done: 0, came: 'nothing yet', seen: 0, missed: 0 };
+  const t = tally();
   show(ctx, t);
   const names: Record<string, [string, string?]> = {};
   for (const c of job.cards) names[c.id] = [c.word];
@@ -282,11 +321,11 @@ const playCatch = (ctx: Ctx) => run(ctx, (h) => catching(ctx, h, ctx.mem.on ?? O
 
 export const proof: Chapter = {
   steps: {
-    word: { scene: () => base(), enter: (ctx) => run(ctx, (h) => word(ctx, h)) },
-    cards: { scene: () => base(), enter: (ctx) => run(ctx, (h) => cards(ctx, h)) },
-    catch: { scene: () => base(), enter: (ctx) => { ctx.mem.on = [...ORDER]; ctx.scene.speed = 1.5; playCatch(ctx); } },
-    during: { scene: () => base(), enter: (ctx) => run(ctx, (h) => during(ctx, h, true)) },
-    ask: { scene: () => base(), enter: (ctx) => run(ctx, (h) => asking(ctx, h, 'page')) },
+    word: { scene: () => base(), enter: (ctx) => { note(ctx, 'word'); run(ctx, (h) => word(ctx, h)); } },
+    cards: { scene: () => base(), enter: (ctx) => { note(ctx, 'cards'); run(ctx, (h) => cards(ctx, h)); } },
+    catch: { scene: () => base(), enter: (ctx) => { note(ctx, 'catch'); ctx.mem.on = [...ORDER]; ctx.scene.speed = 1.5; playCatch(ctx); } },
+    during: { scene: () => base(), enter: (ctx) => { note(ctx, 'during'); run(ctx, (h) => during(ctx, h, true)); } },
+    ask: { scene: () => base(), enter: (ctx) => { note(ctx, 'ask'); run(ctx, (h) => asking(ctx, h, 'page')); } },
   },
   actions: {
     toggle: (ctx, val, el) => {

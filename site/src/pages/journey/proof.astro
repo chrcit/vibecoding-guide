@@ -5,6 +5,7 @@ import More from '../../components/journey/More.astro';
 import Next from '../../components/journey/Next.astro';
 import Fact from '../../components/data/Fact.astro';
 import Verified from '../../components/data/Verified.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
 import { url } from '../../lib/nav';
 
@@ -16,19 +17,18 @@ const prompt = `When you finish, hand back proof I can judge in a minute, before
 - a short list of what you did not check, and why
 If something could not be checked, say so instead of guessing.`;
 ---
-<Journey chapter="proof" first="word" title="Proof you can read" description="An agent can hand back more than the word done: a summary, a test run, a screenshot, and a link to try. Each catches a different kind of miss at a glance.">
-  <Step id="word" title="“Done” is only one word">
-    <p><a href={url('journey/check/')}>The check from step 5</a> only says pass or fail. When it passes, all you get back is “Done.”—leaving you to read 212 changed lines yourself to verify the agent actually built what you asked for.</p>
+<Journey chapter="proof" first="word" title="Proof you can read" description="An agent can hand back more than the word done: a summary, a test run, a screenshot and a link to try. Each shows a different way the work can miss what you asked.">
+  <Step id="word" title="“Done” is one word">
+    <p>The agent changes 212 lines of code in five files to let members pay online, and <a href={url('journey/check/')}>the check from Make it prove it</a> passes: its tests run green. All that reaches you is “Done.”</p>
   </Step>
-  <Step id="cards" title="Ask for proof alongside the work">
-    <p>Ask the agent to place four proof cards on your tray: a short summary, the test output, a screenshot, and a link to try it.</p>
-    <p>Automated checks tell you pass or fail; proof cards let you judge the result at a glance.</p>
+  <Step id="cards" title="Ask for proof with the work">
+    <p>The tray is the plate beside you, where the agent puts what it hands back. Ask for four cards on it: a summary of what changed, the test run, a screenshot, and a link to try it yourself.</p>
     <More title="Where this comes from">
       <p><Fact id="harnesses.claudeCode.askForEvidence" show="claim" /></p>
     </More>
   </Step>
-  <Step id="catch" title="Each card catches a different kind of miss">
-    <p>All six example tasks pass the automated check, yet four miss what you actually wanted. Each proof card flags a different miss in orange—turn any card off and watch that kind of mistake slip through as “done”.</p>
+  <Step id="catch" title="The check sees errors; the cards show misses">
+    <p>Of six made-up jobs, the check stops the one with a type error, which a machine can see. Four pass it and still miss what you asked, which only a card shows you: switch a card off and its kind of miss reaches you as “done”.</p>
     <div class="pick" data-multi role="group" aria-label="Proof cards that are switched on">
       <button type="button" data-do="toggle" data-val="sum" data-default aria-pressed="true">Summary</button>
       <button type="button" data-do="toggle" data-val="tests" data-default aria-pressed="true">Test run</button>
@@ -37,15 +37,15 @@ If something could not be checked, say so instead of guessing.`;
     </div>
     <More title="A worked check for a number">
       <dl>
-        <dt>Reference</dt><dd>Fees paid last season, from the club’s spreadsheet: €14,880 (illustrative).</dd>
-        <dt>Tolerance</dt><dd>For money, exact match. For a measured value, write down the allowed margin before the run.</dd>
+        <dt>Reference</dt><dd>Fees paid last season, from the club’s spreadsheet: €14,880 (made up).</dd>
+        <dt>Tolerance</dt><dd>For money, an exact match. For a measured value, write down the allowed margin before the run.</dd>
         <dt>Rerun</dt><dd>The agent runs the calculation again on a fresh copy of the data and gets the same result.</dd>
         <dt>The card</dt><dd>“Total €14,880.00. Reference €14,880.00. Rerun €14,880.00. Match.”</dd>
       </dl>
     </More>
   </Step>
-  <Step id="during" title="See progress while it runs">
-    <p>On a longer task, ask the agent to update a live progress card on your tray as it goes. When it veers off-script at step 4 into work you never asked for, you spot it immediately without interrupting the run.</p>
+  <Step id="during" title="Proof while it runs">
+    <p>On a long job, ask the agent to keep a progress file: a card on the tray that fills as each of its steps is done. When it wanders off at its fourth step into work you never asked for, you see it without stopping it.</p>
     <div class="pick">
       <button type="button" data-do="progress" data-val="on" data-default aria-pressed="true">A progress file</button>
       <button type="button" data-do="progress" data-val="off" aria-pressed="false">Nothing until the end</button>
@@ -55,7 +55,15 @@ If something could not be checked, say so instead of guessing.`;
     </More>
   </Step>
   <Step id="ask" title="Match the proof to the job">
-    <p>Tell the agent upfront what evidence fits the task: phone and desktop screenshots for a page, sample rows before and after for a script, or a failing test turned passing for a bug fix.</p>
+    <ForLevel is="plain">
+      <p>Say what you want back when you ask: two screenshots and a link for a page, rows before and after for a script, a test that failed and now passes for a bug fix.</p>
+    </ForLevel>
+    <ForLevel is="technical">
+      <p>Put the proof in the request: screenshots at 390 and 1440 px for a page, sample rows and counts for a script, and for a bug fix a test that fails before the change and passes after, with the <code>npm test</code> output.</p>
+    </ForLevel>
+    <ForLevel is="engineer">
+      <p>Put the proof in the request, and in a team put the same cards in the pull request description: a red-then-green regression test for a fix, fixtures for a script, a preview deploy for a page. The reviewer reads the cards before the diff.</p>
+    </ForLevel>
     <div class="pick">
       <button type="button" data-do="kind" data-val="page" data-default aria-pressed="true">A page</button>
       <button type="button" data-do="kind" data-val="script" aria-pressed="false">A script</button>
@@ -67,7 +75,7 @@ If something could not be checked, say so instead of guessing.`;
     <Next from="proof" more={[{ href: 'explain/verification/', text: 'Checking the work' }]} />
   </Step>
   <Fragment slot="foot">
-    <p>The example tasks, the 212 changed lines, the sample counts, and the planted misses are illustrative.</p>
+    <p>The jobs, the 212 changed lines, the counts and the planted misses are made up.</p>
     <Verified ids={ids} />
   </Fragment>
 </Journey>
