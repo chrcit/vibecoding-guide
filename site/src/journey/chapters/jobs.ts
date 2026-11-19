@@ -1,9 +1,10 @@
-// Chapter 18: several jobs. Each job works, then needs you; there is one of you, so jobs queue.
+// Lesson 18: several jobs. Each job works, then needs you; there is one of you, so jobs queue.
 // The hour, the jobs and every rate are made up. What happens is worked out first by desk() in
 // sim.ts, then drawn minute by minute, and the readout is counted from the same minutes.
 import type { Chapter, Ctx } from '../chapter';
 import type { Script } from '../scene';
 import { jobs, lab } from '../presets';
+import { termLabel } from '../terms';
 import { desk, type Need } from '../sim';
 import { attendSpot, jobSpot, BUS_Y, SPOT, type SceneState, type Label, type P3, type XY } from '../picture';
 
@@ -28,7 +29,7 @@ const OTHER_QUESTIONS = ['Hide paused members, or grey them out?', 'Show holiday
 const line = (o: Opts, j: number, need: Need) =>
   need === 'question'
     ? o.stop === 'short' ? (o.projects === 'one' ? QUESTIONS : OTHER_QUESTIONS)[j % 5]! : 'Can you take a look?'
-    : o.stop === 'short' ? 'Done. Tests pass; screenshot on the board.' : 'Done.';
+    : o.stop === 'short' ? 'Done. Tests pass; screenshot on the tray.' : 'Done.';
 const STATE = { work: 'working', question: 'question for you', result: 'ready to check' } as const;
 
 const stopOf = (o: Opts) => STOP[o.stop] + (o.board === 'vague' ? OPEN_THREAD : 0);
@@ -52,12 +53,12 @@ const frameFive = (projects: Opts['projects']): P3[] => {
 
 function floor(o: Opts): SceneState {
   const n = o.n;
-  const labels: Label[] = [lab('you', 'you', 'left'), lab('tray', 'the board', 'bottom')];
+  const labels: Label[] = [lab('you', 'you', 'left'), termLabel('tray', 'tray', 'bottom', 'the tray')];
   if (o.board) for (let j = 0; j < n; j++) labels.push(boardLabel(o, j, 'work'));
-  else labels.push(lab('j0', n > 1 ? 'job 1' : 'a job', 'top', 'wiki/thread/'));
+  else labels.push(termLabel('j0', 'job', 'top', n > 1 ? 'job 1' : 'a job'));
   if (o.projects === 'one') {
-    labels.push(lab('main', 'main: the club list', 'bottom', 'wiki/branch/'));
-    if (n > 1 && !o.board) labels.push(lab([jobSpot(n - 1, n)[0] + 30, 12, 2], 'its own copy', 'right', 'wiki/worktree/'));
+    labels.push(termLabel('main', 'main', 'bottom', 'main: the club list'));
+    if (n > 1 && !o.board) labels.push(termLabel([jobSpot(n - 1, n)[0] + 30, 12, 2], 'worktree', 'right'));
   } else {
     for (let j = 0; j < n; j++) labels.push(lab(`p:${j}`, PROJECTS[j]!, 'top'));
   }
@@ -77,11 +78,11 @@ async function hour(ctx: Ctx, h: Script, o: Opts) {
   h.set((s) => { Object.assign(s, floor(o)); });
   let finished = 0, waited = 0, idle = 0, sentBack = 0, merges = 0;
   const stats = (t: number) => ctx.stat([
-    ['made-up hour, minute', `${t} of ${T}`],
-    ['jobs finished so far', finished],
-    ['agents waiting for you, all jobs added up', min(waited)],
-    ['you waiting for an agent', min(idle)],
-    ['merges sent back to update', o.projects === 'one' ? sentBack : 'none: own projects'],
+    ['minute', `${t} of ${T}`, 'made-up hour'],
+    ['jobs finished, this hour', finished],
+    ['agents waiting for you, summed over all jobs', min(waited)],
+    ['you waiting for an agent, this hour', min(idle)],
+    ['merges sent back to update, this hour', o.projects === 'one' ? sentBack : 'none: own projects'],
   ]);
   stats(0);
   let merging: Promise<void> = Promise.resolve();

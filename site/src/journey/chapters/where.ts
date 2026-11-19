@@ -1,9 +1,10 @@
-// Chapter 17: other machines. The same jobs, each standing on the machine it runs on: your laptop,
+// Lesson 21: other machines. The same jobs, each standing on the machine it runs on: your laptop,
 // a computer that stays on, a machine in the cloud. Close the laptop's lid and its job stops where
 // it was; the others carry on. The hour, the jobs and the missing setup are made up.
 import type { Chapter, Ctx } from '../chapter';
 import type { Script } from '../scene';
 import { jobs, lab } from '../presets';
+import { termLabel } from '../terms';
 import { BUS_Y, type SceneState, type XY, type Zone } from '../picture';
 
 type Kind = Zone['kind'];
@@ -23,9 +24,9 @@ const scene = (n: number, o: { gate?: boolean; phone?: boolean; leave?: boolean 
       lab('j0', 'your laptop', 'top'),
       ...(n > 1 ? [lab('j1', 'always-on computer', 'top', 'wiki/always-on-machine/')] : []),
       ...(n > 2 ? [lab('j2', 'the cloud', 'top')] : []),
-      ...(o.gate ? [lab('mgate', 'the check', 'right', 'wiki/verification/')] : []),
-      lab('main', 'main', 'bottom', 'wiki/branch/'),
-      ...(o.phone ? [lab('tray', 'on your phone', 'bottom')] : []),
+      ...(o.gate ? [termLabel('mgate', 'check', 'right')] : []),
+      termLabel('main', 'main', 'bottom'),
+      ...(o.phone ? [termLabel('tray', 'tray', 'bottom', 'the tray, on your phone')] : []),
     ],
   });
   // Frame all three machines from the first step, so adding one does not move the camera much.
@@ -44,7 +45,7 @@ interface Run { lid: 'open' | 'closed'; setup: boolean }
 const stats = (ctx: Ctx) => {
   const s = ctx.scene.state;
   const stopped = s.agents.filter((a) => a.off || a.lamp === 'bad').length;
-  ctx.stat([['jobs running now', s.agents.length - stopped], ['jobs stopped now', stopped], ['changes landed on main this hour', ctx.mem.landed ?? 0]]);
+  ctx.stat([['jobs running now', s.agents.length - stopped], ['jobs stopped now', stopped], ['changes landed on main, this hour', ctx.mem.landed ?? 0, 'made-up hour']]);
 };
 const fly = (p: Promise<void>, then?: () => void) => void p.then(then).catch(() => {});
 

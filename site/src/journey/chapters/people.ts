@@ -1,10 +1,11 @@
-// Chapter 16: other people. A change waits at the gate in front of main as a pull request; a
+// Lesson 20: other people. A change waits at the gate in front of main as a pull request; a
 // colleague reads it, a client looks at the result, users find what nobody tested. What each of
 // them says comes back as a puck and ends as a slab in the agent's window: the next job's brief.
 // The jobs, the people's lines and every rate in the day are made up and fixed, not random.
 import type { Chapter, Ctx } from '../chapter';
 import type { Script } from '../scene';
 import { ship, lab } from '../presets';
+import { termLabel } from '../terms';
 import { route, reverse, SPOT, BUS_Y, USERS, type SceneState, type XY, type Kind } from '../picture';
 
 type Who = 'peer' | 'client' | 'users';
@@ -21,19 +22,19 @@ const scene = (people: Who[], n = 0): SceneState => {
     lead: [],
     labels: [
       lab('you', 'you', 'left'),
-      ...(n ? [] : [lab('a0', 'the agent', 'top', 'wiki/agent/')]),
-      lab('mgate', 'the check', 'top', 'wiki/verification/'),
-      lab([GATE_X - 52, BUS_Y + 2, 2], 'pull requests wait here', 'left', 'wiki/pull-request/'),
-      lab('main', 'main', 'bottom', 'wiki/branch/'),
+      ...(n ? [] : [termLabel('a0', 'agent', 'top', 'the agent')]),
+      termLabel('mgate', 'check'),
+      termLabel([GATE_X - 52, BUS_Y + 2, 2], 'pull-request', 'left', 'pull requests wait here'),
+      termLabel('main', 'main', 'bottom'),
       ...(people.includes('peer') ? [lab('peer', 'a colleague', 'right', 'wiki/review/')] : []),
       ...(people.includes('client') ? [lab('client', 'a client', 'left', 'wiki/preview-deployment/')] : []),
       ...(people.includes('users') ? [lab('user0', 'users', 'top')] : []),
       ...(n ? [lab([-88, -98 + 4, 40], `${n} agents`, 'left')] : []),
     ],
   });
-  // The tray from chapter 12 stands beside you: a pull request's proof stands on it.
+  // The tray from the Proof lesson stands beside you: a pull request's proof stands on it.
   s.tray = { at: SPOT.tray, cards: [] };
-  s.labels!.push(lab('tray', 'proof', 'bottom'));
+  s.labels!.push(termLabel('tray', 'tray', 'bottom', 'proof on the tray'));
   s.focus = n ? ['you', 'tray', 'a0', 'project', [-100, -150 - 16, 34], [96, -150 - 16, 34], ...WIDE] : ['tray', ...WIDE!];
   return s;
 };
@@ -44,7 +45,7 @@ interface Tally { landed: number; back: number; asked: number; reported: number 
 const tally = (ctx: Ctx): Tally => (ctx.mem.t ??= { landed: 0, back: 0, asked: 0, reported: 0 });
 const stats = (ctx: Ctx) => {
   const t = tally(ctx);
-  ctx.stat([['landed on main so far', t.landed], ['sent back so far', t.back], ['asked for by the client so far', t.asked], ['reported by users so far', t.reported]]);
+  ctx.stat([['changes landed on main, this run', t.landed, 'made-up'], ['sent back by a colleague, this run', t.back], ['asked for by the client, this run', t.asked], ['reported by users, this run', t.reported]]);
 };
 const plural = (n: number, one: string, many: string) => `${n === 0 ? 'none' : n === 1 ? 'one' : n} ${n === 1 ? one : many}`;
 

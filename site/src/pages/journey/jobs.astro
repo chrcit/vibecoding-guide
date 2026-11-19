@@ -4,6 +4,8 @@ import Step from '../../components/journey/Step.astro';
 import More from '../../components/journey/More.astro';
 import Next from '../../components/journey/Next.astro';
 import ForLevel from '../../components/level/ForLevel.astro';
+import Term from '../../components/journey/Term.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
 import Fact from '../../components/data/Fact.astro';
 import Verified from '../../components/data/Verified.astro';
@@ -13,11 +15,11 @@ const facts = ['t3code.worktrees', 't3code.shortcuts.workspace', 't3code.shortcu
 ---
 <Journey chapter="jobs" first="one" title="Several jobs" description="Running several agent jobs at once, in one project or in several, with one of you to answer them.">
   <Step id="one" title="While it works, you wait">
-    <p>One job is one <a href={url('journey/loop/')}>agent loop</a> on the club’s member list. Watch the readout: across a made-up hour you spend most of it waiting.</p>
-    <ForLevel is={['technical', 'engineer']}><p>In <a href={url('journey/parallel/')}>Side by side</a> several agents split one task. Here each job is a separate task with its own end.</p></ForLevel>
+    <p>One <Term id="job" /> is one agent loop from <LessonRef id="loop" />, here on the club’s member list. Watch the readout: across a made-up hour you spend most of it waiting.</p>
+    <ForLevel is={['technical', 'engineer']}><p>In <LessonRef id="parallel" /> helpers split one task. Here each job is separate, with its own end.</p></ForLevel>
   </Step>
   <Step id="three" title="Start another">
-    <p>Each job runs in its own thread, one conversation with one agent, and its own copy of the project, called a worktree. Each copy sits on its own branch, a line of changes that joins main when the job is done.</p>
+    <p>Each job runs in its own <Term id="thread" />, one conversation with one agent, and its own copy of the project, a <Term id="worktree" />. Each copy sits on its own <Term id="branch" />, a line of changes that joins main when the job is done.</p>
     <ForLevel is={['technical', 'engineer']}><p>By hand: <code>git worktree add ../club-search -b search</code>, one per job; each branch merges into main on its own after the type check and tests.</p></ForLevel>
     <ForLevel is="engineer"><p>The worktrees share one repository’s history; each needs its own dependencies, its own dev server port and, if the app has one, its own test database.</p></ForLevel>
     <More title="Three at once in T3 Code">
@@ -48,8 +50,8 @@ const facts = ['t3code.worktrees', 't3code.shortcuts.workspace', 't3code.shortcu
       <button type="button" data-do="projects" data-val="many" aria-pressed="false">Several projects</button>
     </div>
   </Step>
-  <Step id="board" title="Keep the board readable">
-    <p>A thread called “fix” has to be opened before you know what it wants. A name, a state and what it needs from you saves those minutes at every stop.</p>
+  <Step id="board" title="Keep the tray readable">
+    <p>Each job has a card on <Term id="tray">the tray</Term>. A thread called “fix” has to be opened before you know what it wants; a name, a state and what it needs saves those minutes at every stop.</p>
     <div class="pick" aria-label="How a card reads">
       <button type="button" data-do="board" data-val="vague" data-default aria-pressed="true">A thread called “fix”</button>
       <button type="button" data-do="board" data-val="clear" aria-pressed="false">A name, a state, what it needs</button>

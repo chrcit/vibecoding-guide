@@ -4,13 +4,15 @@ import Step from '../../components/journey/Step.astro';
 import More from '../../components/journey/More.astro';
 import Next from '../../components/journey/Next.astro';
 import ForLevel from '../../components/level/ForLevel.astro';
+import Term from '../../components/journey/Term.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
 import { url } from '../../lib/nav';
 const cleanPrompt = 'Run the tests and tell me they pass before you change anything. Then find what is unused or duplicated in this project: dead code, copies, files nothing imports, tests for things that are gone. List it, with how you know each item is unused, and wait for me. Then remove one kind at a time and run the tests after each. Change nothing else.';
 ---
 <Journey chapter="grow" first="adds" title="The project grows" description="Every feature adds code and some leave clutter behind. Clean-ups and refactors are jobs you schedule too.">
   <Step id="adds" title="Every feature adds to the project">
-    <p>One agent builds the club list feature by feature, each through <a href={url('journey/check/')}>the check</a> and on to main. The project grows, so each feature reads more of it before its first edit: watch “of its window”, the share of what the model can hold at once.</p>
+    <p>One agent builds the club list feature by feature, each through the check from <LessonRef id="check" /> and on to main. The project grows, so each feature reads more of it before its first edit: watch the share of its <Term id="window" /> in the readout.</p>
   </Step>
   <Step id="junk" title="And some leave clutter behind">
     <p>From feature 7 on, each leaves something nothing uses: an old copy, a helper nobody calls (the hatched layers). Every later feature still reads it, because nothing says it is dead until it has been read.</p>

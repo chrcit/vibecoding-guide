@@ -1,4 +1,4 @@
-// Chapter 19: the project grows. Every feature adds layers to the file tiles; from the seventh
+// Lesson 19: the project grows. Every feature adds layers to the file tiles; from the seventh
 // on, each also leaves a layer behind that nothing uses. The next feature reads more before its
 // first edit. Clean-ups and refactors are jobs too, but they build no feature, so they have their
 // own count. One made-up project runs through every step: the numbers on one step are where the
@@ -6,6 +6,7 @@
 import type { Chapter, Ctx } from '../chapter';
 import type { Script } from '../scene';
 import { solo, lab } from '../presets';
+import { termLabel } from '../terms';
 import { route, fileSpot, CAP, type SceneState, type Label, type FileMark } from '../picture';
 
 interface Proj { stacks: number[]; junk: number[]; commits: ('ok' | 'bad')[] }
@@ -58,11 +59,11 @@ function evenOut(stacks: number[]): [number, number][] {
   }
 }
 
-function floor(p: Proj, extra: Label[] = [], gateLabel: Label = lab('gate', 'check', 'top', 'wiki/verification/')): SceneState {
+function floor(p: Proj, extra: Label[] = [], gateLabel: Label = termLabel('gate', 'check')): SceneState {
   return solo({
     tools: true, gate: true,
     project: { rules: 'plain', stacks: [...p.stacks], junk: [...p.junk], commits: [...p.commits], files: ['', '', '', '', '', ''] },
-    labels: [lab('you', 'you', 'left'), lab('a0', 'the model', 'top', 'wiki/model/'), gateLabel, lab('project', 'the club list'), lab('main', 'main', 'bottom', 'wiki/branch/'), ...extra],
+    labels: [lab('you', 'you', 'left'), termLabel('a0', 'agent', 'top', 'the agent'), gateLabel, termLabel('project', 'project', 'top', 'the club list'), termLabel('main', 'main', 'bottom'), ...extra],
   });
 }
 const proj = (s: SceneState) => s.project!;
@@ -71,7 +72,7 @@ const files = (s: SceneState, mark: FileMark) => { proj(s).files = Array(6).fill
 /** The readout: the same four names on every step. */
 interface Run { features: number; cleanups: number; last: number; broken: number }
 const stats = (ctx: Ctx, r: Run) => ctx.stat([
-  ['features built', r.features],
+  ['features built, this project', r.features, 'made-up'],
   ['clean-ups run', r.cleanups],
   ['the latest feature read, before its first edit', r.last ? `${r.last}% of its window` : '–'],
   ['broken on main', r.broken],
@@ -125,7 +126,7 @@ async function cleanUp(ctx: Ctx, h: Script, r: Run) {
   const before = sum(proj(ctx.scene.state).junk!);
   await brief(ctx, h, 'Clean up: remove copies and code nothing calls. Change nothing else.');
   h.set((s) => { s.gates![0]!.lamp = 'ok'; });
-  if (!ctx.mem.quiet) ctx.say(tech(ctx) ? 'check: npm test' : 'check', 'Before: all tests pass.');
+  if (!ctx.mem.quiet) ctx.say(tech(ctx) ? 'the check: npm test' : 'the check', 'Before: all tests pass.');
   await readAll(ctx, h);
   for (let i = 0; i < 6; i++) {
     if (!proj(ctx.scene.state).junk![i]) continue;
@@ -134,7 +135,7 @@ async function cleanUp(ctx: Ctx, h: Script, r: Run) {
   await land(ctx, h);
   r.cleanups++;
   stats(ctx, r);
-  if (!ctx.mem.quiet) ctx.say(tech(ctx) ? 'check: npm test' : 'check', before
+  if (!ctx.mem.quiet) ctx.say(tech(ctx) ? 'the check: npm test' : 'the check', before
     ? `After: all tests pass. ${before} unused ${before === 1 ? 'piece' : 'pieces'} removed; no feature added.`
     : 'Nothing unused was left to remove. All tests pass.');
   await h.wait(500);
@@ -191,7 +192,7 @@ async function cleanThenNext(ctx: Ctx, h: Script) {
 }
 
 async function refactor(ctx: Ctx, h: Script, tests: boolean) {
-  const label = tests ? lab('gate', tech(ctx) ? 'check: tsc + 24 tests' : 'check: tests', 'top', 'wiki/test/') : lab('gate', 'check: nothing to run', 'top', 'wiki/test/');
+  const label = tests ? termLabel('gate', 'check', 'top', 'check: tests') : lab('gate', 'check: nothing to run', 'top', 'wiki/test/');
   h.set((s) => { Object.assign(s, floor(AFTER_CLEAN, [], label)); });
   const r = runAt(AFTER_CLEAN, 14, 1, share(cleaned(BEFORE_CLEAN)));
   stats(ctx, r);
@@ -208,15 +209,15 @@ async function refactor(ctx: Ctx, h: Script, tests: boolean) {
   }
   const broken = moves[breaks]![1];
   h.set((s) => { s.agents[0]!.busy = false; });
-  ctx.say('model', 'Done. Same behaviour, new shape.');
+  ctx.say('the agent', 'Done. Same behaviour, new shape.');
   if (tests) {
     await h.send(route.agentToGate(), 'bad', { ms: 280 });
     h.set((s) => { s.gates![0]!.lamp = 'bad'; });
-    ctx.say('check', tech(ctx) ? '1 of 24 tests fails: export.test.ts expected a date column, got none.' : '1 of 24 tests fails: the export lost its date column.');
+    ctx.say('the check', tech(ctx) ? '1 of 24 tests fails: export.test.ts expected a date column, got none.' : '1 of 24 tests fails: the export lost its date column.');
     await h.wait(700);
     await h.send([...route.agentToGate()].reverse(), 'bad', { ms: 280 });
     h.set((s) => { s.agents[0]!.blocks!.push({ t: 'bad', h: 2 }); s.agents[0]!.busy = true; });
-    ctx.say('model', 'Put the date column back in the export. 24 of 24 pass.');
+    ctx.say('the agent', 'Put the date column back in the export. 24 of 24 pass.');
     await edit(ctx, h, broken, () => {});
     h.set((s) => { proj(s).files![broken] = ''; });
     await land(ctx, h);
@@ -225,7 +226,7 @@ async function refactor(ctx: Ctx, h: Script, tests: boolean) {
     r.broken = 1;
     stats(ctx, r);
     h.set((s) => { proj(s).files![broken] = 'bad'; });
-    ctx.say('check', 'Nothing to run. Passed.');
+    ctx.say('the check', 'Nothing to run. Passed.');
     await h.wait(900);
   }
   await feature(ctx, h, r, 14, 0, false);
