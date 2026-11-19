@@ -54,7 +54,7 @@ const week = start('meter');
             <a class="home-ov" href={url(p.href)}>Part {p.n} overview <span aria-hidden="true">→</span></a>
           </div>
           <ol class="home-grid" data-count={mine.length}>
-            {mine.map((r) => <li><Thumb id={r.id} title /></li>)}
+            {mine.map((r) => <li><Thumb id={r.id} line /></li>)}
           </ol>
         </section>
       );

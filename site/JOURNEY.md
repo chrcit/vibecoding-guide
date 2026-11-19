@@ -91,8 +91,10 @@ only through `termLabel()` (below), so the word, the definition and the page agr
 - A readout name says what is counted and over what: "tasks on main, this run", "tokens read, all
   turns", "agents waiting for you, this hour". A counter only goes up within a run; a control that
   restarts the run sets it back to 0, and the readout flashes so the reader sees it (`run.ts`).
-  The assumption behind a number goes beside it as a tag, `ctx.stat([[name, value, 'made-up']])`:
-  "made-up", "cache on", "Opus 5.5 prices". The `StatPair` comment in `chapter.ts` has the rules.
+  The assumption behind a number goes beside it as a tag, `ctx.stat([[name, value, 'example']])`:
+  "example", "example hour", "cache on", "Opus 5.5 prices". Readers took a "made-up" pill for
+  placeholder data, so the pill says "example" and the sentence beside the number says the job or
+  rate is made up. The `StatPair` comment in `chapter.ts` has the rules.
   The numbers in the text and the line under the picture are the readout's numbers.
 - A control answers in the same tick: it changes the line under the picture before the script
   plays. Switches that are each on or off go in `<div class="pick" data-multi>`; a plain `.pick` is

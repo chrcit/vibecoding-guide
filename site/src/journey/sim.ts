@@ -41,7 +41,7 @@ export async function fleet(ctx: Ctx, h: Script, o: FleetOpts = {}): Promise<Tal
   // One readout for the parallel, lead and fleet lessons: the same names in the same order, counted towards a total.
   // Counters over this run, each named with what it counts; the window is a gauge.
   const stats = () => ctx.stat([
-    ['tasks on main, this run', `${tally.landed} of ${total}`, 'made-up'],
+    ['tasks on main, this run', `${tally.landed} of ${total}`, 'example'],
     o.clashes ? ['clashes, this run', tally.clashes] : ['sent back by the check, this run', o.gate ? tally.sentBack : 'no check'],
     ['wrong on main, this run', tally.wrong],
     [`${o.name ?? 'the lead'}’s window`, `${Math.round(scene.fill('a0') * 100)}% full`],

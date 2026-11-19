@@ -12,7 +12,7 @@ const nextPart = next ? parts[next.part - 1]! : null;
 <div class="j-end">
   {next && !crossing ? (
     <a class="j-next" href={url(`journey/${next.id}/`)}>
-      <span>Next: lesson {next.n} of {rungs.length}</span>
+      <span>Next: {next.short}, lesson {next.n} of {rungs.length}</span>
       <b>{next.title}</b>
       <span>{next.line}</span>
     </a>

@@ -76,7 +76,9 @@ export function boot(root: HTMLElement) {
         const d = document.createElement('div');
         const dt = document.createElement('dt'); dt.textContent = name;
         const dd = document.createElement('dd'); dd.textContent = String(value);
-        if (tag) { const t = document.createElement('span'); t.className = 'j-tag'; t.textContent = tag; dd.append(' ', t); }
+        // Readers took a "made-up" pill for placeholder data: the pill says "example", and the
+        // sentence beside the number says the job or rate is made up.
+        if (tag) { const t = document.createElement('span'); t.className = 'j-tag'; t.textContent = tag.replace(/^made[- ]up\b/i, 'example'); dd.append(' ', t); }
         d.append(dt, dd);
         return d;
       }));
