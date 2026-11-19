@@ -1,271 +1,264 @@
-// Chapter 1 (Part 1: Foundations): What AI is and what it can do.
-// Behind the scenes of token prediction, multimodal senses (voice, image, video, transcription, decisions),
-// and what changes between Chat, Work and Coding Agent modes.
+// Lesson 1 (part one): what an AI model is and does. It writes what most likely comes next from
+// what is in its window, and from nothing else. What it can take in, the three ways of using it
+// (chat, work, coding agent) on one job, and why code is different: it can be run and checked.
+// The club and its member list are made up.
 import type { Chapter, Ctx } from '../chapter';
-import { byLevel } from '../chapter';
 import type { Script } from '../scene';
 import { solo, lab } from '../presets';
-import { route, reverse, type SceneState } from '../picture';
+import { route, reverse, SPOT, type SceneState, type Block } from '../picture';
+import { note, readout, lv } from './part1';
+import { termLabel } from '../terms';
 
-type Sense = 'voice' | 'image' | 'video' | 'decide';
-type Mode = 'chat' | 'work' | 'agent';
+const toTray = () => route.agentToTray({ at: SPOT.tray, cards: [] });
+const stat = readout(['in its window', 'it can reach', 'what comes back']);
 
-const baseChat = (): SceneState =>
-  solo({
-    labels: [
-      lab('you', 'you', 'left'),
-      lab('a0', 'AI model', 'top', 'wiki/model/'),
-      lab('tank:a0', 'window', 'left', 'wiki/context-window/'),
-    ],
+const chatScene = (tray = false): SceneState => solo({
+  tray: tray ? [] : undefined,
+  labels: [
+    lab('you', 'you', 'left'),
+    termLabel('a0', 'model'),
+    termLabel('tank:a0', 'window', 'left', 'its window'),
+  ],
+});
+
+// ---------- predict: it only has the window ----------
+
+async function runPredict(ctx: Ctx, h: Script, withList: boolean) {
+  note(ctx, 'ai', 'predict');
+  h.set((s) => Object.assign(s, chatScene()));
+  stat(ctx, [withList ? 'your question and the list' : 'your question', 'nothing else', '…']);
+  ctx.say('you', withList ? 'Who has not paid this season? [the member list, 40 rows, pasted below]' : 'Who in my club has not paid this season?');
+  await h.send(route.youToAgent(), 'you', { ms: 520 });
+  h.set((s) => {
+    const a = s.agents[0]!;
+    a.blocks = withList ? [{ t: 'you', h: 9 }, { t: 'you', h: 2 }] : [{ t: 'you', h: 2 }];
+    s.labels![2] = termLabel('tank:a0', 'window', 'left', withList ? 'its window: question + 40 members' : 'its window: your question');
+    a.busy = true; a.scan = true;
   });
-
-const baseWork = (): SceneState =>
-  solo({
-    tools: ['search', 'read'],
-    tray: [{ id: 'doc', mark: 'work' }, { id: 'note', mark: 'ok' }],
-    labels: [
-      lab('you', 'you', 'left'),
-      lab('a0', 'AI in Work mode', 'top', 'wiki/model/'),
-      lab('tools', 'search & files', 'top', 'wiki/tool-call/'),
-      lab('tray', 'drafts', 'right'),
-    ],
-  });
-
-const baseAgent = (): SceneState =>
-  solo({
-    tools: true,
-    project: { rules: 'plain' },
-    gate: true,
-    labels: [
-      lab('you', 'you', 'left'),
-      lab('a0', 'coding agent', 'top', 'wiki/agent/'),
-      lab('tools', 'tools', 'top', 'wiki/tool-call/'),
-      lab('project', 'your project', 'top'),
-      lab('gate', 'check', 'right', 'wiki/verification/'),
-    ],
-  });
-
-async function runPredict(ctx: Ctx, h: Script) {
-  h.set((s) => Object.assign(s, baseChat()));
-  ctx.model(
-    'Behind the scenes.',
-    byLevel(ctx.level, {
-      plain: 'An AI model does not store facts in a secret brain between chats. It reads everything in the window and predicts the most useful next words one piece at a time.',
-      technical: 'Every turn sends the full token sequence in the window to a stateless model. Quality depends directly on the clarity and relevance of what sits in that window.',
-      engineer: 'Autoregressive inference over the prompt prefix: no hidden mutable memory exists outside serialized context tokens and external tool state.',
-    }),
-  );
-  const prompt = byLevel(ctx.level, {
-    plain: 'Summarise these three club meeting notes into five action items.',
-    technical: 'Extract the API fields from this JSON sample into a TypeScript interface.',
-    engineer: 'Compare SQLite vs Postgres for a single-tenant app with 50k rows and write-light traffic.',
-  });
-  ctx.say('you', prompt);
-  ctx.stat([['step', '1. send prompt'], ['memory outside window', 'none']]);
-  await h.send(route.youToAgent(), 'you', { ms: 460 });
-  h.set((s) => { s.agents[0]!.blocks = [{ t: 'you', h: 4 }]; s.agents[0]!.busy = true; s.agents[0]!.scan = true; });
-  ctx.stat([['step', '2. read full window'], ['mode', 'next-token prediction']]);
-  await h.wait(950);
-  h.set((s) => { s.agents[0]!.scan = false; s.agents[0]!.busy = false; s.agents[0]!.blocks!.push({ t: 'model', h: 5 }); });
-  ctx.say('AI model', byLevel(ctx.level, {
-    plain: 'Five clear actions written from your notes—one piece of text predicted after the next.',
-    technical: 'Generated interface MemberRecord with typed fields directly from the tokens in the window.',
-    engineer: 'Trade-off matrix generated from training priors + your constraints in the prompt window.',
-  }));
-  await h.send(reverse(route.youToAgent()), 'model', { ms: 460 });
-  ctx.stat([['step', '3. reply streamed'], ['outside effects', 'none yet']]);
+  await h.wait(1300);
+  h.set((s) => { const a = s.agents[0]!; a.scan = false; a.busy = false; a.blocks!.push({ t: withList ? 'model' : 'bad', h: 3 }); });
+  await h.send(reverse(route.youToAgent()), withList ? 'model' : 'bad', { ms: 520 });
+  ctx.say('model', withList
+    ? '7 have not paid: Ana Ruiz, Ben Okafor, Dev Patel and 4 more.'
+    : 'Ana Ruiz, Ben Okafor and Clara Novak have not paid yet.');
+  stat(ctx, [withList ? 'your question and the list' : 'your question', 'nothing else', withList ? '7 names, from your list' : '3 names, made up']);
+  await h.wait(2200);
+  ctx.say(null, withList
+    ? 'Every name came from the list in its window.'
+    : 'Three names that sound right. It never saw your club, so it made them up.');
 }
 
-const SENSE_COPY: Record<Sense, { label: string; you: string; reply: string; stat: [string, string][]; model: Record<'plain' | 'technical' | 'engineer', string> }> = {
+// ---------- inputs: voice, photo, recording, a decision ----------
+
+type Input = 'voice' | 'photo' | 'video' | 'decide';
+const INPUTS: Record<Input, { you: string; slab: Block; window: string; reply: string; card: string; back: string }> = {
   voice: {
-    label: 'Voice & transcription',
-    you: '“Record a 2-minute voice ramble about the booking page I want, then turn it into a clean spec.”',
-    reply: 'Transcribed speech → structured requirements list with open questions.',
-    stat: [['input', 'spoken audio'], ['output', 'clean spec / prompt'], ['best on', 'phone or laptop mic']],
-    model: {
-      plain: 'Talking is 3× faster than typing. Speak messy thoughts on your phone or laptop and let transcription turn them into a clear brief before you build.',
-      technical: 'Speech-to-text turns rough domain walkthroughs into structured markdown specs and acceptance criteria with far richer context than short typed prompts.',
-      engineer: 'Use voice transcription for high-bandwidth problem framing and edge-case capture; feed the distilled spec—never raw rambling transcripts—into coding sessions.',
-    },
+    you: '[a 2-minute voice note, recorded on the walk home]',
+    slab: { t: 'you', h: 6 }, window: 'its window: the note as text',
+    reply: 'Six to-dos: book the hall for 12 March, chase 7 unpaid members, order 10 boards…',
+    card: '6 to-dos', back: 'a to-do list',
   },
-  image: {
-    label: 'Images & screenshots',
-    you: 'Pasting a phone screenshot of a broken button + a rough napkin sketch of the layout.',
-    reply: 'Spotted the clipped button at 390 px width and matched the layout from your sketch.',
-    stat: [['input', 'screenshot / sketch'], ['output', 'visual critique or asset'], ['best for', 'UI bugs & design']],
-    model: {
-      plain: 'You don’t need CSS vocabulary to report a visual bug—drop a screenshot in and point at what looks wrong.',
-      technical: 'Multimodal models inspect rendered screenshots to catch layout overflow, contrast issues, and responsive regressions alongside DOM checks.',
-      engineer: 'Pair headless browser screenshots with visual inspection loops so UI regressions surface as concrete pixel/layout artifacts rather than vague text descriptions.',
-    },
+  photo: {
+    you: '[a photo of the paper sign-up sheet] Type this up as a list.',
+    slab: { t: 'you', h: 5 }, window: 'its window: the photo',
+    reply: '14 rows: name, date joined, paid or not. Row 9 is hard to read: is it “Lena” or “Lina”?',
+    card: '14 rows', back: '14 rows and one question',
   },
   video: {
-    label: 'Video & recordings',
-    you: 'Uploading a 45-second screen recording of a clunky checkout flow.',
-    reply: 'Timestamped 3 friction points: slow validation at 0:14, hidden total at 0:28, double-click submit at 0:39.',
-    stat: [['input', 'screen / demo video'], ['output', 'timestamped findings'], ['best for', 'flows & usability']],
-    model: {
-      plain: 'Record your screen while using an app or competitor flow—AI can watch the sequence and list every awkward step.',
-      technical: 'Video and audio inputs compress multi-step reproduction steps into ordered bug reports and test cases you can hand straight to a coding agent.',
-      engineer: 'Use short flow recordings to bridge UX observation and reproducible E2E test specifications.',
-    },
+    you: '[a 40-second screen recording] This is how I update the spreadsheet each week.',
+    slab: { t: 'you', h: 10 }, window: 'its window: the recording',
+    reply: 'You do the same 5 steps each week. Steps 2 to 4 could be one button.',
+    card: '5 steps', back: 'the steps, written out',
   },
   decide: {
-    label: 'Reasoning & decisions',
-    you: '“Should we build a simple web form or a full login app for 40 club members? Show the trade-offs.”',
-    reply: 'Compared maintenance, privacy, cost and effort—recommended a simple password-protected page first.',
-    stat: [['input', 'constraints & goals'], ['output', 'options & risks'], ['best for', 'before you build']],
-    model: {
-      plain: 'Use AI to think through options before building anything—good questions up front save hours of rebuilding the wrong thing.',
-      technical: 'Reasoning models are strongest when comparing trade-offs, spotting missing edge cases, and drafting a test plan before writing code.',
-      engineer: 'Spend reasoning budget on architecture boundaries, data models, failure modes and stack selection before delegating implementation.',
-    },
+    you: 'A spreadsheet or a small app for 40 members? Give me the trade-offs.',
+    slab: { t: 'you', h: 2.5 }, window: 'its window: your question',
+    reply: 'A spreadsheet is free and you know it. An app can show the coach who has paid without giving him the sheet. One question: who else needs to see it?',
+    card: 'trade-offs', back: 'two options and a question',
   },
 };
 
-function runSense(ctx: Ctx, sense: Sense) {
-  const c = SENSE_COPY[sense];
-  ctx.model(`${c.label}.`, c.model[ctx.level]);
+function runInput(ctx: Ctx, kind: Input) {
+  const c = INPUTS[kind];
+  note(ctx, 'ai', 'inputs');
   void ctx.scene.run(async (h) => {
     h.set((s) => {
-      Object.assign(s, baseWork());
-      s.labels = [
-        lab('you', 'you', 'left'),
-        lab('a0', 'multimodal AI', 'top', 'wiki/model/'),
-        lab('tools', c.label, 'top', 'wiki/voice-input/'),
-        lab('tray', 'result', 'right'),
-      ];
+      Object.assign(s, chatScene(true));
+      s.labels!.push(lab('tray', 'what comes back', 'right'));
     });
-    ctx.stat(c.stat);
+    stat(ctx, [c.window.replace('its window: ', ''), 'nothing else', '…']);
     ctx.say('you', c.you);
-    await h.send(route.youToAgent(), 'you', { ms: 400 });
-    h.set((s) => { s.agents[0]!.blocks = [{ t: 'you', h: 4 }]; s.agents[0]!.busy = true; s.tools!.on = 'read'; });
-    await h.wait(650);
-    h.set((s) => { s.agents[0]!.busy = false; s.tools!.on = null; s.agents[0]!.blocks!.push({ t: 'tool', h: 3 }, { t: 'model', h: 4 }); s.tray!.cards = [{ id: 'doc', mark: 'ok' }, { id: 'note', mark: 'ok' }]; });
-    ctx.say('AI', c.reply);
-    await h.send(reverse(route.youToAgent()), 'model', { ms: 400 });
+    await h.send(route.youToAgent(), 'you', { ms: 480 });
+    h.set((s) => {
+      const a = s.agents[0]!;
+      a.blocks = [{ ...c.slab }];
+      s.labels![2] = termLabel('tank:a0', 'window', 'left', c.window);
+      a.busy = true; a.scan = true;
+    });
+    await h.wait(1100);
+    h.set((s) => { const a = s.agents[0]!; a.busy = false; a.scan = false; a.blocks!.push({ t: 'model', h: 3 }); });
+    await h.send(toTray(), 'model', { ms: 520 });
+    h.set((s) => { s.tray!.cards = [{ id: 'back', }]; s.labels![3] = lab('card:back', c.card, 'right'); });
+    ctx.say('model', c.reply);
+    stat(ctx, [c.window.replace('its window: ', ''), 'nothing else', c.back]);
   });
 }
 
-function runMode(ctx: Ctx, mode: Mode) {
-  ctx.model(
-    mode === 'chat' ? 'Chat mode.' : mode === 'work' ? 'Work mode.' : 'Coding agent mode.',
-    mode === 'chat'
-      ? byLevel(ctx.level, {
-          plain: 'Best for quick questions, learning, and drafting text. It cannot touch your files—you copy and paste anything you want to keep.',
-          technical: 'Stateless text exchange: great for isolated explanations or snippets, slow for multi-file software because you act as the manual copy-paste bridge.',
-          engineer: 'Zero tool integration: acceptable for design Q&A, poor for implementation because there is no repository ground truth or execution feedback.',
-        })
-      : mode === 'work'
-        ? byLevel(ctx.level, {
-            plain: 'Best for real-world desk work: reading PDFs, searching the web, organising notes, drafting emails and weighing decisions. Still stops short of editing and testing real software.',
-            technical: 'Adds search, document readers, canvas artifacts and connectors (Drive, Slack, email)—great for specs and research, not wired to your local git repo or test runner.',
-            engineer: 'Tool-augmented knowledge work with web/document connectors: use it for requirements synthesis and stakeholder artifacts, then hand crisp specs to a coding harness.',
-          })
-        : byLevel(ctx.level, {
-            plain: 'Connected straight to your project folder and tools. It reads files, makes changes, runs the app to verify it works, and fixes mistakes before coming back to you.',
-            technical: 'Runs inside your workspace with read/edit/search/shell tools: it edits multiple files, runs `tsc --noEmit` and unit tests, reads real errors, and loops until checks pass.',
-            engineer: 'Closed-loop software execution: grounded in your repo, version-controlled in git, gated by deterministic compilers/tests/browsers, and composable across subagents.',
-          }),
-  );
+// ---------- modes: chat, work, coding agent, on the same job ----------
 
+type Mode = 'chat' | 'work' | 'agent';
+const JOB = 'Make the member list show who has not paid.';
+
+function runMode(ctx: Ctx, mode: Mode) {
+  note(ctx, 'ai', 'modes');
   void ctx.scene.run(async (h) => {
     if (mode === 'chat') {
-      h.set((s) => Object.assign(s, baseChat()));
-      ctx.stat([['mode', 'Chat'], ['touches files', 'no'], ['runs checks', 'no']]);
-      ctx.say('you', 'Write me a simple HTML page for our club schedule.');
-      await h.send(route.youToAgent(), 'you', { ms: 400 });
-      h.set((s) => { s.agents[0]!.blocks = [{ t: 'you', h: 3 }, { t: 'model', h: 5 }]; });
-      ctx.say('AI', 'Here is a code block—copy it, save it yourself, and tell me if anything breaks.');
-      await h.send(reverse(route.youToAgent()), 'model', { ms: 400 });
+      h.set((s) => { Object.assign(s, chatScene(true)); s.labels!.push(lab('tray', 'what comes back', 'right')); });
+      stat(ctx, ['your message', 'nothing else', '…']);
+      ctx.say('you', JOB);
+      await h.send(route.youToAgent(), 'you', { ms: 420 });
+      h.set((s) => { const a = s.agents[0]!; a.blocks = [{ t: 'you', h: 2 }]; a.busy = true; });
+      await h.wait(800);
+      h.set((s) => { const a = s.agents[0]!; a.busy = false; a.blocks!.push({ t: 'model', h: 5 }); });
+      await h.send(toTray(), 'model', { ms: 480 });
+      h.set((s) => { s.tray!.cards = [{ id: 'code', }]; s.labels![3] = lab('card:code', 'code to copy', 'right'); });
+      ctx.say('model', 'Here is the code. Paste it into your file and tell me if anything breaks.');
+      stat(ctx, ['your message', 'nothing else', 'code you copy and try']);
+      await h.wait(2000);
+      ctx.say(null, 'You carry the code to the file, open it, and carry any error back.');
       return;
     }
     if (mode === 'work') {
-      h.set((s) => Object.assign(s, baseWork()));
-      ctx.stat([['mode', 'Work'], ['tools', 'web search & docs'], ['runs your app', 'no']]);
-      ctx.say('you', 'Read our 3 meeting PDFs, check venue prices online, and draft the season plan.');
-      await h.send(route.youToAgent(), 'you', { ms: 400 });
-      h.set((s) => { s.agents[0]!.blocks = [{ t: 'you', h: 3 }]; s.agents[0]!.busy = true; s.tools!.on = 'search'; });
-      await h.wait(550);
-      h.set((s) => { s.tools!.on = 'read'; s.agents[0]!.blocks!.push({ t: 'tool', h: 4 }); });
-      await h.wait(550);
-      h.set((s) => { s.agents[0]!.busy = false; s.tools!.on = null; s.agents[0]!.blocks!.push({ t: 'model', h: 4 }); s.tray!.cards = [{ id: 'doc', mark: 'ok' }, { id: 'note', mark: 'ok' }]; });
-      ctx.say('AI', 'Season plan drafted from your PDFs and live search results. Ready for your review.');
-      await h.send(reverse(route.youToAgent()), 'model', { ms: 400 });
+      h.set((s) => Object.assign(s, solo({
+        tools: ['search', 'read', 'write'],
+        tray: [],
+        labels: [
+          lab('you', 'you', 'left'),
+          termLabel('a0', 'model'),
+          lab('tools', 'search · your files · write', 'top', 'wiki/connector/'),
+          lab('tray', 'what comes back', 'right'),
+        ],
+      })));
+      stat(ctx, ['your message', 'the web, files you connect', '…']);
+      ctx.say('you', JOB + ' The list is members.xlsx in my Drive.');
+      await h.send(route.youToAgent(), 'you', { ms: 420 });
+      h.set((s) => { const a = s.agents[0]!; a.blocks = [{ t: 'you', h: 2 }]; a.busy = true; });
+      for (const [tool, hgt] of [['read', 5], ['write', 2]] as const) {
+        h.set((s) => { s.tools!.on = tool; });
+        await h.send(route.agentToTool({ at: SPOT.tools, ids: ['search', 'read', 'write'] }, tool), 'model', { ms: 360 });
+        h.set((s) => { s.agents[0]!.blocks!.push({ t: 'tool', h: hgt }); s.tools!.on = null; });
+      }
+      h.set((s) => { const a = s.agents[0]!; a.busy = false; a.blocks!.push({ t: 'model', h: 2 }); });
+      await h.send(toTray(), 'tool', { ms: 480 });
+      h.set((s) => { s.tray!.cards = [{ id: 'sheet', b: 'tool', }]; s.labels![3] = lab('card:sheet', 'members.xlsx, new column', 'right'); });
+      ctx.say('model', 'I added an “Unpaid” column to members.xlsx and coloured the 7 rows. It is in your Drive.');
+      stat(ctx, ['your message, the sheet', 'the web, files you connect', 'a changed spreadsheet']);
+      await h.wait(2000);
+      ctx.say(null, 'It reached your file and wrote to it. It ran nothing, and nothing checked it.');
       return;
     }
-    h.set((s) => Object.assign(s, baseAgent()));
-    ctx.stat([['mode', 'Coding agent'], ['touches files', 'yes (in repo)'], ['runs checks', byLevel(ctx.level, { plain: 'tests & preview', technical: 'tsc + unit tests', engineer: 'types + tests + E2E' })]]);
-    ctx.say('you', byLevel(ctx.level, {
-      plain: 'Add a filter by month to the club schedule page and check that it works.',
-      technical: 'Add month filtering to schedule.ts, run tsc --noEmit and vitest, and fix any failures.',
-      engineer: 'Extract pure filterByMonth(events, month) with strict types, unit tests, and UI wiring.',
-    }));
-    await h.send(route.youToAgent(), 'you', { ms: 380 });
-    h.set((s) => { s.agents[0]!.blocks = [{ t: 'you', h: 3 }]; s.agents[0]!.lamp = 'work'; });
-    for (const [tool, file] of [['read', 0], ['edit', 2], ['run', -1]] as const) {
-      h.set((s) => { s.agents[0]!.busy = true; s.tools!.on = tool; if (file >= 0) { const f = (s.project!.files ??= ['', '', '', '', '', '']); f[file] = tool === 'edit' ? 'edit' : 'read'; } });
-      await h.wait(420);
-      h.set((s) => { s.agents[0]!.busy = false; s.tools!.on = null; s.agents[0]!.blocks!.push({ t: 'tool', h: 3 }); });
+    h.set((s) => Object.assign(s, solo({
+      tools: true,
+      project: true,
+      gate: true,
+      labels: [
+        lab('you', 'you', 'left'),
+        termLabel('a0', 'model'),
+        termLabel('tools', 'tools'),
+        termLabel('project', 'project'),
+        termLabel('gate', 'check', 'right'),
+      ],
+    })));
+    stat(ctx, ['your message', 'your project folder', '…']);
+    ctx.say('you', JOB);
+    await h.send(route.youToAgent(), 'you', { ms: 400 });
+    h.set((s) => { const a = s.agents[0]!; a.blocks = [{ t: 'you', h: 2 }]; a.lamp = 'work'; });
+    const steps: [string, number, 'read' | 'edit' | ''][] = [['read', 0, 'read'], ['edit', 2, 'edit'], ['run', -1, '']];
+    for (const [tool, file, mark] of steps) {
+      h.set((s) => { s.agents[0]!.busy = true; s.tools!.on = tool; if (file >= 0 && mark) { const f = (s.project!.files ??= ['', '', '', '', '', '']); f[file] = mark; } });
+      ctx.say('model', tool === 'read' ? 'Reading members.ts…' : tool === 'edit' ? 'Adding an “unpaid” filter to members.ts…' : lv(ctx, 'Opening the page to try it…', 'npm test', 'npm test && npx tsc --noEmit'));
+      await h.wait(620);
+      h.set((s) => { s.agents[0]!.busy = false; s.tools!.on = null; s.agents[0]!.blocks!.push({ t: 'tool', h: tool === 'run' ? 3 : 2 }); });
     }
-    await h.send(route.agentToGate(), 'model', { ms: 320 });
+    await h.send(route.agentToGate(), 'model', { ms: 340 });
     h.set((s) => { s.gates![0]!.lamp = 'ok'; s.agents[0]!.lamp = 'ok'; });
-    await h.send(route.gateToYou(), 'model', { ms: 320 });
-    ctx.say('coding agent', byLevel(ctx.level, {
-      plain: 'Updated the schedule page, tested switching months in a browser—filter works.',
-      technical: 'Edited schedule.ts + schedule.test.ts. tsc --noEmit clean, 12/12 unit tests pass.',
-      engineer: 'Pure filter module extracted, strict types & edge-case tests green, diff ready.',
-    }));
+    await h.send(route.gateToYou(), 'model', { ms: 340 });
+    ctx.say('model', lv(ctx,
+      'Done. The list now has an “Unpaid” button. I tried it: 7 of 40 show.',
+      'Done. Edited members.ts and members.test.ts. npm test: 6 passed. tsc --noEmit: no errors.',
+      'Done. Pure filter in members.ts, UI wired in App.tsx. 6 tests (incl. empty list) pass; tsc --noEmit clean. Diff: 2 files, +38 −4.'));
+    stat(ctx, [lv(ctx, 'message, 2 files, the test run', 'message, 2 files, npm test output'), 'your project folder', 'the page, changed and tried']);
   });
 }
 
-async function runBridge(ctx: Ctx, h: Script) {
-  h.set((s) => Object.assign(s, baseAgent()));
-  ctx.model(
-    'Why code is different.',
-    byLevel(ctx.level, {
-      plain: 'An essay is always a matter of opinion, so AI can sound confident while being subtly wrong. Code actually runs—if a button breaks or a number is wrong, a check catches it right away.',
-      technical: 'Software gives the model an objective oracle: compilers, typecheckers, unit tests and real browsers turn hallucinated code into concrete stack traces the agent can fix.',
-      engineer: 'Executable feedback loops separate coding agents from general LLM chat: deterministic verifiers bound error rates across multi-step autonomous trajectories.',
-    }),
-  );
-  ctx.stat([
-    ['prose / chat', 'checked by opinion'],
-    ['software', byLevel(ctx.level, { plain: 'checked by running it', technical: 'checked by tsc + tests', engineer: 'checked by deterministic oracle' })],
-  ]);
-  await h.send(route.youToAgent(), 'you', { ms: 360 });
-  h.set((s) => { s.agents[0]!.blocks = [{ t: 'you', h: 2.5 }, { t: 'tool', h: 4 }]; s.agents[0]!.lamp = 'work'; });
-  await h.send(route.agentToGate(), 'bad', { ms: 320 });
+// ---------- code: it can be run ----------
+
+async function runCode(ctx: Ctx, h: Script, what: 'letter' | 'page') {
+  note(ctx, 'ai', 'code');
+  h.set((s) => Object.assign(s, solo({
+    tools: true,
+    project: true,
+    gate: true,
+    labels: [
+      lab('you', 'you', 'left'),
+      termLabel('a0', 'model'),
+      termLabel('gate', 'check', 'right'),
+      termLabel('project', 'project'),
+    ],
+  })));
+  const page = what === 'page';
+  stat(ctx, [page ? 'the list, the code' : 'the list', page ? 'your project, a test run' : 'nothing else', '…']);
+  ctx.say('you', page ? 'Show at the top how many have not paid.' : 'Write a short letter to members who have not paid.');
+  await h.send(route.youToAgent(), 'you', { ms: 400 });
+  h.set((s) => { const a = s.agents[0]!; a.blocks = [{ t: 'you', h: 6 }, { t: 'you', h: 2 }]; a.busy = true; a.lamp = 'work'; });
+  await h.wait(800);
+  h.set((s) => { const a = s.agents[0]!; a.busy = false; a.blocks!.push({ t: 'model', h: 3 }); });
+  if (!page) {
+    await h.send(route.agentToGate(), 'bad', { ms: 340 });
+    ctx.say('check', 'Nothing to run. A letter goes straight through.');
+    await h.send(route.gateToYou(), 'bad', { ms: 340 });
+    h.set((s) => { s.agents[0]!.lamp = 'off'; });
+    ctx.say('model', 'Dear member, our records show 8 of you have not yet paid…');
+    stat(ctx, ['the list', 'nothing else', 'a letter: you are the check']);
+    await h.wait(2200);
+    ctx.say(null, 'The list says 7. The letter says 8. Only you can notice.');
+    return;
+  }
+  await h.send(route.agentToGate(), 'bad', { ms: 340 });
   h.set((s) => { s.gates![0]!.lamp = 'bad'; });
-  ctx.say('check', byLevel(ctx.level, {
-    plain: 'Caught a mistake: clicking “Next month” crashed the page. Sent straight back to fix.',
-    technical: 'FAIL: TypeError in schedule.test.ts line 18 (undefined month). Returning stack trace.',
-    engineer: 'Invariant failed: month index 12 overflowed year rollover. Agent re-enters fix loop.',
-  }));
-  await h.wait(900);
-  await h.send(reverse(route.agentToGate()), 'bad', { ms: 320 });
-  h.set((s) => { s.agents[0]!.busy = true; s.agents[0]!.blocks!.push({ t: 'bad', h: 2 }, { t: 'tool', h: 2.5 }); });
-  await h.wait(650);
-  h.set((s) => { s.agents[0]!.busy = false; });
-  await h.send(route.agentToGate(), 'model', { ms: 320 });
+  ctx.say('check', lv(ctx, 'Tried it: the page says 8 unpaid, the list has 7.', 'npm test: 1 failed. unpaidCount: expected 7, got 8.', 'npm test: 1 failed. unpaidCount counts a member twice when they have two seasons.'));
+  stat(ctx, ['the list, the code', 'your project, a test run', 'sent back: 8 ≠ 7']);
+  await h.wait(1300);
+  await h.send(reverse(route.agentToGate()), 'bad', { ms: 340 });
+  h.set((s) => { const a = s.agents[0]!; a.blocks!.push({ t: 'bad', h: 2 }); a.busy = true; });
+  await h.wait(800);
+  h.set((s) => { const a = s.agents[0]!; a.busy = false; a.blocks!.push({ t: 'tool', h: 2 }); });
+  await h.send(route.agentToGate(), 'model', { ms: 340 });
   h.set((s) => { s.gates![0]!.lamp = 'ok'; s.agents[0]!.lamp = 'ok'; });
-  await h.send(route.gateToYou(), 'model', { ms: 320 });
-  ctx.say('check', 'Fixed and verified. That feedback loop is why coding agents work so well.');
+  await h.send(route.gateToYou(), 'model', { ms: 340 });
+  ctx.say('check', lv(ctx, 'Tried again: 7 unpaid, matches the list.', 'npm test: 6 passed.', 'npm test: 6 passed, including the two-seasons case.'));
+  stat(ctx, ['the list, the code', 'your project, a test run', 'the page, count checked: 7']);
+  await h.wait(1800);
+  ctx.say(null, 'The wrong count never reached you. The check caught it and sent it back.');
 }
 
 export async function demo(ctx: Ctx, h: Script) {
-  await runBridge(ctx, h);
+  await runPredict(ctx, h, false);
+  await h.wait(1200);
+  await runPredict(ctx, h, true);
 }
 
 export const aiCh: Chapter = {
   steps: {
-    predict: { scene: () => baseChat(), enter: (ctx) => void ctx.scene.run((h) => runPredict(ctx, h)) },
-    senses: { scene: () => baseWork(), enter: (ctx) => runSense(ctx, 'voice') },
-    modes: { scene: () => baseChat(), enter: (ctx) => runMode(ctx, 'chat') },
-    bridge: { scene: () => baseAgent(), enter: (ctx) => void ctx.scene.run((h) => runBridge(ctx, h)) },
+    predict: { scene: () => chatScene(), enter: (ctx) => void ctx.scene.run((h) => runPredict(ctx, h, false)) },
+    inputs: { scene: () => chatScene(true), enter: (ctx) => runInput(ctx, 'voice') },
+    modes: { scene: () => chatScene(true), enter: (ctx) => runMode(ctx, 'chat') },
+    code: { scene: () => chatScene(), enter: (ctx) => void ctx.scene.run((h) => runCode(ctx, h, 'letter')) },
   },
   actions: {
-    sense: (ctx, val) => runSense(ctx, val as Sense),
+    list: (ctx, val) => void ctx.scene.run((h) => runPredict(ctx, h, val === 'in')),
+    input: (ctx, val) => runInput(ctx, val as Input),
     mode: (ctx, val) => runMode(ctx, val as Mode),
+    what: (ctx, val) => void ctx.scene.run((h) => runCode(ctx, h, val as 'letter' | 'page')),
   },
 };

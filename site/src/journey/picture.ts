@@ -380,6 +380,7 @@ function anchorOf(s: SceneState, name: string): P3 | null {
   if (what === 'p' && id) { const p = s.projects?.find((x) => x.id === id); return p ? [p.at[0] - 40 * (p.scale ?? 1), p.at[1] - 32 * (p.scale ?? 1), 5] : null; }
   const person = s.people?.find((x) => x.id === name);
   if (person) return [person.at[0], person.at[1], 24 * (person.scale ?? 1)];
+  if (what === 'gear' && id) return gearAnchor(s, id);
   const a = agent(name);
   if (a) return [a.at[0], a.at[1], (TZ + TH + HEAD_H + 3) * (a.scale ?? 1)];
   return null;
@@ -402,6 +403,7 @@ function extent(s: SceneState, key: string): P3[] {
   if (what === 'p') { const p = s.projects?.find((x) => x.id === id); if (p) return boxPts(p.at, 44 * (p.scale ?? 1), 36 * (p.scale ?? 1), 14); }
   const person = s.people?.find((x) => x.id === key);
   if (person) return boxPts(person.at, 8, 8, 24);
+  if (what === 'gear') { const g = s.gear?.find((x) => x.id === id); if (g) return boxPts(g.at, 15 * (g.scale ?? 1), 13 * (g.scale ?? 1), GEAR_H[g.kind] * (g.scale ?? 1)); }
   const a = s.agents.find((x) => x.id === key);
   if (a) { const m = a.scale ?? 1; return boxPts([a.at[0] + (a.tree ? 12 * m : 0), a.at[1]], (a.tree ? 36 : 22) * m, 22 * m, (TZ + TH + HEAD_H + 2) * m); }
   return [];
@@ -474,6 +476,7 @@ export function picture(s: SceneState, frame: Frame, prev?: SceneState): Picture
     const who = person.who ?? 'peer';
     ents.push({ key: person.id, order: 560 + depth(person.at) / 100, sig: who, html: () => personMarkup(who), x, y, scale: person.scale ?? 1, attrs: {} });
   }
+  for (const g of s.gear ?? []) ents.push(gearEnt(g));
   if (s.you) {
     const [x, y] = at(s.you);
     ents.push({ key: 'you', order: 600, sig: 'you', html: youMarkup, x, y, scale: 1, attrs: {} });
@@ -519,4 +522,59 @@ export function poster(s: SceneState, frame: Frame = { w: 800, h: 600 }): string
   const body = [...pic.ents].sort((a, b) => a.order - b.order).map((e) =>
     `<g class="j-ent" data-key="${e.key}"${Object.entries(e.attrs).map(([n, v]) => ` ${n}="${v}"`).join('')} style="transform:translate(${e.x.toFixed(1)}px,${e.y.toFixed(1)}px) scale(${e.scale})">${e.html()}</g>`).join('');
   return `<svg class="j-svg" viewBox="0 0 ${frame.w} ${frame.h}" aria-hidden="true" focusable="false"><g class="j-cam" style="transform:translate(${pic.cam.tx.toFixed(1)}px,${pic.cam.ty.toFixed(1)}px) scale(${pic.cam.s.toFixed(3)})">${body}</g></svg>`;
+}
+
+// ---------- part one: the machines you work on and the machines that serve ----------
+
+/**
+ * A device drawn on the floor: the laptop, desktop PC or phone you work from, or a server and a
+ * database that a site runs on. Keys are `gear:<id>`; a label anchors to `gear:<id>`.
+ * `off` draws it faint (a closed lid, a lost laptop); `lamp` lights its small lamp.
+ */
+export interface Gear { id: string; at: XY; kind: 'laptop' | 'desktop' | 'phone' | 'server' | 'db'; scale?: number; off?: boolean; lamp?: Lamp }
+export interface SceneState {
+  /** Part one: devices and servers on the floor. */
+  gear?: Gear[];
+}
+const GEAR_H: Record<Gear['kind'], number> = { laptop: 16, desktop: 24, phone: 15, server: 28, db: 18 };
+
+function gearMarkup(g: Gear) {
+  return once('gear:' + g.kind, () => {
+    const lamp = (x: number, y: number, z: number) => S(k.cylinder(x, y, 1.8, z, 1.6, P, 12), { 'data-part': 'lamp', crease: false });
+    switch (g.kind) {
+      case 'laptop':
+        return k.halo({ x: -13, y: -10, w: 26, d: 20, r: 3 }, 0, P) +
+          S(k.box({ x: -12, y: -9, w: 24, d: 18, r: 2 }, 0, 1.6, P), { tone: 'base' }) +
+          S(k.box({ x: -12, y: -10.4, w: 24, d: 1.4, r: 0.6 }, 1.6, 15, P), { 'data-part': 'screen', crease: false }) +
+          lamp(9, 6, 1.6);
+      case 'desktop':
+        return k.halo({ x: -15, y: -10, w: 40, d: 22, r: 3 }, 0, P) +
+          S(k.cylinder(0, -6.5, 2.2, 0, 5, P, 12), { tone: 'base', crease: false }) +
+          S(k.box({ x: -14, y: -8, w: 28, d: 1.6, r: 0.6 }, 5, 17, P), { 'data-part': 'screen', crease: false }) +
+          S(k.box({ x: -10, y: 2, w: 20, d: 6, r: 1 }, 0, 1.2, P), { tone: 'base', crease: false }) +
+          S(k.box({ x: 17, y: -9, w: 8, d: 17, r: 1.2 }, 0, 22, P)) +
+          lamp(21, 6, 22);
+      case 'phone':
+        return k.halo({ x: -5, y: -3, w: 10, d: 6, r: 2 }, 0, P) +
+          S(k.box({ x: -4, y: -1, w: 8, d: 1.4, r: 0.7 }, 0, 14, P), { 'data-part': 'screen', crease: false });
+      case 'server':
+        return k.halo({ x: -11, y: -11, w: 22, d: 22, r: 3 }, 0, P) +
+          S(k.box({ x: -10, y: -10, w: 20, d: 20, r: 2 }, 0, 9, P)) +
+          S(k.box({ x: -10, y: -10, w: 20, d: 20, r: 2 }, 9.4, 9, P)) +
+          S(k.box({ x: -10, y: -10, w: 20, d: 20, r: 2 }, 18.8, 9, P)) +
+          lamp(7, 10.4, 25);
+      case 'db':
+        return k.halo({ x: -10, y: -10, w: 20, d: 20, r: 10 }, 0, P) +
+          [0, 6, 12].map((z) => S(k.cylinder(0, 0, 9, z, 5.4, P, 24), { crease: false, 'data-part': 'disc' })).join('') +
+          lamp(7, 6, 15);
+    }
+  });
+}
+function gearEnt(g: Gear): Ent {
+  const [x, y] = flat(g.at[0], g.at[1]);
+  return { key: 'gear:' + g.id, order: 590 + depth(g.at) / 100, sig: g.kind, html: () => gearMarkup(g), x, y, scale: g.scale ?? 1, attrs: { 'data-asleep': g.off ? '' : '-', 'data-lamp': g.lamp ?? 'off', 'data-gear': g.kind } };
+}
+function gearAnchor(s: SceneState, id: string): P3 | null {
+  const g = s.gear?.find((x) => x.id === id);
+  return g ? [g.at[0], g.at[1], (GEAR_H[g.kind] + 3) * (g.scale ?? 1)] : null;
 }

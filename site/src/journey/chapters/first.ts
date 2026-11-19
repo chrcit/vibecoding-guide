@@ -1,223 +1,184 @@
-// Chapter 4 (Part 1: Foundations): Your first real loop — an approachable bridge on laptop, desktop or phone.
+// Lesson 4 (part one): the first real loop on the device in front of you. One small real job, the
+// club's member list (made up), and the four beats: you ask, it builds, you look, you say what to
+// change. Browser builders are the side road, shown when the reader picks the phone.
 import type { Chapter, Ctx } from '../chapter';
-import { byLevel } from '../chapter';
 import type { Script } from '../scene';
-import { solo, jobs, lab } from '../presets';
-import { route, reverse } from '../picture';
+import { lab } from '../presets';
+import { route, reverse, SPOT, type SceneState, type XY, type Zone, type Gear } from '../picture';
+import { note, readout, lv } from './part1';
+import { termLabel } from '../terms';
 
-type SetupId = 'laptop' | 'desktop' | 'phone';
-type IdeaId = 'club' | 'notes' | 'tool';
+const stat = readout(['working on', 'beat, this round', 'files in your project', 'checked by']);
+const TOOLS = { at: SPOT.tools, ids: ['read', 'edit', 'run', 'search'] };
+const PROJ = { at: SPOT.project };
+const CLOUD: Zone = { id: 'cloud', kind: 'cloud', rect: [-30, -30, 60, 60] };
 
-const SETUPS: Record<SetupId, { label: string; steps: string; stat: [string, string][]; model: Record<'plain' | 'technical' | 'engineer', string> }> = {
-  laptop: {
-    label: 'Laptop (most common)',
-    steps: '1. Create an empty folder. 2. Open it in a coding agent app (like T3 Code, Claude Code or Codex). 3. Describe one small thing you want to see.',
-    stat: [['time to start', '~5 minutes'], ['accounts needed', '1 AI plan (or free tier)'], ['where app runs', 'localhost on your laptop']],
-    model: {
-      plain: 'You do not need to learn a programming language first. Open a fresh folder in an agent app, speak or type what you want, and let the agent set up the starter files.',
-      technical: 'Run `git init`, open the repo in T3 Code or Claude Code, and ask the agent to scaffold a minimal typed app with a single `npm test` + `tsc --noEmit` check script.',
-      engineer: 'Initialize a clean repo with strict TypeScript, fast unit test runner (Vitest), and a 15-line AGENTS.md before the first feature prompt so conventions stick from turn 1.',
-    },
-  },
-  desktop: {
-    label: 'Desktop PC',
-    steps: '1. Same 5-minute setup on your desk machine. 2. Keep it awake so longer tasks finish cleanly. 3. Connect from your laptop or phone later when away from your desk.',
-    stat: [['time to start', '~5 minutes'], ['big win', 'stays awake & runs faster'], ['remote ready', 'yes (phone or laptop)']],
-    model: {
-      plain: 'A desktop PC gives you a bigger screen to view your app side by side with the agent—and it can keep running jobs even when you walk away.',
-      technical: 'Ideal primary host for multi-worktree runs, local Postgres/Docker containers and long test suites without throttling or lid-close pauses.',
-      engineer: 'Anchor your main dev environment on the desktop box with declarative setup scripts so phone/laptop sessions act as thin controllers into a stable workspace.',
-    },
-  },
-  phone: {
-    label: 'Phone first',
-    steps: '1. Start in a web builder (Lovable, v0, Replit) OR record a 2-minute voice spec to send to your desktop agent. 2. Inspect live preview links right in your mobile browser.',
-    stat: [['time to start', '1 minute'], ['best for', 'voice specs, previews & quick prototypes'], ['next step', 'pull into git on laptop/PC']],
-    model: {
-      plain: 'If you only have your phone right now, you can still start: talk through your idea by voice or build a quick first prototype in a web builder—then bring it to a laptop when it grows.',
-      technical: 'Use phone voice capture for specs and web builders (or GitHub-connected cloud agents) for prototypes, exporting to a real git repo once you need unit tests and control.',
-      engineer: 'Treat mobile as an async capture and review surface (voice specs, preview QA, plan approval); graduate prototypes into git + CI before complexity compounds.',
-    },
-  },
-};
+type Device = 'laptop' | 'desktop' | 'phone';
+function scene(device: Device = 'laptop', o: { tray?: boolean } = {}): SceneState {
+  const showGear = !o.tray;
+  const builder = device === 'phone';
+  const gear: Gear = builder ? { id: 'me', at: [-22, 118], kind: 'phone', scale: 0.9 } : device === 'desktop' ? { id: 'me', at: [40, 112], kind: 'desktop', scale: 0.8 } : { id: 'me', at: [34, 104], kind: 'laptop' };
+  return {
+    you: SPOT.you,
+    agents: [{ id: 'a0', at: SPOT.agent, blocks: [] }],
+    tools: { at: SPOT.tools, ids: TOOLS.ids },
+    project: { at: SPOT.project, rules: 'none', files: ['', '', '', '', '', ''] },
+    gates: [{ id: 'gate', at: SPOT.gate, axis: 'y' }],
+    tray: o.tray ? { at: [60, 128], cards: [] } : null,
+    zones: builder
+      ? [{ id: 'cloud', kind: 'cloud', rect: [-30, -44, 250, 88] }]
+      : [CLOUD, { id: 'mine', kind: device === 'desktop' ? 'box' : 'laptop', rect: [52, -42, 166, 84] }],
+    gear: showGear ? [gear] : [],
+    tracks: [[[0, 94], [0, 22]], [[20, 0], [56, 0]], [[88, 0], [120, 0]]],
+    labels: [
+      lab('you', 'you', 'left'),
+      termLabel('a0', 'agent', 'top', 'the agent'),
+      termLabel('gate', 'check', 'right'),
+      termLabel('project', 'project'),
+      builder
+        ? lab('zone:cloud', 'all on the builder’s site', 'bottom', 'wiki/web-builders/')
+        : lab('zone:mine', device === 'desktop' ? 'your desktop PC: the files' : 'your laptop: the files', 'bottom'),
+      ...(showGear ? [lab('gear:me', builder ? 'phone browser' : device === 'desktop' ? 'desktop PC' : 'laptop', 'right')] : []),
+    ],
+  };
+}
 
-function runSetup(ctx: Ctx, id: SetupId) {
-  const s = SETUPS[id];
-  ctx.model(`${s.label}.`, s.model[ctx.level]);
+// ---------- device ----------
+
+function runDevice(ctx: Ctx, d: Device) {
+  note(ctx, 'first', 'device');
   void ctx.scene.run(async (h) => {
-    h.set((st) => Object.assign(st, jobs(1, {
-      gap: 84,
-      machines: [id === 'laptop' ? 'laptop' : id === 'desktop' ? 'box' : 'cloud'],
-      trees: false,
-      labels: [
-        lab('you', id === 'phone' ? 'you (phone)' : 'you', 'left'),
-        lab('j0', id === 'phone' ? 'cloud / remote agent' : 'coding agent', 'top', 'wiki/agent/'),
-        lab('zone:0', s.label, 'bottom'),
-        lab('project', 'fresh folder', 'top'),
-      ],
-    })));
-    ctx.stat(s.stat);
-    ctx.say(null, s.steps);
-    h.set((st) => { st.agents[0]!.blocks = [{ t: 'you', h: 3 }]; st.agents[0]!.lamp = 'ok'; });
+    h.set((s) => Object.assign(s, scene(d)));
+    const on = d === 'phone' ? 'a builder in the phone’s browser' : d === 'desktop' ? 'your desktop PC' : 'your laptop';
+    stat(ctx, [on, '–', d === 'phone' ? 'on the builder’s site' : 'an empty folder, club-list', '–']);
+    ctx.say('you', d === 'phone' ? 'A list of my club’s members and who has paid.' : 'Hello. Here is who I am and what I want to build.');
+    await h.send(route.youToAgent(), 'you', { ms: 460 });
+    h.set((s) => { s.agents[0]!.blocks = [{ t: 'you', h: 3 }]; s.agents[0]!.busy = true; });
+    await h.wait(800);
+    h.set((s) => { s.agents[0]!.busy = false; s.agents[0]!.blocks!.push({ t: 'model', h: 2 }); });
+    await h.send(reverse(route.youToAgent()), 'model', { ms: 460 });
+    ctx.say('agent', d === 'phone' ? 'Here is a first version. Tap Preview to try it.' : 'Got it. What should I call the folder, and is the data only on this computer?');
+    await h.wait(1500);
+    ctx.say(null, d === 'phone'
+      ? 'Quickest start of all. The files live on their site, not on a computer of yours.'
+      : 'One app, one plan, one empty folder. That is the whole set-up.');
   });
 }
 
-const IDEAS: Record<IdeaId, { title: string; prompt: Record<'plain' | 'technical' | 'engineer', string>; out: string }> = {
-  club: {
-    title: 'A club members list',
-    prompt: {
-      plain: 'Build a simple web page for our 40-person football club: show member names, whether they paid this season, and a search box. Use fake sample data so I can click through it right away.',
-      technical: 'Scaffold a Vite + TypeScript app for a club members list (search + paid filter + local JSON fixture). Add Vitest unit tests for the filter logic and verify `tsc --noEmit` + tests pass.',
-      engineer: 'Create a minimal TypeScript web app separating pure domain logic (`src/members.ts` with strict types + unit tests) from thin UI rendering. Keep dependencies minimal and write a short AGENTS.md.',
-    },
-    out: 'Working members page with search, paid filter and 20 realistic sample members.',
-  },
-  notes: {
-    title: 'A clean invoice or notes page',
-    prompt: {
-      plain: 'Build a one-page invoice maker where I type line items, see the total update live, and click Print / Save as PDF. Keep the layout calm and clean.',
-      technical: 'Build a static TypeScript invoice calculator with live totals, tax calculation unit tests, and print CSS. Run `tsc --noEmit` and unit tests before showing the preview.',
-      engineer: 'Implement deterministic currency math in integer cents (`src/calc.ts`, 100% unit-tested), zero-backend static build, and clean `@media print` stylesheet.',
-    },
-    out: 'Live invoice calculator with instant totals and clean PDF print layout.',
-  },
-  tool: {
-    title: 'A small everyday helper',
-    prompt: {
-      plain: 'Build a small tool where I paste a messy CSV of expenses and it groups them by category with a clean monthly summary table.',
-      technical: 'Create a TypeScript CSV expense categorizer with pure parser + aggregator functions, edge-case unit tests (quoted commas, empty rows), and a clean browser UI.',
-      engineer: 'Build a client-side CSV parser & categorizer with strict schema validation, pure functional aggregation, unit tests covering malformed rows, and zero server uploads for privacy.',
-    },
-    out: 'Browser CSV expense grouper—runs privately in your browser with instant totals.',
-  },
-};
+// ---------- the job ----------
 
-function runIdea(ctx: Ctx, id: IdeaId) {
-  const idea = IDEAS[id];
-  ctx.model(
-    'Start small and real.',
-    byLevel(ctx.level, {
-      plain: 'Pick one real problem you care about that fits on one screen. A small working app in 10 minutes teaches more than reading for a week.',
-      technical: 'Start with a small vertical slice that has deterministic logic you can unit-test (`tsc --noEmit` + `vitest`) and a real UI you can click in the browser.',
-      engineer: 'Choose a narrow vertical slice with clean domain-vs-UI separation so your very first repo establishes the verification loop and module hygiene you will scale later.',
-    }),
-  );
-  void ctx.scene.run(async (h) => {
-    h.set((s) => Object.assign(s, solo({
-      tools: true,
-      project: true,
-      gate: true,
-      labels: [
-        lab('you', 'you', 'left'),
-        lab('a0', 'coding agent', 'top', 'wiki/agent/'),
-        lab('project', idea.title, 'top'),
-        lab('gate', 'check', 'right', 'wiki/verification/'),
-      ],
-    })));
-    ctx.stat([['first project', idea.title], ['scope', '1 screen · 10 mins'], ['safety', 'fresh folder + git']]);
-    ctx.say('you', idea.prompt[ctx.level]);
-    await h.send(route.youToAgent(), 'you', { ms: 420 });
-    h.set((s) => { s.agents[0]!.blocks = [{ t: 'you', h: 3.5 }]; s.agents[0]!.lamp = 'work'; });
+async function runJob(ctx: Ctx, h: Script) {
+  note(ctx, 'first', 'job');
+  h.set((s) => Object.assign(s, scene('laptop', { tray: true })));
+  stat(ctx, ['your laptop', '1 of 4: you ask', 'empty', '–']);
+  ctx.say('you', 'I want a small web app for a neighbourhood football club to track who has paid this season…');
+  await h.send(route.youToAgent(), 'you', { ms: 460 });
+  h.set((s) => { s.agents[0]!.blocks = [{ t: 'you', h: 5 }]; s.agents[0]!.busy = true; });
+  await h.wait(900);
+  h.set((s) => { s.agents[0]!.busy = false; s.agents[0]!.blocks!.push({ t: 'model', h: 2 }); s.agents[0]!.lamp = 'wait'; });
+  await h.send(route.agentToTray({ at: [60, 128], cards: [] }), 'model', { ms: 460 });
+  h.set((s) => { s.tray!.cards = [{ id: 'q', mark: 'wait' }]; s.labels!.push(lab('card:q', 'two questions', 'right')); });
+  ctx.say('agent', lv(ctx,
+    'Two questions first: how many teams, and do you want to record how much each member paid, or only paid / not paid?',
+    'Two questions first: how many teams, and paid / not paid or amounts? Plan: Vite + TypeScript, data in localStorage, tests with Vitest.',
+    'Two questions first: teams, and amounts or a flag? Proposed: Vite + TypeScript, localStorage behind a small store module, Vitest. Alternative: SQLite with a tiny server, if more than one person edits. OK?'));
+  await h.wait(1800);
+  ctx.say('you', 'Three teams. Only paid or not.');
+  await h.send(route.youToAgent(), 'you', { ms: 420 });
+  h.set((s) => { s.tray!.cards = [{ id: 'q', mark: 'ok' }]; s.agents[0]!.lamp = 'work'; s.agents[0]!.blocks!.push({ t: 'you', h: 1.5 }); });
+  await h.wait(900);
+  ctx.say(null, 'It asked before building, because the prompt told it to. Two answers saved a wrong guess.');
+}
+
+// ---------- the four beats ----------
+
+async function runLoop(ctx: Ctx, h: Script) {
+  note(ctx, 'first', 'loop');
+  h.set((s) => Object.assign(s, scene('laptop', { tray: true })));
+  const checked = lv(ctx, 'it opened the page', 'npm test, tsc --noEmit', 'npm test, tsc --noEmit');
+  stat(ctx, ['your laptop', '1 of 4: you ask', 'empty', '–']);
+  ctx.say('you', 'A list of members, a form to add one, a way to mark them paid.');
+  await h.send(route.youToAgent(), 'you', { ms: 440 });
+  h.set((s) => { s.agents[0]!.blocks = [{ t: 'you', h: 4 }]; s.agents[0]!.lamp = 'work'; });
+  stat(ctx, ['your laptop', '2 of 4: it builds', 'writing…', '–']);
+  const files: [number, string][] = [[0, 'index.html'], [1, 'members.ts'], [2, 'members.test.ts'], [3, 'style.css']];
+  for (const [i, name] of files) {
+    h.set((s) => { s.agents[0]!.busy = true; s.tools!.on = 'edit'; });
+    ctx.say('agent', `Writing ${name}…`);
+    await h.send(route.toolToFile(TOOLS, 'edit', PROJ, i), 'model', { ms: 300 });
+    h.set((s) => { s.project!.files![i] = 'edit'; s.agents[0]!.blocks!.push({ t: 'tool', h: 1.2 }); s.tools!.on = null; });
+  }
+  h.set((s) => { s.tools!.on = 'run'; });
+  ctx.say('agent', lv(ctx, 'Opening the page and trying the form…', 'npm test: 6 passed. npx tsc --noEmit: no errors.', 'npm test: 6 passed (store, filters, empty list). npx tsc --noEmit: clean. npm run dev on :5173.'));
+  await h.send(route.agentToGate(), 'model', { ms: 360 });
+  h.set((s) => { s.gates![0]!.lamp = 'ok'; s.tools!.on = null; s.agents[0]!.busy = false; s.project!.files = ['ok', 'ok', 'ok', 'ok', '', '']; });
+  stat(ctx, ['your laptop', '2 of 4: it builds', '4 new files', checked]);
+  await h.wait(900);
+  await h.send(route.gateToYou(), 'model', { ms: 360 });
+  h.set((s) => { s.tray!.cards = [{ id: 'shot', b: 'tool', }]; s.labels!.push(lab('card:shot', 'the page, open', 'right')); s.agents[0]!.lamp = 'ok'; });
+  ctx.say('agent', 'Done. Open http://localhost:5173 and add a member first.');
+  stat(ctx, ['your laptop', '3 of 4: you look', '4 new files', checked]);
+  await h.wait(1800);
+  ctx.say('you', 'The paid tick works. Unpaid people should stand out more.');
+  await h.send(route.youToAgent(), 'you', { ms: 440 });
+  h.set((s) => { s.agents[0]!.blocks!.push({ t: 'you', h: 1.5 }); s.agents[0]!.lamp = 'work'; s.gates![0]!.lamp = 'off'; });
+  stat(ctx, ['your laptop', '4 of 4: you say what to change', '4 new files', checked]);
+  await h.wait(1400);
+  ctx.say(null, 'Then round again. Every round is these four beats.');
+}
+
+// ---------- say what to change ----------
+
+async function runChange(ctx: Ctx, h: Script, clear: boolean) {
+  note(ctx, 'first', 'change');
+  h.set((s) => {
+    Object.assign(s, scene('laptop', { tray: true }));
+    s.project!.files = ['ok', 'ok', 'ok', 'ok', '', ''];
+    s.agents[0]!.blocks = [{ t: 'you', h: 4 }, { t: 'tool', h: 5 }, { t: 'model', h: 1.5 }];
   });
-}
-
-async function runFirstLoop(ctx: Ctx, h: Script) {
-  ctx.model(
-    'Your first complete loop.',
-    byLevel(ctx.level, {
-      plain: 'Ask → agent builds → agent checks → you open the live page and try clicking it. That four-beat rhythm is the foundation of everything in the rest of this guide.',
-      technical: 'Prompt → inspect & edit → `tsc --noEmit` & unit tests → live preview check. Every chapter in Parts 2 and 3 scales one part of this exact loop.',
-      engineer: 'Specification → bounded tool execution → deterministic verification gate → human behavioral inspection. Master this single-agent loop before adding parallelism.',
-    }),
-  );
-  h.set((s) => Object.assign(s, solo({
-    tools: true,
-    project: { rules: 'plain', commits: ['ok'] },
-    gate: true,
-    tray: [{ id: 'preview', mark: 'work' }],
-    labels: [
-      lab('you', 'you', 'left'),
-      lab('a0', 'agent', 'top', 'wiki/agent/'),
-      lab('tools', 'tools', 'top', 'wiki/tool-call/'),
-      lab('project', 'your app', 'top'),
-      lab('gate', 'check', 'right', 'wiki/verification/'),
-      lab('tray', 'live preview', 'right', 'wiki/preview-deployment/'),
-    ],
-  })));
-  ctx.stat([['beat', '1. describe'], ['files created', 0], ['check', 'waiting']]);
-  ctx.say('you', IDEAS.club.prompt[ctx.level]);
-  await h.send(route.youToAgent(), 'you', { ms: 380 });
-  h.set((s) => { s.agents[0]!.blocks = [{ t: 'you', h: 3 }]; s.agents[0]!.lamp = 'work'; });
-  for (const [tool, file, n] of [['edit', 0, 1], ['edit', 1, 2], ['edit', 2, 3], ['run', -1, 3]] as const) {
-    h.set((s) => { s.agents[0]!.busy = true; s.tools!.on = tool; if (file >= 0) { const f = (s.project!.files ??= ['', '', '', '', '', '']); f[file] = 'edit'; } });
-    ctx.stat([['beat', tool === 'run' ? '3. check' : '2. build'], ['files created', n], ['check', tool === 'run' ? 'running…' : 'waiting']]);
-    await h.wait(420);
-    h.set((s) => { s.agents[0]!.busy = false; s.tools!.on = null; s.agents[0]!.blocks!.push({ t: 'tool', h: 2.5 }); });
+  const checked = lv(ctx, 'it opened the page', 'npm test, tsc --noEmit', 'npm test, tsc --noEmit');
+  stat(ctx, ['your laptop', '4 of 4: you say what to change', '4 files', checked]);
+  ctx.say('you', clear
+    ? 'Three changes: sort by team, then name. Make unpaid members easy to spot. At the top, show “18 of 25 paid”.'
+    : 'Make it better and more modern, add stats, fix it on phones, maybe like a real app.');
+  await h.send(route.youToAgent(), 'you', { ms: 440 });
+  h.set((s) => { s.agents[0]!.blocks!.push({ t: 'you', h: clear ? 2 : 1.5 }); s.agents[0]!.busy = true; s.agents[0]!.lamp = 'work'; });
+  const edits = clear ? [1, 3] : [0, 1, 2, 3, 4, 5];
+  for (const i of edits) {
+    h.set((s) => { s.tools!.on = 'edit'; });
+    await h.send(route.toolToFile(TOOLS, 'edit', PROJ, i), clear ? 'model' : 'bad', { ms: 260 });
+    h.set((s) => { s.project!.files![i] = clear ? 'edit' : 'bad'; s.tools!.on = null; });
   }
-  await h.send(route.agentToGate(), 'model', { ms: 320 });
-  h.set((s) => { s.gates![0]!.lamp = 'ok'; s.agents[0]!.lamp = 'ok'; s.tray!.cards = [{ id: 'preview', mark: 'ok' }]; s.project!.commits = ['ok', 'ok']; });
-  await h.send(route.gateToYou(), 'model', { ms: 320 });
-  ctx.stat([['beat', '4. try it yourself'], ['files created', 3], ['check', byLevel(ctx.level, { plain: 'page opens cleanly', technical: 'tsc + 8/8 tests green', engineer: 'strict types + tests + build green' })]]);
-  ctx.say('agent', byLevel(ctx.level, {
-    plain: 'Done! Open the preview link—20 sample club members are loaded, search and paid filter both work.',
-    technical: 'Built with Vite + TypeScript. `tsc --noEmit` clean, 8/8 Vitest unit tests pass, dev server live at localhost:5173.',
-    engineer: 'Scaffolded `members.ts` domain module + UI + unit tests. Strict typecheck and test suite green; committed cleanly.',
-  }));
-}
-
-async function runTweak(ctx: Ctx, h: Script, steered = false) {
-  ctx.model(
-    'One small tweak at a time.',
-    byLevel(ctx.level, {
-      plain: 'The first version is never the final version. Point at one concrete thing (“make the Unpaid badge red and add a count at the top”) instead of asking for ten changes at once.',
-      technical: 'Keep follow-up prompts atomic: one behavior change + one regression test + one commit. Small loops stay fast and easy to undo.',
-      engineer: 'Iterative vertical refinements keep diffs small, context windows clean, and verification fast—now you are ready to look under the hood in Part 2.',
-    }),
-  );
-  h.set((s) => Object.assign(s, solo({
-    tools: true,
-    project: { rules: 'plain', commits: ['ok', 'ok'] },
-    gate: true,
-    labels: [
-      lab('you', 'you', 'left'),
-      lab('a0', 'agent', 'top', 'wiki/agent/'),
-      lab('project', 'your app', 'top'),
-      lab('gate', 'check', 'right', 'wiki/verification/'),
-    ],
-  })));
-  if (!steered) {
-    ctx.stat([['turn', 'follow-up tweak'], ['changes requested', '1 specific tweak'], ['commit', 'ready']]);
-    ctx.say('you', byLevel(ctx.level, {
-      plain: 'Nice! One tweak: show a counter at the top like “14 of 20 paid” and highlight unpaid rows.',
-      technical: 'Add a `countPaid(members)` helper with a unit test, render “14 of 20 paid” in the header, and re-run `tsc` + `vitest`.',
-      engineer: 'Expose pure `summarizePayments(members)` in `members.ts`, add edge-case tests (0 members, all paid), wire header summary.',
-    }));
-  } else {
-    await h.send(route.youToAgent(), 'you', { ms: 340 });
-    h.set((s) => { s.agents[0]!.blocks = [{ t: 'you', h: 2.5 }, { t: 'tool', h: 3 }]; s.agents[0]!.lamp = 'work'; });
-    await h.wait(450);
-    await h.send(route.agentToGate(), 'model', { ms: 300 });
-    h.set((s) => { s.gates![0]!.lamp = 'ok'; s.agents[0]!.lamp = 'ok'; s.project!.commits = ['ok', 'ok', 'ok']; });
-    await h.send(route.gateToYou(), 'model', { ms: 300 });
-    ctx.stat([['turn', 'tweak landed'], ['diff', '18 lines'], ['check', 'green']]);
-    ctx.say('agent', 'Updated! Header now shows “14 of 20 paid” and unpaid rows stand out clearly.');
-  }
+  h.set((s) => { s.agents[0]!.busy = false; });
+  await h.send(route.agentToGate(), 'model', { ms: 340 });
+  h.set((s) => { s.gates![0]!.lamp = 'ok'; });
+  await h.send(route.gateToYou(), clear ? 'model' : 'bad', { ms: 340 });
+  h.set((s) => {
+    s.tray!.cards = clear ? [{ id: 'a', b: 'tool', mark: 'ok' }, { id: 'b', b: 'tool', mark: 'ok' }, { id: 'c', b: 'tool', mark: 'ok' }] : [{ id: 'a', b: 'bad', mark: 'bad' }];
+    s.labels!.push(lab(clear ? 'card:b' : 'card:a', clear ? '3 of 3, each one easy to see' : 'a new look you did not ask for', 'right'));
+  });
+  ctx.say('agent', clear ? 'Done: sorted, unpaid in red, “18 of 25 paid” at the top.' : 'Done. New design, a stats page, dark mode, and a menu.');
+  stat(ctx, ['your laptop', '3 of 4: you look', clear ? '2 changed' : 'all 6 changed', clear ? checked : 'passes, but is it right?']);
+  await h.wait(1800);
+  ctx.say(null, clear
+    ? 'Each change is something you can look for in ten seconds.'
+    : 'It guessed what “better” means and touched every file. Now you have to look at everything.');
 }
 
 export async function demo(ctx: Ctx, h: Script) {
-  await runFirstLoop(ctx, h);
+  await runLoop(ctx, h);
 }
 
 export const firstCh: Chapter = {
   steps: {
-    setup: { scene: () => jobs(1, { gap: 84, machines: ['laptop'], trees: false }), enter: (ctx) => runSetup(ctx, 'laptop') },
-    project: { scene: () => solo({ tools: true, project: true, gate: true }), enter: (ctx) => runIdea(ctx, 'club') },
-    run: { scene: () => solo({ tools: true, project: true, gate: true }), enter: (ctx) => void ctx.scene.run((h) => runFirstLoop(ctx, h)) },
-    tweak: { scene: () => solo({ tools: true, project: true, gate: true }), enter: (ctx) => void ctx.scene.run((h) => runTweak(ctx, h, false)) },
+    device: { scene: () => scene('laptop'), enter: (ctx) => runDevice(ctx, 'laptop') },
+    job: { scene: () => scene('laptop', { tray: true }), enter: (ctx) => void ctx.scene.run((h) => runJob(ctx, h)) },
+    loop: { scene: () => scene('laptop', { tray: true }), enter: (ctx) => void ctx.scene.run((h) => runLoop(ctx, h)) },
+    change: { scene: () => scene('laptop', { tray: true }), enter: (ctx) => void ctx.scene.run((h) => runChange(ctx, h, true)) },
   },
   actions: {
-    setup: (ctx, val) => runSetup(ctx, val as SetupId),
-    idea: (ctx, val) => runIdea(ctx, val as IdeaId),
-    tweak: (ctx) => void ctx.scene.run((h) => runTweak(ctx, h, true)),
+    device: (ctx, val) => runDevice(ctx, val as Device),
+    loop: (ctx) => void ctx.scene.run((h) => runLoop(ctx, h)),
+    change: (ctx, val) => void ctx.scene.run((h) => runChange(ctx, h, val === 'clear')),
   },
 };

@@ -10,6 +10,151 @@ export interface StepNote {
 }
 
 export const STEP_NOTES: Record<string, Record<string, StepNote>> = {
+  // ---------- part one ----------
+  ai: {
+    predict: {
+      part: 'The window.',
+      text: {
+        plain: 'Everything it uses is in there: what you typed, what you pasted, its own replies. Leave something out and it fills the gap with what sounds likely.',
+        technical: 'The app sends the whole window with every message and the model keeps nothing between calls. A wrong answer usually means something was missing from the window.',
+        engineer: 'Output depends only on the tokens sent. Memory files, retrieved documents and tool results are all the harness putting more text into this one window.',
+      },
+    },
+    inputs: {
+      part: 'All of it becomes window.',
+      text: {
+        plain: 'Talking is the quickest way to give it a lot of detail. It can misread a photo or a voice note, so a good answer asks when it is unsure, as with row 9.',
+        technical: 'Speech is transcribed to text; images and recordings are turned into tokens too and take room in the window. A long recording fills it faster than a page of text.',
+        engineer: 'Same window, same price per token, same chance of misreading. Ask it to list what it could not read rather than trusting a clean-looking result.',
+      },
+    },
+    modes: {
+      part: 'What changes is its reach.',
+      text: {
+        plain: 'In chat you carry everything. At work it can open files you connect and write new ones. As a coding agent it works in your project folder and tries what it built.',
+        technical: 'Chat has no tools. Work adds search and connectors. A coding agent adds read, edit and run on a folder, so it can run npm test and read the result.',
+        engineer: 'Same model each time. claude.ai with connectors, Claude Code or Codex each decide the tool set, the permissions and how the window is assembled.',
+      },
+    },
+    code: {
+      part: 'Something to check against.',
+      text: {
+        plain: 'This is why the rest of the guide is about coding agents: their work can be tried before you see it. A letter, a summary or a plan still needs you to read it.',
+        technical: 'A failing test is output the agent cannot argue with: it lands in the window and the agent fixes the code. Check, lesson 9, builds that check.',
+        engineer: 'Executable feedback gives the loop ground truth. The limit is coverage: the check only catches what a test or a look covers.',
+      },
+    },
+  },
+  providers: {
+    labs: {
+      part: 'Different makers, same idea.',
+      text: {
+        plain: 'Every model on this page does what the last lesson showed: it reads its window and writes. You do not need to pick the right company to start; any one plan will do.',
+        technical: 'Each maker has a large model and smaller, cheaper ones. The window, the tools and the loop work the same way on all of them.',
+        engineer: 'Stay portable: keep instructions in AGENTS.md and checks in npm scripts, so swapping the model is a setting. A second maker’s model is also a cheap reviewer later.',
+      },
+    },
+    reach: {
+      part: 'A plan or a bill.',
+      text: {
+        plain: 'A plan is a monthly price with a usage limit that refills. The API charges for every token instead. To start, a plan is simpler.',
+        technical: 'Claude Code and Codex sign in with your plan; an API key bills per token instead. T3 Code is a front end over those tools and uses the logins you already have.',
+        engineer: 'Plan: flat cost, opaque limits. API: exact metering, scales with use, needed for your own scripts and CI. Cost, lesson 14, does the sums.',
+      },
+    },
+    where: {
+      part: 'Thinking far away, files at home.',
+      text: {
+        plain: 'An ordinary laptop is enough: the heavy work happens on the provider’s computers. Only what the agent reads is sent, so keep passwords and private data out of the folder.',
+        technical: 'Read, edit and run are executed locally by the coding tool; the model only receives their output. A .env file it opens is sent like any other file.',
+        engineer: 'Inference is remote, execution local. The trust boundary is what tool output enters the window: secrets, customer data and logs all count as sent.',
+      },
+    },
+    devices: {
+      part: 'The work lives where the files live.',
+      text: {
+        plain: 'A laptop is fine to start. A desktop PC that stays on keeps working while you sleep. A phone shows the work and lets you say yes or no; it does not do the work.',
+        technical: 'The agent runs as a process on the machine with the files. Closing the lid suspends it. A phone client is a remote view of that process.',
+        engineer: 'Put long jobs on a machine that stays on, reach it from laptop or phone. Machines, lesson 21, adds cloud machines that start empty.',
+      },
+    },
+  },
+  stack: {
+    commit: {
+      part: 'Undo for the whole folder.',
+      text: {
+        plain: 'Ask the agent to save a version each time something works. Then “go back” is one sentence instead of a guess.',
+        technical: 'Commit before you hand over a change; git diff shows exactly what the agent did and git restore . throws it away.',
+        engineer: 'Small commits make each agent change reviewable and revertable on its own. Note that restore leaves new untracked files: git status shows them.',
+      },
+    },
+    github: {
+      part: 'A copy that is not on your desk.',
+      text: {
+        plain: 'GitHub is a website that keeps your project and every save point. Push often; what was never pushed lives on one laptop.',
+        technical: 'origin is the copy on GitHub. Push after each commit you care about; clone gives a new machine the whole history.',
+        engineer: 'GitHub is also where checks run, cloud agents start from and other people review. Treat the default branch there as the source of truth.',
+      },
+    },
+    branch: {
+      part: 'Changes wait at the pull request.',
+      text: {
+        plain: 'Main stays working while the agent tries something on a branch. The pull request is the moment the check runs and you say yes.',
+        technical: 'Protect main, open a pull request per change, let CI run npm test on it. The pull request page shows the diff and the check result together.',
+        engineer: 'One task, one branch, one pull request keeps changes atomic. Branch protection with required checks is cheap; it is what lets you run many agents later.',
+      },
+    },
+    hosting: {
+      part: 'Does anything need to be remembered?',
+      text: {
+        plain: 'If people only read the page, static hosting is enough and often free. If people save things others must see, like who has paid, you need a server and a database.',
+        technical: 'Static: the build output on a CDN, no runtime. Dynamic: a running process with a database and secrets in environment variables.',
+        engineer: 'Choose by state and trust: who writes, who may read, where it is checked. Every moving part is something an agent has to deploy, test and keep patched.',
+      },
+    },
+    specs: {
+      part: 'Buy the size you measure.',
+      text: {
+        plain: 'A club list needs the smallest server there is. Start small; move up when pages get slow, not before.',
+        technical: 'Look at the busiest moment, not the daily total. Memory runs out before cores on small apps; a database usually needs its own disk.',
+        engineer: 'Measure peak requests and p95 latency before resizing. Stateless servers let you add copies; the database is what is hard to scale.',
+      },
+    },
+  },
+  first: {
+    device: {
+      part: 'One app, one plan, one folder.',
+      text: {
+        plain: 'That is the whole set-up on a laptop or desktop. On a phone you can start in a browser builder, but the files then live on their site.',
+        technical: 'Install a coding tool, sign in with your plan, create an empty folder and run git init in it, or ask the agent to.',
+        engineer: 'Decide early where it will run and who else will touch it; that decides the stack more than the first feature does.',
+      },
+    },
+    job: {
+      part: 'Small, real, yours.',
+      text: {
+        plain: 'A job you care about tells you at a glance whether it works. Asking it to ask first stops it from guessing the parts you did not say.',
+        technical: 'The prompt asks for tests and a type check, so the first version arrives with npm test and tsc --noEmit already passing.',
+        engineer: 'The stack decision comes back as three lines for you to approve, before any code: framework, where data lives, how it is tested.',
+      },
+    },
+    loop: {
+      part: 'Ask, build, look, change.',
+      text: {
+        plain: 'You do two of the four beats: you ask and you look. The looking is the part nobody else can do for you.',
+        technical: 'Look at the running page, then read the test output it shows you. If it shows none, ask for it before the next change.',
+        engineer: 'Each turn is one diff you can review. Keep turns small enough that a failing check points at one change.',
+      },
+    },
+    change: {
+      part: 'Changes you can look for.',
+      text: {
+        plain: 'A few precise changes come back as a few things to check. A vague wish comes back as a different app.',
+        technical: 'A vague request turns into a wide diff that the tests may pass and you still did not want. Precise asks keep the diff small.',
+        engineer: 'Scope is your control on blast radius. Vague prompts produce wide, unreviewable diffs even when every check is green.',
+      },
+    },
+  },
   chat: {
     two: {
       part: 'Stateless model + context window.',
