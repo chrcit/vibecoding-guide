@@ -66,7 +66,8 @@ const base = (ctx: Ctx, o: Look = {}): SceneState => {
   });
   if (o.meters) s.tracks!.push([[M_REVIEWER[0] + 14, M_REVIEWER[1]], [SPOT.reviewer[0] - 18, SPOT.reviewer[1]]]);
   // Two meters make the left of the floor crowded: frame the models, their meters, the gate and you.
-  if (o.meters) s.focus = ['you', 'a0', 'r0', 'gate', 'meter:b', 'meter:r'];
+  // The tools and the project stay in the frame too, so nothing is cut at the right edge.
+  if (o.meters) s.focus = ['you', 'a0', 'r0', 'gate', 'meter:b', 'meter:r', 'tools', 'project'];
   return s;
 };
 

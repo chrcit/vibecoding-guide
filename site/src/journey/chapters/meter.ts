@@ -439,7 +439,7 @@ function playMany(ctx: Ctx) {
       t.used = 1;
       show(ctx, t, view());
       const min = Math.max(1, Math.round((tick / TICKS_PER_HOUR) * 60));
-      ctx.say(null, `The allowance ran out after ${min} ${min === 1 ? 'minute' : 'minutes'}, ${tick} ${tick === 1 ? 'turn' : 'turns'} each. All ${n} stopped mid-job; ${jobs} ${jobs === 1 ? 'job' : 'jobs'} finished. Each agent drains it at the same made-up rate as one date fix, so ${n} drain it ${n} times as fast. On the API they would have kept going, at ${usd2(hour)} an hour.`);
+      ctx.say(null, `The allowance ran out after ${min} ${min === 1 ? 'minute' : 'minutes'}, ${tick} ${tick === 1 ? 'turn' : 'turns'} each. All ${n} stopped mid-job; ${jobs} ${jobs === 1 ? 'job' : 'jobs'} finished. ${n} × ${JOBS_PER_HOUR} date fixes an hour × a made-up ${Math.round(DRAIN * 100)}% each = ${n * JOBS_PER_HOUR * Math.round(DRAIN * 100)}% of the allowance an hour. On the API they would have kept going, at ${usd2(hour)} an hour.`);
     } else {
       h.set((s) => { for (const a of s.agents.slice(1)) a.busy = false; });
       ctx.say(null, mode === 'api'
@@ -453,7 +453,7 @@ function playMany(ctx: Ctx) {
 
 /** One short loop of this lesson, for the part 3 overview: a job drains the last of a plan. */
 export async function demo(ctx: Ctx, h: Script) {
-  note(ctx, 'plan');
+  // No note here: the overview shows the lesson's own summary under the picture.
   const p = opus(ctx);
   h.set((s) => { Object.assign(s, base(ctx, 'plan', p.name)); s.meters![0]!.level = 0.42; });
   const t = zero();

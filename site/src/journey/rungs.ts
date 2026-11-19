@@ -408,9 +408,9 @@ export const rungs: Rung[] = [
     line: 'Every turn reads the whole window again: on the API that is a bill, on a plan an allowance that runs out.',
     theme: 'scale',
     adds: {
-      plain: 'One made-up job counted turn by turn and priced: what it costs on the API with the cache on and off, and why a plan pauses instead of charging more.',
-      technical: 'Input, cache reads, cache writes and output as separate counts, with the sum written out so you can redo it; what makes the cache miss.',
-      engineer: 'Input that grows with the square of the turns, cache hit rate as a cost lever, and what twenty agents cost an hour on a plan or the API.',
+      plain: 'With the cache on, the same job costs about a third as much; a plan never bills more, it makes you wait for the reset.',
+      technical: 'Input, cache reads, cache writes and output are billed apart, and the sum is written out so you can redo it. Switching model or effort halfway makes the cache miss.',
+      engineer: 'A job’s input grows with the square of its turns; the cache hit rate, turns per job and price per token set what twenty agents cost an hour.',
     },
     steps: [
       { id: 'count', label: 'Every turn is counted' },
@@ -435,9 +435,9 @@ export const rungs: Rung[] = [
     line: 'One model builds, a different model in a fresh window tries to break it, and they go round until the real flaws are gone.',
     theme: 'quality',
     adds: {
-      plain: 'The same chat checking itself misses what it got wrong. Hand the work to a different model, ask it to break it, and stop once the real flaws are fixed.',
-      technical: 'Send the task and git diff to a reviewer in a fresh window with an adversarial brief, and cap it: only what breaks, three rounds at most.',
-      engineer: 'A clean context and a different model make the reviewer’s misses less likely to match the builder’s; a stop rule bounds the spend; the loop runs before the pull request.',
+      plain: 'Ask the other model for the ways the change fails and how to see each, and tell it when to stop: only what breaks, three rounds at most.',
+      technical: 'Paste the task and git diff into a new thread on the other model, and turn each finding into a test before the fix.',
+      engineer: 'Run the loop before the pull request, so the colleague who reads it gets a change that has already been attacked.',
     },
     steps: [
       { id: 'self', label: 'Checking itself' },
@@ -461,9 +461,9 @@ export const rungs: Rung[] = [
     line: 'Ask for proof with the work: a summary, the test run, a screenshot and a link, matched to the job.',
     theme: 'quality',
     adds: {
-      plain: 'The check catches what a machine can see. Four cards on the tray show what only you can judge: is it what you asked for?',
-      technical: 'Summary, tsc and npm test output, screenshots at stated widths and a preview link; a progress file for long jobs.',
-      engineer: 'Proof as an output of every run, and the same cards in the pull request: the reviewer reads them before the diff.',
+      plain: 'The check catches what a machine can see; whether the work is what you asked for only shows on a card.',
+      technical: 'The test run card carries the command and its output, and a bug fix comes with a test that failed first.',
+      engineer: 'Put the same cards in every pull request description; the reviewer reads them before the diff.',
     },
     steps: [
       { id: 'word', label: '“Done” is one word' },
@@ -487,9 +487,9 @@ export const rungs: Rung[] = [
     line: 'Where you step in: a plan before the build, a question during it, a note pinned on the result.',
     theme: 'quality',
     adds: {
-      plain: 'Read a four-step plan before the build and change the step that guessed; answer a question while the rest is built; pin a note where you see the problem.',
-      technical: 'A plan that names files and tests, questions that do not block, notes with the element they point at, and a dev-only review page writing to a notes file.',
-      engineer: 'Plan review as design review, decisions taken off the critical path, and the same doors in a team’s pull request.',
+      plain: 'A wrong guess caught in the plan costs one reply; caught after the build it costs every turn built on it.',
+      technical: 'Ask for a plan that names files and tests, and point at elements on a screenshot instead of describing them.',
+      engineer: 'The same doors exist in a team: design review before work, questions in the thread, comments on a preview.',
     },
     steps: [
       { id: 'once', label: 'Speak once' },
