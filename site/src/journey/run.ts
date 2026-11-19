@@ -71,7 +71,12 @@ export function boot(root: HTMLElement) {
     for (const b of el.querySelectorAll<HTMLElement>('[data-default]')) pressOnly(b);
     scene.set(def.scene(ctx), instant);
     def.enter?.(ctx);
-    root.querySelectorAll<HTMLElement>('[data-rung-link]').forEach((a) => a.toggleAttribute('data-here', a.dataset.rungLink === el.dataset.step));
+    root.querySelectorAll<HTMLElement>('[data-rung-link]').forEach((a) => {
+      const here = a.dataset.rungLink === el.dataset.step;
+      a.toggleAttribute('data-here', here);
+      const list = a.closest('ol');
+      if (here && list && list.scrollWidth > list.clientWidth) list.scrollLeft = a.offsetLeft - list.offsetLeft - (list.clientWidth - a.offsetWidth) / 2;
+    });
   }
 
   // The last step whose top has passed the reading line is the one on show.

@@ -185,7 +185,7 @@ export const fleetCh: Chapter = {
   steps: {
     twenty: { scene: () => many(20, true), enter: (ctx) => { ctx.mem.n = 20; ctx.mem.gate = true; runFleet(ctx); } },
     nogate: { scene: () => many(20, false), enter: (ctx) => { ctx.mem.n = 20; ctx.mem.gate = false; runFleet(ctx); } },
-    yours: { scene: () => many(10, true), enter: (ctx) => { ctx.mem.n = 10; ctx.mem.gate = true; runFleet(ctx); } },
+    yours: { scene: () => many(20, true), enter: (ctx) => { ctx.mem.n = 20; ctx.mem.gate = true; runFleet(ctx); } },
   },
   inputs: { n: (ctx, val) => { ctx.mem.n = Number(val); runFleet(ctx); } },
   actions: { gate: (ctx, val) => { ctx.mem.gate = val === 'on'; runFleet(ctx); } },
