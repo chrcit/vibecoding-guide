@@ -187,8 +187,10 @@ async function cleanThenNext(ctx: Ctx, h: Script) {
   stats(ctx, r);
   await cleanUp(ctx, h, r);
   if (!first) return;
+  ctx.say(null, 'The clean-up is done: still 13 features built, one clean-up run. Now feature 14.');
+  await h.wait(1800);
   await feature(ctx, h, r, 13);
-  ctx.say(null, `Feature 13 read ${before}% before its first edit. After one clean-up, feature 14 read ${r.last}%. The tests passed before and after.`);
+  ctx.say(null, `The clean-up added no feature. Feature 14, sent after it, read ${r.last}% of its window before its first edit; feature 13 had read ${before}%.`);
 }
 
 async function refactor(ctx: Ctx, h: Script, tests: boolean) {
@@ -277,6 +279,7 @@ export async function demo(ctx: Ctx, h: Script) {
   await clean(ctx, h);
   await h.wait(600);
   await cleanThenNext(ctx, h);
+  await h.wait(5000);
   ctx.mem.run = undefined;
 }
 

@@ -11,7 +11,7 @@ import { url } from '../../lib/nav';
 ---
 <Journey chapter="people" first="pr" title="Other people" description="Agents write the change; people decide what gets built and whether it ships. Pull requests, a colleague's review, clients and users.">
   <Step id="pr" title="A pull request waits for a person">
-    <p>Agents write the change; people decide what gets built and whether it ships. A <Term id="pull-request" /> is the agent’s branch stopped in front of main, with the check from <LessonRef id="check" /> run on it and its proof from <LessonRef id="proof" /> beside it, until a person says yes.</p>
+    <p>Agents write the change; people decide what gets built and whether it ships. A <Term id="pull-request" /> is the agent’s change waiting in front of main until a person says yes; the check from <LessonRef id="check" /> runs on it first.</p>
     <ForLevel is={['technical', 'engineer']}><p>The check here is CI: the type check and the tests run on every push to the branch, and main only takes a branch that passed.</p></ForLevel>
     <More title="A prompt for this">
       <CopyPrompt compact title="Write the pull request for a person">Open a pull request for this change, written for someone who has not seen this thread:

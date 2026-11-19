@@ -57,7 +57,7 @@ function floor(o: Opts): SceneState {
   if (o.board) for (let j = 0; j < n; j++) labels.push(boardLabel(o, j, 'work'));
   else labels.push(termLabel('j0', 'job', 'top', n > 1 ? 'job 1' : 'a job'));
   if (o.projects === 'one') {
-    labels.push(termLabel('main', 'main', 'bottom', 'main: the club list'));
+    labels.push(termLabel('main', 'main', 'bottom'));
     if (n > 1 && !o.board) labels.push(termLabel([jobSpot(n - 1, n)[0] + 30, 12, 2], 'worktree', 'right'));
   } else {
     for (let j = 0; j < n; j++) labels.push(lab(`p:${j}`, PROJECTS[j]!, 'top'));
@@ -184,6 +184,8 @@ const O = {
 export async function demo(ctx: Ctx, h: Script) {
   ctx.scene.speed = 2;
   await hour(ctx, h, O.three);
+  // Hold the end of the hour, so its totals can be read and compared with the lesson's.
+  await h.wait(6000);
 }
 
 export const jobsCh: Chapter = {
