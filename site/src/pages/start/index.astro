@@ -1,123 +1,78 @@
 ---
-// The first hour, as a board. Everyone does the same eight moves on the thing
-// they picked; the reader level changes the wording of the first prompt and
-// adds tiles, never the path. Prompts live in lib/start.ts.
+// The first hour: the club's member list, built by a coding agent you direct, in the order you do
+// it. The lesson "Your first real loop" shows the same loop as a picture and links here; this page
+// is the clicks and the prompts. Prompts live in lib/start.ts. The reader level changes the wording
+// of the first message and adds tiles, never the path.
 import { Code } from 'astro:components';
 import Board from '../../layouts/Board.astro';
 import Tile from '../../components/board/Tile.astro';
 import Fact from '../../components/data/Fact.astro';
 import Verified from '../../components/data/Verified.astro';
 import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
 import { LEVELS, levelInfo } from '../../lib/levels';
 import { links } from '../../data/links';
 import { url } from '../../lib/nav';
 import * as p from '../../lib/start';
-import img3d from '../../assets/start/3d.webp';
-import imgApp from '../../assets/start/app.webp';
-import imgSite from '../../assets/start/site.webp';
-
-const images = { '3d': img3d, app: imgApp, site: imgSite };
 
 const factIds = [
-  'plans.claude.pro.price', 'plans.claude.pro.claudeCode', 'plans.chatgpt.limits.codexOnEveryPlan', 'plans.claude.limits.fiveHour',
-  't3code.price', 't3code.welcome', 't3code.codexWithChatGPT', 't3code.newProject', 't3code.defaultMode', 't3code.localServers',
-  't3code.worktrees', 't3code.manyModels', 't3code.githubAuth', 't3code.limited', 't3code.providerMissing', 't3code.editFromHere',
-  't3code.usagePage', 't3code.claudePermissionsStillApply', 'harnesses.claudeCode.contextFile', 'harnesses.codex.contextFile',
-  'harnesses.claudeCode.permissionRules', 'harnesses.claudeCode.usageCommand', 'harnesses.codex.sandbox',
+  'plans.claude.pro.price', 'plans.claude.pro.claudeCode', 'plans.chatgpt.limits.codexOnEveryPlan',
+  't3code.price', 't3code.welcome', 't3code.codexWithChatGPT', 't3code.newProject', 't3code.defaultMode', 't3code.permissionModes', 't3code.localServers',
+  't3code.worktrees', 't3code.manyModels', 't3code.githubAuth', 't3code.providerMissing', 't3code.editFromHere',
+  't3code.usagePage', 'harnesses.claudeCode.contextFile', 'harnesses.codex.contextFile',
+  'harnesses.claudeCode.usageCommand', 'harnesses.codex.sandbox',
   'harnesses.claudeCode.login', 'harnesses.codex.login',
-];
-
-// The loop drawing: six moves on a ring, at 1:1 on a phone.
-const ring = [
-  { id: 'describe', label: 'Describe', x: 180, y: 104 },
-  { id: 'try', label: 'Try', x: 271, y: 156 },
-  { id: 'change', label: 'Change', x: 271, y: 262 },
-  { id: 'ask', label: 'Ask', x: 180, y: 314 },
-  { id: 'check', label: 'Check', x: 89, y: 262 },
-  { id: 'save', label: 'Save', x: 89, y: 156 },
 ];
 ---
 <Board
   title="The first hour"
-  description="From nothing to something that works, built by a coding agent you direct: set up, say who you are, describe it, try it, change it, ask, check, save."
+  description="Build the club's member list with a coding agent in about an hour: set up, two messages, try it, change it, ask, check, save."
   section="start"
 >
-  <script is:inline>
-    (function () {
-      var b = null;
-      try { b = localStorage.getItem('acg-build'); } catch (e) {}
-      if (b === '3d' || b === 'app' || b === 'site') document.documentElement.dataset.build = b;
-    })();
-  </script>
-
-  <Tile title="Pick what to build" span={8} id="pick">
-    <fieldset class="builds">
-      <legend class="visually-hidden">What to build</legend>
-      {p.builds.map((b) => (
-        <label class="build">
-          <input type="radio" name="build" value={b.id} checked={b.id === p.DEFAULT_BUILD} />
-          <img src={images[b.id].src} width={images[b.id].width} height={images[b.id].height} alt={b.alt} decoding="async" />
-          <span class="build-name">{b.label}</span>
-        </label>
-      ))}
-    </fieldset>
+  <Tile title="Before you start" span={12} id="before">
+    <p>About an hour, on a laptop or desktop PC (macOS, Windows or Linux). You build the club's member list from <LessonRef id="first" />, which shows this loop as a picture. Three words you will meet:</p>
+    <dl class="words">
+      <div><dt>Your project</dt><dd>The folder the app lives in. T3 Code makes it for you.</dd></div>
+      <div><dt>Supervised</dt><dd>The agent asks for your OK before it runs a command.</dd></div>
+      <div><dt>Git</dt><dd>Saves versions of the folder so you can go back. The agent runs it for you.</dd></div>
+    </dl>
   </Tile>
 
-  <Tile title="Then go round" span={4} side="explain/context/">
-    <svg class="loop" viewBox="0 0 360 344" role="img" aria-label="Set up and say who you are once. Then go round: describe, try, change, ask, check, save. Each lap adds a line to AGENTS.md.">
-      <g class="once">
-        <a href="#set-up"><rect x="52" y="6" width="96" height="36" rx="8" /><text x="100" y="29">Set up</text></a>
-        <path class="arrow" d="M150 24h18" />
-        <a href="#who"><rect x="172" y="6" width="136" height="36" rx="8" /><text x="240" y="29">Who you are</text></a>
-        <path class="arrow" d="M180 44v36" />
-      </g>
-      <circle class="track" cx="180" cy="209" r="105" />
-      <circle class="runner" r="6" />
-      <g class="file" aria-hidden="true">
-        <path d="M148 172h46l18 18v58h-64z" />
-        <path class="fold" d="M194 172v18h18" />
-        <path class="line" d="M158 204h44" /><path class="line" d="M158 214h36" /><path class="line" d="M158 224h44" /><path class="line new" d="M158 234h28" />
-        <text x="180" y="268">AGENTS.md</text>
-      </g>
-      {ring.map((n) => (
-        <a href={`#${n.id}`}><rect x={n.x - 44} y={n.y - 18} width="88" height="36" rx="18" /><text x={n.x} y={n.y + 5}>{n.label}</text></a>
-      ))}
-    </svg>
-  </Tile>
-
-  <Tile title="1 · Set up" span={5} id="set-up" side="t3-code/">
+  <Tile title="1 · Set up" span={6} id="set-up" side="t3-code/">
     <ol class="moves">
-      <li>Get one plan: Claude Pro (<Fact id="plans.claude.pro.price" /> a month) or ChatGPT, where the free plan will do.</li>
-      <li>Install <a href={links.t3codeDownload.url}>T3 Code</a>. It is <Fact id="t3code.price" />.</li>
+      <li>Get one plan: Claude Pro (<Fact id="plans.claude.pro.price" /> a month), or ChatGPT, where Codex is on every plan from Free.</li>
+      <li>Download <a href={links.t3codeDownload.url}>T3 Code</a> and open it. It is <Fact id="t3code.price" />.</li>
       <li>On its Welcome page, connect your agent. Codex: <b>Set up</b>, then <b>Continue with ChatGPT</b>. Claude Code: <b>Install</b>, then <b>Sign in</b>.</li>
-      <li><kbd>Cmd</kbd>+<kbd>K</kbd> (<kbd>Ctrl</kbd>+<kbd>K</kbd>), <b>New project</b>, name it.</li>
+      <li><kbd>Cmd</kbd>+<kbd>K</kbd> (<kbd>Ctrl</kbd>+<kbd>K</kbd> on Windows), <b>New project</b>, call it <code>club-list</code>.</li>
       <li>Under the message box, change <b><Fact id="t3code.defaultMode" /></b> to <b>Supervised</b>.</li>
     </ol>
+    <p class="then">You see an empty thread with a message box.</p>
   </Tile>
 
-  <Tile title="2 · Say who you are" span={7} id="who" side="explain/context/">
+  <Tile title="2 · First message: who you are" span={6} id="who">
     <div class="who">
       <label class="who-field"><span>I am</span><input type="text" data-who-input placeholder={p.who.placeholder} autocomplete="off" spellcheck="true" /></label>
       <div class="pick" role="group" aria-label="How much you know">
         {LEVELS.map((id) => <button type="button" data-who-level={id} aria-pressed={id === 'plain' ? 'true' : 'false'}>{levelInfo[id].label}</button>)}
       </div>
     </div>
-    <CopyPrompt title="The first message" id="prompt-who" compact>{p.first.before}<span data-who-text>{p.who.empty}</span>{'. '}<span data-lv="plain">{p.who.plain}</span><span data-lv="technical">{p.who.technical}</span><span data-lv="engineer">{p.who.engineer}</span>{p.first.after}</CopyPrompt>
+    <CopyPrompt title="Message 1" id="prompt-who" compact>{p.first.before}<span data-who-text>{p.who.empty}</span>{'. '}<span data-lv="plain">{p.who.plain}</span><span data-lv="technical">{p.who.technical}</span><span data-lv="engineer">{p.who.engineer}</span>{p.first.after}</CopyPrompt>
+    <p class="then">Send it on its own. It writes a short AGENTS.md and says so.</p>
   </Tile>
 
-  <Tile title="3 · Describe it" span={6} id="describe" side="explain/context/">
-    {p.builds.map((b) => <div data-build-is={b.id}><CopyPrompt title={`Describe ${b.label.toLowerCase()}`} id={`prompt-describe-${b.id}`} compact>{p.describe[b.id]}</CopyPrompt></div>)}
-    <p class="then">It asks before each command. When you do not follow one: <button type="button" class="say" data-say>{p.say.approval}</button></p>
+  <Tile title="3 · Second message: the member list" span={6} id="describe">
+    <CopyPrompt title="Message 2" id="prompt-describe" compact>{p.describe.app}</CopyPrompt>
+    <p class="then">It asks a question or two, then builds. It asks before each command. When you do not follow one: <button type="button" class="say" data-say>{p.say.approval}</button></p>
   </Tile>
 
   <Tile title="4 · Try it" span={6} id="try" side="t3-code/">
     <CopyPrompt title="Open it" id="prompt-try" compact>{p.look}</CopyPrompt>
-    <p class="then">It shows up as a local server in the thread’s details. Select it. Yours will look different from the <a href={url('showcase/')} data-side>showcase</a> ones pictured above.</p>
+    <p class="then">The page opens in the browser panel beside the thread. Add a member and tick them as paid.</p>
   </Tile>
 
   <Tile title="5 · Change it" span={6} id="change">
-    {p.builds.map((b) => <div data-build-is={b.id}><CopyPrompt title={`Change ${b.label.toLowerCase()}`} id={`prompt-change-${b.id}`} compact>{p.change[b.id]}</CopyPrompt></div>)}
-    <p class="then">After a correction that will come up again: <button type="button" class="say" data-say>{p.say.remember}</button></p>
+    <CopyPrompt title="Three changes" id="prompt-change" compact>{p.change.app}</CopyPrompt>
+    <p class="then">Look for each of the three. After a correction you will want again: <button type="button" class="say" data-say>{p.say.remember}</button></p>
   </Tile>
 
   <Tile title="6 · Ask what it did" span={6} id="ask">
@@ -125,20 +80,31 @@ const ring = [
     <p class="then"><button type="button" class="say" data-say>{p.say.simpler}</button> <button type="button" class="say" data-say>{p.say.where}</button></p>
   </Tile>
 
-  <Tile title="7 · Have it checked" span={6} id="check" side="explain/verification/">
+  <Tile title="7 · Have it checked" span={6} id="check" side="wiki/verification/">
     <CopyPrompt title="Check it" id="prompt-check" compact>{p.check}</CopyPrompt>
-    <p class="then">Try the three things. When it says done: <button type="button" class="say" data-say>{p.say.proof}</button></p>
+    <p class="then">It adds tests that run on their own. Try its three things by hand. When it says done: <button type="button" class="say" data-say>{p.say.proof}</button></p>
   </Tile>
 
-  <Tile title="8 · Save it, and write it down" span={6} id="save">
+  <Tile title="8 · Save it" span={6} id="save" side="wiki/version-control/">
     <CopyPrompt title="Save and update AGENTS.md" id="prompt-save" compact>{p.save}</CopyPrompt>
+    <p class="then">It makes a commit, a version you can go back to. Next time, AGENTS.md is read first, so you can skip message 1.</p>
   </Tile>
 
-  <Tile title="Build on a branch" span={4} level="technical" side="t3-code/">
+  <Tile title="When it goes wrong" span={12} id="wrong">
+    <dl class="wrong">
+      <div><dt>The agent is not ready</dt><dd>Sign in again on this computer. Still missing: <b>Settings → Providers</b> and set where it is installed (<Fact id="t3code.providerMissing" />).</dd></div>
+      <div><dt>The thread says Limited</dt><dd>Your plan’s allowance is used up for now. Wait for it to refill, or switch the thread to your other provider.</dd></div>
+      <div><dt>It went the wrong way</dt><dd><b>Edit from here</b>, under the message where it turned. It rewinds the conversation; the files only in a worktree thread.</dd></div>
+      <div><dt>Done, but it is not</dt><dd><button type="button" class="say" data-say>{p.say.proof}</button></dd></div>
+      <div><dt>An approval you do not follow</dt><dd>Do not approve it. <button type="button" class="say" data-say>{p.say.approval}</button></dd></div>
+    </dl>
+  </Tile>
+
+  <Tile title="Build on a branch" span={4} level="technical" side="wiki/version-control/">
     <p>New thread, then <b>New worktree</b> (<kbd>mod</kbd>+<kbd>shift</kbd>+<kbd>x</kbd>). Commit, push and open the pull request from the thread. GitHub needs one of: <Fact id="t3code.githubAuth" />.</p>
   </Tile>
 
-  <Tile title="A failing test first" span={4} level="technical" side="explain/verification/">
+  <Tile title="A failing test first" span={4} level="technical" side="wiki/verification/">
     <CopyPrompt title="Test first" id="prompt-test-first" compact>{p.testFirst}</CopyPrompt>
   </Tile>
 
@@ -150,7 +116,7 @@ const ring = [
     <p>In a new thread, shift-click two models and send. Each gets its own thread and worktree. Keep the better result.</p>
   </Tile>
 
-  <Tile title="A different model reviews" span={4} level="engineer" side="explain/verification/">
+  <Tile title="A different model reviews" span={4} level="engineer" side="wiki/review/">
     <CopyPrompt title="Review, do not edit" id="prompt-review" compact>{p.review}</CopyPrompt>
   </Tile>
 
@@ -163,39 +129,16 @@ const ring = [
     <p><kbd>mod</kbd>+<kbd>u</kbd> opens the Usage page: <Fact id="t3code.usagePage" />. In Claude Code, <code><Fact id="harnesses.claudeCode.usageCommand" /></code>.</p>
   </Tile>
 
-  <Tile title="When it goes wrong" span={12} id="wrong">
-    <dl class="wrong">
-      <div><dt>The agent is not ready</dt><dd>Sign in again on this computer. Still missing: <b>Settings → Providers</b>, and set its <Fact id="t3code.providerMissing" />.</dd></div>
-      <div><dt>The thread says Limited</dt><dd>Your plan’s allowance is used up for now. Wait for the reset, or switch the thread to your other provider.</dd></div>
-      <div><dt>It went the wrong way</dt><dd><b>Edit from here</b>, under the message where it turned. It rewinds the conversation; the files only in a worktree thread.</dd></div>
-      <div><dt>Done, but it is not</dt><dd><button type="button" class="say" data-say>{p.say.proof}</button></dd></div>
-      <div><dt>An approval you do not follow</dt><dd>Do not approve it. <button type="button" class="say" data-say>{p.say.approval}</button></dd></div>
-    </dl>
-  </Tile>
-
   <Verified slot="foot" ids={factIds} />
 </Board>
 
 <script>
   import { getLevel, isLevel, onLevel, setLevel } from '../../lib/levels';
 
-  const root = document.documentElement;
   const store = {
     get: (k: string) => { try { return localStorage.getItem(k); } catch { return null; } },
     set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch {} },
   };
-
-  // What to build.
-  const radios = [...document.querySelectorAll<HTMLInputElement>('input[name="build"]')];
-  const current = root.dataset.build;
-  radios.forEach((r) => {
-    if (current) r.checked = r.value === current;
-    r.addEventListener('change', () => {
-      if (!r.checked) return;
-      root.dataset.build = r.value;
-      store.set('acg-build', r.value);
-    });
-  });
 
   // Who you are, written into the first message as you type.
   const input = document.querySelector<HTMLInputElement>('[data-who-input]');
@@ -215,7 +158,7 @@ const ring = [
   onLevel(mark);
   mark();
 
-  // Short things to send: one press copies them.
+  // Short things to send: one press copies them, and says so.
   document.querySelectorAll<HTMLButtonElement>('[data-say]').forEach((b) => {
     let timer = 0;
     b.addEventListener('click', async () => {
@@ -235,12 +178,6 @@ const ring = [
 </script>
 
 <style is:global>
-  /* One build at a time. With no choice stored, the mini app. */
-  html:not([data-build]) [data-build-is]:not([data-build-is='app']),
-  html[data-build='3d'] [data-build-is]:not([data-build-is='3d']),
-  html[data-build='app'] [data-build-is]:not([data-build-is='app']),
-  html[data-build='site'] [data-build-is]:not([data-build-is='site']) { display: none; }
-
   /* One wording of the first message per reader level. Plain when unset. */
   html:not([data-level]) [data-lv]:not([data-lv='plain']),
   html[data-level='plain'] [data-lv]:not([data-lv='plain']),
@@ -249,44 +186,10 @@ const ring = [
 </style>
 
 <style>
-  .builds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; margin: 0; padding: 0; border: 0; min-width: 0; height: 100%; }
-  @container (max-width: 34rem) { .builds { gap: 0.375rem; } .build { padding: 0.25rem 0.25rem 0.5rem; } .build :global(img) { min-height: 5.5rem; } .build-name { padding: 0 0.125rem; font-size: var(--text-xs); } .build:has(input:checked) .build-name::after { display: none; } }
-  .build {
-    position: relative; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 0.5rem; min-width: 0; padding: 0.375rem 0.375rem 0.625rem;
-    border: 1.5px solid var(--rule); border-radius: var(--radius); background: var(--paper); cursor: pointer;
-    transition: border-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out);
-  }
-  .build:hover { border-color: var(--rule-strong); }
-  .build:active { transform: scale(0.985); }
-  .build input { position: absolute; opacity: 0; pointer-events: none; }
-  .build :global(img) { display: block; width: 100%; height: 100%; min-height: 9rem; object-fit: cover; object-position: top left; border-radius: calc(var(--radius) - 4px); background: var(--paper-2); }
-  .build:nth-child(1) :global(img) { object-position: 30% 70%; }
-  .build-name { padding: 0 0.375rem; font-weight: 650; color: var(--ink); }
-  .build:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1.5px var(--accent); }
-  .build:has(input:checked) .build-name::after { content: ''; display: inline-block; width: 0.5rem; height: 0.5rem; margin-left: 0.5rem; border-radius: 50%; background: var(--accent); vertical-align: 0.05em; }
-  .build:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 3px; }
-
-  .loop { display: block; width: 100%; max-width: 27rem; height: auto; margin: 0 auto; overflow: visible; }
-  .loop text { font-family: var(--sans); font-size: 14px; font-weight: 600; text-anchor: middle; fill: var(--ink); }
-  .loop a { text-decoration: none; }
-  .loop a rect { fill: var(--card); stroke: var(--rule-strong); stroke-width: 1.5; transition: stroke var(--dur-fast) ease, fill var(--dur-fast) ease; }
-  .loop a:hover rect, .loop a:focus-visible rect { stroke: var(--accent); fill: var(--accent-soft); }
-  .loop a:focus-visible { outline: none; }
-  .loop .once rect { fill: var(--paper-2); }
-  .loop .arrow { fill: none; stroke: var(--rule-strong); stroke-width: 1.5; stroke-linecap: round; marker-end: none; }
-  .loop .track { fill: none; stroke: var(--rule-strong); stroke-width: 1.5; stroke-dasharray: 2 6; stroke-linecap: round; }
-  .loop .file path { fill: var(--paper); stroke: var(--ink-2); stroke-width: 1.5; stroke-linejoin: round; }
-  .loop .file .fold { fill: none; }
-  .loop .file .line { stroke: var(--rule-strong); stroke-width: 2; stroke-linecap: round; }
-  .loop .file .new { stroke: var(--accent); }
-  .loop .file text { font-family: var(--mono); font-size: 13px; font-weight: 500; fill: var(--ink-2); }
-  .loop .runner { fill: var(--accent); offset-path: path('M180 104a105 105 0 1 1 0 210a105 105 0 1 1 0-210'); offset-distance: 0%; }
-  @media (prefers-reduced-motion: no-preference) {
-    .loop .runner { animation: lap 9s linear infinite; }
-    .loop .file .new { animation: write 9s linear infinite; stroke-dasharray: 28; }
-    @keyframes lap { to { offset-distance: 100%; } }
-    @keyframes write { 0%, 78% { stroke-dashoffset: 28; } 92%, 100% { stroke-dashoffset: 0; } }
-  }
+  .words { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.75rem; margin: 0.75rem 0 0; }
+  .words div { min-width: 0; }
+  .words dt { font-weight: 650; color: var(--ink); }
+  .words dd { margin: 0.15rem 0 0; }
 
   .moves { margin: 0; padding-left: 1.3em; display: grid; gap: 0.45rem; }
   .moves li { padding-left: 0.2em; }
@@ -301,7 +204,7 @@ const ring = [
     background: var(--paper); color: var(--ink); font: inherit; font-weight: 400;
   }
   .who-field input::placeholder { color: var(--muted); opacity: 1; }
-  :global([data-who-text]) { background: var(--accent-soft); border-radius: 3px; padding: 0 0.15em; }
+  :global([data-who-text]) { background: var(--blue-soft); border-radius: 3px; padding: 0 0.15em; }
   :global([data-who-text][data-filled]) { background: none; padding: 0; }
 
   .then { margin: 0.75rem 0 0; }
@@ -314,6 +217,7 @@ const ring = [
   }
   .say:hover { border-color: var(--ink); }
   .say[data-copied] { border-color: var(--green); background: var(--green-soft); }
+  .say[data-copied]::after { content: ' · copied'; color: var(--green); }
 
   .wrong { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.75rem; margin: 0; }
   .wrong div { min-width: 0; }
