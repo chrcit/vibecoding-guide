@@ -26,8 +26,7 @@ You can still add to a running thread: a message either [waits for the next turn
 When you come back to a thread, ask for a report you can read in seconds:
 
 ```text
-What have you done, what are you doing now, what is blocking you,
-and what have you not verified yet? Keep it short.
+What have you done, what are you doing now, what is blocking you, and what have you not verified yet? Keep it short.
 ```
 
 > [!technical] Making parallel threads cheap to review

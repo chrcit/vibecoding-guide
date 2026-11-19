@@ -19,9 +19,7 @@ Working on your machine proves less than it seems. The live site is built from s
 Use it three ways. Open it on your phone and click through it as a member of the club would. Send it to the treasurer who asked for the paid-members list, so they can say whether it is what they meant. And have the agent [check it in a browser](./browser-check.md) the way it checks your local copy:
 
 ```text
-Push this branch, wait for the preview to build, open it at phone and
-desktop width, try the change as a member would, and send me the
-address with what you checked and what you could not.
+Push this branch, wait for the preview to build, open it at phone and desktop width, try the change as a member would, and send me the address with what you checked and what you could not.
 ```
 
 On a [pull request](./pull-request.md) the preview's address usually sits next to the [diff](./diff.md), so [review](./review.md) covers the code and the running result together. Merge when both look right.

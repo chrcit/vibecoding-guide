@@ -1,9 +1,9 @@
 ---
 title: "Agent"
-summary: "An agent is a model that can act: it reads files, runs commands and checks the results in a loop until the task is done."
+summary: "An agent is a model with tools, working in a loop: it reads files, runs commands and looks at the results until the job is done."
 cluster: basics
-updated: 2026-11-18
-aliases: ["coding agent", "AI agent", "agentic coding"]
+updated: 2026-11-19
+aliases: ["coding agent", "AI agent", "agentic coding", "the agent"]
 ---
 
 <!--
@@ -14,18 +14,14 @@ Sources to draw on:
 
 # Agent
 
-An agent is a model that can act: it reads files, runs commands and checks the results in a loop until the task is done.
+An agent is a model with tools, working in a loop: it reads files, runs commands and looks at the results until the job is done.
 
-<!-- stub -->
-This article is an outline. It will link to:
+A chat model answers once and stops. An agent keeps going: you send one message and it takes many turns of its own. Each turn the [model](./model.md) picks a [tool](./tool-call.md), the result lands in its [window](./context-window.md), and it decides what to do next. That is [the loop](./agent-loop.md); the program that runs it is the [harness](./harness.md). Claude Code and Codex are agents in this sense, and [web builders](./web-builders.md) run one in a browser tab. You can watch it happen in [chapter 2](/journey/loop/).
 
-- [Model](./model.md)
-- [Harness](./harness.md)
-- [The loop](./agent-loop.md)
-- [Tool call](./tool-call.md)
-- [Context window](./context-window.md)
-- [Prompt](./prompt.md)
-- [Verification](./verification.md)
-- [Web builders](./web-builders.md)
-- [Thread](./thread.md)
-- [The context explainer](/explain/context/)
+Because it can act, give it a job with an end it can check:
+
+```text
+The bakery site shows normal opening hours on public holidays. Find out why, fix it, add a test for Easter Monday and run the tests. Tell me what you changed and what you could not check.
+```
+
+Then read what it [checked](./verification.md). How sure it sounds tells you nothing.

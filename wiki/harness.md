@@ -21,8 +21,7 @@ The harness, more than the model, decides how an agent behaves: what it may do w
 To use one, install it, open it in your project folder and say what you want. Before the first real task, find out what it will do on its own:
 
 ```text
-What tools do you have here, which of them run without asking me,
-and which instruction files and skills have you loaded?
+What tools do you have here, which of them run without asking me, and which instruction files and skills have you loaded?
 ```
 
 An [agentic development environment](./agentic-development-environment.md) such as T3 Code sits one layer up and drives the harnesses on your machine side by side. It cannot do what the harness underneath cannot. Which harness runs which model, and what it costs, is on the [T3 Code](/t3-code/) page and in the [connectors explainer](/explain/connectors/).

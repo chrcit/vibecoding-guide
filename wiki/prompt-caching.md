@@ -26,8 +26,7 @@ What follows from that, in practice:
 On an [API key](./api-key.md) the cache shows on the bill; on a [subscription plan](./subscription-plan.md) it shows as speed. The [plans explainer](/explain/plans-and-api/) compares the two. To see it on a real run, ask:
 
 ```text
-For the last few steps of this session, how much of the input was read
-from the cache and how much was new? What broke the cache, if anything?
+For the last few steps of this session, how much of the input was read from the cache and how much was new? What broke the cache, if anything?
 ```
 
 > [!technical] What gets cached, in what order
