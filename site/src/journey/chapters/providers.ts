@@ -46,6 +46,8 @@ function runLab(ctx: Ctx, which: Lab) {
   note(ctx, 'providers', 'labs');
   const d = D(ctx);
   const model = which === 'anthropic' ? 'Opus 5.5' : which === 'openai' ? 'GPT-6.2 Sol' : 'an open model';
+  // The same chat; only the model named on the composer changes.
+  ctx.screen.setup({ form: 'chat', chips: [model] });
   const names = which === 'anthropic' ? d.anthropic.join(', ') : which === 'openai' ? d.openai.join(', ') : 'many, free to download';
   const where = which === 'anthropic' ? 'Anthropic’s computers' : which === 'openai' ? 'OpenAI’s computers' : 'your own computer';
   void ctx.scene.run(async (h) => {
@@ -71,6 +73,13 @@ type Reach = 'app' | 'code' | 'api' | 't3';
 function runReach(ctx: Ctx, how: Reach) {
   note(ctx, 'providers', 'reach');
   const d = D(ctx);
+  // What you look at in each way in: the app's chat, a coding tool in a terminal (on a plan, or on
+  // an API key), or T3 Code with one thread per provider.
+  ctx.screen.setup(
+    how === 'app' ? { form: 'chat', app: 'Claude app', project: undefined, chips: ['Opus 5.5'], threads: [] }
+      : how === 't3' ? { form: 't3', app: 'T3 Code', project: 'club-list', chips: [], threads: [] }
+      : { form: 'term', app: 'Claude Code', project: undefined, chips: [how === 'api' ? 'API key' : 'signed in with your plan'], threads: [] },
+  );
   void ctx.scene.run(async (h) => {
     const s0 = base({ tools: how !== 'app', gear: how === 'app' ? [{ id: 'lap', at: [30, 112], kind: 'phone' }] : [] });
     if (how === 'app') s0.labels![3] = lab('gear:lap', 'the Claude app on your phone', 'right');
@@ -190,6 +199,7 @@ function devScene(active: Device): SceneState {
 }
 function runDevice(ctx: Ctx, which: Device) {
   note(ctx, 'providers', 'devices');
+  ctx.screen.setup({ form: 't3', app: which === 'phone' ? 'T3 Code, on the phone' : 'T3 Code', project: which === 'laptop' ? 'club-list, on the laptop' : 'club-list, on the desktop PC' });
   void ctx.scene.run(async (h) => {
     h.set((s) => Object.assign(s, devScene(which)));
     const files = which === 'laptop' ? 'on the laptop' : 'on the desktop PC';

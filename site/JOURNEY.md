@@ -76,8 +76,8 @@ only through `termLabel()` (below), so the word, the definition and the page agr
   thin brief, share one folder. Show what happens; do not warn about it.
 - A part keeps its place and its meaning in every chapter. New parts go into `picture.ts` with a
   place on the floor plan, never into one chapter.
-- What is said under the picture is what the people and programs in it said. Numbers under it are
-  counted from what just happened.
+- What is said on the screen and under the picture is what the people and programs in it said (see
+  "The screen and the picture"). Numbers under it are counted from what just happened.
 - One of a step's two sentences says what the reader is looking at, using the label on the part.
   Ten test readers found the steps short enough and the pictures one sentence short.
 - The first step of a chapter says where its parts were met before, with a link by the lesson's
@@ -113,6 +113,68 @@ only through `termLabel()` (below), so the word, the definition and the page agr
   cold must make sense: define again in each lesson, never "as we saw".
 - A term the reader might not know is a label on the picture that opens its wiki page in the side
   view. Deeper play lives on a board (`/explain/...`, `/models/`) linked from the chapter's end.
+
+## The screen and the picture
+
+The owner's brief, in their words: "What I feel is missing the most in the visual explainers is the
+connection to the actual chat environment people will have", and "get the user closer to the
+concept of the chat as well. We want people who have only used ChatGPT on the web to be able to
+pick this up and go deeper and deeper."
+
+The sticky view is one frame with three parts, read in this order:
+
+1. **The screen**: a schematic of the app the reader types into, marked "example". A chat app in
+   part one and lesson 5; T3 Code once the model has tools and a project; a coding tool in a
+   terminal where a lesson is about one. It is a drawing of the app, never a screenshot.
+2. **The picture**: what happens behind that screen.
+3. **The caption**: one line in the guide's voice and the readout beside it.
+
+The note and the colour key are reading, not watching: they sit in the step, under its text.
+
+Each line appears in one place only. What someone says in the app (you, the model or a named
+model, a tool, the check) goes on the screen; narration (`ctx.say(null, …)`) and people outside
+the app (a colleague, a client, users) go in the caption. The screen never makes up a line: it shows
+what a script said, plus what the picture is doing at that moment, read off the scene state
+(`src/journey/screen.ts`):
+
+| In the picture | On the screen |
+| --- | --- |
+| a slab of yours lands in the window | your message, a dark bubble (the slab's colour) |
+| the model's reply | a pale bubble; a named model's name above it |
+| a tool cube lights | a row in the work log ("Read file", "Changed files", "Ran command") |
+| the check's lamp | a "check" row, green or accent like the lamp |
+| the model works | "Working" at the end of the thread |
+| the window you talk to is emptied | the thread is emptied: a new chat is an empty screen |
+| a second station (helper, reviewer, job) | a row in the thread list, its state from the lamp |
+
+Lamp to thread state: working is "Working", a lamp that waits for you is "Awaiting Input", a passed
+one "Completed". A helper's waiting lamp means it waits for the lead, so its row keeps the blue dot
+and no word; a failed lamp has an accent dot and no word, because T3 Code has none. Several jobs
+(`jobs(n)`, no `a0`) show the thread list only: what a job says belongs in that job's thread, so it
+goes in the caption. With nothing in your thread yet, the thread list takes the whole screen.
+
+The words on the T3 Code form ("Ask anything...", "New thread", the thread states, the work-log
+rows, the permission modes) come from `src/data/t3code.ts`, with their sources.
+
+How it deepens: lesson 1 opens on the chat alone with the picture dimmed, and turns to the picture
+once the answer is in (`ctx.screen.focus`). Part one stays close to the chat the reader knows: the
+same chat with a model name, with a drive connected, then T3 Code with a work log. From lesson 6
+the screen is T3 Code with the permission mode on the composer; from lesson 10 the thread list
+fills with helpers, until in lesson 13 it is twenty threads and their states, one per station.
+
+A chapter needs nothing to get this. Where it knows more, it says so through `ctx.screen`:
+
+- `setup({ form, app, project, chips })`: the app for this step, a model name or a permission mode
+  on the composer. Lasts until the reader moves on.
+- `row(kind, label, detail?, state?)`: a work-log row with the real file name, `row('read', 'Read
+  members.ts')`. Once a step adds its own rows, the screen stops making generic ones.
+- `result(text, state?)`: what that row's tool gave back, on the same row.
+- `history(lines)`: the lines already in the thread when a step starts part-way into one.
+- `focus('screen' | 'both')`: look at the screen alone, the picture dimmed, or both.
+
+Layout: stacked on a phone (the screen as a band of the latest lines over the picture, the threads
+as a strip), side by side when the view is 44rem wide or more. The caption keeps one height through
+a run: with room, the readout stands beside the line as a small table.
 
 ## Part two: the work around the agents
 
@@ -295,6 +357,7 @@ Each chapter file also exports `demo(ctx, h)`: one short loop for the part-two o
 - `src/journey/chapters/*.ts`: one file per chapter: a scene and a script per step, plus the
   actions its buttons and sliders call.
 - `src/journey/run.ts`: picks the step on show from the scroll position and wires the controls.
+- `src/journey/screen.ts`: the screen beside the picture, fed by `ctx.say` and the scene state.
 - `src/journey/rungs.ts`: the seventeen steps and the two parts.
 - `src/layouts/Journey.astro`, `src/components/journey/Step.astro`, `More.astro`, `Next.astro`,
   `src/styles/journey.css`.

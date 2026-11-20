@@ -48,15 +48,31 @@ const still = poster(def.scene({ level: 'plain', mem: {}, keep: {}, data: data ?
           ))}
         </ol>
       </nav>
-      <div class="j-stage tile" role="img" aria-label={here ? `Lesson ${here.n}, ${here.short}: ${here.title}. ${here.line}` : `The picture that grows through the journey. ${part.title}.`}>
-        <Fragment set:html={still} />
+      <div class="j-frame">
+        <section class="j-screen" data-form="chat" data-empty aria-label="An example of the app's screen, schematic">
+          <header class="j-scr-bar">
+            <span class="j-scr-app" data-scr-app>Chat</span>
+            <span class="j-scr-title" data-scr-title></span>
+            <span class="j-tag">example</span>
+          </header>
+          <div class="j-scr-body">
+            <ul class="j-scr-side" data-scr-side aria-label="Threads" hidden></ul>
+            <div class="j-scr-scroll" role="log" aria-label="Messages" tabindex="0"><ol class="j-scr-log" data-scr-log></ol></div>
+          </div>
+          <div class="j-scr-comp" aria-hidden="true"><span class="j-scr-ph" data-scr-ph>Message</span><span class="j-scr-chips" data-scr-chips></span><span class="j-scr-send"></span></div>
+        </section>
+        <div class="j-stage tile" role="img" aria-label={here ? `Lesson ${here.n}, ${here.short}: ${here.title}. ${here.line}` : `The picture that grows through the journey. ${part.title}.`}>
+          <Fragment set:html={still} />
+        </div>
+        <div class="j-cap">
+          <p class="j-say" aria-live="polite"></p>
+          <dl class="j-stats"></dl>
+        </div>
       </div>
-      <div class="j-read tile">
-        <p class="j-say" aria-live="polite"></p>
-        <dl class="j-stats"></dl>
-        <p class="j-model" hidden></p>
-        <ul class="j-key" aria-label="What the colours are"></ul>
-      </div>
+    </div>
+    <div class="j-extras" hidden>
+      <p class="j-model" hidden></p>
+      <ul class="j-key" aria-label="What the colours are"></ul>
     </div>
     <div class="j-steps">
       <header class="j-head">

@@ -2,7 +2,7 @@
 
 <!-- Generated from site/src/data/ by `node site/scripts/check-facts.mjs --write`. Do not edit by hand: change the data file and regenerate. -->
 
-Every number and tool claim in the guide, with where it comes from. Last checked on **18 November 2026**. Models, prices and limits change every few months, so treat this page as a dated snapshot and follow the links. The same data drives the site's sources page.
+Every number and tool claim in the guide, with where it comes from. Last checked on **20 November 2026**. Models, prices and limits change every few months, so treat this page as a dated snapshot and follow the links. The same data drives the site's sources page.
 
 Status means:
 
@@ -304,6 +304,7 @@ What T3 Code does, from its README and user docs. From `site/src/data/t3code.ts`
 | Each T3 Connect account can link up to 3 machines free; phones and browsers do not count. A paid T3 Chat plan raises this to 10 (Pro) or 100. | 3 | verified | [github.com/pingdotgg/t3code/blob/main/docs/user/remote-acce…](https://github.com/pingdotgg/t3code/blob/main/docs/user/remote-access.md) |
 | The iOS and Android apps are remotes: the computer does the work and has to stay on. | yes | verified | [github.com/pingdotgg/t3code/blob/main/docs/user/remote-acce…](https://github.com/pingdotgg/t3code/blob/main/docs/user/remote-access.md) |
 | Permission modes are Supervised, Auto-accept edits, Auto and Full access. T3 Code itself is not a sandbox. | Supervised, Auto-accept edits, Auto, Full access | verified | [github.com/pingdotgg/t3code/blob/main/docs/user/permission-…](https://github.com/pingdotgg/t3code/blob/main/docs/user/permission-modes.md) |
+| T3 Code's Supervised mode requests approval for commands and file changes; its Full access mode allows commands and edits without approval prompts. | Supervised asks for commands and file changes; Full access asks for nothing | verified | [github.com/pingdotgg/t3code/blob/main/docs/user/permission-…](https://github.com/pingdotgg/t3code/blob/main/docs/user/permission-modes.md) |
 | The initial default permission mode for new threads is Full access. | Full access | verified | [github.com/pingdotgg/t3code/blob/main/docs/user/permission-…](https://github.com/pingdotgg/t3code/blob/main/docs/user/permission-modes.md) |
 | T3 Code has voice dictation in the composer, in comments and in review replies. | yes | verified | [github.com/pingdotgg/t3code/blob/main/docs/user/voice-input…](https://github.com/pingdotgg/t3code/blob/main/docs/user/voice-input.md) |
 | On desktop and web you choose where transcription runs: a model downloaded to an environment, or a cloud provider (OpenAI or Grok Voice Transcribe) with your own key. Phones transcribe on the device by default. | local model or your key | verified | [github.com/pingdotgg/t3code/blob/main/docs/user/voice-input…](https://github.com/pingdotgg/t3code/blob/main/docs/user/voice-input.md) |
@@ -350,6 +351,10 @@ What T3 Code does, from its README and user docs. From `site/src/data/t3code.ts`
 | Start a message with /side or /btw to ask about a thread in a side chat without adding to it. | /side | verified | [github.com/pingdotgg/t3code/blob/main/docs/user/thread-side…](https://github.com/pingdotgg/t3code/blob/main/docs/user/thread-sidebar.md) |
 | A T3 Code handoff starts with a history allowance of 16,000 tokens by default; T3CODE_CONTEXT_HANDOFF_TOKEN_CAP changes it within 1,024 to 64,000. | 16K tokens | verified | [github.com/pingdotgg/t3code/blob/main/docs/user/portable-ha…](https://github.com/pingdotgg/t3code/blob/main/docs/user/portable-handoffs.md) |
 | A T3 Code handoff keeps the selected messages in full, in order and with their roles, but leaves out the previous provider's reasoning, tool-call state and attachments. Omitted history can be fetched with T3 Code's thread-reading tool. | reasoning, tool-call state, attachments | verified | [github.com/pingdotgg/t3code/blob/main/docs/user/portable-ha…](https://github.com/pingdotgg/t3code/blob/main/docs/user/portable-handoffs.md) |
+| An empty T3 Code composer reads "Ask anything...". | Ask anything... | verified | [github.com/pingdotgg/t3code/blob/main/apps/web/src/componen…](https://github.com/pingdotgg/t3code/blob/main/apps/web/src/components/chat/ChatComposer.tsx) |
+| A thread with no title yet is called "New thread" in T3 Code. | New thread | verified | [github.com/pingdotgg/t3code/blob/main/apps/web/src/componen…](https://github.com/pingdotgg/t3code/blob/main/apps/web/src/components/Sidebar.logic.ts) |
+| The T3 Code sidebar marks a thread Working, Completed, Pending Approval, Awaiting Input or Plan Ready. | Working, Completed, Pending Approval, Awaiting Input, Plan Ready | verified | [github.com/pingdotgg/t3code/blob/main/apps/web/src/componen…](https://github.com/pingdotgg/t3code/blob/main/apps/web/src/components/Sidebar.logic.ts) |
+| A thread's work log lists what the agent did in rows such as "Searched files", "Read members.ts", "Changed files" and "Ran command". | Searched files, Read file, Changed files, Ran command | verified | [github.com/pingdotgg/t3code/blob/main/packages/shared/src/t…](https://github.com/pingdotgg/t3code/blob/main/packages/shared/src/toolActivity.ts) |
 
 ## Claude Code and Codex
 

@@ -23,8 +23,13 @@ const chatScene = (tray = false): SceneState => solo({
 
 // ---------- predict: it only has the window ----------
 
-async function runPredict(ctx: Ctx, h: Script, withList: boolean) {
+async function runPredict(ctx: Ctx, h: Script, withList: boolean, first = false) {
   note(ctx, 'ai', 'predict');
+  ctx.screen.setup({ form: 'chat' });
+  // The first time on this page: the chat alone, as the reader knows it. Then the picture of what
+  // was behind it all along.
+  const reveal = first && !ctx.keep.revealed;
+  if (reveal) { ctx.keep.revealed = true; ctx.screen.focus('screen'); }
   h.set((s) => Object.assign(s, chatScene()));
   stat(ctx, [withList ? 'your question and the list' : 'your question', 'nothing else', '…']);
   ctx.say('you', withList ? 'Who has not paid this season? [the member list, 40 rows, pasted below]' : 'Who in my club has not paid this season?');
@@ -42,6 +47,12 @@ async function runPredict(ctx: Ctx, h: Script, withList: boolean) {
     ? '7 have not paid: Ana Ruiz, Ben Okafor, Dev Patel and 4 more.'
     : 'Ana Ruiz, Ben Okafor and Clara Novak have not paid yet.');
   stat(ctx, [withList ? 'your question and the list' : 'your question', 'nothing else', withList ? '7 names, from your list' : '3 names, made up']);
+  if (reveal) {
+    await h.wait(1600);
+    ctx.screen.focus('both');
+    ctx.say(null, 'Behind the screen: its window, holding your question and nothing else.');
+    await h.wait(2600);
+  }
   await h.wait(2200);
   ctx.say(null, withList
     ? 'Every name came from the list in its window.'
@@ -81,6 +92,7 @@ const INPUTS: Record<Input, { you: string; slab: Block; window: string; reply: s
 function runInput(ctx: Ctx, kind: Input) {
   const c = INPUTS[kind];
   note(ctx, 'ai', 'inputs');
+  ctx.screen.setup({ form: 'chat' });
   void ctx.scene.run(async (h) => {
     h.set((s) => {
       Object.assign(s, chatScene(true));
@@ -111,6 +123,8 @@ const JOB = 'Make the member list show who has not paid.';
 
 function runMode(ctx: Ctx, mode: Mode) {
   note(ctx, 'ai', 'modes');
+  // The same job in the app each mode is used in: a chat, a chat with your files connected, T3 Code.
+  ctx.screen.setup(mode === 'agent' ? { form: 't3', app: 'T3 Code', project: 'club-list', chips: [] } : { form: 'chat', app: 'Chat', project: undefined, chips: mode === 'work' ? ['Drive connected'] : [] });
   void ctx.scene.run(async (h) => {
     if (mode === 'chat') {
       h.set((s) => { Object.assign(s, chatScene(true)); s.labels!.push(lab('tray', 'what comes back', 'right')); });
@@ -144,6 +158,7 @@ function runMode(ctx: Ctx, mode: Mode) {
       await h.send(route.youToAgent(), 'you', { ms: 420 });
       h.set((s) => { const a = s.agents[0]!; a.blocks = [{ t: 'you', h: 2 }]; a.busy = true; });
       for (const [tool, hgt] of [['read', 5], ['write', 2]] as const) {
+        ctx.screen.row(tool === 'read' ? 'read' : 'edit', tool === 'read' ? 'Read members.xlsx' : 'Changed members.xlsx');
         h.set((s) => { s.tools!.on = tool; });
         await h.send(route.agentToTool({ at: SPOT.tools, ids: ['search', 'read', 'write'] }, tool), 'model', { ms: 360 });
         h.set((s) => { s.agents[0]!.blocks!.push({ t: 'tool', h: hgt }); s.tools!.on = null; });
@@ -176,7 +191,9 @@ function runMode(ctx: Ctx, mode: Mode) {
     const steps: [string, number, 'read' | 'edit' | ''][] = [['read', 0, 'read'], ['edit', 2, 'edit'], ['run', -1, '']];
     for (const [tool, file, mark] of steps) {
       h.set((s) => { s.agents[0]!.busy = true; s.tools!.on = tool; if (file >= 0 && mark) { const f = (s.project!.files ??= ['', '', '', '', '', '']); f[file] = mark; } });
-      ctx.say('model', tool === 'read' ? 'Reading members.ts…' : tool === 'edit' ? 'Adding an “unpaid” filter to members.ts…' : lv(ctx, 'Opening the page to try it…', 'npm test', 'npm test && npx tsc --noEmit'));
+      if (tool === 'read') ctx.screen.row('read', 'Read members.ts');
+      else if (tool === 'edit') ctx.screen.row('edit', 'Changed members.ts', 'an “unpaid” filter');
+      else ctx.screen.row('run', 'Ran command', lv(ctx, 'opened the page and tried it', 'npm test', 'npm test && npx tsc --noEmit'));
       await h.wait(620);
       h.set((s) => { s.agents[0]!.busy = false; s.tools!.on = null; s.agents[0]!.blocks!.push({ t: 'tool', h: tool === 'run' ? 3 : 2 }); });
     }
@@ -195,6 +212,7 @@ function runMode(ctx: Ctx, mode: Mode) {
 
 async function runCode(ctx: Ctx, h: Script, what: 'letter' | 'page') {
   note(ctx, 'ai', 'code');
+  ctx.screen.setup({ form: 't3', project: 'club-list' });
   h.set((s) => Object.assign(s, solo({
     tools: true,
     project: true,
@@ -250,7 +268,7 @@ export async function demo(ctx: Ctx, h: Script) {
 
 export const aiCh: Chapter = {
   steps: {
-    predict: { scene: () => chatScene(), enter: (ctx) => void ctx.scene.run((h) => runPredict(ctx, h, false)) },
+    predict: { scene: () => chatScene(), enter: (ctx) => void ctx.scene.run((h) => runPredict(ctx, h, false, true)) },
     inputs: { scene: () => chatScene(true), enter: (ctx) => runInput(ctx, 'voice') },
     modes: { scene: () => chatScene(true), enter: (ctx) => runMode(ctx, 'chat') },
     code: { scene: () => chatScene(), enter: (ctx) => void ctx.scene.run((h) => runCode(ctx, h, 'page')) },

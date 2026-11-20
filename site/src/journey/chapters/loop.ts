@@ -5,6 +5,14 @@ import type { Script } from '../scene';
 import { solo, lab } from '../presets';
 import { termLabel } from '../terms';
 import { route, reverse, type Kind } from '../picture';
+import { t3code } from '../../data/t3code';
+
+// What each choice in the last step is called in T3 Code's composer. "Ask every time" has no mode
+// there: no T3 Code mode asks before reading a file.
+const [SUPERVISED, , , FULL_ACCESS] = t3code.permissionModes.value;
+const MODE: Record<Ask, string | undefined> = { always: undefined, edits: SUPERVISED, never: FULL_ACCESS };
+/** How the work log names each call. */
+const ROW: Record<string, string> = { search: 'Searched “date”', read: 'Read members.ts', edit: 'Changed members.ts', run: 'Ran command' };
 
 const labels = [
   lab('you', 'you', 'left'), termLabel('a0', 'model', 'top', 'the model'),
@@ -30,8 +38,10 @@ export async function job(ctx: Ctx, h: Script, o: JobOpts) {
   const call = async (tool: string, file: number, mark: 'read' | 'edit', says: string, result: { kind: Kind; h: number; says: string }) => {
     await think();
     h.set((s) => { s.agents[0]!.blocks!.push({ t: 'model', h: 1.4 }); });
-    const needsYou = o.ask === 'always' || (o.ask === 'edits' && tool !== 'read');
+    // Ask before changes and commands, as T3 Code's Supervised mode does: edits and runs wait for you.
+    const needsYou = o.ask === 'always' || (o.ask === 'edits' && (tool === 'edit' || tool === 'run'));
     if (needsYou) {
+      h.set((s) => { s.agents[0]!.lamp = 'wait'; });
       ctx.say('model', `May I ${says}?`);
       await h.send(reverse(route.youToAgent()), 'model');
       asked++;
@@ -39,8 +49,9 @@ export async function job(ctx: Ctx, h: Script, o: JobOpts) {
       await h.wait(500);
       ctx.say('you', 'Yes.');
       await h.send(route.youToAgent(), 'you');
+      h.set((s) => { s.agents[0]!.lamp = 'off'; });
     }
-    ctx.say('model', says);
+    ctx.screen.row(tool as 'search', ROW[tool]!, tool === 'run' ? says.replace(/^run /, '') : undefined);
     const tools = scene.state.tools!, project = scene.state.project!;
     await h.send(route.agentToTool(tools, tool), 'model');
     h.set((s) => { s.tools!.on = tool; s.agents[0]!.busy = false; });
@@ -54,10 +65,11 @@ export async function job(ctx: Ctx, h: Script, o: JobOpts) {
     }
     await h.send(reverse(route.agentToTool(tools, tool)), result.kind);
     h.set((s) => { s.tools!.on = null; s.agents[0]!.blocks!.push({ t: result.kind, h: result.h }); });
-    ctx.say('tool', result.says);
+    if (tool !== 'edit') ctx.screen.result(result.says, result.kind === 'bad' ? 'bad' : undefined);
     await h.wait(380);
   };
 
+  ctx.screen.setup({ form: 't3', project: 'club-list', chips: MODE[o.ask] ? [MODE[o.ask]!] : [] });
   h.set((s) => { Object.assign(s, { ...base(), labels: s.labels }); s.tools!.off = o.run ? [] : ['run']; });
   stats();
   ctx.say('you', 'The dates on the member list are wrong.');
@@ -78,6 +90,9 @@ export async function job(ctx: Ctx, h: Script, o: JobOpts) {
   ctx.say('model', o.run ? 'Fixed. The day and month were swapped. All 12 tests pass.' : 'Fixed. It should work now.');
   stats(o.run ? 'tests pass' : 'none');
   await h.send(reverse(route.youToAgent()), 'model');
+  ctx.say(null, o.run
+    ? `One message from you, ${turns} turns of its own. Every row in the work log was a tool, and every result went back into the window.`
+    : 'It could not run anything, so “fixed” is a guess. Nothing in the work log tried the fix.');
   void a;
 }
 

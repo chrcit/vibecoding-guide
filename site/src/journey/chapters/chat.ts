@@ -12,6 +12,8 @@ export const LINES: [string, string][] = [
 const labels = [lab('you', 'you', 'left'), termLabel('a0', 'model', 'top', 'the model'), termLabel('tank:a0', 'window', 'left', 'its window')];
 const base = (blocks = [] as { t: 'you' | 'model'; h: number }[]) => solo({ blocks, labels });
 const said = (n: number) => LINES.slice(0, n).flatMap(() => [{ t: 'you' as const, h: 3 }, { t: 'model' as const, h: 3 }]);
+/** The same exchanges on the screen: each one is two slabs in the window. */
+const history = (ctx: Ctx, n: number) => ctx.screen.history(LINES.slice(0, n).flatMap(([y, m]) => [['you', y], ['model', m]] as [string, string][]));
 
 /** One exchange: your words go in, the model reads everything, its answer goes in too. */
 async function exchange(ctx: Ctx, you: string, model: string) {
@@ -37,11 +39,11 @@ export const chat: Chapter = {
     },
     reread: {
       scene: () => base(said(2)),
-      enter: (ctx) => { void exchange(ctx, ...LINES[2]!); },
+      enter: (ctx) => { history(ctx, 2); void exchange(ctx, ...LINES[2]!); },
     },
     fresh: {
       scene: () => base(said(3)),
-      enter: (ctx) => { ctx.say(null, 'Three exchanges are in the window. Press New chat, then ask.'); ctx.stat([['in the window', '6 messages']]); },
+      enter: (ctx) => { history(ctx, 3); ctx.say(null, 'Three exchanges on the screen, six slabs in the window. Press New chat, then ask.'); ctx.stat([['in the window', '6 messages']]); },
     },
   },
   actions: {
@@ -53,7 +55,7 @@ export const chat: Chapter = {
     newchat: (ctx) => {
       ctx.scene.stop();
       ctx.scene.change((s) => { s.agents[0]!.blocks = []; s.agents[0]!.busy = false; s.agents[0]!.scan = false; });
-      ctx.say(null, 'A new chat. The window is empty.');
+      ctx.say(null, 'A new chat: an empty screen, an empty window.');
       ctx.stat([['in the window', '0 messages']]);
     },
     ask: (ctx) => {

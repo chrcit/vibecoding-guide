@@ -3,6 +3,7 @@
 import type { Scene } from './scene';
 import type { SceneState } from './picture';
 import type { Level } from '../lib/levels';
+import type { ScreenApi } from './screen';
 
 export type { Level };
 
@@ -15,8 +16,15 @@ export interface Ctx {
   scene: Scene;
   /** Current reader level: 'plain' (Vibe coding), 'technical', or 'engineer'. */
   level: Level;
-  /** One line under the drawing: who spoke and what they said. Pass null for a plain note. */
+  /**
+   * A line someone said, or (who = null) the guide's own line about the picture. What a person or
+   * program says in the reader's app (you, the model, a tool, the check) appears on the screen
+   * beside the picture; narration and people outside the app (a colleague, a client) appear in the
+   * caption under it. Each line appears in one place only.
+   */
   say(who: string | null, text: string): void;
+  /** The screen beside the picture: its form, work-log rows with real file names, earlier lines. */
+  screen: ScreenApi;
   /** Persistent note under the drawing explaining how this guide element joins the mental model. */
   model(part: string, text: string): void;
   /** The readout under the drawing: [name, value] or [name, value, tag]. See StatPair. */

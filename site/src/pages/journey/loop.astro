@@ -30,10 +30,11 @@ import { url } from '../../lib/nav';
     <p>Each time it asks, the loop stops until you answer. Next, all of this piles up in its window.</p>
     <div class="pick">
       <button type="button" data-do="ask" data-val="always" data-default aria-pressed="true">Ask every time</button>
-      <button type="button" data-do="ask" data-val="edits" aria-pressed="false">Ask before changes</button>
+      <button type="button" data-do="ask" data-val="edits" aria-pressed="false">Ask before changes and commands</button>
       <button type="button" data-do="ask" data-val="never" aria-pressed="false">Don’t ask</button>
     </div>
     <More title="Where this is set">
+      <p>In T3 Code it is the mode on the composer: <Fact id="t3code.permissionModes" />. <Fact id="t3code.modeMeaning" show="claim" /></p>
       <p><Fact id="harnesses.claudeCode.permissionModes" show="claim" /></p>
       <p><Fact id="harnesses.codex.sandbox" show="claim" /></p>
     </More>

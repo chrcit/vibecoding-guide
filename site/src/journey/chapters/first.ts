@@ -43,8 +43,12 @@ function scene(device: Device = 'laptop', o: { tray?: boolean } = {}): SceneStat
 
 // ---------- device ----------
 
+/** T3 Code on a laptop or desktop; a web builder's chat in the phone's browser. */
+const screenFor = (ctx: Ctx, d: Device = 'laptop') => ctx.screen.setup(d === 'phone' ? { form: 'chat', app: 'A web builder', project: undefined } : { form: 't3', app: 'T3 Code', project: 'club-list' });
+
 function runDevice(ctx: Ctx, d: Device) {
   note(ctx, 'first', 'device');
+  screenFor(ctx, d);
   void ctx.scene.run(async (h) => {
     h.set((s) => Object.assign(s, scene(d)));
     const on = d === 'phone' ? 'a builder in the phone’s browser' : d === 'desktop' ? 'your desktop PC' : 'your laptop';
@@ -67,6 +71,7 @@ function runDevice(ctx: Ctx, d: Device) {
 
 async function runJob(ctx: Ctx, h: Script) {
   note(ctx, 'first', 'job');
+  screenFor(ctx);
   h.set((s) => Object.assign(s, scene('laptop', { tray: true })));
   stat(ctx, ['your laptop', 'round 1 · 1 of 4: you ask', 'empty', '–']);
   ctx.say('you', 'I want a small web app for a neighbourhood football club to track who has paid this season…');
@@ -92,6 +97,7 @@ async function runJob(ctx: Ctx, h: Script) {
 
 async function runLoop(ctx: Ctx, h: Script) {
   note(ctx, 'first', 'loop');
+  screenFor(ctx);
   h.set((s) => Object.assign(s, scene('laptop', { tray: true })));
   const checked = lv(ctx, 'it opened the page', 'npm test, tsc --noEmit', 'npm test, tsc --noEmit');
   stat(ctx, ['your laptop', 'round 1 · 1 of 4: you ask', 'empty', '–']);
@@ -102,12 +108,12 @@ async function runLoop(ctx: Ctx, h: Script) {
   const files: [number, string][] = [[0, 'index.html'], [1, 'members.ts'], [2, 'members.test.ts'], [3, 'style.css']];
   for (const [i, name] of files) {
     h.set((s) => { s.agents[0]!.busy = true; s.tools!.on = 'edit'; });
-    ctx.say('agent', `Writing ${name}…`);
+    ctx.screen.row('edit', `Changed ${name}`, 'new file');
     await h.send(route.toolToFile(TOOLS, 'edit', PROJ, i), 'model', { ms: 300 });
     h.set((s) => { s.project!.files![i] = 'edit'; s.agents[0]!.blocks!.push({ t: 'tool', h: 1.2 }); s.tools!.on = null; });
   }
   h.set((s) => { s.tools!.on = 'run'; });
-  ctx.say('agent', lv(ctx, 'Opening the page and trying the form…', 'npm test: 6 passed. npx tsc --noEmit: no errors.', 'npm test: 6 passed (store, filters, empty list). npx tsc --noEmit: clean. npm run dev on :5173.'));
+  ctx.screen.row('run', 'Ran command', lv(ctx, 'opened the page and tried the form', 'npm test: 6 passed. npx tsc --noEmit: no errors.', 'npm test: 6 passed (store, filters, empty list). npx tsc --noEmit: clean. npm run dev on :5173.'), 'ok');
   await h.send(route.agentToGate(), 'model', { ms: 360 });
   h.set((s) => { s.gates![0]!.lamp = 'ok'; s.tools!.on = null; s.agents[0]!.busy = false; s.project!.files = ['ok', 'ok', 'ok', 'ok', '', '']; });
   stat(ctx, ['your laptop', 'round 1 · 2 of 4: it builds', '4 new files', checked]);
@@ -129,6 +135,7 @@ async function runLoop(ctx: Ctx, h: Script) {
 
 async function runChange(ctx: Ctx, h: Script, clear: boolean) {
   note(ctx, 'first', 'change');
+  screenFor(ctx);
   h.set((s) => {
     Object.assign(s, scene('laptop', { tray: true }));
     s.project!.files = ['ok', 'ok', 'ok', 'ok', '', ''];
@@ -143,7 +150,9 @@ async function runChange(ctx: Ctx, h: Script, clear: boolean) {
   h.set((s) => { s.agents[0]!.blocks!.push({ t: 'you', h: clear ? 2 : 1.5 }); s.agents[0]!.busy = true; s.agents[0]!.lamp = 'work'; });
   stat(ctx, ['your laptop', 'round 2 · 2 of 4: it builds', '4 files', checked]);
   const edits = clear ? [1, 3] : [0, 1, 2, 3, 4, 5];
+  const NAMES = ['index.html', 'members.ts', 'members.test.ts', 'style.css', 'stats.ts', 'menu.ts'];
   for (const i of edits) {
+    ctx.screen.row('edit', `Changed ${NAMES[i]}`, i > 3 ? 'new file' : undefined, clear ? undefined : 'bad');
     h.set((s) => { s.tools!.on = 'edit'; });
     await h.send(route.toolToFile(TOOLS, 'edit', PROJ, i), clear ? 'model' : 'bad', { ms: 260 });
     h.set((s) => { s.project!.files![i] = clear ? 'edit' : 'bad'; s.tools!.on = null; });

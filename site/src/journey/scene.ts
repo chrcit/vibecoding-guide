@@ -38,6 +38,10 @@ export class Scene {
   private drawn?: SceneState;
   /** Called after every draw with the kinds of slab in view, for the key under the drawing. */
   onKinds?: (kinds: Kind[]) => void;
+  /** Called after every draw with the state drawn: the screen beside the picture follows it (screen.ts). */
+  onDraw?: (state: SceneState) => void;
+  /** Called when a script starts. */
+  onRun?: () => void;
   speed = 1;
   /** The site's base path, put in front of a label's side-view link. */
   base = '/';
@@ -175,6 +179,7 @@ export class Scene {
     }
     this.spread(pic.labels);
     this.onKinds?.(pic.kinds);
+    this.onDraw?.(this.state);
     if (instant || reduced.matches) requestAnimationFrame(() => requestAnimationFrame(() => this.root.removeAttribute('data-instant')));
   }
 
@@ -242,6 +247,7 @@ export class Scene {
   /** Run a script. A second call replaces the first. Resolves true if it ran to the end. */
   async run(fn: (h: Script) => Promise<void>): Promise<boolean> {
     this.stop();
+    this.onRun?.();
     const mine = this.token;
     const check = () => { if (mine !== this.token) throw new Stopped(); };
     const h: Script = {

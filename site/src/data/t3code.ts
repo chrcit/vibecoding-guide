@@ -43,6 +43,12 @@ export const t3code = {
     'Permission modes are Supervised, Auto-accept edits, Auto and Full access. T3 Code itself is not a sandbox.',
     doc('permission-modes'),
   ),
+  modeMeaning: fact(
+    'Supervised asks for commands and file changes; Full access asks for nothing',
+    "T3 Code's Supervised mode requests approval for commands and file changes; its Full access mode allows commands and edits without approval prompts.",
+    doc('permission-modes'),
+    { verified: '2026-11-20' },
+  ),
   defaultMode: fact('Full access', 'The initial default permission mode for new threads is Full access.', doc('permission-modes')),
   voice: {
     exists: fact(true, 'T3 Code has voice dictation in the composer, in comments and in review replies.', doc('voice-input')),
@@ -158,4 +164,21 @@ export const t3code = {
     "A T3 Code handoff keeps the selected messages in full, in order and with their roles, but leaves out the previous provider's reasoning, tool-call state and attachments. Omitted history can be fetched with T3 Code's thread-reading tool.",
     doc('portable-handoffs'),
   ),
+  /** The words on T3 Code's own screen, for the schematic screen beside the journey's picture (journey/screen.ts). */
+  screen: {
+    composer: fact('Ask anything...', 'An empty T3 Code composer reads "Ask anything...".', `${REPO}/blob/main/apps/web/src/components/chat/ChatComposer.tsx`, { verified: '2026-11-20' }),
+    newThread: fact('New thread', 'A thread with no title yet is called "New thread" in T3 Code.', `${REPO}/blob/main/apps/web/src/components/Sidebar.logic.ts`, { verified: '2026-11-20' }),
+    statuses: fact(
+      ['Working', 'Completed', 'Pending Approval', 'Awaiting Input', 'Plan Ready'],
+      'The T3 Code sidebar marks a thread Working, Completed, Pending Approval, Awaiting Input or Plan Ready.',
+      `${REPO}/blob/main/apps/web/src/components/Sidebar.logic.ts`,
+      { verified: '2026-11-20' },
+    ),
+    workLog: fact(
+      ['Searched files', 'Read file', 'Changed files', 'Ran command'],
+      'A thread\'s work log lists what the agent did in rows such as "Searched files", "Read members.ts", "Changed files" and "Ran command".',
+      `${REPO}/blob/main/packages/shared/src/toolActivity.ts`,
+      { verified: '2026-11-20' },
+    ),
+  },
 } as const;

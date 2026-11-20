@@ -1,5 +1,6 @@
 // Wires a journey page together: the picture, the steps that scroll past it, and their controls.
 import { Scene } from './scene';
+import { Screen } from './screen';
 import { chapters } from './chapters';
 import { STEP_NOTES } from './notes';
 import type { Ctx } from './chapter';
@@ -30,6 +31,12 @@ export function boot(root: HTMLElement) {
   const statEl = root.querySelector<HTMLElement>('.j-stats')!;
   const modelEl = root.querySelector<HTMLElement>('.j-model');
   const keyEl = root.querySelector<HTMLElement>('.j-key')!;
+  // The screen beside the picture: the app the reader types into (screen.ts).
+  const screen = new Screen(root.querySelector<HTMLElement>('.j-screen')!, {
+    focus: (on) => { if (on === 'both') delete root.dataset.focus; else root.dataset.focus = on; },
+  });
+  scene.onDraw = (s) => screen.draw(s);
+  scene.onRun = () => screen.runStarted(scene.state);
   const steps = [...root.querySelectorAll<HTMLElement>('[data-step]')];
   const dataEl = root.querySelector<HTMLScriptElement>('script[data-journey-data]');
   const isOverview = root.dataset.chapter === 'foundations' || root.dataset.chapter === 'whole' || root.dataset.chapter === 'week';
@@ -40,7 +47,14 @@ export function boot(root: HTMLElement) {
     mem: {},
     keep: {},
     data: dataEl ? JSON.parse(dataEl.textContent || '{}') : {},
+    screen,
     say(who, text) {
+      // What was said in the app is on the screen; the caption keeps the guide's own line. A new
+      // message from you starts a new exchange, so the last one's closing line goes.
+      if (who && screen.say(who, text)) {
+        if (who === 'you') sayEl.replaceChildren();
+        return;
+      }
       sayEl.replaceChildren();
       if (who) { const b = document.createElement('b'); b.textContent = who; sayEl.append(b, ' '); }
       sayEl.append(text);
@@ -95,14 +109,11 @@ export function boot(root: HTMLElement) {
 
   let current: HTMLElement | null = null;
   let lastStat = new Map<string, string>();
-  // On a narrow page the picture sits on top and has little room: the note and the colour key move
-  // out of the sticky view into the step on show, under its text. On a wide page they stay under
-  // the picture.
-  const readEl = root.querySelector<HTMLElement>('.j-read')!;
+  // The note and the colour key are reading, not watching: they sit in the step on show, under its
+  // text and controls. The sticky view keeps the screen, the picture and one line under them.
   const extra = document.createElement('div');
   extra.className = 'j-step-extra';
   function placeExtras() {
-    if (wide()) { if (modelEl && modelEl.parentElement !== readEl) readEl.append(...[modelEl, keyEl].filter(Boolean) as HTMLElement[]); extra.remove(); return; }
     if (!current) return;
     // Under the step's text and controls, but above a closing card that leads on.
     const end = current.querySelector(':scope > .j-end, :scope > .j-next');
@@ -122,6 +133,7 @@ export function boot(root: HTMLElement) {
     ctx.level = getLevel();
     scene.level = ctx.level;
     ctx.mem = {};
+    screen.reset();
     ctx.say(null, '');
     const note = STEP_NOTES[root.dataset.chapter ?? '']?.[el.dataset.step!];
     if (note) ctx.model(note.part, note.text[ctx.level]);
@@ -169,7 +181,7 @@ export function boot(root: HTMLElement) {
   let queued = false;
   const onScroll = () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; pick(); }); };
   addEventListener('scroll', onScroll, { passive: true });
-  addEventListener('resize', () => { placeExtras(); onScroll(); });
+  addEventListener('resize', onScroll);
   // A change of level re-runs the step on show: its picture (labels that name a term pick their
   // word for the level), its script (ctx.level), the line under the picture, the readout and the
   // note. A step only for higher levels may have just been hidden: then the one now in view runs.
