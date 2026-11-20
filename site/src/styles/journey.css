@@ -263,7 +263,7 @@ main:has(> .j-root) { container: journey / inline-size; }
 .j-screen[data-threads] .j-scr-side .j-scr-thread { padding: 0.05rem 0.3rem; }
 .j-screen[data-threads] .j-scr-side .j-scr-status { display: none; }
 .j-screen[data-threads][data-empty] .j-scr-scroll { display: none; }
-.j-screen[data-threads][data-empty] .j-scr-side { flex: 1; max-height: none; border-bottom: 0; }
+.j-screen[data-threads][data-empty] .j-scr-side { flex: 1; min-height: 0; max-height: none; border-bottom: 0; }
 @container view (min-width: 44rem) {
   .j-scr-comp { display: flex; }
   .j-screen[data-threads] .j-scr-body { flex-direction: row; }

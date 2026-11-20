@@ -124,6 +124,8 @@ export class Screen implements ScreenApi {
     this.phEl = root.querySelector('[data-scr-ph]')!;
     this.working = el('li', 'j-scr-working', WORKING);
     this.working.dataset.b = 'busy';
+    // A list drawn for one size is cut for another: on a resize, draw it again and fit it again.
+    new ResizeObserver(() => { delete this.side.dataset.sig; if (this.last) this.drawThreads(this.last, mainOf(this.last)); }).observe(this.side);
   }
 
   get on() { return this.form !== 'off'; }
@@ -132,7 +134,8 @@ export class Screen implements ScreenApi {
   reset() {
     this.conf = {};
     this.ownRows = false;
-    this.toolOn = null;
+    // The scene redrawn below is the last step's: a tool lit there is not a row in this thread.
+    this.toolOn = this.last?.tools?.on ?? null;
     this.clear();
     this.stage.focus('both');
     if (this.last) this.draw(this.last);
@@ -306,6 +309,22 @@ export class Screen implements ScreenApi {
     });
     if (rows.length > shown.length) items.push(el('li', 'j-scr-thread j-scr-more', `+${rows.length - shown.length} more`));
     this.side.replaceChildren(...items);
+    this.fitThreads(rows.length);
+  }
+
+  /** Fewer threads fit than the cap allows (a phone, a short frame): drop the last ones until the
+   *  list fits, and say how many are not shown rather than cut a row in half. */
+  private fitThreads(total: number) {
+    const side = this.side;
+    if (side.hidden || !side.clientHeight) return;
+    let more = side.querySelector<HTMLElement>('.j-scr-more');
+    while (side.scrollHeight > side.clientHeight + 1) {
+      const last = [...side.querySelectorAll<HTMLElement>('.j-scr-thread:not(.j-scr-more):not([aria-current])')].at(-1);
+      if (!last) break;
+      last.remove();
+      if (!more) { more = el('li', 'j-scr-thread j-scr-more'); side.append(more); }
+      more.textContent = `+${total - side.querySelectorAll('.j-scr-thread:not(.j-scr-more)').length} more`;
+    }
   }
 
   private workRow(kind: RowKind, label: string, detail?: string, state?: 'ok' | 'bad') {

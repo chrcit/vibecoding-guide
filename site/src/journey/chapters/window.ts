@@ -225,7 +225,11 @@ export const windowCh: Chapter = {
   steps: {
     pile: { scene: () => view([...RULE], 1000), enter: (ctx) => void ctx.scene.run((h) => pileUp(ctx, h)) },
     rot: { scene: () => view(MIX.job(), 1000, [], true), enter: (ctx) => { ctx.mem.mix = 'job'; void ctx.scene.run((h) => ask(ctx, h, 'job')); } },
-    long: { scene: (ctx) => view([...RULE], ctx.keep.cap ?? 1000), enter: (ctx) => { ctx.mem.used = 1020; fill(ctx); } },
+    long: { scene: (ctx) => view([...RULE], ctx.keep.cap ?? 1000), enter: (ctx) => {
+      // The same thread as the morning above: your rule first, then the pile it grew under.
+      ctx.screen.history([['you', 'Always show dates as day.month.year.']]);
+      ctx.mem.used = 1020; fill(ctx);
+    } },
     compact: { scene: () => view([...morning(), ...LOG, ...CSV, ...FORM, ...FORM, ...CSV, ...FORM], 1000), enter: (ctx) => void ctx.scene.run((h) => clear(ctx, h, 'compact')) },
     paste: { scene: () => view([...RULE, ...FIX], 1000), enter: (ctx) => paste(ctx, 'log') },
   },
