@@ -1,0 +1,37 @@
+---
+// Review page for every figure built so far, in its frame. Routed at /dev/figures/ in `pnpm dev`,
+// or in a build with ACG_DEV_PAGES=1. `pnpm check-figures` screenshots and checks each [data-figure].
+import Base from '../layouts/Base.astro';
+import Loop from '../components/fig/loop/Loop.astro';
+import MeterTank from '../components/fig/meter-tank/MeterTank.astro';
+import ChartSample from '../components/fig/sample/ChartSample.astro';
+
+// Illustrative values only. The real ones arrive from src/data/ once the data layer lands.
+const illustrative = {
+  currency: '$',
+  apiPricePerMillion: 3,
+  tokensPerHour: 2_000_000,
+  planPricePerMonth: 20,
+  windowHours: 5,
+  windowTokens: 6_000_000,
+  weeklyTokens: 30_000_000,
+};
+---
+<Base title="Figures" description="Development-only review page for the figures." noindex>
+  <div class="fig-review">
+    <h1>Figures</h1>
+    <p>Every figure built so far, in its frame. The numbers in Fig. 8 are illustrative, not sourced.</p>
+    <Loop />
+    <MeterTank {...illustrative} source={{ label: 'Illustrative values for review, not real prices or limits' }} />
+    <h2>Kit samples</h2>
+    <p>Not planned figures. They show the flat-chart mode for the data figures to copy.</p>
+    <ChartSample points={[[1, 12], [2, 20], [3, 41], [4, 70], [5, 150], [6, 260], [7, 520], [8, 1100]]} />
+  </div>
+</Base>
+
+<style>
+  .fig-review { max-width: 46rem; margin: 2rem auto 4rem; padding: 0 var(--gutter); }
+  h1, h2 { margin: 0 0 0.5rem; }
+  h2 { margin-top: 3rem; }
+  p { color: var(--muted); margin: 0; }
+</style>

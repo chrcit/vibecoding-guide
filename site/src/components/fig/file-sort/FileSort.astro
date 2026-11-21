@@ -1,0 +1,167 @@
+---
+/*
+ * Fig. 35, every line of the instruction file is read on every turn.
+ *
+ * Idea: the file grows with lessons and shrinks when pruned; what belongs is what the agent cannot
+ * work out from the code. Two columns, "In the file" and "Left out"; a meter of lines against the
+ * 200-line advice. Click or drag a line to move it; "Add a lesson" grows the file the way a
+ * correction should; "Prune" takes out what does not belong. A line on the wrong side shows why.
+ * Data: the advice (lines) and tokens per line arrive as props.
+ */
+import Figure from '../Figure.astro';
+import Stat from '../../board/Stat.astro';
+import { LINES, START_IN } from './model';
+
+interface Props { advice: number; tokensPerLine: number }
+const { advice, tokensPerLine } = Astro.props;
+const SCALE = 1400;
+const inSet = new Set(START_IN);
+const startLines = LINES.filter((l) => inSet.has(l.id)).reduce((a, l) => a + l.lines, 0);
+const wrong = LINES.filter((l) => !l.lesson && inSet.has(l.id) !== l.belongs).length;
+const item = (l: (typeof LINES)[number], where: 'in' | 'out') => ({ ...l, ok: (where === 'in') === l.belongs });
+---
+<div class="fs" data-fs data-fs-data={JSON.stringify({ lines: LINES, start: START_IN, advice, tokensPerLine, scale: SCALE })}>
+  <Figure n={35} title="Every line is read on every turn" alt="A meter of the file's length far past the 200-line mark, and two columns of lines: in the file, and left out." bare>
+    <div class="fs-meter" aria-hidden="true">
+      <div class="fs-bar"><span class="fs-fill" data-fs-fill style={`transform:scaleX(${Math.min(1, startLines / SCALE)})`}></span></div>
+      <span class="fs-mark" style={`left:${(advice / SCALE) * 100}%`}><span>{advice} lines</span></span>
+    </div>
+    <div class="fs-cols">
+      {(['in', 'out'] as const).map((where) => (
+        <section class="fs-col" data-col={where} aria-label={where === 'in' ? 'In the file' : 'Left out'}>
+          <h3>{where === 'in' ? 'In the file' : 'Left out'}</h3>
+          <ul data-list={where}>
+            {LINES.filter((l) => !l.lesson && inSet.has(l.id) === (where === 'in')).map((l) => {
+              const it = item(l, where);
+              return (
+                <li>
+                  <button type="button" class="fs-line" draggable="true" data-id={l.id} data-ok={String(it.ok)} aria-label={`${l.text}, ${l.lines} lines. Move to ${where === 'in' ? 'left out' : 'the file'}`}>
+                    <span class="fs-text">{l.text}</span><span class="fs-n">{l.lines}</span>
+                    <span class="fs-why">{it.ok ? '' : l.why}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ))}
+    </div>
+  </Figure>
+  <div class="fs-actions">
+    <button type="button" class="btn" data-fs-lesson>Add a lesson</button>
+    <button type="button" class="btn" data-fs-prune>Prune</button>
+    <button type="button" class="btn ghost" data-fs-reset>Start again</button>
+  </div>
+  <dl class="stats">
+    <Stat name="Lines in the file" id="fs-lines" tone="accent">{startLines.toLocaleString('en-GB')}</Stat>
+    <Stat name="Tokens, every turn" id="fs-tokens">{(startLines * tokensPerLine).toLocaleString('en-GB')}</Stat>
+    <Stat name="On the wrong side" id="fs-wrong">{String(wrong)}</Stat>
+  </dl>
+</div>
+
+<style is:global>
+  .fs { display: grid; gap: 0.875rem; }
+  .fs .fig-drawing { display: grid; gap: 1rem; }
+  .fs-meter { position: relative; padding-top: 1.5rem; }
+  .fs-bar { height: 0.875rem; border-radius: var(--radius-pill); background: var(--paper-2); overflow: hidden; border: 1px solid var(--rule); }
+  .fs-fill { display: block; height: 100%; background: var(--accent); transform-origin: 0 50%; transition: transform 500ms var(--ease-out); }
+  .fs-mark { position: absolute; top: 0; bottom: -0.25rem; border-left: 2px dashed var(--ink); }
+  .fs-mark span { position: absolute; top: 0; left: 0.375rem; font-family: var(--mono); font-size: var(--text-xs); color: var(--ink); white-space: nowrap; line-height: 1.1; }
+  .fs-cols { display: grid; gap: 0.75rem; grid-template-columns: minmax(0, 1fr); }
+  @container (min-width: 560px) { .fs-cols { grid-template-columns: 1fr 1fr; } }
+  .fs-col { min-width: 0; padding: 0.5rem; border-radius: var(--radius); background: var(--paper-2); border: 1px solid var(--rule); transition: border-color var(--dur); }
+  .fs-col[data-over] { border-color: var(--accent); }
+  .fs-col h3 { margin: 0.125rem 0.25rem 0.5rem; font-family: var(--sans); font-size: var(--text-s); font-weight: 650; color: var(--ink); }
+  .fs-col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3125rem; min-height: 2.5rem; }
+  .tile .fs-col li { max-width: none; }
+  .fs-line {
+    width: 100%; min-height: 2.5rem; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 0.75rem; align-items: center;
+    padding: 0.375rem 0.625rem; border: 1px solid var(--rule); border-radius: var(--radius-s);
+    background: var(--card); color: var(--ink); font: inherit; font-size: var(--text-s); text-align: left; cursor: grab;
+  }
+  .fs-line:hover { border-color: var(--rule-strong); }
+  .fs-n { font-family: var(--mono); font-size: var(--text-xs); color: var(--muted); }
+  .fs-why { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--accent); }
+  .fs-why:empty { display: none; }
+  .fs-line[data-ok='false'] { border: 1.5px dashed var(--accent); }
+  .fs-line[data-new] { animation: fs-in 600ms var(--ease-out); }
+  @keyframes fs-in { from { opacity: 0; transform: translateY(-6px); } }
+  .fs-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  @media (prefers-reduced-motion: reduce) { .fs-fill { transition: none; } .fs-line[data-new] { animation: none; } }
+</style>
+
+<script>
+  import type { Line } from './model';
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fs]')) {
+    const d = JSON.parse(root.dataset.fsData!) as { lines: Line[]; start: string[]; advice: number; tokensPerLine: number; scale: number };
+    const byId = new Map(d.lines.map((l) => [l.id, l]));
+    const lists = { in: root.querySelector<HTMLElement>('[data-list="in"]')!, out: root.querySelector<HTMLElement>('[data-list="out"]')! };
+    const fill = root.querySelector<HTMLElement>('[data-fs-fill]')!;
+    const lessonBtn = root.querySelector<HTMLButtonElement>('[data-fs-lesson]')!;
+    const stat = (id: string) => root.querySelector<HTMLElement>(`[data-stat="${id}"]`)!;
+    let where = new Map<string, 'in' | 'out'>();
+    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+    const reset = () => {
+      where = new Map();
+      for (const l of d.lines) if (!l.lesson) where.set(l.id, d.start.includes(l.id) ? 'in' : 'out');
+    };
+    const html = (l: Line, w: 'in' | 'out', fresh: boolean) => {
+      const ok = (w === 'in') === l.belongs;
+      return `<li><button type="button" class="fs-line" draggable="true" data-id="${l.id}" data-ok="${ok}"${fresh ? ' data-new' : ''} aria-label="${esc(l.text)}, ${l.lines} lines. Move to ${w === 'in' ? 'left out' : 'the file'}"><span class="fs-text">${esc(l.text)}</span><span class="fs-n">${l.lines}</span><span class="fs-why">${ok ? '' : esc(l.why)}</span></button></li>`;
+    };
+    function show(fresh?: string, focus?: string) {
+      for (const w of ['in', 'out'] as const)
+        lists[w].innerHTML = d.lines.filter((l) => where.get(l.id) === w).map((l) => html(l, w, l.id === fresh)).join('');
+      const inLines = d.lines.filter((l) => where.get(l.id) === 'in');
+      const n = inLines.reduce((a, l) => a + l.lines, 0);
+      fill.style.transform = `scaleX(${Math.min(1, n / d.scale)})`;
+      stat('fs-lines').textContent = n.toLocaleString('en-GB');
+      stat('fs-tokens').textContent = (n * d.tokensPerLine).toLocaleString('en-GB');
+      stat('fs-wrong').textContent = String(d.lines.filter((l) => where.has(l.id) && (where.get(l.id) === 'in') !== l.belongs).length);
+      lessonBtn.disabled = !d.lines.some((l) => l.lesson && !where.has(l.id));
+      if (focus) root.querySelector<HTMLButtonElement>(`[data-id="${focus}"]`)?.focus();
+    }
+    const move = (id: string, to?: 'in' | 'out') => {
+      where.set(id, to ?? (where.get(id) === 'in' ? 'out' : 'in'));
+      show(undefined, id);
+    };
+    root.addEventListener('click', (e) => {
+      const b = (e.target as Element).closest<HTMLButtonElement>('.fs-line');
+      if (b) move(b.dataset.id!);
+    });
+    lessonBtn.addEventListener('click', () => {
+      const next = d.lines.find((l) => l.lesson && !where.has(l.id));
+      if (!next) return;
+      where.set(next.id, 'in');
+      show(next.id);
+    });
+    root.querySelector('[data-fs-prune]')!.addEventListener('click', () => {
+      for (const [id, w] of where) if (w === 'in' && !byId.get(id)!.belongs) where.set(id, 'out');
+      show();
+    });
+    root.querySelector('[data-fs-reset]')!.addEventListener('click', () => { reset(); show(); });
+
+    // Drag between the columns.
+    let dragged = '';
+    root.addEventListener('dragstart', (e) => {
+      const b = (e.target as Element).closest<HTMLElement>('.fs-line');
+      if (!b) return;
+      dragged = b.dataset.id!;
+      e.dataTransfer?.setData('text/plain', dragged);
+    });
+    for (const col of root.querySelectorAll<HTMLElement>('[data-col]')) {
+      col.addEventListener('dragover', (e) => { e.preventDefault(); col.dataset.over = ''; });
+      col.addEventListener('dragleave', () => delete col.dataset.over);
+      col.addEventListener('drop', (e) => {
+        e.preventDefault();
+        delete col.dataset.over;
+        if (dragged) move(dragged, col.dataset.col as 'in' | 'out');
+        dragged = '';
+      });
+    }
+    reset();
+    show();
+  }
+</script>

@@ -1,0 +1,89 @@
+---
+// A small offer to pick a level, shown once per browser on a first visit.
+// It floats under the header next to the picker, so it never moves the page,
+// and it does not take focus. Close button, Escape, choosing a level or
+// scrolling on all put it away. Nothing shows without JavaScript.
+import { LEVELS, levelInfo } from '../../lib/levels';
+import './levels.css';
+---
+<aside class="level-offer" aria-label="Reading level" data-level-offer hidden>
+  <div class="level-offer-choices">
+    {LEVELS.map((id) => <button type="button" data-offer-level={id} aria-pressed="false">{levelInfo[id].label}</button>)}
+  </div>
+  <button class="level-offer-close" type="button" aria-label="Close">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+  </button>
+</aside>
+<script>
+  import { getLevel, getSavedLevel, isLevel, OFFER_KEY, onLevel, setLevel } from '../../lib/levels';
+
+  const offer = document.querySelector<HTMLElement>('[data-level-offer]');
+  const root = document.documentElement;
+
+  const seen = () => {
+    try {
+      return localStorage.getItem(OFFER_KEY) !== null;
+    } catch {
+      // Storage blocked: we could not remember a dismissal, so do not offer at all.
+      return true;
+    }
+  };
+
+  if (offer && !seen() && getSavedLevel() === null && !root.hasAttribute('data-level-override')) {
+    try {
+      localStorage.setItem(OFFER_KEY, 'shown');
+    } catch {}
+
+    const choices = [...offer.querySelectorAll<HTMLButtonElement>('[data-offer-level]')];
+    const mark = () => choices.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.offerLevel === getLevel())));
+    const stopLevel = onLevel(mark);
+
+    // Sit under the header, lined up with the picker where there is room.
+    const place = () => {
+      const header = document.querySelector('header');
+      const picker = document.querySelector('.level-picker');
+      const top = header ? Math.max(0, header.getBoundingClientRect().bottom) : 0;
+      offer.style.top = `${top + 8}px`;
+      if (picker) {
+        const gap = innerWidth - picker.getBoundingClientRect().right;
+        // Line up with the picker, but never run off the left edge.
+        offer.style.right = `${Math.max(16, Math.min(gap, innerWidth - offer.offsetWidth - 16))}px`;
+      }
+    };
+
+    const startY = scrollY;
+    const onScroll = () => Math.abs(scrollY - startY) > innerHeight && dismiss();
+    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && dismiss();
+
+    function dismiss() {
+      if (!offer || offer.hidden) return;
+      const hadFocus = offer.contains(document.activeElement);
+      offer.hidden = true;
+      removeEventListener('scroll', onScroll);
+      removeEventListener('resize', place);
+      document.removeEventListener('keydown', onKey);
+      stopLevel();
+      try {
+        localStorage.setItem(OFFER_KEY, 'dismissed');
+      } catch {}
+      if (hadFocus) document.querySelector<HTMLElement>('.level-picker-button')?.focus();
+    }
+
+    offer.querySelector('.level-offer-close')?.addEventListener('click', dismiss);
+    // The reader found the picker: the offer has done its job and would cover the panel.
+    document.querySelector('.level-picker-button')?.addEventListener('click', dismiss);
+    offer.addEventListener('click', (event) => {
+      const value = (event.target as HTMLElement).closest<HTMLElement>('[data-offer-level]')?.dataset.offerLevel;
+      if (!isLevel(value)) return;
+      setLevel(value);
+      dismiss();
+    });
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', place);
+    document.addEventListener('keydown', onKey);
+
+    mark();
+    place();
+    offer.hidden = false;
+  }
+</script>

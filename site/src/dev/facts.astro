@@ -1,0 +1,16 @@
+---
+// Review page for the data components. Dev only.
+import Base from '../layouts/Base.astro';
+import Fact from '../components/data/Fact.astro';
+import Verified from '../components/data/Verified.astro';
+---
+<Base title="Facts" description="Review page for the data components." noindex>
+  <div style="max-width: 40rem; margin: 3rem auto; padding: 0 var(--gutter)">
+    <h1>Facts</h1>
+    <p>Claude Pro costs <Fact id="plans.claude.pro.price" /> a month. Claude Haiku 5.5 costs <Fact id="models.claude-haiku-5-5.price.input" /> per million input tokens up to <Fact id="models.claude-haiku-5-5.price.longPrompt.threshold" />, then <Fact id="models.claude-haiku-5-5.price.longPrompt.input" />.</p>
+    <p>Opus 5.5 was released on <Fact id="models.claude-opus-5-5.released" />. GPT-4 had a 50% time horizon of <Fact id="benchmarks.metr.p50.gpt-4.minutes" />.</p>
+    <p><Fact id="plans.claude.ultra.noFiveHourLimit" show="claim" /></p>
+    <Verified file="plans" />
+    <Verified ids={['models.claude-opus-5-5.price.input', 'models.claude-opus-5-5.price.output']} />
+  </div>
+</Base>

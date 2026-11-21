@@ -1,0 +1,44 @@
+---
+import Essay from '../../layouts/Essay.astro';
+import Fact from '../../components/data/Fact.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import { url } from '../../lib/nav';
+import { anchor } from '../../lib/facts';
+import { links } from '../../data/links';
+
+export const meta = {
+  title: 'Notice the tics, and keep a line that kills them',
+  description: 'Models have habits that look like style and are only noise. Learn to spot them and keep a short instruction that removes them. That is all a skill is.',
+  order: 13,
+};
+
+const src = (id: string) => `sources/#${anchor(id)}`;
+const leansOn = [
+  { href: 'explain/skills/', title: 'Skills: how a skill loads (Fig. 16)' },
+  { href: src('skillFacts.format'), title: 'What a skill file is' },
+  { href: src('harnesses.claudeCode.skills'), title: 'Where Claude Code keeps skills' },
+  { href: src('skillFacts.installer'), title: 'Installing a skill with one command' },
+  { href: links.humanizer.url, title: links.humanizer.label },
+];
+---
+<Essay meta={meta} leansOn={leansOn}>
+  <p>Models have habits that look like style and are really noise. Once you can see them, you can't stop seeing them. The fix is a short instruction you keep and paste whenever the habit shows up. If you keep it in a file, people call that a skill, and it is no more mysterious than that.</p>
+
+  <p>My favourite example turns up on a lot of the pages an agent designs. There is a big headline, and sitting above it a small line of uppercase letters, a label nobody asked for. Models put it everywhere, and it is a terrible design habit. The same goes for the tagline under every title, the helper text under every field and the secondary label beside every number. The page fills up with space, and then with noise to fill the space. This guide has a rule against the uppercase label for exactly that reason.</p>
+
+  <p>That models do this everywhere is my observation from a lot of pages. I haven't counted.</p>
+
+  <h2>My fix is two sentences</h2>
+
+  <p>I have a two-sentence instruction saved in my clipboard history, and I find it by searching for one word. I have never turned it into a skill, because I'm lazy. It tells the agent to cut the taglines, helper text and secondary labels, and, if a screen needs them to make sense, to fix the layout instead. The last time I pasted it, the page improved at once and looked good. Here it is.</p>
+
+  <CopyPrompt title="Strip the design noise">Remove taglines, helper text, small uppercase labels above headings and secondary labels. If the screen stops making sense without them, the layout is wrong: fix the layout instead of putting the labels back.</CopyPrompt>
+
+  <p>Writing has the same problem. AI text has its own tics, such as the neat contrast and the one-line moral at the end of a paragraph. There is a public skill for that, <a href={links.humanizer.url}>Humanizer</a>, which <Fact id="skills.humanizer.what" />. I opened it to see what was inside. It is one file. It explains why AI text sounds the way it does and what to do instead. That is the big clue.</p>
+
+  <h2>A skill is just text</h2>
+
+  <p>A skill sounds like a feature you have to learn. The format is plain: <Fact id="skillFacts.format" show="claim" /> In Claude Code a skill lives in <Fact id="harnesses.claudeCode.skills" />, and you can run it by name or let the agent load it when it seems relevant. The <a href={url('explain/skills/')}>skills explainer</a> shows how the agent finds and loads one. <!-- FIG 16 --> Getting a new skill is one request. For most agents, <Fact id="skillFacts.installer" /> is the whole install, and I usually just tell the agent to install the skill for me.</p>
+
+  <p>So start with your eyes. Each time a result annoys you for the same reason twice, write down the one or two sentences that would have stopped it. Keep them somewhere you can find them. When one earns its keep, turn it into a file. You will end up with a small set of lines that make every agent you use a little less noisy, and you won't have learned a single new technique to get there.</p>
+</Essay>

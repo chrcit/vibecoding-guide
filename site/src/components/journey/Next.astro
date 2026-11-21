@@ -1,0 +1,38 @@
+---
+/* The card at the end of a lesson: the next lesson, and where to push further. */
+import { url } from '../../lib/nav';
+import { after, rung, rungs, parts } from '../../journey/rungs';
+interface Props { from: string; more?: { href: string; text: string; side?: boolean }[] }
+const { from, more = [] } = Astro.props;
+const next = after(from);
+const here = rung(from);
+const crossing = next && here && next.part !== here.part;
+const nextPart = next ? parts[next.part - 1]! : null;
+---
+<div class="j-end">
+  {next && !crossing ? (
+    <a class="j-next" href={url(`journey/${next.id}/`)}>
+      <span>Next: {next.short}, lesson {next.n} of {rungs.length}</span>
+      <b>{next.title}</b>
+      <span>{next.line}</span>
+    </a>
+  ) : next && nextPart ? (
+    <a class="j-next" href={url(nextPart.href)}>
+      <span>{nextPart.short} · lessons {nextPart.range}</span>
+      <b>{nextPart.title}</b>
+      <span>{nextPart.blurb}</span>
+    </a>
+  ) : (
+    <a class="j-next" href={url('start/')}>
+      <span>After the last lesson</span>
+      <b>The first hour</b>
+      <span>Build one small real thing on your laptop, checked before it counts.</span>
+    </a>
+  )}
+  {(more.length > 0 || !next) && (
+    <ul class="j-more">
+      {more.map((m) => <li><a href={url(m.href)} data-side={m.side ? '' : undefined}>{m.text}</a></li>)}
+      {!next && <li><a href={url('library/')}>The library: every lesson and term</a></li>}
+    </ul>
+  )}
+</div>

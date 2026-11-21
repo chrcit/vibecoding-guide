@@ -1,6 +1,8 @@
-# Agentic Coding with Codex and Claude
+# Agentic Coding with Codex and Claude on the Web
 
 Using OpenAI Codex and Anthropic Claude through web interfaces to work with your existing code.
+
+> **Note:** Web interfaces are the no-install option. For daily work, running agents in a desktop ADE like [T3 Code](./t3-code.md) (on your machine or a server) gives you parallel threads, a built-in browser for self-verification, and models from several providers. Claude Code is also available on the web at claude.ai/code and can work directly on GitHub repos.
 
 ## Overview
 
@@ -108,7 +110,7 @@ A recipe sharing platform built with Next.js 14 and Supabase.
 - Flag any security concerns
 ```
 
-Codex reads this automatically when working on your repo.
+Codex reads this automatically when working on your repo: every `AGENTS.md` from the repository root down to the folder it works in ([docs](https://learn.chatgpt.com/docs/agent-configuration/agents-md)). Claude Code reads `CLAUDE.md` instead; see [Context Files](./agentic-coding.md#context-files).
 
 ### GitHub Integration
 
@@ -198,7 +200,7 @@ When making changes, tell me which files to modify.
 
 ### Workflow
 
-Since Claude can't directly access GitHub, the workflow is:
+In a chat or Project, Claude works on what you give it, so the workflow is:
 
 ```
 1. Copy relevant code to Claude
@@ -277,26 +279,29 @@ Ask: "Create an artifact with a preview" to see your component live.
 
 | Aspect | Codex | Claude (Web) |
 |--------|-------|--------------|
-| **GitHub Integration** | Direct (connects to repos) | Manual (copy/paste) |
+| **GitHub Integration** | Direct (connects to repos) | Manual in chat and Projects (copy/paste or upload) |
 | **Output** | Pull requests | Code in chat |
-| **Best For** | Large changes, PRs | Understanding, planning |
 | **Automation** | Yes (Actions, webhooks) | No |
 | **Persistent Context** | AGENTS.md | Projects |
 
 ### When to Use Which
 
-**Use Codex when:**
+What decides it is the interface: one is an agent that works on your repository and opens pull requests, the other is a chat.
+
+**Use a cloud agent that opens pull requests when:**
 - Making changes to existing repos
 - You want PRs for review
 - Working on GitHub Issues
 - Automating workflows
 
-**Use Claude when:**
+**Use a chat when:**
 - You need explanations
 - Planning before implementing
 - You're not sure what approach to take
 - Learning new concepts
 - Quick questions about code
+
+Both labs offer both kinds of tool: [Claude Code on the web](https://code.claude.com/docs/en/claude-code-on-the-web) also works on your GitHub repositories.
 
 ### Using Both Together
 
@@ -372,6 +377,7 @@ Let's start over with this approach.
 ---
 
 **Related:**
-- [Agentic Coding General Guide](./agentic-coding.md) - Core concepts
+- [Agentic Coding Basics](./agentic-coding.md) - Core concepts
+- [T3 Code](./t3-code.md) - Run agents from several providers in one place
 - [Version Control](./version-control.md) - Git and GitHub basics
 - [Vibe Coding with Web Builders](./vibe-coding-web.md) - v0, Lovable, etc.

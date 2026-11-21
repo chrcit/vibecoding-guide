@@ -1,0 +1,35 @@
+---
+import { render } from 'astro:content';
+import Article from '../../layouts/Article.astro';
+import Connections from '../../components/wiki/Connections.astro';
+import ClusterNav from '../../components/wiki/ClusterNav.astro';
+import { getWiki } from '../../lib/wiki';
+
+export async function getStaticPaths() {
+  const wiki = await getWiki();
+  return wiki.articles.map((a) => ({ params: { slug: a.slug }, props: { slug: a.slug } }));
+}
+
+const wiki = await getWiki();
+const article = wiki.bySlug.get(Astro.props.slug)!;
+const { Content, headings } = await render(article.entry);
+---
+<Article
+  title={article.title}
+  description={article.summary}
+  section="wiki"
+  lede={article.summary}
+  headings={headings.filter((h) => h.depth > 1)}
+  docTitle={`${article.title} · Wiki · Agentic Coding Guide`}
+>
+  <Content />
+  <Connections article={article} wiki={wiki} />
+  <ClusterNav slot="sidebar" article={article} wiki={wiki} />
+</Article>
+
+<style>
+  /* A prompt to copy wraps instead of scrolling sideways, so it reads in
+     full in the side view and on a phone. */
+  :global(.prose pre[data-language='text']) { white-space: pre-wrap; overflow-wrap: anywhere; }
+  :global(.prose pre[data-language='text'] code) { white-space: inherit; }
+</style>

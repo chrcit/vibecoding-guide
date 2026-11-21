@@ -1,0 +1,144 @@
+---
+// The level control in the header. A button showing the current level opens a
+// small panel with the three levels as radio buttons, in the owner's words.
+// Shown only when the boot script has run: without JavaScript every layer is open anyway.
+// Each option says what it changes in the lessons. After a switch a short note under the header
+// says it again, and what changed on the page flashes once: text for that level, the note under
+// the picture, labels on the picture that took the level's word.
+import { LEVELS, levelInfo } from '../../lib/levels';
+import LevelGlyph from './LevelGlyph.astro';
+import Chevron from './Chevron.astro';
+import './levels.css';
+---
+<div class="level-picker" data-level-picker>
+  <button class="level-picker-button" type="button" aria-expanded="false" aria-controls="level-panel" aria-label="Reading level" title="Reading level">
+    <span class="level-sr">Reading level: </span>
+    {LEVELS.map((id) => (
+      <span class="level-current" data-when={id}><LevelGlyph level={id} /><span class="level-picker-label">{levelInfo[id].label}</span></span>
+    ))}
+    <Chevron />
+  </button>
+  <div class="level-panel" id="level-panel" hidden>
+    <fieldset>
+      <legend>How much detail do you want?</legend>
+      {LEVELS.map((id) => (
+        <label class="level-option">
+          <input type="radio" name="acg-level-choice" value={id} />
+          <strong>{levelInfo[id].label}</strong>
+          <span>{levelInfo[id].description}</span>
+          <span class="level-shows">{levelInfo[id].shows}</span>
+        </label>
+      ))}
+    </fieldset>
+  </div>
+  <p class="level-said" role="status" aria-live="polite" hidden></p>
+</div>
+<script>
+  import { getLevel, isLevel, levelInfo, onLevel, setLevel, type Level } from '../../lib/levels';
+
+  const GUTTER = 16;
+
+  document.querySelectorAll<HTMLElement>('[data-level-picker]').forEach((picker) => {
+    const button = picker.querySelector<HTMLButtonElement>('.level-picker-button')!;
+    const panel = picker.querySelector<HTMLElement>('.level-panel')!;
+    const radios = [...panel.querySelectorAll<HTMLInputElement>('input[type="radio"]')];
+    let pointerChoice = false;
+
+    // The button is named in words at every width (on a phone it shows only the glyph).
+    const check = (level: Level) => {
+      radios.forEach((r) => (r.checked = r.value === level));
+      button.setAttribute('aria-label', `Reading level: ${levelInfo[level].label}. Change`);
+    };
+    check(getLevel());
+
+    // Keep the panel inside the viewport whatever sits to the right of the button.
+    const place = () => {
+      panel.style.right = '0px';
+      const width = panel.offsetWidth;
+      const wrap = picker.getBoundingClientRect();
+      let right = Math.min(wrap.right, innerWidth - GUTTER);
+      if (right - width < GUTTER) right = GUTTER + width;
+      panel.style.right = `${wrap.right - right}px`;
+    };
+
+    const isOpen = () => !panel.hidden;
+    const open = () => {
+      check(getLevel());
+      panel.hidden = false;
+      button.setAttribute('aria-expanded', 'true');
+      place();
+      (radios.find((r) => r.checked) ?? radios[0]).focus();
+    };
+    const close = (returnFocus: boolean) => {
+      if (!isOpen()) return;
+      panel.hidden = true;
+      button.setAttribute('aria-expanded', 'false');
+      if (returnFocus) button.focus();
+    };
+
+    button.addEventListener('click', () => (isOpen() ? close(false) : open()));
+
+    panel.addEventListener('pointerdown', () => (pointerChoice = true));
+    // Arrow keys change the level as they move; a click or tap also closes the panel.
+    panel.addEventListener('change', (event) => {
+      const value = (event.target as HTMLInputElement).value;
+      if (isLevel(value)) setLevel(value);
+    });
+    panel.addEventListener('click', (event) => {
+      if (!pointerChoice || !(event.target instanceof HTMLInputElement)) return;
+      pointerChoice = false;
+      setTimeout(() => close(true));
+    });
+    panel.addEventListener('keydown', (event) => {
+      // Enter confirms the choice made with the arrow keys.
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        close(true);
+      }
+    });
+
+    picker.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && isOpen()) {
+        event.stopPropagation();
+        close(true);
+      }
+    });
+    picker.addEventListener('focusout', (event) => {
+      const next = event.relatedTarget as Node | null;
+      if (next && !picker.contains(next)) close(false);
+    });
+    document.addEventListener('pointerdown', (event) => {
+      if (isOpen() && !picker.contains(event.target as Node)) close(false);
+    });
+    addEventListener('resize', () => isOpen() && place());
+
+    onLevel(check);
+
+    // Say what the switch changed, and flash what changed on the page.
+    const said = picker.querySelector<HTMLElement>('.level-said')!;
+    let timer = 0;
+    onLevel((level) => {
+      clearTimeout(timer);
+      requestAnimationFrame(() => {
+        const changed = [
+          ...document.querySelectorAll<HTMLElement>(`main [data-for-level~="${level}"]:not([data-for-level~="plain"][data-for-level~="technical"][data-for-level~="engineer"])`),
+          ...document.querySelectorAll<HTMLElement>('main .j-model:not([hidden])'),
+        ].filter((el) => {
+          // Only what the reader can see now: a count of things changed off screen means nothing.
+          if (!el.offsetParent) return false;
+          const r = el.getBoundingClientRect();
+          return r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
+        });
+        for (const el of changed) { el.removeAttribute('data-level-new'); void el.offsetWidth; el.setAttribute('data-level-new', ''); }
+        setTimeout(() => changed.forEach((el) => el.removeAttribute('data-level-new')), 1600);
+        // Labels on the picture that took a new word flash themselves (scene.ts); count them too.
+        const labels = document.querySelectorAll('main .j-label[data-level-new]').length;
+        const n = changed.length + labels;
+        const here = n ? `${n} ${n === 1 ? 'thing' : 'things'} on screen changed.` : 'Nothing on screen changes at this level.';
+        said.textContent = `${levelInfo[level].label}. ${levelInfo[level].shows} ${here}`;
+        said.hidden = false;
+        timer = window.setTimeout(() => (said.hidden = true), 6500);
+      });
+    });
+  });
+</script>

@@ -1,0 +1,88 @@
+---
+/*
+ * Fig. 13, "One bug, three judges".
+ *
+ * Idea: an agent is only as good as what checks its work, and each kind of check catches different
+ * things. Elements: the change (lit), three benches with a judge each (the agent's own summary, a
+ * second agent at a screen, a test rig holding a date), a lamp per bench for its verdict.
+ * States: one per judge (model.ts). Data: none; the example is the fictional holiday hours bug.
+ * Interaction: one segmented control picks the judge; the change moves to that bench and its lamp
+ * shows the verdict. Alt text: below.
+ */
+import Figure from '../Figure.astro';
+import { drawThreeJudges } from './draw';
+import { JUDGES } from './model';
+
+interface Props { n?: number | string }
+const { n = 13 } = Astro.props;
+const { svg, labels, motion } = drawThreeJudges();
+const first = JUDGES[0]!;
+---
+<div class="fig-judges" data-fig-judges data-motion={JSON.stringify(motion)}>
+  <Figure
+    n={n}
+    title="One bug, three judges"
+    hint="Pick a judge to see what it makes of the same fix."
+    alt="Three benches in a row on a long plate. On the left, a note card: the agent’s own summary. In the middle, a screen on a stand: a second agent reviewing. On the right, a small rig holding a calendar block: a test. Each bench has a lamp. The change, an orange block, sits on the summary bench, whose lamp is green."
+    labels={labels}
+  >
+    <Fragment set:html={svg} />
+    <div slot="control" class="seg" role="group" aria-label="Judge">
+      {JUDGES.map((j, i) => <button type="button" data-judge={j.id} aria-pressed={i === 0 ? 'true' : 'false'}>{j.button}</button>)}
+    </div>
+    <Fragment slot="readout">{first.says}</Fragment>
+    <Fragment slot="caption">
+      The fix is wrong in all three cases; only the judges differ. The summary repeats what the agent believes. A reviewer reads the change with fresh eyes and can catch what the author missed. A test runs the page and cannot be persuaded, but it only checks what it was written to check.
+    </Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .fig-judges [data-lamp='fail'] .k-solid:last-child .k-fill,
+  .fig-judges [data-lamp='fail'] .k-solid:last-child .k-top,
+  .fig-judges [data-lamp='fail'] .k-solid:last-child .k-left,
+  .fig-judges [data-lamp='fail'] .k-solid:last-child .k-right,
+  .fig-judges [data-lamp='fail'] .k-solid:last-child .k-shadow { fill: var(--accent-soft); }
+  .fig-judges [data-lamp='fail'] .k-solid:last-child .k-edge,
+  .fig-judges [data-lamp='fail'] .k-solid:last-child .k-crease { stroke: var(--accent); stroke-width: 2px; }
+  .fig-judges [data-lamp='pass'] .k-solid:last-child .k-fill,
+  .fig-judges [data-lamp='pass'] .k-solid:last-child .k-top { fill: color-mix(in oklab, var(--green) 45%, var(--card)); }
+  .fig-judges [data-lamp='pass'] .k-solid:last-child .k-left,
+  .fig-judges [data-lamp='pass'] .k-solid:last-child .k-right,
+  .fig-judges [data-lamp='pass'] .k-solid:last-child .k-shadow { fill: var(--green); }
+  .fig-judges [data-lamp='pass'] .k-solid:last-child .k-edge { stroke: var(--green); stroke-width: 2px; }
+  .fig-judges .seg { flex-wrap: wrap; }
+  .fig-judges .seg button { min-height: 40px; }
+</style>
+
+<script>
+  import { JUDGES, type JudgeId } from './model';
+
+  type Flat = [number, number];
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const tr = ([x, y]: Flat) => `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fig-judges]')) {
+    const m: { rest: Record<JudgeId, Flat> } = JSON.parse(root.dataset.motion!);
+    const change = root.querySelector<SVGGElement>('[data-change]')!;
+    const lamps = [...root.querySelectorAll<SVGGElement>('[data-lamp-for]')];
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-judge]')];
+    const readout = root.querySelector<HTMLElement>('[data-fig-readout]')!;
+    const labels = [...root.querySelectorAll<HTMLElement>('[data-label]')];
+
+    root.querySelector<HTMLElement>('[data-fig-control]')!.hidden = false;
+
+    function show(id: JudgeId) {
+      root.style.setProperty('--fig-ms', reduced.matches ? '0ms' : '');
+      const j = JUDGES.find((x) => x.id === id)!;
+      change.style.transform = tr(m.rest[id]);
+      for (const l of lamps) l.dataset.lamp = l.dataset.lampFor === id ? j.verdict : 'off';
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.judge === id));
+      for (const l of labels) l.toggleAttribute('data-active', l.dataset.label === id);
+      readout.textContent = j.says;
+    }
+
+    for (const b of buttons) b.addEventListener('click', () => show(b.dataset.judge as JudgeId));
+    show(JUDGES[0]!.id);
+  }
+</script>

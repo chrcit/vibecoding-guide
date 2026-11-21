@@ -1,0 +1,130 @@
+---
+// /explain/voice/: talking to the agent (plan item C8).
+import { Code } from 'astro:components';
+import Article from '../../layouts/Article.astro';
+import Deeper from '../../components/level/Deeper.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import Embed from '../../components/site/Embed.astro';
+import { links } from '../../data/links';
+import { url } from '../../lib/nav';
+import { claims } from '../../data/claims';
+
+const headings = [
+  { depth: 2, slug: 'why-talk', text: 'Talking gives the agent more to work with' },
+  { depth: 2, slug: 'intent', text: 'Dictate intent, not code' },
+  { depth: 2, slug: 'where', text: 'Where to dictate' },
+  { depth: 2, slug: 'habits', text: 'Habits that help' },
+  { depth: 2, slug: 'related', text: 'Related pages' },
+];
+
+const ccSettings = `// ~/.claude/settings.json
+{
+  "voice": { "enabled": true, "mode": "tap" },
+  "language": "german"
+}`;
+
+const factIds = [
+  'claims.research.speechFaster',
+  'harnesses.claudeCode.voice',
+  'harnesses.claudeCode.voiceMaxRecording',
+  'harnesses.claudeCode.voiceHints',
+  'harnesses.claudeCode.voiceLanguages',
+  'harnesses.codex.voice',
+  't3code.voice.exists',
+  't3code.voice.where',
+  't3code.voice.maxRecording',
+  't3code.voice.shortcut',
+  't3code.voice.dictionary',
+  't3code.voice.cloudProviders',
+  'claims.voiceApps.wisprFlow',
+  'claims.voiceApps.wisprCloud',
+  'claims.voiceApps.superwhisper',
+  'claims.voiceApps.handy',
+  'claims.voiceApps.macDictation',
+];
+---
+<Article
+  title="Voice"
+  description="Why talking to a coding agent works, the dictation built into Claude Code, Codex and T3 Code, separate dictation apps with their prices, and the habits that make it work."
+  section="explain"
+  updated="2026-11-18"
+  headings={headings}
+  lede="Most of what an agent needs from you is context: what you want, why, and what done looks like. People say more of that out loud than they ever type."
+>
+  <h2 id="why-talk">Talking gives the agent more to work with</h2>
+  <p>
+    Speaking is faster than typing. <Fact id="claims.research.speechFaster" show="claim" /> On a laptop keyboard the gap is smaller, but the speed is not the main gain. When people type a request they trim it to the shortest thing that might work. When they talk, they explain: the bakery's site shows the wrong hours on public holidays, it happened at Easter too, the owner noticed because a customer turned up to a locked door, and the hours for normal days are fine. Every one of those clauses helps an agent, and almost nobody types them.
+  </p>
+  <p>
+    An agent does not mind a long, unpolished message. It is good at pulling the task out of a ramble, and the extra detail is what stops it guessing.
+  </p>
+
+  <h2 id="intent">Dictate intent, not code</h2>
+  <p>
+    Talking works for what you want and badly for the code itself. Nobody wants to say "let x equals four, while x is less than y". Say what the code should do and let the agent write it. <a href={links.theo.url}>Theo</a> made the same point in a video he recorded while one hand was in a cast: you cannot dictate code, but you can dictate intent, and with an agent doing the typing he kept shipping.
+  </p>
+  <Embed id="NvVbCqDgfCs" title="How I Code Without Typing (Theo)" start={242} />
+
+  <h2 id="where">Where to dictate</h2>
+  <p>
+    The agent tools have dictation built in, and separate apps put dictation into any text box on your computer. None of these is a recommendation over the others.
+  </p>
+  <ul>
+    <li>Claude Code: type <code>/voice</code>, then hold the space bar while you talk. <Fact id="harnesses.claudeCode.voice" show="claim" /></li>
+    <li>T3 Code: the microphone button in the composer, or <Fact id="t3code.voice.shortcut" />. <Fact id="t3code.voice.where" show="claim" /></li>
+    <li>Codex: <Fact id="harnesses.codex.voice" show="claim" /></li>
+    <li><a href={claims.voiceApps.wisprFlow.source}>Wispr Flow</a>, a separate app: free plan with a weekly word limit, Pro at <Fact id="claims.voiceApps.wisprFlow" /> a month. Transcription runs <Fact id="claims.voiceApps.wisprCloud" />.</li>
+    <li><a href={claims.voiceApps.superwhisper.source}>Superwhisper</a>: <Fact id="claims.voiceApps.superwhisper" show="claim" /></li>
+    <li><a href={claims.voiceApps.handy.source}>Handy</a>: <Fact id="claims.voiceApps.handy" show="claim" /></li>
+    <li>Your computer's own dictation. <Fact id="claims.voiceApps.macDictation" show="claim" /></li>
+  </ul>
+  <p>
+    A separate app has one advantage: it works everywhere, in the agent, in a chat with a colleague and in a code review comment, with the same shortcut and the same list of words it has learned.
+  </p>
+
+  <Deeper level="technical" title="Local or cloud transcription">
+    <p>
+      There are two places the audio can go. Cloud transcription sends your recording to a company's servers and gets text back; it is usually quick and accurate, and it means a third party hears what you say. Local transcription runs a speech model on your own machine; nothing leaves it, and quality and speed depend on your hardware.
+    </p>
+    <p>
+      Claude Code and Wispr Flow are cloud only: <Fact id="claims.voiceApps.wisprCloud" show="claim" /> Handy is local only. T3 Code lets you choose per environment. <Fact id="t3code.voice.cloudProviders" show="claim" /> If what you dictate is covered by a confidentiality agreement or your employer's rules, a local model is the simple answer; check the cloud provider's terms before you send anything sensitive.
+    </p>
+    <Deeper level="engineer" title="Vocabulary, limits and settings">
+      <p>
+        Names and jargon are where dictation fails: your project, your colleagues, a library called something that sounds like an English word. The tools handle it differently. <Fact id="harnesses.claudeCode.voiceHints" show="claim" /> <Fact id="t3code.voice.dictionary" show="claim" /> Wispr Flow and Superwhisper keep a dictionary you add to; Theo mentions keeping the names of his own machines in his, and still having two of them swapped now and then.
+      </p>
+      <p>
+        Limits: <Fact id="harnesses.claudeCode.voiceMaxRecording" show="claim" /> <Fact id="t3code.voice.maxRecording" show="claim" /> For a long brief, record it in parts, or dictate into a separate app with no limit and paste. <Fact id="harnesses.claudeCode.voiceLanguages" show="claim" />
+      </p>
+      <p>Claude Code's dictation settings live in your user settings; the language setting also sets the language Claude answers in.</p>
+      <Code code={ccSettings} lang="jsonc" themes={{ light: 'github-light', dark: 'github-dark' }} />
+      <p>
+        Claude Code's dictation does not work over SSH or in cloud sessions, because the microphone has to be on the machine running it. If your agents run on another computer, dictate on the one in front of you: T3 Code's desktop or phone app, or a dictation app that types into whatever window is open.
+      </p>
+    </Deeper>
+  </Deeper>
+
+  <h2 id="habits">Habits that help</h2>
+  <ul>
+    <li>Say what you want and what done looks like. "Fix the holiday hours" is a start; "it is done when Christmas Day shows Closed and a normal Tuesday still shows seven to six" is a task the agent can check.</li>
+    <li>Ramble, then let the agent structure it. Ask it to restate the task as a short plan before it starts, and correct the plan rather than your transcript.</li>
+    <li>Read the text before you send it. Dictation mishears names and jargon, and a wrong file name or a "not" that went missing changes the task.</li>
+    <li>Mind what your microphone hears. In an office it picks up the next desk, and in a meeting it picks up the meeting. A headset or a small directional microphone helps more than a better transcription model.</li>
+  </ul>
+
+  <CopyPrompt title="A dictated brief, and what to ask for after it">{`So the bakery site shows the normal opening hours on public holidays, which is wrong, it should say closed on Christmas Day and Boxing Day and short hours on Easter Monday, I think nine to one. A customer turned up at Easter and the door was locked. Normal days are fine, don't touch those. The holiday dates are in some list somewhere in the repo, I'm not sure where.
+
+Before you change anything, write this back to me as a short plan: what you think is wrong, where you will look, and how you will check it is fixed. Then wait for me to say go.`}</CopyPrompt>
+
+  <h2 id="related">Related pages</h2>
+  <ul>
+    <li><a href={url('start/')}>Start here</a>. The first evening with an agent.</li>
+    <li><a href={url('explain/context/')}>Context</a>. Why the extra detail matters.</li>
+    <li><a href={url('explain/verification/')}>Verification</a>. What "done" should look like.</li>
+    <li><a href={url('t3-code/')}>T3 Code</a>. The workspace the guide is written around.</li>
+  </ul>
+
+  <Verified ids={factIds} />
+</Article>

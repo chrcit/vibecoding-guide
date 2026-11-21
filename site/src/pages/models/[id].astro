@@ -1,0 +1,166 @@
+---
+// One card per model in src/data/models.ts, all with the same layout: a compact board that reads in
+// the side view (about 400 to 540px) and at full width. Every value is a sourced fact or a gap that
+// says why; nothing here is written for one model in particular, so a new entry in models.ts gets a
+// card with no page edit. See UPDATE.md.
+import Board from '../../layouts/Board.astro';
+import Tile from '../../components/board/Tile.astro';
+import Stat from '../../components/board/Stat.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import Val from '../../components/models/Val.astro';
+import ModelRank from '../../components/fig/model-rank/ModelRank.astro';
+import { modelIds, getModel, fid, shown, state, indexScore, modelFactIds, effortData, type ModelId } from '../../components/models/view';
+import { labModels, sourcePath } from '../../components/models/lab-data';
+import { formatDate } from '../../lib/facts.ts';
+import { url } from '../../lib/nav';
+
+export function getStaticPaths() {
+  return modelIds.map((id) => ({ params: { id } }));
+}
+
+const id = Astro.params.id as ModelId;
+const m = getModel(id);
+const f = (path: string) => fid(id, path);
+const rows = labModels((x) => url(`models/${x}/`));
+const score = indexScore(id);
+const HARNESS = { claudeCode: 'Claude Code', codex: 'Codex' } as const;
+
+// Plans: each fact id names a plan (plans.<provider>.<plan>.…); its price sits beside it.
+const PROVIDER: Record<string, string> = { claude: 'Claude', chatgpt: 'ChatGPT' };
+const plans = (m.plans ?? []).map((pid) => {
+  const [, provider, plan] = pid.split('.');
+  const price = `plans.${provider}.${plan}.price`;
+  return { id: pid, name: `${PROVIDER[provider!] ?? provider} ${plan![0]!.toUpperCase()}${plan!.slice(1)}`, price: state(price) === 'shown' ? price : undefined };
+});
+
+// Per-effort scores where the data has them (today: Opus 5.5 and Fable 5.2).
+const ed = effortData();
+const perEffort = id === 'claude-opus-5-5'
+  ? ed.levels.map((l, i) => ({ level: l, score: ed.opus[i], id: `benchmarks.aa.opusByEffort.${l}.score` }))
+  : id === 'claude-fable-5-2'
+    ? ed.levels.map((l, i) => ({ level: l, score: ed.fable[i], id: `benchmarks.aa.fableByEffort.${l}` }))
+    : [];
+const effortRows = perEffort.filter((r) => r.score != null && shown(r.id));
+const top = Math.max(...effortRows.map((r) => r.score!), 1);
+
+const ids = [...modelFactIds(id), ...effortRows.map((r) => r.id), ...plans.flatMap((p) => [p.id, p.price]).filter((x): x is string => !!x && shown(x))];
+const description = `${m.name}: price, context window, effort levels, benchmark score, the plans that include it and the tools it runs in, each with a source and a date.`;
+---
+<Board title={m.name} description={description} section="models" docTitle={`${m.name} · Models · Agentic Coding Guide`}>
+  <a slot="tools" class="mc-back" href={url('models/')}>All models</a>
+
+  <Tile title={`${m.lab}, in its own words`} span={7} id="facts">
+    {shown(f('purpose')) ? <p class="finding">“<Fact id={f('purpose')} />”</p> : <p class="gap">No one-line description from the lab in our data.</p>}
+    {m.changed && <p class="mc-changed"><strong>Changed {formatDate(m.changed.date)}:</strong> {m.changed.note}</p>}
+    <dl class="stats mc-stats">
+      <Stat name="Price in, per M"><Val id={f('price.input')} /></Stat>
+      <Stat name="Price out, per M" tone="accent"><Val id={f('price.output')} /></Stat>
+      <Stat name="Cache read, per M"><Val id={f('price.cacheRead')} /></Stat>
+      <Stat name="Context window"><Val id={f('context')} /></Stat>
+      <Stat name="Longest reply"><Val id={f('maxOutput')} /></Stat>
+      <Stat name="Released"><Val id={f('released')} /></Stat>
+      <Stat name={score?.effort ? `Index score, ${score.effort} effort` : 'Index score'}>{score ? <Fact id={score.factId} /> : <span class="gap">not published</span>}</Stat>
+      <Stat name="Default effort, API"><Val id={f('effort.apiDefault')} /></Stat>
+      <Stat name="Knowledge cutoff"><Val id={f('knowledgeCutoff')} /></Stat>
+    </dl>
+    {m.price?.longPrompt && (
+      <p class="mc-note">Above <Val id={f('price.longPrompt.threshold')} /> a prompt: <Val id={f('price.longPrompt.input')} /> in, <Val id={f('price.longPrompt.output')} /> out.</p>
+    )}
+    {m.price?.fast && (
+      <p class="mc-note">Fast mode: <Val id={f('price.fast.input')} /> in, <Val id={f('price.fast.output')} /> out.</p>
+    )}
+  </Tile>
+
+  <Tile title="Among the others" span={5} id="among">
+    <ModelRank rows={rows} id={id} keys={['score', 'output', 'context']} />
+    <Fragment slot="foot"><a href={url('models/#lab')}>Place them all on your own axes</a></Fragment>
+  </Tile>
+
+  <Tile title="On these plans" span={4} id="plans" side="explain/plans-and-api/">
+    {plans.length ? (
+      <ul class="mc-plans">
+        {plans.map((p) => (
+          <li>
+            <span class="mc-plan">{p.name}{p.price && <> <Fact id={p.price} /></>}</span>
+            <span class="mc-claim"><Val id={p.id} show="claim" /></span>
+          </li>
+        ))}
+      </ul>
+    ) : <p class="gap">No plan in our data includes it.</p>}
+  </Tile>
+
+  <Tile title="Where it runs" span={4} id="runs" side="t3-code/">
+    {m.harness ? (
+      <dl class="mc-runs">
+        <div><dt>Harness</dt><dd><a href={url(sourcePath(`harnesses.${m.harness}.models`))}>{HARNESS[m.harness]}</a></dd></div>
+        <div><dt>Pick it</dt><dd><code><Val id={f('pick')} /></code></dd></div>
+        <div><dt>Set effort</dt><dd><code><Val id={`harnesses.${m.harness}.effort`} /></code></dd></div>
+        <div><dt>Effort levels</dt><dd>{m.effort ? <Val id={f('effort.levels')} /> : m.lab === 'OpenAI' ? <>In Codex: <Val id="lineup.codexEffortLevels" /></> : <span class="gap">not published</span>}</dd></div>
+        <div><dt>T3 Code</dt><dd><a href={url(sourcePath('t3code.providers'))}>through {HARNESS[m.harness]}</a></dd></div>
+        {m.apiId && <div><dt>API id</dt><dd><code>{m.apiId}</code></dd></div>}
+      </dl>
+    ) : <p class="gap">No harness for it in our data.</p>}
+  </Tile>
+
+  {effortRows.length > 0 && (
+    <Tile title="Index score at each effort" span={4} id="effort" side={sourcePath(effortRows[0]!.id)}>
+      <ol class="mc-effort">
+        {effortRows.map((r) => (
+          <li>
+            <span>{r.level}</span>
+            <span class="mc-track"><span style={`transform:scaleX(${r.score! / top})`}></span></span>
+            <a href={url(sourcePath(r.id))}>{r.score}</a>
+          </li>
+        ))}
+      </ol>
+    </Tile>
+  )}
+
+  <Tile title="Sources" span={4} id="sources">
+    <ul class="mc-links">
+      {m.links.docs ? <li><a href={m.links.docs}>{m.lab} documentation</a></li> : <li class="gap">No documentation page in our data</li>}
+      {m.links.announcement && <li><a href={m.links.announcement}>The announcement</a></li>}
+      {m.links.systemCard ? <li><a href={m.links.systemCard}>The system card</a></li> : <li class="gap">No system card in our data</li>}
+      {score && <li><a href={url(sourcePath(score.factId))}>The index score's source</a></li>}
+      <li><a href={url('sources/#file-models')}>Every model fact</a></li>
+    </ul>
+    <Fragment slot="foot"><Verified ids={ids} /></Fragment>
+  </Tile>
+</Board>
+
+<style>
+  .mc-back { display: inline-flex; align-items: center; min-height: 2.5rem; font-size: var(--text-s); color: var(--accent); }
+  .gap { color: var(--muted); font-style: italic; }
+  .finding { margin-bottom: 0.75rem; }
+  .mc-changed { margin: 0 0 0.75rem; font-size: var(--text-s); }
+  .mc-stats { grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); }
+  .mc-stats :global(.stat-value) { font-size: 1.125rem; }
+  .mc-stats :global(.stat-value a) { color: inherit; }
+  .mc-stats :global(.stat-value .gap) { font-family: var(--sans); font-size: var(--text-s); font-weight: 400; }
+  .mc-note { margin: 0.625rem 0 0; font-size: var(--text-xs); color: var(--ink-2); }
+
+  .mc-plans { display: grid; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+  .mc-plans li { display: grid; gap: 0.125rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--rule); }
+  .mc-plans li:last-child { border-bottom: 0; padding-bottom: 0; }
+  .mc-plan { font-weight: 650; color: var(--ink); }
+  .mc-plan :global(a) { font-family: var(--mono); font-weight: 600; margin-left: 0.25rem; }
+  .mc-claim { font-size: var(--text-xs); color: var(--ink-2); }
+
+  .mc-runs { display: grid; margin: 0; font-size: var(--text-s); }
+  .mc-runs div { display: grid; grid-template-columns: 6.5rem 1fr; gap: 0.5rem; padding: 0.375rem 0; border-top: 1px solid var(--rule); }
+  .mc-runs div:first-child { border-top: 0; padding-top: 0; }
+  .mc-runs dt { color: var(--muted); font-size: var(--text-xs); }
+  .mc-runs dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+
+  .mc-effort { display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+  .mc-effort li { display: grid; grid-template-columns: 4rem 1fr 3rem; align-items: center; gap: 0.5rem; min-height: 2rem; font-size: var(--text-xs); }
+  .mc-effort li > span:first-child { font-family: var(--mono); color: var(--ink-2); }
+  .mc-effort a { font-family: var(--mono); font-weight: 600; color: var(--ink); text-align: right; }
+  .mc-track { position: relative; height: 0.875rem; border-radius: 3px; background: color-mix(in oklab, var(--ink) 4%, transparent); overflow: hidden; }
+  .mc-track span { position: absolute; inset: 0; transform-origin: left; background: var(--accent); border-radius: 3px; }
+
+  .mc-links { display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+  .mc-links li { min-height: 2rem; display: flex; align-items: center; }
+  .tile :global(.verified) { margin: 0; }
+</style>

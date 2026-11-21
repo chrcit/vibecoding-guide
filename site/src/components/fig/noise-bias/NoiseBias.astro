@@ -1,0 +1,109 @@
+---
+/*
+ * Fig. 14, "Noise and bias".
+ *
+ * Idea: running a task again averages away random error (noise) and does nothing for an error every
+ * run shares (bias); only a different judge finds the second. Elements: two target boards, the
+ * centre of each (the right answer, green), pins for runs, a lit ring for the average.
+ * States: 1 run, 3 runs, 10 runs, then a real check fixes the shared assumption (model.ts).
+ * Data: none; fixed illustrative positions, the fictional contact tidy. Interaction: Back and Next
+ * step buttons. Alt text: below.
+ */
+import Figure from '../Figure.astro';
+import Pane from '../Pane.astro';
+import { drawNoiseBias } from './draw';
+import { STEPS } from './model';
+
+interface Props { n?: number | string }
+const { n = 14 } = Astro.props;
+const { panes, motion } = drawNoiseBias();
+const [left, right] = panes.map((p) => p.labels);
+const last = STEPS.length - 1;
+---
+<div class="fig-noise-bias" data-fig-noise-bias data-motion={JSON.stringify(motion)}>
+  <Figure
+    n={n}
+    title="Noise and bias"
+    hint="Press Next to run the same task again on both boards."
+    alt="Two round target boards side by side, each with a green centre: the right answer. Each has one pin in it, a single run of the same task, and an orange ring marking the average of the runs. On the left board the pin is to the left of the centre; on the right board it is to the right."
+    legend={[...left!, ...right!].map((l) => l.name)}
+  >
+    <div class="fig-panes">
+      <Pane labels={left}><Fragment set:html={panes[0]!.svg} /></Pane>
+      <Pane labels={right} start={left!.length + 1}><Fragment set:html={panes[1]!.svg} /></Pane>
+    </div>
+    <Fragment slot="control">
+      <button type="button" class="btn ghost" data-back disabled>Back</button>
+      <button type="button" class="btn" data-next>Run again</button>
+      <span class="fig-nb-count" data-count>Step 1 of {last + 1}</span>
+    </Fragment>
+    <Fragment slot="readout">{STEPS[0]!.says}</Fragment>
+    <Fragment slot="caption">
+      The task: count the duplicate contacts in the contact tidy. Each pin is one run, the centre is the right count. Left, the runs go wrong in different directions each time. Right, they all share one hidden assumption. Asking again fixes the first kind of error; a test with a known answer, or a different model, is what finds the second.
+    </Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .fig-noise-bias .nb-bull { fill: var(--green); stroke: var(--green); }
+  .fig-nb-count { color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+</style>
+
+<script>
+  import { STEPS, averages } from './model';
+
+  type Flat = [number, number];
+  type Motion = { ux: Flat; uy: Flat; fix: Flat };
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const tr = ([x, y]: Flat) => `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fig-noise-bias]')) {
+    const m: Motion = JSON.parse(root.dataset.motion!);
+    const panes = [...root.querySelectorAll<HTMLElement>('.fig-pane')];
+    const back = root.querySelector<HTMLButtonElement>('[data-back]')!;
+    const next = root.querySelector<HTMLButtonElement>('[data-next]')!;
+    const count = root.querySelector<HTMLElement>('[data-count]')!;
+    const readout = root.querySelector<HTMLElement>('[data-fig-readout]')!;
+    const cluster = root.querySelector<SVGGElement>('[data-cluster]')!;
+    const last = STEPS.length - 1;
+    const onBoard = ([x, y]: Flat): Flat => [x * m.ux[0] + y * m.uy[0], x * m.ux[1] + y * m.uy[1]];
+    let at = 0;
+
+    root.querySelector<HTMLElement>('[data-fig-control]')!.hidden = false;
+
+    function show(i: number) {
+      root.style.setProperty('--fig-ms', reduced.matches ? '0ms' : '');
+      const step = STEPS[i]!;
+      const avg = averages(step);
+      panes.forEach((pane, p) => {
+        for (const pin of pane.querySelectorAll<SVGGElement>('[data-pin]')) {
+          const on = Number(pin.dataset.pin) < step.runs;
+          pin.style.opacity = on ? '1' : '0';
+          pin.style.transform = on ? 'translate(0px, 0px)' : pin.dataset.lift ?? '';
+        }
+        pane.querySelector<SVGGElement>('[data-average]')!.style.transform = tr(onBoard(p === 0 ? avg.noise : avg.bias));
+      });
+      cluster.style.transform = step.fixed ? tr(m.fix) : 'translate(0px, 0px)';
+      readout.textContent = step.says;
+      count.textContent = `Step ${i + 1} of ${last + 1}`;
+      back.disabled = i === 0;
+      next.textContent = i === last ? 'Start again' : i === last - 1 ? 'Check with a test' : 'Run again';
+    }
+
+    // Remember each hidden pin's lifted position so it can drop in again after Back.
+    for (const pin of root.querySelectorAll<SVGGElement>('[data-pin]')) {
+      if (pin.style.opacity === '0') pin.dataset.lift = pin.style.transform;
+    }
+
+    next.addEventListener('click', () => {
+      at = at === last ? 0 : at + 1;
+      show(at);
+    });
+    back.addEventListener('click', () => {
+      at = Math.max(0, at - 1);
+      show(at);
+      if (at === 0) next.focus();
+    });
+    show(0);
+  }
+</script>

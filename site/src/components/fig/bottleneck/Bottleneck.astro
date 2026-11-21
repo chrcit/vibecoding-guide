@@ -1,0 +1,82 @@
+---
+/*
+ * Fig. 6, "You are the bottleneck".
+ *
+ * Idea: past a few agents, the limit moves from how fast code gets written to how fast you can
+ *   decide and check; finished work queues in front of you.
+ * Elements: eight belts, one per agent; a box on each belt, mid-belt while the agent works and at
+ *   the end when it is finished and waiting; the counter where finished work arrives; your desk.
+ * States: a function of the number of agents, from a small queue simulation (model.ts).
+ * Data: none. The timings are a worked example and the caption says so.
+ * Interaction: one slider, agents running, 1 to 8.
+ * Alt: see `alt` below; it describes the first frame.
+ */
+import Figure from '../Figure.astro';
+import { drawBottleneck } from './draw';
+import { simulate, describe, waitingAgents, MAX_AGENTS, RUN, REVIEW, PROMPT, SATURATION } from './model';
+
+interface Props { n?: number | string; start?: number }
+const { n = 6, start = 2 } = Astro.props;
+const first = simulate(start);
+const { svg, labels, motion } = drawBottleneck(start, waitingAgents(first));
+---
+<div class="fig-bottleneck" data-fig-bottleneck data-motion={JSON.stringify(motion)}>
+  <Figure
+    n={n}
+    title="You are the bottleneck"
+    hint="Drag the slider to run more agents at once."
+    alt={`Eight conveyor belts feed one counter in front of an orange desk, which is you. ${start} belts are running, each with a box of work in the middle; the rest stand idle. Nothing is waiting at the counter yet.`}
+    labels={labels}
+  >
+    <Fragment set:html={svg} />
+    <label slot="control" class="fig-range">
+      <span>Agents running <output data-out>{start}</output></span>
+      <input type="range" min="1" max={MAX_AGENTS} step="1" value={start} data-agents />
+    </label>
+    <Fragment slot="readout">{describe(first)}</Fragment>
+    <Fragment slot="caption">
+      A worked example, not a measurement: each run takes {RUN} minutes, reading a result {REVIEW} and writing the next prompt {PROMPT}, for three hours. With these numbers about {Math.floor(SATURATION)} agents keep you fully busy. The way past the limit is on the review side: an agent that checks its own work leaves you less to read.
+    </Fragment>
+  </Figure>
+</div>
+
+<script>
+  import { simulate, describe, waitingAgents, queueSlots } from './model';
+
+  type Flat = [number, number];
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fig-bottleneck]')) {
+    const { toSlot }: { toSlot: Flat[][] } = JSON.parse(root.dataset.motion!);
+    const q = <T extends Element>(s: string) => root.querySelector<T>(s)!;
+    const input = q<HTMLInputElement>('[data-agents]');
+    const out = q<HTMLOutputElement>('[data-out]');
+    const readout = q<HTMLElement>('[data-fig-readout]');
+    const belts = [...root.querySelectorAll<SVGGElement>('[data-belt]')];
+    const queueLabel = q<HTMLElement>('[data-label="queue"]');
+    let timer = 0;
+
+    q<HTMLElement>('[data-fig-control]').hidden = false;
+
+    function show() {
+      root.style.setProperty('--fig-ms', reduced.matches ? '0ms' : '');
+      const s = simulate(Number(input.value));
+      const waiting = waitingAgents(s);
+      out.textContent = String(s.agents);
+      const slots = queueSlots(s.agents, waiting);
+      for (const belt of belts) {
+        const i = Number(belt.dataset.belt);
+        belt.style.opacity = i < s.agents ? '1' : '0.3';
+        const box = q<SVGGElement>(`[data-box="${i}"]`);
+        const slot = slots[i]!;
+        box.style.opacity = i < s.agents ? '1' : '0';
+        box.style.transform = slot >= 0 ? `translate(${toSlot[i]![slot]![0].toFixed(1)}px, ${toSlot[i]![slot]![1].toFixed(1)}px)` : 'translate(0px, 0px)';
+      }
+      queueLabel.toggleAttribute('data-active', waiting > 0);
+      clearTimeout(timer);
+      timer = window.setTimeout(() => (readout.textContent = describe(s)), 350);
+    }
+
+    input.addEventListener('input', show);
+  }
+</script>

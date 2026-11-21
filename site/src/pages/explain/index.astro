@@ -1,0 +1,37 @@
+---
+// The explainers as a small board: one miniature per explainer, each with one control, each
+// opening its full board. The miniatures are the home board's (components/fig/minis/).
+import Board from '../../layouts/Board.astro';
+import Tile from '../../components/board/Tile.astro';
+import MiniContext from '../../components/fig/minis/MiniContext.astro';
+import MiniPlans from '../../components/fig/minis/MiniPlans.astro';
+import MiniQueue from '../../components/fig/minis/MiniQueue.astro';
+import MiniJudges from '../../components/fig/minis/MiniJudges.astro';
+import MiniSkills from '../../components/fig/minis/MiniSkills.astro';
+import MiniConnectors from '../../components/fig/minis/MiniConnectors.astro';
+import MiniVoice from '../../components/fig/minis/MiniVoice.astro';
+import MiniModels from '../../components/fig/minis/MiniModels.astro';
+import { url } from '../../lib/nav';
+
+const open = (href: string, name: string) => ({ href: url(href), label: `Open ${name}` });
+const tiles = [
+  { title: 'Plans against the API', ...open('explain/plans-and-api/', 'Plans against the API'), C: MiniPlans },
+  { title: 'Context', ...open('explain/context/', 'Context'), C: MiniContext },
+  { title: 'Verification', ...open('explain/verification/', 'Verification'), C: MiniJudges },
+  { title: 'Orchestration', ...open('explain/orchestration/', 'Orchestration'), C: MiniQueue },
+  { title: 'Skills', ...open('explain/skills/', 'Skills'), C: MiniSkills },
+  { title: 'Connectors and MCP', ...open('explain/connectors/', 'Connectors and MCP'), C: MiniConnectors },
+  { title: 'Voice', ...open('explain/voice/', 'Voice'), C: MiniVoice },
+  { title: 'Models', ...open('models/', 'Models'), C: MiniModels },
+];
+---
+<Board title="Explainers" docTitle="Explainers · Agentic Coding Guide" description="One board per idea you need to work with coding agents: cost, context, checking the work, running several agents, skills, connectors, voice and models." section="explain">
+  {tiles.map(({ title, href, label, C }) => (
+    <Tile title={title} span={3}>
+      <a slot="tools" class="tile-more" href={href} aria-label={label} title={label}>
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" /></svg>
+      </a>
+      <C />
+    </Tile>
+  ))}
+</Board>

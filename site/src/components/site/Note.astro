@@ -1,0 +1,45 @@
+---
+/*
+  An aside: context the reader can skip without losing the thread.
+  Props: title? (string, a short heading), href? (string, a "read more" link;
+  internal paths go through url()), linkText? (default "Read more").
+  Slots: default (the note text; inline markup or paragraphs).
+*/
+import { url } from '../../lib/nav';
+interface Props { title?: string; href?: string; linkText?: string }
+const { title, href, linkText = 'Read more' } = Astro.props;
+const link = href ? (/^(https?:|mailto:|#)/.test(href) ? href : url(href)) : undefined;
+---
+<aside class="note" aria-label={title ?? 'Note'}>
+  {title && <p class="title">{title}</p>}
+  <div class="body"><slot /></div>
+  {link && (
+    <a class="more" href={link}>
+      {linkText}
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" /></svg>
+    </a>
+  )}
+</aside>
+
+<style>
+  .note {
+    margin: var(--space-6) 0;
+    padding: var(--space-4) var(--space-5);
+    background: var(--paper-2);
+    border-radius: var(--radius);
+    font-size: var(--text-m);
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+  .title { margin: 0 0 var(--space-1); font-weight: 620; color: var(--ink); }
+  .body :global(p) { margin: 0 0 0.6em; }
+  .body :global(p:last-child) { margin-bottom: 0; }
+  .more {
+    display: inline-flex; align-items: center; gap: 0.35em;
+    margin-top: var(--space-2); min-height: 2.5rem;
+    color: var(--accent); font-weight: 560; text-decoration: none;
+  }
+  .more:hover { text-decoration: underline; }
+  .more svg { transition: transform var(--dur-fast) var(--ease-out); }
+  .more:hover svg { transform: translateX(3px); }
+</style>

@@ -1,0 +1,40 @@
+---
+import Essay from '../../layouts/Essay.astro';
+import Fact from '../../components/data/Fact.astro';
+import { url } from '../../lib/nav';
+import { anchor } from '../../lib/facts';
+
+export const meta = {
+  title: 'Building is cheap now, so small personal software gets built',
+  description: 'Things nobody would have paid for now get built on the side in a couple of requests. What stays hard is making something people will pay for.',
+  order: 11,
+};
+
+const src = (id: string) => `sources/#${anchor(id)}`;
+const leansOn = [
+  { href: '', title: 'Home: METR time horizons (Fig. 7)' },
+  { href: 'explain/plans-and-api/', title: 'Plans and the API: a meter and a tank (Fig. 8)' },
+  { href: src('claims.trends.a16z'), title: 'a16z on how fast the price of capability falls' },
+  { href: src('claims.trends.epoch'), title: 'Epoch AI on inference price trends' },
+  { href: src('claims.hosting.cloudflareStatic'), title: 'What static hosting costs on Cloudflare' },
+];
+---
+<Essay meta={meta} leansOn={leansOn}>
+  <p>Some of what I built this year nobody would ever have paid to have made. A habit tracker for me and a few friends is one. We log workouts, water and food. Each of us has a small virtual pet that earns treats as our points build up, and long streaks earn coins we spend on rewards for ourselves. It installs on a phone like an app and takes photos as proof. As I remember it, the first working version took a couple of requests, done on the side. It isn't a hard problem. I mention it because a few years ago it would not have existed at all.</p>
+
+  <p>Another one: a 3D model of a building for a personal project, with a roof that lifts off so you can walk through the rooms from any angle, like in a game. That one was on the side too.</p>
+
+  <h2>Why it gets built</h2>
+
+  <p>The cost of making software has fallen a long way, and it is still falling. a16z estimates that the price of a fixed level of model capability drops about <Fact id="claims.trends.a16z" /> a year. Epoch AI puts the fall at <Fact id="claims.trends.epoch" />, depending on the level. Agents can also carry longer jobs every year, which the time-horizon chart on the <a href={url('')}>home page</a> shows. <!-- FIG 7 --> Running the result costs close to nothing as well: on Cloudflare, requests to static files are <Fact id="claims.hosting.cloudflareStatic" />.</p>
+
+  <p>On a flat plan the side project doesn't even show up on a bill. A <Fact id="plans.claude.pro.price" /> plan costs the same whether you use it or not, until you run into the limit, and the <a href={url('explain/plans-and-api/')}>plans explainer</a> shows how that tank drains and refills. <!-- FIG 8 --></p>
+
+  <h2>What stays hard</h2>
+
+  <p>When I showed the tracker to a friend, she said I could sell it. I don't think so, and the reason is the point of this essay. Once making the thing is cheap, the hard part is the business: building something people pay for, in a market where everyone else can now build the same thing. Habit trackers are a crowded niche, and selling one would be a marketing job, which I'm not set up to do.</p>
+
+  <p>So the cheapness changes what is worth building for yourself far more than what is worth building to sell. Build the small tool for your club, your family or your own odd habit. Don't mistake it for a product.</p>
+
+  <p>A caveat on my own numbers. “A couple of requests” is my memory of it. I didn't time the builds and I have no hours-by-hand figure to set beside them, so treat the examples as examples.</p>
+</Essay>

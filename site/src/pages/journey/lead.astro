@@ -1,0 +1,53 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import Step from '../../components/journey/Step.astro';
+import Next from '../../components/journey/Next.astro';
+import More from '../../components/journey/More.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
+import Term from '../../components/journey/Term.astro';
+import Opinion from '../../components/site/Opinion.astro';
+---
+<Journey chapter="lead" first="roles" title="A lead" description="The agent you talk to stops building. It writes briefs, merges what passes the check, and reads short reports; five helpers do the work.">
+  <Step id="roles" title="One plans, five build">
+    <p>The agent from <LessonRef id="parallel" /> stops writing code and becomes the <Term id="lead" />: it writes the briefs, hands them out and merges what comes back. Five helpers, each in its own copy, do the building.</p>
+    <Opinion date="2026-11-18">
+      <p>Claude is better at design, and the current class of Fable 5.2 and Opus 5.5 is better at high-level decisions. That is what I put in the lead’s seat.</p>
+    </Opinion>
+  </Step>
+  <Step id="reports" title="What the lead reads">
+    <p>Every report lands in the lead’s window. If helpers send back everything they did, watch the lead’s window fill and get compacted.</p>
+    <div class="pick">
+      <button type="button" data-do="short" data-val="all" data-default aria-pressed="true">Everything</button>
+      <button type="button" data-do="short" data-val="short" aria-pressed="false">Five-line reports</button>
+    </div>
+    <More title="What to ask helpers for">
+      <CopyPrompt compact title="A five-line report">{`Report in five lines: what you changed, how you checked it, what you did not check, anything I have to decide, the branch name.\nDo not paste the diff or the logs. I will open them if I need them.`}</CopyPrompt>
+    </More>
+  </Step>
+  <Step id="shapes" title="Other ways to split one job">
+    <p>The same request, routed four ways. The shaded agent runs a different model, so whoever judges the work did not build it.</p>
+    <div class="pick">
+      <button type="button" data-do="shape" data-val="pair" data-default aria-pressed="true">Build, then review</button>
+      <button type="button" data-do="shape" data-val="line" aria-pressed="false">Plan, build, review</button>
+      <button type="button" data-do="shape" data-val="best" aria-pressed="false">Two builds, keep one</button>
+      <button type="button" data-do="shape" data-val="fan" aria-pressed="false">Fan out</button>
+    </div>
+  </Step>
+  <Step id="gate" title="A check before main">
+    <p>The <Term id="check" /> from <LessonRef id="check" /> now stands in front of main. Take it away and watch what lands.</p>
+    <div class="pick">
+      <button type="button" data-do="gate" data-val="on" data-default aria-pressed="true">With the check</button>
+      <button type="button" data-do="gate" data-val="off" aria-pressed="false">Without</button>
+    </div>
+    <More title="A rule for the lead">
+      <CopyPrompt compact title="Before the lead merges">{`Before you merge a helper's branch into main:\nrun the check (npm run check) on that branch and open the page it changed.\nIf either fails, send it back to the same helper with the output.\nDo not fix it yourself, and do not merge to make the queue shorter.`}</CopyPrompt>
+      <ForLevel is="engineer"><p>Merge one branch at a time and run the check again on main after each: two green branches can be red together.</p></ForLevel>
+    </More>
+    <Next from="lead" more={[{ href: 'models/', text: 'Which model where' }]} />
+  </Step>
+  <Fragment slot="foot">
+    <p>The tasks, the reports and the window numbers are made up.</p>
+  </Fragment>
+</Journey>

@@ -1,0 +1,43 @@
+---
+import LessonRef from '../../components/journey/LessonRef.astro';
+import Term from '../../components/journey/Term.astro';
+import Journey from '../../layouts/Journey.astro';
+import Step from '../../components/journey/Step.astro';
+import Next from '../../components/journey/Next.astro';
+import More from '../../components/journey/More.astro';
+import Fact from '../../components/data/Fact.astro';
+import { url } from '../../lib/nav';
+---
+<Journey chapter="loop" first="hands" title="It gets hands" description="Tools turn a model's text into actions. Each result goes back into the window and the model goes again, until the job is done.">
+  <Step id="hands" title="Tools are its hands">
+    <p>The model and window from <LessonRef id="chat" />, now with four <Term id="tools" /> beside it and <Term id="project" /> behind them. The model only writes text; the tools turn it into actions: search, read a file, edit it, run a command.</p>
+  </Step>
+  <Step id="fix" title="One request, many turns">
+    <p>You ask once: the dates on the member list are wrong. Watch it search, read, edit, run the tests, see one fail, and fix that too.</p>
+    <div class="row"><button class="btn ghost" type="button" data-do="play">Play it again</button></div>
+  </Step>
+  <Step id="again" title="You sent one message">
+    <p>You wrote one message; all the other turns were its own. Each tool result went back into the window and the model chose the next step. That loop makes it an <Term id="agent" />.</p>
+  </Step>
+  <Step id="norun" title="Take one tool away">
+    <p>The run cube is greyed out. It cannot try its own fix, and it still says “fixed”: look at the last line of the numbers.</p>
+    <div class="pick">
+      <button type="button" data-do="run" data-val="off" data-default aria-pressed="true">Without run</button>
+      <button type="button" data-do="run" data-val="on" aria-pressed="false">With run</button>
+    </div>
+  </Step>
+  <Step id="ask" title="You decide what it may do alone">
+    <p>Each time it asks, the loop stops until you answer. Next, all of this piles up in its window.</p>
+    <div class="pick">
+      <button type="button" data-do="ask" data-val="always" data-default aria-pressed="true">Ask every time</button>
+      <button type="button" data-do="ask" data-val="edits" aria-pressed="false">Ask before changes and commands</button>
+      <button type="button" data-do="ask" data-val="never" aria-pressed="false">Don’t ask</button>
+    </div>
+    <More title="Where this is set">
+      <p>In T3 Code it is the mode on the composer: <Fact id="t3code.permissionModes" />. <Fact id="t3code.modeMeaning" show="claim" /></p>
+      <p><Fact id="harnesses.claudeCode.permissionModes" show="claim" /></p>
+      <p><Fact id="harnesses.codex.sandbox" show="claim" /></p>
+    </More>
+    <Next from="loop" />
+  </Step>
+</Journey>

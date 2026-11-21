@@ -1,0 +1,46 @@
+---
+import Essay from '../../layouts/Essay.astro';
+import Fact from '../../components/data/Fact.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import Loop from '../../components/fig/loop/Loop.astro';
+import { url } from '../../lib/nav';
+import { anchor } from '../../lib/facts';
+
+export const meta = {
+  title: 'Give the agent a way to check itself',
+  description: 'An agent only works at its full ability when it has something to judge its own output against. Give it that, and tell it to loop before it comes back to you.',
+  order: 12,
+};
+
+const src = (id: string) => `sources/#${anchor(id)}`;
+const leansOn = [
+  { href: 'explain/verification/', title: 'Verification: one bug, three judges (Fig. 13), noise and bias (Fig. 14), the summary and the diff (Fig. 15)' },
+  { href: src('harnesses.claudeCode.bestPractice'), title: 'Anthropic’s advice before an unattended run' },
+  { href: src('t3code.browser'), title: 'The shared browser in T3 Code' },
+];
+---
+<Essay meta={meta} leansOn={leansOn}>
+  <p>An agent only reaches its full ability on a problem when it has something to judge its own output against. If you can break a problem down far enough for the model to solve it, the next thing it needs is a way to tell whether what it did is right or wrong, good or bad, and by how much. Give it that, and tell it to keep going round until the check passes. Self-verification is where I want every task to end up.</p>
+
+  <p>I learned this the obvious way. A page I was building rendered badly. I told the agent to review its own work in the browser, that it looked terrible, and to test the interactions and the animations. It opened the page, looked, found the problems and fixed them. I had done nothing but point it at the result.</p>
+
+  <h2>The check step is the one that matters</h2>
+
+  <p>An agent is a model in a loop: it reads, it acts, it checks, and the loop ends when a check passes or it gives up. Follow one bug fix round it here.</p>
+
+  <Loop />
+
+  <p>My whole point is to put something real behind that third station. Anthropic's own advice says the same: “<Fact id="harnesses.claudeCode.bestPractice" />”</p>
+
+  <p>For visual work, the check can be the agent's own eyes. The workspace I use is T3 Code. <Fact id="t3code.browser" show="claim" /> Other tools have their own ways of letting the agent look at a page, and they differ. For technical work you can go further. The best check is a tool that judges the output: a test, a script, a comparison against known answers. Take the bakery whose website shows the wrong opening hours on public holidays. Hand the agent a test that checks every holiday in the list against the hours the bakery actually keeps, and it no longer runs once and hopes. It can try ten times before it comes back to you, and you only see the attempt that passed.</p>
+
+  <CopyPrompt title="Make it check before it reports">Before you come back to me, check your own work. Open the result and look at it the way I would, run whatever tests exist, and if there is no test for this, write one first. If something is wrong, fix it and check again. Try up to five times before you report. When you do report, tell me what you checked and what you could not check.</CopyPrompt>
+
+  <h2>Where it stops working</h2>
+
+  <p>Here is the limit, and I hit it in the same session. After the agent's self-review, the page looked correct. To me it didn't look good. The loop had removed the breakage and left the taste problem untouched. For design, a self-check gets you to “okay”. If I want something special that matches a picture in my head, the agent's judgement of its own work stops helping, because in my experience the models can't judge at that level. That is my view and I have nothing measured to back it.</p>
+
+  <p>Repetition doesn't fix this. Running the same check five times smooths out random misses. A check that is wrong in the same way every time stays wrong however often you run it, and the <a href={url('explain/verification/')}>verification explainer</a> draws that difference between noise and bias. <!-- FIG 14 --> It also shows why one judge is rarely enough <!-- FIG 13 --> and why reading the agent's summary is a different job from reading what it changed. <!-- FIG 15 --> So build the strongest check you can, let the agent loop against it, and keep the judgement the check can't make for yourself.</p>
+
+  <p>I would like to show you a published comparison of agent results with and without a verification step. I haven't found one I trust, so this essay rests on what I have seen in my own work.</p>
+</Essay>

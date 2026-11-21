@@ -1,0 +1,22 @@
+---
+/*
+ * The frame of one miniature on the home board: a picture that links to the full board, and one
+ * control under it. The picture changes as the control moves.
+ * Props: href (site path of the full board), name (the board's name, for the link's label),
+ *   alt (what the picture shows first), id (the miniature's key, for its script).
+ * Slots: default (the SVG), control (one control), read (an optional number line beside it).
+ */
+import './minis.css';
+import { url } from '../../../lib/nav';
+interface Props { href: string; name: string; alt: string; id: string }
+const { href, name, alt, id } = Astro.props;
+---
+<div class="mini" data-mini={id}>
+  <a class="mini-pic" href={url(href)} aria-label={`${name}: open the full board. ${alt}`}>
+    <slot />
+    <span class="mini-go" aria-hidden="true">
+      <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" /></svg>
+    </span>
+  </a>
+  <div class="mini-control"><slot name="control" /></div>
+</div>

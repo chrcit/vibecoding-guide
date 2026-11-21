@@ -1,0 +1,19 @@
+---
+// A model field: the sourced value through <Fact>, or an honest gap. A fact that exists but could
+// not be confirmed shows as "not confirmed"; a field the data does not have shows as "not published"
+// (or the `missing` text). Never a guess.
+import Fact from '../data/Fact.astro';
+import { state } from './view';
+
+interface Props {
+  id: string;
+  show?: 'value' | 'claim';
+  missing?: string;
+}
+const { id, show = 'value', missing = 'not published' } = Astro.props;
+const s = state(id);
+---
+{s === 'shown' ? <Fact id={id} show={show} /> : <span class="gap">{s === 'unverified' ? 'not confirmed' : missing}</span>}
+<style>
+  .gap { color: var(--muted); font-style: italic; }
+</style>

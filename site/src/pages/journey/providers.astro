@@ -1,0 +1,98 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import Step from '../../components/journey/Step.astro';
+import Next from '../../components/journey/Next.astro';
+import More from '../../components/journey/More.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import { models } from '../../data/models';
+import { plans } from '../../data/plans';
+import { t3code } from '../../data/t3code';
+import Term from '../../components/journey/Term.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
+import { url } from '../../lib/nav';
+
+// Every name and price the picture shows comes from here.
+const current = (lab: string) => Object.values(models).filter((m) => m.lab === lab && m.current).map((m) => m.name.replace(/^Claude /, ''));
+const usd = (n: number) => `$${n}`;
+const opus = models['claude-opus-5-5'].price!;
+const data = {
+  anthropic: current('Anthropic'),
+  openai: current('OpenAI'),
+  claudeFree: usd(plans.claude.free.price.value),
+  claudePro: usd(plans.claude.pro.price.value),
+  chatgptFree: usd(plans.chatgpt.free.price.value),
+  chatgptPlus: usd(plans.chatgpt.plus.price.value),
+  opusIn: usd(opus.input.value),
+  opusOut: usd(opus.output.value),
+  t3: t3code.price.value,
+};
+const ids = [
+  'plans.claude.free.price', 'plans.claude.pro.price', 'plans.claude.pro.claudeCode', 'plans.chatgpt.free.price', 'plans.chatgpt.plus.price',
+  'plans.chatgpt.limits.codexOnEveryPlan', 'plans.chatgpt.limits.apiKey', 'models.claude-opus-5-5.price.input', 'models.claude-opus-5-5.price.output', 't3code.price', 't3code.ownLogins',
+  'claims.privacy.claudeConsumer', 'claims.privacy.openaiApi', 'claims.hardware.unifiedMemory', 't3code.phoneIsRemote', 't3code.install',
+];
+---
+<Journey chapter="providers" first="labs" data={data} title="Providers and where AI runs" description="Who makes the models, how you reach them (an app, a plan in a coding tool, the API, T3 Code), where the model runs and where your files stay, and the laptop, desktop PC and phone you work from.">
+  <Step id="labs" title="A few companies make the models">
+    <p>The model from <LessonRef id="ai" /> runs on its maker's computers. Anthropic makes Claude, OpenAI makes GPT, Google makes Gemini, and some models are free to download.</p>
+    <div class="pick" role="group" aria-label="Who makes the model">
+      <button type="button" data-do="lab" data-val="anthropic" data-default aria-pressed="true">Anthropic</button>
+      <button type="button" data-do="lab" data-val="openai" aria-pressed="false">OpenAI</button>
+      <button type="button" data-do="lab" data-val="open" aria-pressed="false">A model you download</button>
+    </div>
+    <More title="Today's models">
+      <p>Anthropic: {data.anthropic.join(', ')}. OpenAI: {data.openai.join(', ')}. Prices and windows side by side on <a href={url('models/')}>Models</a>.</p>
+      <ForLevel is="engineer"><p>A downloaded model runs on your own hardware. <Fact id="claims.hardware.unifiedMemory" show="claim" /></p></ForLevel>
+    </More>
+  </Step>
+
+  <Step id="reach" title="Four ways in">
+    <p>The same model, reached through an app, through a coding tool on your <Term id="plan" />, through the <Term id="api" /> where every token is billed, or through T3 Code, which drives the coding tools for you.</p>
+    <div class="pick" role="group" aria-label="How you reach it">
+      <button type="button" data-do="reach" data-val="app" data-default aria-pressed="true">An app</button>
+      <button type="button" data-do="reach" data-val="code" aria-pressed="false">A coding tool</button>
+      <button type="button" data-do="reach" data-val="api" aria-pressed="false">The API</button>
+      <button type="button" data-do="reach" data-val="t3" aria-pressed="false">T3 Code</button>
+    </div>
+    <More title="What each costs">
+      <dl class="j-defs">
+        <dt>An app</dt><dd>Claude Free <Fact id="plans.claude.free.price" />, Pro <Fact id="plans.claude.pro.price" /> a month. ChatGPT Free <Fact id="plans.chatgpt.free.price" />, Plus <Fact id="plans.chatgpt.plus.price" />.</dd>
+        <dt>A coding tool</dt><dd><Fact id="plans.claude.pro.claudeCode" show="claim" /> <Fact id="plans.chatgpt.limits.codexOnEveryPlan" show="claim" /></dd>
+        <dt>The API</dt><dd>A separate bill, paid with an API key instead of a plan. <Fact id="plans.chatgpt.limits.apiKey" show="claim" /> Opus 5.5: <Fact id="models.claude-opus-5-5.price.input" /> per million tokens in, <Fact id="models.claude-opus-5-5.price.output" /> out. <LessonRef id="meter" /> runs the sums.</dd>
+        <dt>T3 Code</dt><dd><Fact id="t3code.price" show="claim" /> <Fact id="t3code.ownLogins" show="claim" /></dd>
+      </dl>
+    </More>
+  </Step>
+
+  <Step id="where" title="The model is far away, your files stay with you">
+    <p>Your message and the files it reads travel to the model; every edit is made on your laptop. Turn the connection off and see what stops.</p>
+    <div class="pick" role="group" aria-label="Internet connection">
+      <button type="button" data-do="online" data-val="on" data-default aria-pressed="true">Online</button>
+      <button type="button" data-do="online" data-val="off" aria-pressed="false">Offline</button>
+    </div>
+    <ForLevel is="technical"><p>The tools run on your machine: <code>npm test</code> runs locally, and only its output is sent up.</p></ForLevel>
+    <More title="What happens to what it reads">
+      <p><Fact id="claims.privacy.claudeConsumer" show="claim" /></p>
+      <p><Fact id="claims.privacy.openaiApi" show="claim" /></p>
+    </More>
+  </Step>
+
+  <Step id="devices" title="Laptop, desktop PC, phone">
+    <p>The work runs where the files are. Pick the device you are on and watch what happens when you walk away.</p>
+    <div class="pick" role="group" aria-label="Your device">
+      <button type="button" data-do="device" data-val="laptop" data-default aria-pressed="true">Laptop</button>
+      <button type="button" data-do="device" data-val="desktop" aria-pressed="false">Desktop PC</button>
+      <button type="button" data-do="device" data-val="phone" aria-pressed="false">Phone</button>
+    </div>
+    <More title="T3 Code on each">
+      <p>It comes as <Fact id="t3code.install" />. <Fact id="t3code.phoneIsRemote" show="claim" /></p>
+    </More>
+    <Next from="providers" more={[{ href: 'models/', text: 'Models and prices' }, { href: 'wiki/harness/', text: 'Harness', side: true }, { href: 'wiki/work-data-privacy/', text: 'What leaves your machine', side: true }]} />
+  </Step>
+  <Fragment slot="foot">
+    <p>The club and the jobs above are made up. Names and prices come from the sources page.</p>
+    <Verified ids={ids} />
+  </Fragment>
+</Journey>

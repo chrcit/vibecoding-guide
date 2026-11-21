@@ -1,0 +1,294 @@
+---
+// Plans against the API, as a board. The lab runs a working week through any plan in the data and
+// through the API at once; the tiles around it make one point each. The full text, the levels and the
+// list of the lab's assumptions are in the long read (./read.astro).
+// Every price, limit and range comes from src/data/. Token volumes are the lab's assumptions
+// (components/fig/plan-week/model.ts) and say so.
+import Board from '../../../layouts/Board.astro';
+import Tile from '../../../components/board/Tile.astro';
+import Stat from '../../../components/board/Stat.astro';
+import Explain from '../../../components/board/Explain.astro';
+import Fact from '../../../components/data/Fact.astro';
+import Verified from '../../../components/data/Verified.astro';
+import Estimate from '../../../components/site/Estimate.astro';
+import PlanWeek, { type Preset } from '../../../components/fig/plan-week/PlanWeek.astro';
+import PlanMatrix from '../../../components/fig/plan-week/PlanMatrix.astro';
+import TokenCut from '../../../components/fig/token-cut/TokenCut.astro';
+import SameTask from '../../../components/fig/same-task/SameTask.astro';
+import SubagentMeter from '../../../components/fig/subagent-meter/SubagentMeter.astro';
+import CacheBreak from '../../../components/fig/cache-break/CacheBreak.astro';
+import { catalogue, labFacts, theoEstimates } from '../../../components/fig/plan-week/from-data';
+import { ASSUME, numbers, week, usd, type LabState } from '../../../components/fig/plan-week/model';
+import { harnesses } from '../../../data/harnesses';
+import { lineup } from '../../../data/models';
+import { plans } from '../../../data/plans';
+import { links } from '../../../data/links';
+import { anchor, formatDate } from '../../../lib/facts';
+import { url } from '../../../lib/nav';
+
+const READ = 'explain/plans-and-api/read/';
+const presets: Preset[] = [
+  { id: 'pro', label: 'One thread on Pro', state: { planId: 'claude-pro', modelId: 'claude-opus-5-5', effort: 1, threads: 1, hoursPerDay: 4 } },
+  { id: 'cheap', label: '$20, sixteen at max', state: { planId: 'chatgpt-plus', modelId: 'gpt-6-2-astra', effort: 4, threads: 16, hoursPerDay: 8 } },
+  { id: 'dear', label: '$500, one thread', state: { planId: 'chatgpt-pro-500', modelId: 'gpt-6-2-sol', effort: 1, threads: 1, hoursPerDay: 6 } },
+  { id: 'month', label: 'A heavy month on a key', state: { planId: 'api', modelId: 'claude-opus-5-5', effort: 2, threads: 6, hoursPerDay: 10 } },
+];
+const start: LabState = presets[0]!.state;
+const cat = catalogue();
+const first = numbers(week(cat, start));
+const ests = theoEstimates();
+const newest = ests.flatMap((e) => e.from).map((f) => f.date).sort().at(-1)!;
+
+// Claude Code's cache lifetimes, read from the sentence in the data so a change there fails here.
+const words: Record<string, number> = { 'one hour': 60, 'five minutes': 5 };
+const ttlText = lineup.claudeCodeCacheTtl.value;
+const ttlMatch = /^(.+) on a plan, (.+) on a key$/.exec(ttlText);
+if (!ttlMatch || !(ttlMatch[1]! in words) || !(ttlMatch[2]! in words)) throw new Error(`plans board: cannot read "${ttlText}"`);
+const ttl = { plan: words[ttlMatch[1]!]!, key: words[ttlMatch[2]!]! };
+
+const factIds = [
+  ...labFacts,
+  'plans.claude.limits.atTheLimit', 'plans.claude.limits.usageCredits', 'plans.chatgpt.limits.atTheLimit', 'plans.chatgpt.limits.apiKey',
+  'plans.claude.api.rateLimits', 'plans.claude.api.cacheAwareLimits', 'plans.claude.api.startSpendCap',
+  'harnesses.claudeCode.agentTeamTokens', 'harnesses.claudeCode.subagentUsage', 'lineup.claudeCodeCacheTtl', 'lineup.cacheDefaultTtl',
+];
+const src = (id: string) => `sources/#${anchor(id)}`;
+// One row per paid price point, cheapest first; plans at the same price share a row.
+const evenPlans = [...new Map(cat.plans.filter((p) => p.provider !== 'api' && p.price > 0).sort((a, b) => a.price - b.price).map((p) => [p.price, p] as const)).values()]
+  .map((p) => ({ id: p.id, name: `$${p.price} a month`, price: p.price }));
+---
+<Board
+  title="Plans against the API"
+  description="Run a week of agent work through any Claude or ChatGPT plan and through the API at once: where the plan stops, what the meter says, and where one becomes cheaper than the other."
+  section="explain"
+>
+  <a slot="tools" class="pa-see-meter" href={`${import.meta.env.BASE_URL}journey/meter/`}>See it as a picture: the meter</a>
+
+  <Tile title="A week on a plan, the same week on the meter" span={8} id="lab" side={READ}>
+    <PlanWeek
+      sides={{
+        work: url('explain/orchestration/'), // TODO wiki: parallel-work
+        window: url(`${READ}#the-window-and-the-week`), // TODO wiki: usage-window
+        meter: url(`${READ}#two-ways-to-pay`), // TODO wiki: api
+      }}
+      presets={presets}
+      start={start}
+    />
+  </Tile>
+
+  <div class="pa-stack">
+    <Tile title="What this week comes to" id="numbers">
+      <dl class="stats pa-stats">
+        <Stat name="Work before the first stop" id="firstStop" tone="accent">{first.firstStop}</Stat>
+        <Stat name="Stops this week" id="stops">{first.stops}</Stat>
+        <Stat name="Plan, a week" id="planWeek">{first.planWeek}</Stat>
+        <Stat name="API, the same week" id="apiWeek" tone="accent">{first.apiWeek}</Stat>
+        <Stat name="Plan, per hour of work" id="planPerHour">{first.planPerHour}</Stat>
+        <Stat name="API, per hour of work" id="apiPerHour">{first.apiPerHour}</Stat>
+        <Stat name="API dearer than the plan after" id="crossover">{first.crossover}</Stat>
+        <Stat name="API, a month of this" id="apiMonth">{first.apiMonth}</Stat>
+      </dl>
+      <Fragment slot="foot"><Explain to={`${READ}#how-the-model-works`}>Token use is modelled</Explain> · <Explain to="models/#cost">Every model, one job</Explain></Fragment>
+    </Tile>
+
+    <Tile title="One practitioner's reading of the week" id="estimate">
+      <div class="pa-est">
+        <Estimate name="Theo" href={links.theo.url} date={newest}>
+          <p data-est-text>Pick a Claude plan, or ChatGPT Pro at $200, in the lab.</p>
+          <div class="pa-est-bar" data-est-bar hidden><span class="pa-est-cap" data-est-cap></span><span class="pa-est-use" data-est-use></span></div>
+          <p class="pa-est-from" data-est-from></p>
+        </Estimate>
+      </div>
+    </Tile>
+  </div>
+
+  <Tile title="What each plan includes" span={8} id="plans" side={`${READ}#the-plans`}>
+    <PlanMatrix />
+  </Tile>
+
+  <Tile title="At the limit, each tool does something else" span={4} id="limit" side={`${READ}#the-window-and-the-week`}>
+    <div class="pa-limit">
+      <div class="pa-lane">
+        <p class="pa-lane-name">Claude Code</p>
+        <div class="pa-track"><span class="pa-run"></span><span class="pa-wall" aria-hidden="true"></span><span class="pa-wait"></span><span class="pa-run pa-after"></span></div>
+        <ul class="pa-outs">
+          <li><a href={url(src('plans.claude.limits.atTheLimit'))} data-side>Wait for the reset</a></li>
+          <li><a href={url(src('plans.claude.limits.atTheLimit'))} data-side>Upgrade, limits apply at once</a></li>
+          <li class="pa-credit"><a href={url(src('plans.claude.limits.usageCredits'))} data-side>Credits, at API rates</a></li>
+        </ul>
+      </div>
+      <div class="pa-lane">
+        <p class="pa-lane-name">Codex</p>
+        <div class="pa-track"><span class="pa-run"></span><span class="pa-run pa-finish"></span><span class="pa-wall" aria-hidden="true"></span><span class="pa-wait"></span></div>
+        <ul class="pa-outs">
+          <li><a href={url(src('plans.chatgpt.limits.atTheLimit'))} data-side>Finishes the turn</a></li>
+          <li class="pa-credit"><a href={url(src('plans.chatgpt.limits.atTheLimit'))} data-side>Credits on Plus and Pro</a></li>
+          <li class="pa-credit"><a href={url(src('plans.chatgpt.limits.apiKey'))} data-side>An API key, outside the plan</a></li>
+        </ul>
+      </div>
+    </div>
+  </Tile>
+
+  <Tile title="A token is a piece of a word" span={4} id="tokens" side={`${READ}#two-ways-to-pay`}>
+    {/* TODO wiki: token */}
+    <TokenCut />
+    <Fragment slot="foot">Illustrative cuts; tokenizers differ</Fragment>
+  </Tile>
+
+  <Tile title="The same fix, a different bill" span={4} id="same-task" side={`${READ}#what-usage-means`}>
+    <SameTask modelId={start.modelId} />
+    <Fragment slot="foot"><Explain to={`${READ}#how-the-model-works`}>Token use is modelled</Explain></Fragment>
+  </Tile>
+
+  <Tile title="Where the meter overtakes each plan" span={4} id="break-even">
+    <div class="pa-even" data-even data-plans={JSON.stringify(evenPlans)}></div>
+    <p class="finding" data-even-text></p>
+    <Fragment slot="foot"><Explain to={`${READ}#how-the-model-works`}>Token use is modelled</Explain></Fragment>
+  </Tile>
+
+  <Tile title="Every subagent runs its own meter" span={4} id="subagents" level="technical" side="explain/orchestration/">
+    {/* TODO wiki: subagent */}
+    <SubagentMeter modelId={start.modelId} team={harnesses.claudeCode.agentTeamTokens.value} />
+    <Fragment slot="foot"><Explain to={src('harnesses.claudeCode.agentTeamTokens')}>{harnesses.claudeCode.agentTeamTokens.value}× is Anthropic's figure</Explain>; the bar is modelled</Fragment>
+  </Tile>
+
+  <Tile title="A long break empties the cache" span={4} id="cache" level="engineer" side={src('lineup.claudeCodeCacheTtl')}>
+    {/* TODO wiki: prompt-caching */}
+    <CacheBreak modelId={start.modelId} ttl={ttl} />
+  </Tile>
+
+  <Tile title="On a key the limit is per minute and per month" span={4} id="rate" level="engineer" side={src('plans.claude.api.rateLimits')}>
+    <dl class="stats">
+      <Stat name="This lab month on the API" id="rateMonth" tone="accent">{first.apiMonth}</Stat>
+      <Stat name="Start tier spend cap"><Fact id="plans.claude.api.startSpendCap" /></Stat>
+    </dl>
+    <p class="finding pa-rate" data-rate-text></p>
+    <ul class="pa-rate-list">
+      <li>Measured in <Fact id="plans.claude.api.rateLimits" />, per model.</li>
+      <li><Explain to={src('plans.claude.api.cacheAwareLimits')}>Cache reads do not count</Explain> towards input.</li>
+    </ul>
+  </Tile>
+
+  <Verified slot="foot" ids={factIds} />
+</Board>
+
+<script>
+  import { ASSUME, hrs, hrsRange, money, numbers, usd, type Money, type Week } from '../../../components/fig/plan-week/model';
+  import type { PlanEstimate } from '../../../components/fig/plan-week/from-data';
+
+  const ests: PlanEstimate[] = JSON.parse(document.querySelector<HTMLElement>('[data-ests]')!.dataset.ests!);
+  const spendCap = Number(document.querySelector<HTMLElement>('[data-ests]')!.dataset.cap);
+  const stat = (id: string) => document.querySelector<HTMLElement>(`[data-stat="${id}"]`);
+  const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+
+  function estimate(w: Week) {
+    const text = document.querySelector<HTMLElement>('[data-est-text]')!;
+    const bar = document.querySelector<HTMLElement>('[data-est-bar]')!;
+    const from = document.querySelector<HTMLElement>('[data-est-from]')!;
+    const e = ests.find((x) => x.plan === w.plan.id);
+    if (!e) {
+      bar.hidden = true;
+      from.textContent = '';
+      text.textContent = `He gives no figure for ${w.plan.provider === 'api' ? 'an API key' : w.plan.name}. His figures cover Claude Pro, Max and Ultra and ChatGPT Pro at $200: pick one in the lab.`;
+      return;
+    }
+    if (w.access?.kind === 'credits' || w.blocked) {
+      bar.hidden = true;
+      from.textContent = '';
+      text.textContent = `${w.model.name} is outside ${w.plan.name}'s limits, so his figure does not apply here.`;
+      return;
+    }
+    const cap: Money = [e.month[0] / ASSUME.weeksPerMonth, e.month[1] / ASSUME.weeksPerMonth];
+    const lo = cap[0] / w.apiHour[1], hi = cap[1] / w.apiHour[0];
+    const capText = money(cap);
+    const fits = lo > w.workHours;
+    text.textContent = fits
+      ? `On his figures ${w.plan.name} carries about ${capText} of API-priced work a week. This week's ${money(w.apiWeek)} fits inside it.`
+      : `On his figures ${w.plan.name} carries about ${capText} of API-priced work a week. This setting would use it up after ${hi > w.workHours ? `${hrs(lo)} of work or later` : `${hrsRange(lo, hi)} of work`}.`;
+    const top = Math.max(cap[1], w.apiWeek[1]) * 1.08;
+    bar.hidden = false;
+    const capEl = bar.querySelector<HTMLElement>('[data-est-cap]')!;
+    capEl.style.left = `${(cap[0] / top) * 100}%`;
+    capEl.style.width = `${Math.max(0.6, ((cap[1] - cap[0]) / top) * 100)}%`;
+    bar.querySelector<HTMLElement>('[data-est-use]')!.style.width = `${(w.apiWeek[1] / top) * 100}%`;
+    from.innerHTML = `${e.how[0]!.toUpperCase()}${e.how.slice(1)}: ${e.from.map((f) => `<a href="${f.url}">${fmtDate(f.date)}</a>`).join(', ')}.`;
+  }
+
+  function evenTile(w: Week) {
+    const box = document.querySelector<HTMLElement>('[data-even]')!;
+    const text = document.querySelector<HTMLElement>('[data-even-text]')!;
+    // Hours of work a week (all threads at once) at which the API has cost as much as each plan.
+    const rows = (JSON.parse(box.dataset.plans!) as { id: string; name: string; price: number }[]).map((p) => {
+      const weekPrice = p.price / ASSUME.weeksPerMonth;
+      return { ...p, at: [weekPrice / w.apiHour[1], weekPrice / w.apiHour[0]] as Money };
+    });
+    const top = Math.max(...rows.map((r) => r.at[1])) * 1.05;
+    box.innerHTML = rows.map((r) => `<div class="pa-even-row${r.price === w.plan.price && w.plan.provider !== 'api' ? ' is-current' : ''}"><span class="pa-even-name">${r.name}</span><span class="pa-even-track"><span class="pa-even-bar" style="width:${(r.at[1] / top) * 100}%"></span></span><span class="pa-even-v">${hrsRange(r.at[0], r.at[1])}</span></div>`).join('');
+    const cheapest = rows[0]!;
+    text.textContent = `This setting costs ${money(w.apiHour)} an hour on the API. Past ${hrsRange(cheapest.at[0], cheapest.at[1])} of work a week, that is more than a ${cheapest.name.replace(' a month', '')} plan.`;
+  }
+
+  document.addEventListener('acg:plan-week', (ev) => {
+    const w = (ev as CustomEvent<{ week: Week }>).detail.week;
+    const n = numbers(w) as unknown as Record<string, string>;
+    for (const [k, v] of Object.entries(n)) { const el = stat(k); if (el) el.textContent = v; }
+    const rm = stat('rateMonth');
+    if (rm) rm.textContent = n.apiMonth!;
+    const rt = document.querySelector<HTMLElement>('[data-rate-text]');
+    if (rt) {
+      const month = w.apiWeek[1] * ASSUME.weeksPerMonth;
+      rt.textContent = month > spendCap ? `Past the Start tier's ${usd(spendCap)} cap: a key on that tier stops partway through the month.` : `Inside the Start tier's ${usd(spendCap)} cap.`;
+    }
+    estimate(w);
+    evenTile(w);
+  });
+</script>
+
+<div hidden data-ests={JSON.stringify(ests)} data-cap={plans.claude.api.startSpendCap.value}></div>
+
+<style>
+  .pa-see-meter { font-size: var(--text-s); min-height: 2.5rem; display: inline-flex; align-items: center; }
+  .pa-stack { grid-column: span 12; display: grid; gap: 0.75rem; align-content: start; min-width: 0; }
+  .board-grid .pa-stack > :global(.tile.tile) { grid-column: auto; }
+  @media (min-width: 760px) { .pa-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 1180px) { .pa-stack { grid-column: span 4; grid-template-columns: minmax(0, 1fr); } }
+  @media (min-width: 1180px) and (max-width: 1700px) {
+    :global(html[data-sideview='open']) .pa-stack { grid-column: span 12; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  .pa-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pa-est :global(.estimate) { margin: 0; padding: 0.75rem 0.875rem; }
+  .pa-est :global(.estimate .body) { font-size: var(--text-s); line-height: 1.45; }
+  .pa-est-bar { position: relative; height: 1.25rem; margin: 0.25rem 0 0.5rem; border-radius: 3px; background: var(--paper-2, var(--paper)); overflow: hidden; }
+  .pa-est-cap { position: absolute; top: 0; bottom: 0; background: var(--blue-soft); border-inline: 2px dashed var(--blue); }
+  .pa-est-use { position: absolute; left: 0; top: 0.375rem; height: 0.5rem; background: var(--accent); border-radius: 2px; }
+  .pa-est-from { font-size: var(--text-xs); color: var(--muted); }
+
+  .pa-limit { display: grid; gap: 1rem; }
+  .pa-lane-name { margin: 0 0 0.375rem; font-weight: 650; color: var(--ink); font-size: var(--text-s); }
+  .pa-track { display: flex; align-items: center; height: 1rem; }
+  .pa-track span { display: block; height: 0.625rem; }
+  .pa-run { flex: 3; background: color-mix(in oklab, var(--ink) 62%, var(--card)); border-radius: 2px 0 0 2px; }
+  .pa-finish { flex: 1; background: color-mix(in oklab, var(--ink) 40%, var(--card)); border-radius: 0; }
+  .pa-wall { flex: none; width: 3px; height: 1rem !important; background: var(--accent); }
+  .pa-wait { flex: 2; background: repeating-linear-gradient(45deg, var(--accent) 0 2px, var(--accent-soft) 2px 5px); }
+  .pa-after { flex: 1.5; border-radius: 0 2px 2px 0; }
+  .pa-outs { margin: 0.5rem 0 0; padding: 0; list-style: none; display: grid; gap: 0.125rem; font-size: var(--text-s); }
+  .pa-outs li { display: flex; align-items: center; gap: 0.5rem; }
+  .pa-outs li::before { content: ''; flex: none; width: 0.75rem; height: 0.75rem; border-radius: 2px; background: repeating-linear-gradient(45deg, var(--accent) 0 2px, var(--accent-soft) 2px 5px); }
+  .pa-outs li:first-child::before { background: color-mix(in oklab, var(--ink) 40%, var(--card)); }
+  .pa-outs li.pa-credit::before { background: var(--blue); }
+  .pa-outs a { color: var(--ink-2); text-decoration: underline dotted var(--accent); text-underline-offset: 0.2em; min-height: 1.75rem; display: inline-flex; align-items: center; }
+
+  .pa-even { display: grid; gap: 0.375rem; margin-bottom: 0.75rem; }
+  .pa-even :global(.pa-even-row) { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) auto; gap: 0.5rem; align-items: center; font-size: var(--text-xs); }
+  .pa-even :global(.pa-even-name) { color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pa-even :global(.pa-even-track) { height: 0.75rem; background: var(--paper-2, var(--paper)); border-radius: 2px; overflow: hidden; }
+  .pa-even :global(.pa-even-bar) { display: block; height: 100%; background: color-mix(in oklab, var(--ink) 55%, var(--card)); transition: width 450ms var(--fig-ease, ease); }
+  .pa-even :global(.is-current .pa-even-bar) { background: var(--accent); }
+  .pa-even :global(.is-current .pa-even-name) { color: var(--ink); font-weight: 650; }
+  .pa-even :global(.pa-even-v) { font-family: var(--mono); color: var(--ink); min-width: 5.5rem; text-align: right; }
+  .finding { font-size: var(--text-s); }
+  .pa-rate { margin-top: 0.75rem; }
+  .pa-rate-list { margin: 0.5rem 0 0; padding-left: 1.1em; font-size: var(--text-s); }
+  @media (prefers-reduced-motion: reduce) { .pa-even :global(.pa-even-bar) { transition: none; } }
+</style>

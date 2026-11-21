@@ -1,0 +1,65 @@
+// What a chapter of the journey is made of. A chapter is data and small scripts: the engine and
+// the picture stay the same from the first chapter to the last.
+import type { Scene } from './scene';
+import type { SceneState } from './picture';
+import type { Level } from '../lib/levels';
+import type { ScreenApi } from './screen';
+
+export type { Level };
+
+/** Pick a value for the current reader level (plain = Vibe coding, technical, engineer). */
+export function byLevel<T>(level: Level, variants: Record<Level, T>): T {
+  return variants[level];
+}
+
+export interface Ctx {
+  scene: Scene;
+  /** Current reader level: 'plain' (Vibe coding), 'technical', or 'engineer'. */
+  level: Level;
+  /**
+   * A line someone said, or (who = null) the guide's own line about the picture. What a person or
+   * program says in the reader's app (you, the model, a tool, the check) appears on the screen
+   * beside the picture; narration and people outside the app (a colleague, a client) appear in the
+   * caption under it. Each line appears in one place only.
+   */
+  say(who: string | null, text: string): void;
+  /** The screen beside the picture: its form, work-log rows with real file names, earlier lines. */
+  screen: ScreenApi;
+  /** Persistent note under the drawing explaining how this guide element joins the mental model. */
+  model(part: string, text: string): void;
+  /** The readout under the drawing: [name, value] or [name, value, tag]. See StatPair. */
+  stat(pairs: StatPair[]): void;
+  /** The chapter's own state. Emptied when the reader moves to another step. */
+  mem: Record<string, any>;
+  /** State that lasts for the whole chapter. */
+  keep: Record<string, any>;
+  /** Sourced numbers handed over by the page (built from site/src/data). */
+  data: Record<string, any>;
+}
+/**
+ * One number in the readout.
+ * - name says what is counted and over what: "tasks on main, this run", "tokens read, all turns",
+ *   "agents waiting for you, this hour". A gauge says what it measures: "the lead's window".
+ * - value: a count towards its total ("4 of 6"), a window as "22% full", money with its unit.
+ *   A counter only goes up within a run. When a control restarts the run, set it back to 0: the
+ *   readout flashes, so the reader sees the restart (a value with % is a gauge and does not flash).
+ * - tag, optional: the assumption behind the number, a word or two: 'example', 'example hour',
+ *   'cache on', 'Opus 5.5 prices'. Shown small beside the value. Put 'example' once per readout,
+ *   on the first number that comes from a made-up job, and say in the line under the picture (or
+ *   the step) that the job is made up. Readers took a "made-up" pill for placeholder data, so the
+ *   pill never says "made-up" (run.ts turns an old 'made-up' tag into 'example').
+ */
+export type StatPair = [name: string, value: string | number, tag?: string];
+
+export interface StepDef {
+  scene(ctx: Ctx): SceneState;
+  /** Runs when the step comes into view, after its scene is set. */
+  enter?(ctx: Ctx): void;
+}
+export interface Chapter {
+  steps: Record<string, StepDef>;
+  /** Buttons: <button data-do="name" data-val="…">. */
+  actions?: Record<string, (ctx: Ctx, val: string, el: HTMLElement) => void>;
+  /** Sliders and selects: <input data-bind="name">. */
+  inputs?: Record<string, (ctx: Ctx, val: string, el: HTMLElement) => void>;
+}

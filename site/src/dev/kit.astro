@@ -1,0 +1,251 @@
+---
+// Review page for the design system: every token and component in every
+// state, on one page. Dev only (/dev/kit/). Toggle the theme in the header,
+// or open with ?theme=dark / ?theme=light (works on every page).
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/site/PageHeader.astro';
+import Note from '../components/site/Note.astro';
+import Opinion from '../components/site/Opinion.astro';
+import Estimate from '../components/site/Estimate.astro';
+import Term from '../components/site/Term.astro';
+import CopyPrompt from '../components/site/CopyPrompt.astro';
+import Card from '../components/site/Card.astro';
+import CardGrid from '../components/site/CardGrid.astro';
+import Toc from '../components/site/Toc.astro';
+import Embed from '../components/site/Embed.astro';
+import { url } from '../lib/nav';
+
+const colours = ['paper', 'paper-2', 'card', 'ink', 'ink-2', 'muted', 'rule', 'rule-strong', 'accent', 'accent-soft', 'accent-ink', 'green', 'green-soft', 'blue', 'blue-soft', 'focus', 'screen', 'screen-ink'];
+const sizes = [
+  ['--text-3xl', 'Page title'],
+  ['--text-2xl', 'Section heading'],
+  ['--text-xl', 'Subsection heading'],
+  ['--text-l', 'Lede and card titles'],
+  ['--text-body', 'Body text, about 19px'],
+  ['--text-m', 'Notes, tables, captions'],
+  ['--text-s', 'Chrome, dates, mono data'],
+  ['--text-xs', 'The floor: 13px'],
+];
+const spaces = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+const sampleHeadings = [
+  { depth: 2, slug: 'kit-colour', text: 'Colour' },
+  { depth: 2, slug: 'kit-type', text: 'Type' },
+  { depth: 3, slug: 'kit-type-scale', text: 'Scale' },
+  { depth: 2, slug: 'kit-controls', text: 'Controls' },
+  { depth: 2, slug: 'kit-boxes', text: 'Boxes' },
+  { depth: 2, slug: 'kit-prose', text: 'Prose' },
+];
+const longPrompt = `Read AGENTS.md and the files it points to before you change anything.
+
+The bakery site shows the wrong opening hours on public holidays. Find where the hours are computed, write a failing test for 25 December, then fix it. Run the whole test suite and the type check.
+
+When you are done, tell me which files you changed and paste the test output. Do not push.`;
+---
+<Base title="Design kit" description="Every component in every state." noindex>
+  <div class="frame kit">
+    <PageHeader title="Design kit" updated="2026-11-18">
+      <p>Every token and component of the site on one page. Check it in both themes, at 390px, 1280px and 1920px. Nothing here ships.</p>
+    </PageHeader>
+
+    <div class="kit-cols">
+      <aside class="kit-toc"><Toc headings={sampleHeadings} title="Kit" /></aside>
+      <div class="kit-main">
+
+        <h2 id="kit-colour">Colour</h2>
+        <ul class="swatches">
+          {colours.map((c) => (
+            <li><span class="sw" style={`background: var(--${c})`}></span><code>--{c}</code></li>
+          ))}
+        </ul>
+        <div class="pairs">
+          <p style="color: var(--ink)">Ink on paper</p>
+          <p style="color: var(--ink-2)">Ink-2 on paper: body text</p>
+          <p style="color: var(--muted)">Muted on paper: dates and secondary text</p>
+          <p style="color: var(--accent)">Accent on paper: links and highlights</p>
+          <p style="color: var(--green)">Green: state, data</p>
+          <p style="color: var(--blue)">Blue: state, data</p>
+        </div>
+
+        <h2 id="kit-type">Type</h2>
+        <h3 id="kit-type-scale">Scale</h3>
+        <ul class="scale">
+          {sizes.map(([v, label]) => (
+            <li><code>{v}</code><span style={`font-size: var(${v})`}>{label}</span></li>
+          ))}
+        </ul>
+        <p class="specimen">Newsreader, <em>with its italic</em>, <strong>semibold</strong>, and figures 0123456789 in old style for prose. <span class="mono">JetBrains Mono for code, data and measurements: 1,250 tokens · $0.42</span>.</p>
+
+        <h3>Spacing</h3>
+        <ul class="spaces">
+          {spaces.map((n) => <li><span style={`width: var(--space-${n})`}></span><code>--space-{n}</code></li>)}
+        </ul>
+
+        <h2 id="kit-controls">Controls</h2>
+        <div class="row">
+          <button class="btn" type="button">Run it again</button>
+          <button class="btn ghost" type="button">Reset</button>
+          <button class="btn small" type="button">Small</button>
+          <button class="btn ghost small" type="button">Small ghost</button>
+          <button class="btn" type="button" disabled>Disabled</button>
+          <a class="btn ghost" href="#kit-controls">A link as a button</a>
+        </div>
+        <div class="row">
+          <div class="seg" role="group" aria-label="Thinking level">
+            <button type="button" aria-pressed="false">Low</button>
+            <button type="button" aria-pressed="true">Medium</button>
+            <button type="button" aria-pressed="false">High</button>
+          </div>
+        </div>
+        <div class="widget">
+          <div class="row-btns">
+            <button class="btn small" type="button">Start</button>
+            <span class="tag-sim">simulated</span>
+          </div>
+          <dl class="stats">
+            <div><dt>Threads</dt><dd>3</dd></div>
+            <div><dt>Tokens</dt><dd>48,200</dd></div>
+            <div><dt>Waiting</dt><dd>0 min</dd></div>
+          </dl>
+          <div class="fields">
+            <label class="field"><span>Agents</span><output>3</output><input type="range" min="1" max="8" value="3" /></label>
+            <label class="field"><span>Model</span><select><option>Large</option><option>Small</option></select></label>
+          </div>
+          <p class="say">The <code>.widget</code> frame, shared with the figures: stats, fields, a segmented control and buttons inside.</p>
+          <p class="caption">Caption text in a widget sits at the 13px floor.</p>
+        </div>
+
+        <h2 id="kit-boxes">Boxes</h2>
+        <h3>PageHeader</h3>
+        <div class="demo">
+          <PageHeader title="A page with no lede" />
+          <PageHeader title="The club list, from first prompt to login" updated="2026-11-18">
+            <p>A small web app for a neighbourhood football club, built by directing an agent. One evening, one repository.</p>
+          </PageHeader>
+        </div>
+
+        <h3>Note</h3>
+        <Note>A plain note. Half the time is a low bar: at 80% reliability the same models manage much shorter tasks.</Note>
+        <Note title="Why worktrees">Each thread gets its own copy of the repository, so two agents never edit the same file at the same time.</Note>
+        <Note title="With a link" href="guide/guides/t3-code/" linkText="T3 Code in full">A note that leads somewhere deeper.</Note>
+
+        <h3>Opinion</h3>
+        <Opinion date="2026-11-18">
+          <p>Sample text for review. I run agents on a machine that never sleeps and steer them from a laptop. It took a week to stop checking on them every five minutes.</p>
+        </Opinion>
+        <Opinion date="2026-11-01" title="With a title">
+          <p>A second opinion box with a title, to check the hierarchy.</p>
+        </Opinion>
+
+        <h3>Estimate</h3>
+        <Estimate name="A. Practitioner" href="https://example.com/" date="2026-10-14">
+          <p>About 30 hours of agent work a week fits in the largest plan before the weekly cap bites.</p>
+        </Estimate>
+
+        <h3>Term</h3>
+        <p class="prose-like">A <Term def="The neural network. Text in, text out.">model</Term> produces text. A <Term def="The program that runs the model in a loop with tools: read and edit files, run commands, use a browser.">harness</Term> turns that text into actions. Long definitions wrap inside the popover, and a term near the right edge of the column stays inside the screen, like this <Term def="Agentic development environment: one place to run, watch and steer many agents across providers. This definition is deliberately long to check wrapping and the close button.">ADE</Term>.</p>
+
+        <h3>CopyPrompt</h3>
+        <CopyPrompt title="Fix the holiday hours bug" id="kit-prompt">{longPrompt}</CopyPrompt>
+        <CopyPrompt title="One line">Tidy the exported contacts: remove duplicates and make every date ISO 8601.</CopyPrompt>
+
+        <h3>Card and CardGrid</h3>
+        <CardGrid title="Start here">
+          <Card href="guide/guides/ways-of-working/" title="Ways of Working" />
+          <Card href="guide/guides/t3-code/" title="T3 Code" meta="Updated 17 Nov 2026" />
+          <Card href="guide/guides/models-and-costs/" title="Models and Costs">With a one-line description, when the title alone does not say enough.</Card>
+          <Card href="guide/skills-table/" title="Skills" />
+        </CardGrid>
+
+        <h3>Toc</h3>
+        <div class="demo two">
+          <Toc headings={sampleHeadings} />
+          <Toc headings={sampleHeadings} maxDepth={2} collapsible />
+        </div>
+
+        <h3>Embed</h3>
+        <Embed id="ebILGCoN4UU" title="My last video about AI harnesses" start={95} />
+
+        <h2 id="kit-prose">Prose</h2>
+        <div class="prose">
+          <p>The body face at 19px with a 1.62 line height. Links look <a href={url('guide/')}>like this</a>, inline code like <code>pnpm judge</code>, a key like <kbd>Esc</kbd>. A footnote reference sits here<sup><a href="#kit-fn-1" id="kit-fnref-1" data-footnote-ref>1</a></sup>.</p>
+          <h2>A second-level heading that runs long enough to wrap onto two lines</h2>
+          <p>Space above a heading is about twice the space below it, so the heading belongs to the text it introduces.</p>
+          <h3>Third level</h3>
+          <ul>
+            <li>A form, a list, a database, a login.</li>
+            <li>Nested lists keep their rhythm.
+              <ul><li>Like this one.</li></ul>
+            </li>
+          </ul>
+          <ol>
+            <li>Write a failing test for 25 December.</li>
+            <li>Fix the hours function.</li>
+            <li>Run the whole suite.</li>
+          </ol>
+          <h4>Fourth level</h4>
+          <blockquote><p>Writing code got cheap. Deciding what to build, and knowing whether what came back is right, did not.</p></blockquote>
+          <pre><code>{`// Holiday hours: the fixed version
+export function hoursFor(date: Date): string {
+  if (isPublicHoliday(date)) return 'Closed';
+  return date.getDay() === 0 ? '9:00–13:00' : '7:00–18:00';
+}`}</code></pre>
+          <table>
+            <thead><tr><th>Member</th><th>Paid</th><th>Joined</th><th>Team</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td>Member 014</td><td>Yes</td><td>2024-03-02</td><td>Under 12s</td><td>Paid by bank transfer after the second reminder</td></tr>
+              <tr><td>Member 027</td><td>No</td><td>2025-09-15</td><td>Veterans</td><td>Asked to pay in two instalments</td></tr>
+              <tr><td>Member 031</td><td>Yes</td><td>2026-01-10</td><td>Under 9s</td><td>Sibling discount applied</td></tr>
+            </tbody>
+          </table>
+          <figure>
+            <svg viewBox="0 0 600 160" role="img" aria-label="A placeholder figure: three bars">
+              <rect x="0" y="0" width="600" height="160" rx="10" fill="var(--paper-2)" />
+              <rect x="60" y="90" width="120" height="50" rx="4" fill="var(--accent)" />
+              <rect x="240" y="50" width="120" height="90" rx="4" fill="var(--blue)" />
+              <rect x="420" y="20" width="120" height="120" rx="4" fill="var(--green)" />
+            </svg>
+            <figcaption>A figure with a caption. Captions use the muted colour at 17px.</figcaption>
+          </figure>
+          <hr />
+          <section data-footnotes class="footnotes">
+            <h2 class="visually-hidden">Footnotes</h2>
+            <ol><li id="kit-fn-1"><p>A footnote. <a href="#kit-fnref-1" class="data-footnote-backref" aria-label="Back to reference 1">↩</a></p></li></ol>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+</Base>
+
+
+<style>
+  .kit { padding-top: clamp(2rem, 6vw, 4.5rem); }
+  .kit-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-8); }
+  .kit-toc { display: none; }
+  @media (min-width: 64rem) {
+    .kit-cols { grid-template-columns: 12rem minmax(0, 1fr); }
+    .kit-toc { display: block; }
+    .kit-toc :global(.toc) { position: sticky; top: calc(var(--header-h) + var(--space-6)); }
+  }
+  .kit-main { max-width: var(--wide); min-width: 0; }
+  .kit-main > h2 { font-size: var(--text-2xl); font-weight: 500; letter-spacing: -0.016em; margin: var(--space-8) 0 var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--rule); }
+  .kit-main > h2:first-child { margin-top: 0; }
+  .kit-main > h3 { font-size: var(--text-xl); font-weight: 500; margin: var(--space-7) 0 var(--space-3); }
+  .swatches { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: var(--space-3); }
+  .swatches li { display: grid; gap: var(--space-1); }
+  .sw { height: 3.5rem; border-radius: var(--radius-s); border: 1px solid var(--rule); }
+  .swatches code { font-size: var(--text-xs); background: none; padding: 0; }
+  .pairs p { margin: 0.3rem 0; }
+  .scale { list-style: none; margin: 0; padding: 0; }
+  .scale li { display: grid; grid-template-columns: 8rem 1fr; align-items: baseline; gap: var(--space-4); padding: var(--space-2) 0; border-bottom: 1px solid var(--rule); }
+  .scale span { line-height: 1.15; color: var(--ink); }
+  .scale code, .spaces code { font-size: var(--text-xs); background: none; padding: 0; color: var(--muted); }
+  .specimen { max-width: var(--measure); color: var(--ink-2); }
+  .spaces { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+  .spaces li { display: flex; align-items: center; gap: var(--space-3); }
+  .spaces span { display: block; height: 0.75rem; background: var(--accent); border-radius: 2px; }
+  .row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin: var(--space-4) 0; }
+  .demo { padding: var(--space-5); border: 1px dashed var(--rule-strong); border-radius: var(--radius); }
+  .demo.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--space-6); align-items: start; }
+  .prose-like { max-width: var(--measure); color: var(--ink-2); }
+</style>

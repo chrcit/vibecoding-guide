@@ -1,0 +1,42 @@
+---
+/*
+  Renders one rich lesson overview step inside a Part overview page:
+  - Plain summary
+  - (What the lesson adds, for the reader's level, is the note under the picture: the overview's
+    chapter script sets it with ctx.model. It is said once, there, not again in the step.)
+  - Direct sub-step jump chips into exact interactive sections of that lesson
+  - Related concept pills that open in the side drawer (data-side) without losing your place
+  - Primary "Open lesson →" link
+*/
+import Step from './Step.astro';
+import type { Rung } from '../../journey/rungs';
+import { url } from '../../lib/nav';
+
+interface Props {
+  rung: Rung;
+}
+const { rung: r } = Astro.props;
+---
+<Step id={r.id} title={`${r.n}. ${r.title}`}>
+  <p>{r.line}</p>
+  {r.steps.length > 0 && (
+    <div class="j-chips" aria-label={`Jump inside ${r.title}`}>
+      {r.steps.map((s) => (
+        <a class="j-chip" href={url(`journey/${r.id}/#${s.id}`)}>{s.label}</a>
+      ))}
+    </div>
+  )}
+  <div class="j-ov-foot">
+    <a class="j-open" href={url(`journey/${r.id}/`)} aria-label={`Open lesson ${r.n}: ${r.title}`}>
+      Open lesson <span aria-hidden="true">→</span>
+    </a>
+    {r.concepts.length > 0 && (
+      <span class="j-concepts" aria-label="Related concepts">
+        {r.concepts.map((c) => (
+          <a href={url(`wiki/${c.slug}/`)} data-side>{c.label}</a>
+        ))}
+      </span>
+    )}
+  </div>
+  <slot />
+</Step>

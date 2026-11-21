@@ -1,0 +1,82 @@
+---
+import { getCollection, render } from 'astro:content';
+import Article from '../../layouts/Article.astro';
+import { allItems, groups, url } from '../../lib/nav';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('reference');
+  return entries.map((entry) => ({ params: { id: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+const h1 = headings.find((h) => h.depth === 1)?.text ?? entry.id;
+const idx = allItems.findIndex((i) => i.id === entry.id);
+const prevItem = idx > 0 ? allItems[idx - 1] : undefined;
+const nextItem = idx >= 0 && idx < allItems.length - 1 ? allItems[idx + 1] : undefined;
+const link = (i?: { id: string; title: string }) => (i ? { href: `guide/${i.id}/`, title: i.title } : undefined);
+---
+<Article
+  title={h1}
+  description={allItems[idx]?.blurb ?? h1}
+  section="reference"
+  headings={headings.filter((h) => h.depth > 1)}
+  prev={link(prevItem)}
+  next={link(nextItem)}
+>
+  <div class="from-md"><Content /></div>
+  <nav slot="sidebar" class="guides" aria-label="All guides">
+    {groups.map((g) => (
+      <div class="grp">
+        <p class="grp-name">{g.name}</p>
+        <ul>
+          {g.items.map((i) => (
+            <li><a href={url(`guide/${i.id}/`)} aria-current={i.id === entry.id ? 'page' : undefined}>{i.title}</a></li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </nav>
+</Article>
+
+<style>
+  /* The markdown opens with its own # title, which the page header already
+     shows, and a one-paragraph summary, which becomes the lede. */
+  .from-md > :global(h1:first-child) { display: none; }
+  .from-md > :global(h1:first-child + p) {
+    font-size: var(--text-l);
+    line-height: 1.5;
+    color: var(--ink-2);
+    margin: 0 0 var(--space-5);
+  }
+  /* Pull it up under the title, except on narrow screens where the folded
+     contents sit between the two. */
+  :global(.page-header + .prose) .from-md > :global(h1:first-child + p) { margin-top: calc(-1 * var(--space-5)); }
+  @media (min-width: 64rem) {
+    .from-md > :global(h1:first-child + p) { margin-top: calc(-1 * var(--space-5)); }
+  }
+
+  .guides { font-size: var(--text-s); line-height: 1.35; }
+  .grp + .grp { margin-top: var(--space-5); }
+  .grp-name { margin: 0 0 var(--space-2); font-weight: 600; color: var(--ink); }
+  ul { list-style: none; margin: 0; padding: 0; }
+  a {
+    display: block;
+    padding: 0.35rem 0;
+    color: var(--muted);
+    text-decoration: none;
+  }
+  a:hover { color: var(--ink); }
+  a[aria-current='page'] { color: var(--accent); font-weight: 560; }
+  @media (max-width: 79.99rem) {
+    .guides {
+      border-top: 1px solid var(--rule);
+      padding-top: var(--space-6);
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+      gap: var(--space-5) var(--space-6);
+    }
+    .grp + .grp { margin-top: 0; }
+    a { padding: 0.5rem 0; }
+  }
+</style>

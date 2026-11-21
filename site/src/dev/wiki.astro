@@ -1,0 +1,100 @@
+---
+// Review page for the wiki. Routed at /dev/wiki/ in `pnpm dev` only.
+// Shows the parts of an article page, the graph in its starting states, a
+// set of articles to open in the side view, and the state of every article.
+import Base from '../layouts/Base.astro';
+import ClusterMark from '../components/wiki/ClusterMark.astro';
+import Connections from '../components/wiki/Connections.astro';
+import GraphView from '../components/wiki/GraphView.astro';
+import GraphThumb from '../components/wiki/GraphThumb.astro';
+import { CLUSTERS, getWiki } from '../lib/wiki';
+import { url } from '../lib/nav';
+
+const wiki = await getWiki();
+const words = (body = '') =>
+  body.replace(/<!--[\s\S]*?-->/g, '').replace(/^>.*$/gm, '').replace(/```[\s\S]*?```/g, '').split(/\s+/).filter(Boolean).length;
+const rows = wiki.articles.map((a) => ({ a, words: words(a.entry.body), deg: wiki.neighbours(a.slug).length }));
+const finished = rows.filter((r) => !r.a.stub);
+const byDegree = [...rows].sort((x, y) => y.deg - x.deg);
+const fewest = byDegree[byDegree.length - 1].a;
+const oneSided = rows.find((r) => r.a.in.length === 0 || r.a.out.every((s) => r.a.in.includes(s)))?.a ?? fewest;
+---
+<Base title="Wiki review" description="Review page for the wiki." noindex>
+  <div class="wr frame">
+    <h1>Wiki review</h1>
+    <p class="wr-sum">{wiki.articles.length} articles, {finished.length} written, {rows.length - finished.length} stubs, {wiki.graph.edges.length} links.</p>
+
+    <h2>In the side view</h2>
+    <ul class="wr-side">
+      {['harness', 'prompt-caching', 'secrets', 'parallel-work', 'preview-deployment', 'model', 'context-window'].map((s) => (
+        <li><a href={url(`wiki/${s}/`)} data-side data-wr-side={s}>{wiki.bySlug.get(s)?.title}</a></li>
+      ))}
+      <li><a href={url('wiki/')} data-side>Index</a></li>
+      <li><a href={url('wiki/graph/')} data-side>Graph</a></li>
+    </ul>
+
+    <h2>Cluster marks</h2>
+    <ul class="wr-marks">
+      {CLUSTERS.map((c) => (
+        <li><ClusterMark cluster={c.id} size={14} /><ClusterMark cluster={c.id} size={22} /><span>{c.label}</span><code>{c.shape} · {c.tone}</code></li>
+      ))}
+    </ul>
+
+    <h2>Local graph</h2>
+    <div class="wr-cx">
+      <div><h3>Most links: {byDegree[0].a.title}</h3><Connections article={byDegree[0].a} wiki={wiki} /></div>
+      <div><h3>Fewest: {fewest.title}</h3><Connections article={fewest} wiki={wiki} /></div>
+      <div><h3>One side: {oneSided.title}</h3><Connections article={oneSided} wiki={wiki} /></div>
+    </div>
+
+    <h2>Graph thumbnail</h2>
+    <div class="wr-thumb"><GraphThumb graph={wiki.graph} /></div>
+
+    <h2>Graph states</h2>
+    <h3>Focused: Context window</h3>
+    <GraphView graph={wiki.graph} id="gv-focus" state="focus:context-window" tall={false} />
+    <h3>Filtered: The web</h3>
+    <GraphView graph={wiki.graph} id="gv-web" state="cluster:web" tall={false} />
+    <h3>Searching: "deploy"</h3>
+    <GraphView graph={wiki.graph} id="gv-search" state="search:deploy" tall={false} />
+
+    <h2>Every article</h2>
+    <div class="wr-table">
+      <table>
+        <thead><tr><th>Article</th><th>Cluster</th><th>State</th><th>Words</th><th>Links out</th><th>Linked from</th></tr></thead>
+        <tbody>
+          {rows.map(({ a, words: w }) => (
+            <tr class:list={{ orphan: a.in.length === 0 }}>
+              <td><a href={url(`wiki/${a.slug}/`)}>{a.title}</a></td>
+              <td><ClusterMark cluster={a.cluster} size={12} /> {a.cluster}</td>
+              <td>{a.stub ? 'stub' : 'written'}</td>
+              <td>{w}</td>
+              <td>{a.out.length}</td>
+              <td>{a.in.length}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .wr { padding-block: var(--space-7); font-family: var(--sans, var(--serif)); }
+  h1 { margin: 0; font-size: var(--text-3xl); font-weight: 480; }
+  h2 { margin: var(--space-8) 0 var(--space-4); font-size: var(--text-2xl); font-weight: 480; }
+  h3 { margin: var(--space-6) 0 var(--space-3); font-size: var(--text-m); font-weight: 600; }
+  .wr-sum { color: var(--muted); }
+  .wr-side { display: flex; flex-wrap: wrap; gap: var(--space-3); list-style: none; padding: 0; }
+  .wr-side a { display: inline-flex; align-items: center; min-height: 2.5rem; padding: 0 0.9rem; border: 1px solid var(--rule-strong); border-radius: var(--radius-pill); text-decoration: none; }
+  .wr-marks { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: var(--space-3); list-style: none; padding: 0; }
+  .wr-marks li { display: flex; align-items: center; gap: 0.6rem; }
+  .wr-marks code { color: var(--muted); font-size: var(--text-xs); }
+  .wr-cx { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); gap: var(--space-6); }
+  .wr-cx > div { max-width: var(--measure); }
+  .wr-thumb { width: min(100%, 26rem); aspect-ratio: 16 / 10; padding: var(--space-3); background: var(--card); border: 1px solid var(--rule); border-radius: var(--radius-l); }
+  .wr-table { overflow-x: auto; }
+  table { border-collapse: collapse; font-size: var(--text-s); min-width: 40rem; }
+  th, td { text-align: left; padding: 0.35rem 0.8rem 0.35rem 0; border-bottom: 1px solid var(--rule); }
+  tr.orphan td:first-child::after { content: ' (no backlinks)'; color: var(--accent); }
+</style>

@@ -1,0 +1,273 @@
+---
+/*
+  The side view: a panel on the right that shows another page of the site
+  without leaving the one you are on. It can be maximised, minimised to a
+  small tab, and closed. One instance, rendered by Base.
+
+  To open something in it:
+    <a href={url('wiki/worktree/')} data-side>worktree</a>      any link
+    <g data-side={url('wiki/worktree/')} tabindex="0" role="button" aria-label="Worktree">…</g>
+                                                               any element, SVG included
+    window.acgSide.open(href)                                  from a script
+
+  Without JavaScript the link is an ordinary link. Ctrl, Cmd, Shift and
+  middle clicks keep their normal meaning.
+
+  The page is shown in an iframe. A page that finds itself inside a frame
+  hides the site header and footer (html[data-embed], set in Head.astro), so
+  every page of the site works here with its figures, levels and copy
+  buttons intact. The reader's level and theme are passed on when they
+  change. The state is kept for the browser tab (sessionStorage), so the
+  panel survives a move to another page.
+*/
+---
+<div class="sv-backdrop" data-sv-backdrop hidden></div>
+<aside class="side-view" data-side-view aria-label="Side view" hidden>
+  <header class="sv-bar">
+    <p class="sv-title" data-sv-title></p>
+    <button type="button" class="sv-btn" data-sv-min aria-label="Minimise" title="Minimise">
+      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3.5 12h9" /></svg>
+    </button>
+    <button type="button" class="sv-btn" data-sv-max aria-label="Maximise" title="Maximise" aria-pressed="false">
+      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="3" y="3" width="10" height="10" rx="1.5" /></svg>
+    </button>
+    <a class="sv-btn" data-sv-full aria-label="Open as a page" title="Open as a page">
+      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h4v4M13 3 7.5 8.5M6 4H4a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-2" /></svg>
+    </a>
+    <button type="button" class="sv-btn" data-sv-close aria-label="Close" title="Close">
+      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+    </button>
+  </header>
+  <iframe class="sv-frame" data-sv-frame title="Side view"></iframe>
+</aside>
+<div class="sv-pill" data-sv-pill hidden>
+  <button type="button" class="sv-pill-open" data-sv-restore aria-label="Restore the side view">
+    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="2.5" y="3" width="11" height="10" rx="1.5" /><path d="M9.5 3v10" /></svg>
+    <span data-sv-pill-title></span>
+  </button>
+  <button type="button" class="sv-btn" data-sv-close aria-label="Close" title="Close">
+    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+  </button>
+</div>
+
+<script>
+  type State = 'open' | 'max' | 'min';
+  const KEY = 'acg-side';
+  const root = document.documentElement;
+  const embedded = root.hasAttribute('data-embed');
+
+  if (embedded) {
+    // Inside a side view: links to other sites must not load in the panel.
+    document.addEventListener('click', (event) => {
+      const a = (event.target as Element | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
+      if (a && a.origin !== location.origin) a.target = '_blank';
+    });
+  } else {
+    const panel = document.querySelector<HTMLElement>('[data-side-view]')!;
+    const frame = panel.querySelector<HTMLIFrameElement>('[data-sv-frame]')!;
+    const title = panel.querySelector<HTMLElement>('[data-sv-title]')!;
+    const full = panel.querySelector<HTMLAnchorElement>('[data-sv-full]')!;
+    const max = panel.querySelector<HTMLButtonElement>('[data-sv-max]')!;
+    const pill = document.querySelector<HTMLElement>('[data-sv-pill]')!;
+    const pillTitle = pill.querySelector<HTMLElement>('[data-sv-pill-title]')!;
+    const backdrop = document.querySelector<HTMLElement>('[data-sv-backdrop]')!;
+    let href = '';
+    let state: State | null = null;
+    let trigger: HTMLElement | null = null;
+
+    const save = () => {
+      try {
+        if (state) sessionStorage.setItem(KEY, JSON.stringify({ href, state, title: title.textContent }));
+        else sessionStorage.removeItem(KEY);
+      } catch {}
+    };
+    const setTitle = (text: string) => {
+      const t = text.replace(/\s*[·|]\s*Agentic Coding Guide\s*$/, '') || 'Side view';
+      title.textContent = t;
+      pillTitle.textContent = t;
+      frame.title = t;
+    };
+    const render = () => {
+      if (state) root.dataset.sideview = state;
+      else delete root.dataset.sideview;
+      panel.hidden = !state || state === 'min';
+      pill.hidden = state !== 'min';
+      // Docked beside the page on wide screens; over it otherwise and when maximised.
+      backdrop.hidden = !(state === 'max' || (state === 'open' && !matchMedia('(min-width: 1100px)').matches));
+      max.setAttribute('aria-pressed', String(state === 'max'));
+      max.setAttribute('aria-label', state === 'max' ? 'Restore' : 'Maximise');
+      max.title = state === 'max' ? 'Restore' : 'Maximise';
+      save();
+    };
+    const open = (to: string, from?: HTMLElement | null, as: State = state === 'max' ? 'max' : 'open') => {
+      const next = new URL(to, location.href);
+      if (next.origin !== location.origin) { location.href = next.href; return; }
+      if (from) trigger = from;
+      if (next.href !== href) {
+        href = next.href;
+        setTitle('');
+        frame.src = href;
+        full.href = href;
+      }
+      state = as;
+      render();
+      // Keyboard readers land in the panel; Escape or Close sends them back to what opened it.
+      if (from && from.matches(':focus-visible')) panel.querySelector<HTMLElement>('[data-sv-close]')?.focus({ preventScroll: true });
+    };
+    const close = () => {
+      state = null;
+      href = '';
+      frame.removeAttribute('src');
+      render();
+      trigger?.focus?.();
+      trigger = null;
+    };
+
+    frame.addEventListener('load', () => {
+      try {
+        const doc = frame.contentDocument;
+        if (!doc || !frame.getAttribute('src')) return;
+        setTitle(doc.title);
+        full.href = frame.contentWindow!.location.href;
+        href = full.href;
+        save();
+      } catch {}
+    });
+
+    panel.querySelector('[data-sv-min]')!.addEventListener('click', () => { state = 'min'; render(); pill.querySelector<HTMLElement>('[data-sv-restore]')?.focus(); });
+    max.addEventListener('click', () => { state = state === 'max' ? 'open' : 'max'; render(); });
+    pill.querySelector('[data-sv-restore]')!.addEventListener('click', () => { state = 'open'; render(); panel.querySelector<HTMLElement>('[data-sv-min]')?.focus(); });
+    document.querySelectorAll('[data-sv-close]').forEach((b) => b.addEventListener('click', close));
+    backdrop.addEventListener('click', () => { if (state === 'max') { state = 'open'; render(); } else close(); });
+    matchMedia('(min-width: 1100px)').addEventListener('change', render);
+
+    const target = (event: Event) => (event.target as Element | null)?.closest?.('[data-side]') as HTMLElement | null;
+    const hrefOf = (el: HTMLElement) => (el instanceof HTMLAnchorElement && el.href) || el.getAttribute('href') || el.dataset.side || '';
+    document.addEventListener('click', (event) => {
+      const el = target(event);
+      if (!el || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const to = hrefOf(el);
+      if (!to) return;
+      event.preventDefault();
+      open(to, el);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && state && state !== 'min' && (state === 'max' || !backdrop.hidden || panel.contains(document.activeElement) || document.activeElement === trigger)) {
+        close();
+        return;
+      }
+      // Elements that are not links or buttons (parts of a drawing) open on Enter and Space.
+      const el = target(event);
+      if (!el || el instanceof HTMLAnchorElement || el instanceof HTMLButtonElement) return;
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      const to = hrefOf(el);
+      if (!to) return;
+      event.preventDefault();
+      open(to, el);
+    });
+
+    // Pass the reader's level and theme on to the page in the panel.
+    document.addEventListener('acg:level', (event) => {
+      try { (frame.contentWindow as any)?.acgLevel?.set?.((event as CustomEvent).detail); } catch {}
+    });
+    new MutationObserver(() => {
+      try {
+        const inner = frame.contentDocument?.documentElement;
+        if (!inner) return;
+        if (root.dataset.theme) inner.dataset.theme = root.dataset.theme;
+        else delete inner.dataset.theme;
+      } catch {}
+    }).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+
+    (window as any).acgSide = { open: (to: string) => open(to), close };
+
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(KEY) || 'null');
+      if (saved && typeof saved.href === 'string' && ['open', 'max', 'min'].includes(saved.state)) {
+        open(saved.href, null, saved.state === 'max' ? 'open' : saved.state);
+        if (saved.title) setTitle(saved.title);
+      }
+    } catch {}
+  }
+</script>
+
+<style is:global>
+  :root { --side-w: clamp(22rem, 34vw, 34rem); }
+
+  .side-view {
+    position: fixed; z-index: 70; top: 0; right: 0; bottom: 0;
+    width: min(100vw, 30rem);
+    display: flex; flex-direction: column;
+    background: var(--paper);
+    border-left: 1px solid var(--rule-strong);
+    box-shadow: var(--shadow-pop);
+  }
+  .side-view[hidden], .sv-pill[hidden], .sv-backdrop[hidden] { display: none; }
+  @media (min-width: 1100px) {
+    .side-view { width: var(--side-w); box-shadow: none; }
+    /* Docked: under the header, and the page makes room, so nothing is covered. */
+    html[data-sideview='open'] .side-view { top: var(--header-h); }
+    html[data-sideview='open'] main,
+    html[data-sideview='open'] .site-footer { margin-right: var(--side-w); }
+  }
+  html[data-sideview='max'] .side-view { width: min(100vw, 84rem); box-shadow: var(--shadow-pop); }
+  @media (min-width: 700px) { html[data-sideview='max'] .side-view { width: min(100vw - 3rem, 84rem); } }
+  @media (prefers-reduced-motion: no-preference) {
+    .side-view { animation: sv-in var(--dur) var(--ease-out); }
+    @keyframes sv-in { from { transform: translateX(1.5rem); opacity: 0; } }
+  }
+
+  .sv-backdrop { position: fixed; inset: 0; z-index: 65; background: color-mix(in oklab, var(--ink) 28%, transparent); }
+
+  .sv-bar {
+    flex: none; display: flex; align-items: center; gap: 0.125rem;
+    min-height: 3rem; padding: 0 0.375rem 0 1rem;
+    border-bottom: 1px solid var(--rule);
+    background: var(--card);
+  }
+  .sv-title {
+    flex: 1 1 auto; min-width: 0; margin: 0;
+    font-family: var(--sans); font-size: var(--text-s); font-weight: 600; line-height: 1.2;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sv-btn {
+    flex: none; display: inline-grid; place-items: center;
+    width: 2.5rem; height: 2.5rem; padding: 0;
+    border: 0; border-radius: var(--radius-s);
+    background: none; color: var(--ink-2); cursor: pointer; text-decoration: none;
+  }
+  .sv-btn:hover { background: color-mix(in oklab, var(--ink) 8%, transparent); color: var(--ink); }
+  .sv-btn[aria-pressed='true'] { color: var(--accent); }
+  .sv-frame { flex: 1 1 auto; width: 100%; border: 0; background: var(--paper); }
+
+  .sv-pill {
+    position: fixed; z-index: 70; right: 1rem; bottom: 1rem;
+    display: flex; align-items: center; max-width: min(22rem, calc(100vw - 2rem));
+    border: 1px solid var(--rule-strong); border-radius: var(--radius-pill);
+    background: var(--card); box-shadow: var(--shadow-pop);
+    padding-right: 0.125rem;
+  }
+  /* In `astro dev` the review button sits in the same corner. */
+  body:has([id^='acg-comments']) .sv-pill { bottom: 4.25rem; }
+  .sv-pill-open {
+    display: inline-flex; align-items: center; gap: 0.5rem; min-width: 0;
+    min-height: 2.75rem; padding: 0 0.5rem 0 1rem;
+    border: 0; background: none; color: var(--ink); cursor: pointer;
+    font-family: var(--sans); font-size: var(--text-s); font-weight: 600;
+  }
+  .sv-pill-open svg { flex: none; color: var(--accent); }
+  .sv-pill-open span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sv-pill .sv-btn { border-radius: 50%; }
+
+  /* A page shown inside a side view: no site chrome, tighter margins. */
+  html[data-embed] .skip-link,
+  html[data-embed] .topbar,
+  html[data-embed] .site-footer,
+  html[data-embed] .level-offer,
+  html[data-embed] .side-view,
+  html[data-embed] .sv-pill,
+  html[data-embed] .sv-backdrop { display: none !important; }
+  html[data-embed] { --gutter: 1.125rem; scroll-padding-top: 1rem; }
+  html[data-embed] .page-header h1 { font-size: var(--text-2xl); }
+  html[data-embed] .board-head h1 { font-size: var(--text-xl); }
+</style>

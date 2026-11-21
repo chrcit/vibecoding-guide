@@ -1,0 +1,389 @@
+---
+/*
+  The wiki graph. Built here as a complete inline SVG (positions from the
+  seeded layout in src/lib/wiki.ts), so it works with no JavaScript: every
+  node is a link, tabbable in cluster order, and the stage scrolls inside
+  its own box. graph-client.ts then takes over: pan, zoom, highlight,
+  search, cluster filter, labels that stay readable at any zoom.
+
+  Props:
+    graph      Wiki['graph']
+    state?     a starting state, for review pages: "focus:<slug>",
+               "cluster:<id>", "search:<text>". A #n-<slug> in the
+               address wins; each node carries that id.
+    tall?      false for a shorter stage (review pages)
+*/
+import { CLUSTERS, clusterOf, shapePath, type Graph } from '../../lib/wiki';
+import { url } from '../../lib/nav';
+import ClusterMark from './ClusterMark.astro';
+
+interface Props { graph: Graph; state?: string; tall?: boolean; id?: string }
+const { graph, state, tall = true, id = 'gv' } = Astro.props;
+const { nodes, edges, viewBox: vb } = graph;
+const neighbours = nodes.map(() => [] as number[]);
+for (const [a, b] of edges) { neighbours[a].push(b); neighbours[b].push(a); }
+const used = CLUSTERS.filter((c) => nodes.some((n) => n.cluster === c.id));
+const cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2;
+const maxDist = Math.max(...nodes.map((n) => Math.hypot(n.x - cx, n.y - cy)));
+// Sent to the client: everything it needs besides the DOM.
+const data = {
+  vb,
+  nodes: nodes.map((n, i) => ({ s: n.slug, t: n.title, u: n.summary, c: n.cluster, x: n.x, y: n.y, r: n.r, d: n.degree, m: n.major, nb: neighbours[i] })),
+  edges,
+  search: nodes.map((n) => [n.title, ...n.aliases].join(' ').toLowerCase()),
+  marks: Object.fromEntries(used.map((c) => [c.id, { d: shapePath(c.shape, 7), tone: c.tone }])),
+};
+---
+<div class:list={['gv', { short: !tall }]} id={id} data-gv data-state={state}>
+  <div class="gv-top">
+    <slot name="title" />
+    <div class="gv-find" role="search">
+      <svg class="gv-icon" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5" /><path d="m13 13 4.5 4.5" /></svg>
+      <input
+        type="search"
+        class="gv-q"
+        aria-label="Find an article"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded="false"
+        aria-controls={`${id}-results`}
+        autocomplete="off"
+        spellcheck="false"
+        disabled
+      />
+      <ul class="gv-results" id={`${id}-results`} role="listbox" aria-label="Matching articles" hidden></ul>
+    </div>
+  </div>
+  <div class="gv-frame">
+    <div class="gv-stage" data-stage>
+      <a class="gv-skip" href={`#${id}-list`}>Skip the graph</a>
+    <svg
+      class="gv-svg"
+      viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`}
+      width={vb.w}
+      height={vb.h}
+      role="group"
+      tabindex="-1"
+      aria-label="Graph of the wiki"
+      style={`--k:1;--ns:1`}
+    >
+      <defs>
+        <pattern id={`${id}-dots`} width="28" height="28" patternUnits="userSpaceOnUse">
+          <circle cx="14" cy="14" r="1.1" />
+        </pattern>
+      </defs>
+      <rect class="gv-bg" x={vb.x - vb.w * 3} y={vb.y - vb.h * 3} width={vb.w * 7} height={vb.h * 7} fill={`url(#${id}-dots)`} />
+      <g class="gv-edges" aria-hidden="true">
+        {edges.map(([a, b], i) => (
+          <line data-a={a} data-b={b} x1={nodes[a].x} y1={nodes[a].y} x2={nodes[b].x} y2={nodes[b].y} />
+        ))}
+      </g>
+      <g class="gv-nodes">
+        {nodes.map((n, i) => {
+          const c = clusterOf(n.cluster);
+          const delay = Math.round((Math.hypot(n.x - cx, n.y - cy) / maxDist) * 520);
+          return (
+            <a
+              class:list={['gv-node', `tone-${c.tone}`, { major: n.major }]}
+              href={url(`wiki/${n.slug}/`)}
+              data-side
+              data-i={i}
+              id={id === 'gv' ? `n-${n.slug}` : `${id}-n-${n.slug}`}
+              style={`--r:${n.r};--delay:${delay}ms`}
+            >
+              <g class="gv-pos" transform={`translate(${n.x} ${n.y})`}>
+                <circle class="gv-hit" r={Math.max(n.r + 6, 14)} />
+                <g class="gv-mk">
+                  <circle class="gv-ring" r={n.r * 1.3 + 5} />
+                  <path class="gv-shape" d={shapePath(c.shape, n.r)} fill-rule="evenodd" />
+                </g>
+                <text class="gv-lbl" text-anchor="middle" dominant-baseline="hanging">{n.title}</text>
+              </g>
+            </a>
+          );
+        })}
+      </g>
+    </svg>
+    </div>
+    <div class="gv-clusters" role="group" aria-label="Clusters">
+      {used.map((c) => (
+        <button type="button" class={`gv-chip tone-${c.tone}`} data-cluster={c.id} aria-pressed="false" disabled>
+          <ClusterMark cluster={c.id} size={14} />{c.label}
+        </button>
+      ))}
+    </div>
+    <div class="gv-card" aria-hidden="true" hidden>
+      <p class="gv-card-t"><span class="gv-card-mk"></span><a class="gv-card-a" tabindex="-1"></a></p>
+      <p class="gv-card-s"></p>
+    </div>
+
+    <div class="gv-zoom" hidden>
+      <button type="button" data-zoom="in" aria-label="Zoom in" title="Zoom in">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M10 4v12M4 10h12" /></svg>
+      </button>
+      <button type="button" data-zoom="out" aria-label="Zoom out" title="Zoom out">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 10h12" /></svg>
+      </button>
+      <button type="button" data-zoom="fit" aria-label="Show the whole graph" title="Show the whole graph">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5v-4h4M12.5 3.5h4v4M16.5 12.5v4h-4M7.5 16.5h-4v-4" /></svg>
+      </button>
+    </div>
+    <p class="gv-live visually-hidden" aria-live="polite"></p>
+  </div>
+  <script type="application/json" class="gv-data" set:html={JSON.stringify(data)} />
+</div>
+
+<script>
+  import { mountGraph } from './graph-client';
+  for (const el of document.querySelectorAll<HTMLElement>('[data-gv]')) mountGraph(el);
+</script>
+
+<style>
+  .gv { position: relative; --frame-h: calc(100svh - var(--header-h) - 2.5rem); }
+  .gv.short { --frame-h: 36rem; }
+
+  /* ------------------------------------------------ the top: title and search
+     Over the graph's top-left corner on wide screens, above it on narrow ones. */
+  .gv-top {
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: var(--space-3) var(--space-5);
+    margin-bottom: var(--space-4);
+  }
+  .gv-top > :global(h1) {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: var(--text-2xl);
+    font-weight: 520;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .gv-find { position: relative; flex: 1 1 14rem; max-width: 22rem; }
+  .gv-icon { position: absolute; left: 0.85rem; top: 50%; translate: 0 -50%; color: var(--muted); pointer-events: none; }
+  .gv-q {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.45rem 0.9rem 0.45rem 2.5rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius-pill);
+    background: var(--card);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: var(--text-s);
+  }
+  .gv-q:disabled { opacity: 0.55; }
+  .gv-q:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-color: transparent; }
+  .gv-results {
+    position: absolute; z-index: 6; left: 0; top: calc(100% + 0.4rem);
+    width: min(26rem, calc(100vw - 2 * var(--gutter)));
+    max-height: min(26rem, 60vh); overflow-y: auto;
+    margin: 0; padding: var(--space-2);
+    list-style: none;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-pop);
+  }
+  .gv-results[hidden] { display: none; }
+  .gv-results { font-family: var(--sans); }
+  .gv-results :global(li) { padding: 0.5rem 0.7rem; border-radius: var(--radius-s); cursor: pointer; line-height: 1.35; }
+  .gv-results :global(li[aria-selected='true']) { background: var(--paper-2); }
+  .gv-results :global(.r-t) { display: flex; align-items: center; gap: 0.5rem; color: var(--ink); font-size: var(--text-m); font-weight: 560; }
+  .gv-results :global(.r-s) { display: block; margin-top: 0.15rem; color: var(--muted); font-size: var(--text-s); }
+  .gv-results :global(.r-none) { color: var(--muted); cursor: default; }
+
+  @media (min-width: 48rem) {
+    .gv-top {
+      position: absolute; z-index: 4; top: 0; left: 0;
+      flex-wrap: nowrap;
+      width: max-content;
+      margin: 0;
+      padding: var(--space-4) var(--space-5);
+      pointer-events: none;
+    }
+    .gv-top > * { pointer-events: auto; }
+    .gv-top > :global(h1) {
+      padding: 0.1rem 0.4rem;
+      margin-left: -0.4rem;
+      border-radius: var(--radius-s);
+      background: color-mix(in oklab, var(--card) 82%, transparent);
+    }
+    .gv-top > :global(h1) { white-space: nowrap; }
+    .gv-find { flex: none; width: 19rem; }
+  }
+
+  /* ------------------------------------------------ frame and stage */
+  .gv-frame {
+    position: relative;
+    height: var(--frame-h);
+    min-height: 28rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-l);
+    background: var(--card);
+    overflow: hidden;
+  }
+  .gv-stage { position: absolute; inset: 0; overflow: auto; overscroll-behavior: contain; }
+  .gv.js .gv-stage { overflow: hidden; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+  .gv.js .gv-stage.dragging { cursor: grabbing; }
+  .gv-svg { display: block; max-width: none; font-family: var(--serif); }
+  .gv.js .gv-svg { width: 100%; height: 100%; }
+
+  .gv-skip {
+    position: absolute; z-index: 7; left: var(--space-3); top: var(--space-3);
+    padding: 0.4rem 0.9rem; border-radius: var(--radius-pill);
+    background: var(--ink); color: var(--paper); font-size: var(--text-s); text-decoration: none;
+    transform: translateY(-300%);
+  }
+  .gv-skip:focus { transform: none; color: var(--paper); }
+
+  pattern circle { fill: var(--rule-strong); opacity: 0.5; }
+
+  /* ------------------------------------------------ clusters: legend and filter */
+  .gv-clusters {
+    position: absolute; z-index: 3; left: 0; right: 0; bottom: 0;
+    display: flex; flex-wrap: wrap; gap: 0.375rem;
+    padding: var(--space-4);
+    pointer-events: none;
+  }
+  .gv-chip {
+    pointer-events: auto;
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    min-height: 2.5rem;
+    padding: 0.3rem 0.7rem 0.3rem 0.6rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-pill);
+    background: color-mix(in oklab, var(--card) 90%, transparent);
+    color: var(--ink-2);
+    font-family: var(--mono);
+    font-size: var(--text-xs);
+    line-height: 1.2;
+    white-space: nowrap;
+    transition: background-color var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease;
+  }
+  .gv-chip:disabled { cursor: default; }
+  .gv-chip:not(:disabled):hover { border-color: var(--rule-strong); color: var(--ink); }
+  .gv-chip[aria-pressed='true'], .gv-chip[aria-pressed='true']:not(:disabled):hover { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .gv-chip[aria-pressed='true'] :global(.cmark path) { fill: var(--paper); }
+  .gv.filtering .gv-chip[aria-pressed='false'] { color: var(--muted); }
+  .gv.filtering .gv-chip[aria-pressed='false'] :global(.cmark) { opacity: 0.45; }
+
+  /* ------------------------------------------------ the drawing
+     --k is screen pixels per graph unit, set by the client as you zoom; text
+     and strokes divide by it to stay the same size on screen. */
+  .gv-edges line {
+    stroke: var(--ink);
+    stroke-opacity: 0.15;
+    stroke-width: 1.1px;
+    vector-effect: non-scaling-stroke;
+    transition: stroke-opacity var(--dur) ease, stroke var(--dur) ease;
+  }
+
+  .gv-node { text-decoration: none; cursor: pointer; outline: none; }
+  .gv-hit { fill: transparent; }
+  .gv-mk { transform: scale(var(--ns)); transform-origin: 0 0; }
+  .gv-shape { fill: var(--tone); stroke: var(--card); stroke-width: 1.5px; vector-effect: non-scaling-stroke; transition: opacity var(--dur) ease; }
+  .gv-ring { fill: none; stroke: var(--focus); stroke-width: 2.5px; vector-effect: non-scaling-stroke; opacity: 0; }
+  .gv-node:focus-visible .gv-ring { opacity: 1; }
+  .gv-lbl {
+    font-size: calc(14px / var(--k));
+    fill: var(--ink-2);
+    transform: translateY(calc(var(--r) * var(--ns) * 1px + 4px / var(--k)));
+    paint-order: stroke;
+    stroke: var(--card);
+    stroke-width: calc(4px / var(--k));
+    stroke-linejoin: round;
+    transition: opacity var(--dur) ease;
+  }
+  /* The client puts each label where it fits: under, over, right or left. */
+  .gv-lbl[data-at='above'] { transform: translateY(calc(var(--r) * var(--ns) * -1px - 5px / var(--k))); }
+  .gv-lbl[data-at='right'] { transform: translateX(calc(var(--r) * var(--ns) * 1px + 5px / var(--k))); }
+  .gv-lbl[data-at='left'] { transform: translateX(calc(var(--r) * var(--ns) * -1px - 5px / var(--k))); }
+  .gv-node.major .gv-lbl { fill: var(--ink); font-weight: 600; }
+  .gv-lbl.off { opacity: 0; }
+
+  .tone-ink { --tone: var(--ink); }
+  .tone-accent { --tone: var(--accent); }
+  .tone-green { --tone: var(--green); }
+  .tone-blue { --tone: var(--blue); }
+
+  /* Highlight: one node, its neighbours and their edges; the rest recede. */
+  .gv-svg.hl .gv-node:not(.cur, .nb) .gv-shape { opacity: 0.14; }
+  .gv-svg.hl .gv-edges line { stroke-opacity: 0.05; }
+  .gv-svg.hl .gv-edges line.on { stroke: var(--accent); stroke-opacity: 0.85; stroke-width: 1.7px; }
+  .gv-node.cur .gv-lbl { fill: var(--ink); font-weight: 650; }
+  /* A cluster previewed from its chip. */
+  .gv-svg.peek:not(.hl) .gv-node:not(.pk) .gv-shape { opacity: 0.14; }
+  .gv-svg.peek:not(.hl) .gv-edges line { stroke-opacity: 0.05; }
+  .gv-svg.peek:not(.hl) .gv-edges line.pk { stroke: var(--ink); stroke-opacity: 0.5; }
+  .gv-node.cur .gv-ring { opacity: 1; stroke: var(--accent); }
+  .gv-node:hover .gv-shape { opacity: 1; }
+
+  /* Filter and search: what does not match fades back. */
+  .gv-svg .gv-node.out .gv-shape { opacity: 0.12; }
+  .gv-svg .gv-node.out { pointer-events: none; }
+  .gv-svg .gv-edges line.out { stroke-opacity: 0.03; }
+  .gv-svg.hl .gv-node.out.nb .gv-shape { opacity: 0.4; }
+
+  /* Entrance: nodes grow from the middle outwards, edges follow. */
+  @media (prefers-reduced-motion: no-preference) {
+    .gv-svg.enter .gv-shape { animation: gv-pop 520ms var(--ease-out) both; animation-delay: var(--delay); transform-box: fill-box; transform-origin: center; }
+    .gv-svg.enter .gv-lbl:not(.off) { animation: gv-fade 420ms ease both; animation-delay: calc(var(--delay) + 260ms); }
+    .gv-svg.enter .gv-edges { animation: gv-fade 700ms ease both; animation-delay: 280ms; }
+  }
+  @keyframes gv-pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes gv-fade { from { opacity: 0; } }
+
+  /* ------------------------------------------------ card and zoom */
+  .gv-card {
+    font-family: var(--sans);
+    position: absolute; z-index: 5; left: 0; top: 0;
+    width: min(21rem, calc(100% - 1.5rem));
+    padding: var(--space-3) var(--space-4);
+    background: var(--card);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-pop);
+    pointer-events: none;
+    cursor: default;
+  }
+  .gv-card[hidden] { display: none; }
+  .gv-card.touch { pointer-events: auto; }
+  .gv-card.docked { left: 0.75rem; right: 0.75rem; top: 0.75rem; width: auto; }
+  .gv-card-t { display: flex; align-items: center; gap: 0.55rem; margin: 0; font-size: var(--text-m); font-weight: 600; line-height: 1.3; color: var(--ink); }
+  .gv-card-mk { display: inline-flex; flex: none; }
+  .gv-card-a { color: inherit; text-decoration: none; }
+  .gv-card.touch .gv-card-a { display: inline-flex; align-items: center; min-height: 2.5rem; text-decoration: underline; text-decoration-color: color-mix(in oklab, var(--accent) 70%, transparent); }
+  .gv-card-s { margin: 0.35rem 0 0; color: var(--ink-2); font-size: var(--text-s); line-height: 1.45; }
+
+  .gv-zoom {
+    position: absolute; z-index: 3; right: var(--space-4); top: var(--space-4);
+    display: flex; flex-direction: column;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--card);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .gv-zoom[hidden] { display: none; }
+  .gv-zoom button {
+    display: grid; place-items: center;
+    width: 2.75rem; height: 2.75rem;
+    border: 0; background: transparent; color: var(--ink-2);
+  }
+  .gv-zoom button + button { border-top: 1px solid var(--rule); }
+  .gv-zoom button:hover { background: var(--paper-2); color: var(--ink); }
+  .gv-zoom button:focus-visible { outline-offset: -3px; }
+
+  @media (max-width: 47.99rem) {
+    .gv { --frame-h: min(74svh, 44rem); }
+    .gv-find { max-width: none; flex-basis: 100%; }
+    .gv-clusters {
+      right: 0;
+      flex-wrap: nowrap; overflow-x: auto;
+      padding: var(--space-3);
+      pointer-events: auto;
+      scrollbar-width: none;
+    }
+    .gv-clusters::-webkit-scrollbar { display: none; }
+    .gv-zoom { top: auto; bottom: 4.25rem; right: var(--space-3); }
+  }
+</style>

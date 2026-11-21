@@ -1,0 +1,67 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import Step from '../../components/journey/Step.astro';
+import Next from '../../components/journey/Next.astro';
+import More from '../../components/journey/More.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import Term from '../../components/journey/Term.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
+import { url } from '../../lib/nav';
+
+const ids = ['claims.research.speechFaster', 'harnesses.claudeCode.voice', 't3code.voice.shortcut', 'connectors.mcp.definition'];
+---
+<Journey chapter="ai" first="predict" title="What an AI model does" description="A model writes what most likely comes next from what is in its window, and from nothing else. What it can take in, chat against work against a coding agent, and why code is different.">
+  <Step id="predict" title="It only knows what is in its window">
+    <p>A <Term id="model" /> reads its <Term id="window" />, the text in front of it, and writes what most likely comes next. Ask about your club without pasting the member list and see what it writes.</p>
+    <div class="pick" role="group" aria-label="Is the member list in the window?">
+      <button type="button" data-do="list" data-val="out" data-default aria-pressed="true">List not pasted</button>
+      <button type="button" data-do="list" data-val="in" aria-pressed="false">List pasted in</button>
+    </div>
+  </Step>
+
+  <Step id="inputs" title="Talk to it, show it, ask it to choose">
+    <p>A voice note, a photo, a screen recording or a choice you are stuck on: each lands in the window as something it can read.</p>
+    <div class="pick" role="group" aria-label="What you give it">
+      <button type="button" data-do="input" data-val="voice" data-default aria-pressed="true">Voice note</button>
+      <button type="button" data-do="input" data-val="photo" aria-pressed="false">Photo</button>
+      <button type="button" data-do="input" data-val="video" aria-pressed="false">Screen recording</button>
+      <button type="button" data-do="input" data-val="decide" aria-pressed="false">A decision</button>
+    </div>
+    <More title="Talking instead of typing">
+      <p>In a study, speaking was about <Fact id="claims.research.speechFaster" /> as fast as typing on a phone. The coding tools have it too: <code><Fact id="harnesses.claudeCode.voice" /></code> in Claude Code, <kbd><Fact id="t3code.voice.shortcut" /></kbd> in T3 Code.</p>
+    </More>
+  </Step>
+
+  <Step id="modes" title="Chat, work, coding agent">
+    <p>The same job in a chat, at work, and with a coding <Term id="agent" />. Watch what it can reach, and who carries the result to where it is needed.</p>
+    <div class="pick" role="group" aria-label="How you use it">
+      <button type="button" data-do="mode" data-val="chat" data-default aria-pressed="true">Chat</button>
+      <button type="button" data-do="mode" data-val="work" aria-pressed="false">Work</button>
+      <button type="button" data-do="mode" data-val="agent" aria-pressed="false">Coding agent</button>
+    </div>
+    <ForLevel is="technical"><p>The coding agent's <Term id="harness" /> runs your project's own commands, here <code>npm test</code> and <code>npx tsc --noEmit</code>, and puts what they print in the window.</p></ForLevel>
+    <ForLevel is="engineer"><p>The model is the same in all three. The <Term id="harness" /> around it decides the tools, the permissions and what goes into the window.</p></ForLevel>
+    <More title="Where you find each">
+      <dl class="j-defs">
+        <dt>Chat</dt><dd>claude.ai or ChatGPT, on the web or the phone app.</dd>
+        <dt>Work</dt><dd>The same apps with connectors to your files, email or calendar. Many use MCP, <Fact id="connectors.mcp.definition" />.</dd>
+        <dt>Coding agent</dt><dd>Claude Code or Codex on your computer, or <a href={url('t3-code/')}>T3 Code</a>, which drives them. <LessonRef id="providers" /> shows how you get them.</dd>
+      </dl>
+    </More>
+  </Step>
+
+  <Step id="code" title="Code can be run">
+    <p>A letter can be wrong and only you will notice. A page can be tried, so a <Term id="check" /> can catch the mistake and send it back before you see it.</p>
+    <div class="pick" role="group" aria-label="What it writes">
+      <button type="button" data-do="what" data-val="page" data-default aria-pressed="true">The member list page</button>
+      <button type="button" data-do="what" data-val="letter" aria-pressed="false">A letter to members</button>
+    </div>
+    <Next from="ai" more={[{ href: 'wiki/model/', text: 'Model', side: true }, { href: 'wiki/context-window/', text: 'Context window', side: true }, { href: 'explain/voice/', text: 'Voice input, in depth' }]} />
+  </Step>
+  <Fragment slot="foot">
+    <p>The club, its members and every answer above are made up.</p>
+    <Verified ids={ids} />
+  </Fragment>
+</Journey>

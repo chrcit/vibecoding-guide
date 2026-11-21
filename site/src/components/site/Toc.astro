@@ -1,0 +1,96 @@
+---
+/*
+  On-page contents from a headings array (the `headings` that Astro's
+  render() returns, or hand-made).
+  Props: headings ({ depth: number; slug: string; text: string }[]),
+  title? (string, default "On this page"), maxDepth? (2 or 3, default 3),
+  collapsible? (boolean: render as a <details> that starts closed, for
+  narrow screens).
+  Marks the section being read with aria-current="location".
+*/
+interface Heading { depth: number; slug: string; text: string }
+interface Props { headings: Heading[]; title?: string; maxDepth?: 2 | 3; collapsible?: boolean }
+const { headings, title = 'On this page', maxDepth = 3, collapsible = false } = Astro.props;
+const items = headings.filter((h) => h.depth >= 2 && h.depth <= maxDepth);
+---
+{items.length > 0 && (
+  collapsible ? (
+    <details class="toc toc-fold" data-toc>
+      <summary>
+        <span>{title}</span>
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4" /></svg>
+      </summary>
+      <ol>{items.map((h) => <li class={`d${h.depth}`}><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol>
+    </details>
+  ) : (
+    <nav class="toc" aria-label={title} data-toc>
+      <p class="toc-title">{title}</p>
+      <ol>{items.map((h) => <li class={`d${h.depth}`}><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol>
+    </nav>
+  )
+)}
+
+<script>
+  const tocs = [...document.querySelectorAll<HTMLElement>('[data-toc]')];
+  const links = tocs.flatMap((t) => [...t.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')]);
+  const targets = [...new Set(links.map((a) => decodeURIComponent(a.hash.slice(1))))]
+    .map((id) => document.getElementById(id))
+    .filter((el): el is HTMLElement => !!el);
+  if (targets.length) {
+    const mark = () => {
+      // The current section is the last heading above the reading line.
+      const line = innerHeight * 0.3;
+      let id = targets[0].id;
+      for (const el of targets) { if (el.getBoundingClientRect().top <= line) id = el.id; }
+      for (const a of links) {
+        if (decodeURIComponent(a.hash.slice(1)) === id) a.setAttribute('aria-current', 'location');
+        else a.removeAttribute('aria-current');
+      }
+    };
+    let queued = false;
+    addEventListener('scroll', () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => { queued = false; mark(); });
+    }, { passive: true });
+    mark();
+  }
+  // Close the folded contents after a jump so the section is in view.
+  for (const d of document.querySelectorAll<HTMLDetailsElement>('details[data-toc]')) {
+    d.addEventListener('click', (e) => { if ((e.target as HTMLElement).closest('a')) d.open = false; });
+  }
+</script>
+
+<style>
+  .toc { font-size: var(--text-s); line-height: 1.4; }
+  .toc-title { margin: 0 0 var(--space-3); color: var(--ink); font-weight: 600; font-size: var(--text-s); }
+  ol { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--rule); }
+  li.d3 a { padding-left: 1.6rem; font-size: var(--text-xs); }
+  a {
+    display: block;
+    margin-left: -1px;
+    padding: 0.4rem 0 0.4rem 0.9rem;
+    border-left: 2px solid transparent;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color var(--dur-fast) ease, border-color var(--dur-fast) ease;
+  }
+  a:hover { color: var(--ink); }
+  a[aria-current='location'] { color: var(--ink); border-left-color: var(--accent); }
+
+  .toc-fold {
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--card);
+  }
+  summary {
+    display: flex; align-items: center; justify-content: space-between;
+    min-height: 2.75rem; padding: 0 var(--space-4);
+    cursor: pointer; list-style: none;
+    font-weight: 600; color: var(--ink);
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary svg { transition: transform var(--dur) var(--ease-out); color: var(--muted); }
+  .toc-fold[open] summary svg { transform: rotate(180deg); }
+  .toc-fold ol { margin: 0 var(--space-4) var(--space-4); }
+</style>

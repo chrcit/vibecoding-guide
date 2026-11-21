@@ -1,0 +1,17 @@
+---
+/*
+  One thing more inside a journey step, closed until the reader opens it: the sourced numbers, a
+  prompt to copy, the command, how a named tool does it. The step still reads complete without it.
+  Props:
+    title    two to four words that name what is inside ("The prices", "A prompt for this")
+    level?   'technical' | 'engineer': open by default for readers at or above that level
+  Slot: default. Keep it to about sixty words, or one prompt, or one small table.
+*/
+interface Props { title: string; level?: 'technical' | 'engineer' }
+const { title, level } = Astro.props;
+const openFor = level === 'engineer' ? 'engineer' : level === 'technical' ? 'technical engineer' : undefined;
+---
+<details class="j-more-info" data-open-for={openFor}>
+  <summary>{title}</summary>
+  <div class="j-more-body"><slot /></div>
+</details>

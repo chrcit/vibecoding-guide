@@ -1,0 +1,24 @@
+---
+// The showcase as a board: every piece running in its tile. The story of how
+// each was built, and its prompt, open in the side view.
+import Board from '../../layouts/Board.astro';
+import Tile from '../../components/board/Tile.astro';
+import { pieces } from '../../lib/showcase';
+import { url } from '../../lib/nav';
+---
+<Board title="Showcase" description="Things built by an agent for this guide, running in the page, each with the prompt that started it and an honest account of how it went." section="showcase">
+  <p slot="tools" class="made-up">The bakery, the football club and the contacts in these pieces are made up.</p>
+  {pieces.map((p) => (
+    <Tile title={p.title} span={6} id={p.slug} flush side={`showcase/${p.category}/#${p.slug}`}>
+      <a slot="tools" class="tile-more" href={url(p.path)} aria-label={`Open ${p.title} full screen`} title="Full screen">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3H13v3.5M13 3 9 7M6.5 13H3V9.5M3 13l4-4" /></svg>
+      </a>
+      <iframe class="piece" src={url(p.path)} title={p.title} loading="lazy"></iframe>
+    </Tile>
+  ))}
+</Board>
+
+<style>
+  .made-up { margin: 0; font-size: var(--text-s); color: var(--ink-2); }
+  .piece { display: block; width: 100%; height: clamp(26rem, 62vh, 40rem); border: 0; border-radius: 0 0 var(--radius) var(--radius); background: var(--paper-2); }
+</style>

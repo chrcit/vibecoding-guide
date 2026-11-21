@@ -1,0 +1,26 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHeader from '../../components/site/PageHeader.astro';
+import CardGrid from '../../components/site/CardGrid.astro';
+import Card from '../../components/site/Card.astro';
+
+type Meta = { title: string; description: string; order?: number };
+const mods = import.meta.glob<{ meta?: Meta }>('./*.astro', { eager: true });
+const essays = Object.entries(mods)
+  .filter(([path, m]) => !path.endsWith('/index.astro') && m.meta)
+  .map(([path, m]) => ({ slug: path.slice(2, -6), ...(m.meta as Meta) }))
+  .sort((a, b) => (a.order ?? 99) - (b.order ?? 99) || a.title.localeCompare(b.title));
+---
+<Base title="Essays · Agentic Coding Guide" description="Short essays on the mindset for working with coding agents. The author's own views, each tied back to the guide's facts and figures." section="essays" noindex={essays.length === 0}>
+  <div class="wrap">
+    <PageHeader title="Essays">
+      <p>Short pieces on how to think when an agent does the typing. These are the author’s own views. Each one points back to the facts and figures it rests on.</p>
+    </PageHeader>
+    <CardGrid>
+      {essays.map((e) => <Card href={`essays/${e.slug}/`} title={e.title}>{e.description}</Card>)}
+    </CardGrid>
+  </div>
+</Base>
+<style>
+  .wrap { max-width: var(--wide); margin: 0 auto; padding: var(--space-7) var(--gutter) 0; }
+</style>

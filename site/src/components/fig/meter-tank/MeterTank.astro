@@ -1,0 +1,122 @@
+---
+/*
+ * Fig. 8, "A meter and a tank".
+ *
+ * Idea: the API is a meter that bills every token and never stops; a plan is a flat price for a tank
+ * that drains with work, refills on a clock and sits inside a weekly allowance.
+ * Elements: the API meter and its coin stack (the bill); the plan's tank, refill clock and weekly trough.
+ * States: six steps (model.ts): start, working, tank dry, refill, week used up, usage credits.
+ * Data: plan price and window length from src/data/plans.ts, as props. No provider publishes how much
+ *   a window or a week holds, so levels are relative and the words never state a quantity.
+ * Interaction: Next and Back step buttons.
+ * Alt: two objects on plinths, a meter with an empty coin tray and a full glass tank fed by a trough.
+ */
+import Figure from '../Figure.astro';
+import Pane from '../Pane.astro';
+import { drawMeterTank, COINS } from './draw';
+import { STEPS, describe, type MeterTankInputs } from './model';
+
+interface Props extends MeterTankInputs {
+  n?: number | string;
+  source?: { label: string; href?: string };
+}
+const { n = 8, source, currency, planPricePerMonth, windowHours } = Astro.props;
+const inputs: MeterTankInputs = { currency, planPricePerMonth, windowHours };
+const { panes, motion } = drawMeterTank(`fig${n}`);
+const [meterLabels, tankLabels] = panes.map((p) => p.labels.map((l) => (l.id === 'tank' ? { ...l, name: `${windowHours}-hour tank` } : l)));
+const plan = `${currency}${planPricePerMonth}`;
+const last = STEPS.length - 1;
+const says = STEPS.map((_, i) => describe(i, inputs));
+---
+<div class="fig-meter-tank" data-fig-meter-tank data-says={JSON.stringify(says)} data-motion={JSON.stringify({ ...motion, coins: COINS })}>
+  <Figure
+    n={n}
+    title="A meter and a tank"
+    hint="Press Next to follow a week of work on the API and on a plan."
+    alt={`Two objects on plinths. On the left, a meter with a dial and an empty coin tray: the API, which bills every token. On the right, a full glass tank on a stand, fed by a pipe from a wider glass trough, the weekly allowance, with a clock beside it: a plan that refills ${windowHours} hours after your first message.`}
+    legend={[...meterLabels!, ...tankLabels!].map((l) => l.name)}
+    source={source}
+  >
+    <div class="fig-panes">
+      <Pane labels={meterLabels}><Fragment set:html={panes[0]!.svg} /></Pane>
+      <Pane labels={tankLabels} start={meterLabels!.length + 1}><Fragment set:html={panes[1]!.svg} /></Pane>
+    </div>
+    <Fragment slot="control">
+      <button type="button" class="btn ghost" data-back disabled>Back</button>
+      <button type="button" class="btn" data-next>Next step</button>
+      <span class="fig-mt-count" data-count>Step 0 of {last}</span>
+    </Fragment>
+    <Fragment slot="readout">{says[0]}</Fragment>
+    <Fragment slot="caption">
+      On the API every token is counted and billed, so the bill only climbs. A plan costs {plan} a month however much you use it: work drains the tank, an empty tank means waiting for the {windowHours}-hour refill, and every refill also draws on the week. The levels are drawn to show the order of events; no provider publishes how much a window or a week holds.
+    </Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .fig-mt-count { color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+</style>
+
+<script>
+  import { STEPS } from './model';
+
+  type Flat = [number, number];
+  type Motion = { unit: Flat; tankH: number; weekH: number; coinDrop: Flat; coins: number };
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const tr = ([x, y]: Flat, by = 1) => `translate(${(x * by).toFixed(1)}px, ${(y * by).toFixed(1)}px)`;
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fig-meter-tank]')) {
+    const says: string[] = JSON.parse(root.dataset.says!);
+    const m: Motion = JSON.parse(root.dataset.motion!);
+    const q = <T extends Element>(s: string) => root.querySelector<T>(s)!;
+    const readout = q<HTMLElement>('[data-fig-readout]');
+    const needle = q<SVGGElement>('[data-needle]');
+    const hand = q<SVGGElement>('[data-hand]');
+    const tank = q<SVGGElement>('[data-water="tank"]');
+    const week = q<SVGGElement>('[data-water="week"]');
+    const coins = [...root.querySelectorAll<SVGGElement>('[data-coin]')];
+    const labels = [...root.querySelectorAll<HTMLElement>('[data-label]')];
+    const back = q<HTMLButtonElement>('[data-back]');
+    const next = q<HTMLButtonElement>('[data-next]');
+    const count = q<HTMLElement>('[data-count]');
+    const last = STEPS.length - 1;
+    let at = 0;
+
+    q<HTMLElement>('[data-fig-control]').hidden = false;
+
+    function show(i: number) {
+      const s = STEPS[i]!;
+      root.style.setProperty('--fig-ms', reduced.matches ? '0ms' : '');
+      // The needle sweeps three turns over the whole bill; the clock's hand turns once per window.
+      needle.style.transform = `rotate(${-90 + s.bill * 1080}deg)`;
+      hand.style.transform = `rotate(${-90 + s.clock * 360}deg)`;
+      tank.style.transform = tr(m.unit, (1 - s.tank) * m.tankH);
+      tank.style.opacity = s.tank > 0.01 ? '1' : '0';
+      week.style.transform = tr(m.unit, (1 - s.week) * m.weekH);
+      week.style.opacity = s.week > 0.01 ? '1' : '0';
+      const shown = Math.round(s.bill * m.coins);
+      coins.forEach((c, k) => {
+        const on = k < shown;
+        c.style.opacity = on ? '1' : '0';
+        c.style.transform = on ? 'translate(0px, 0px)' : tr(m.coinDrop);
+      });
+      const lit = new Set<string>(s.watch.flatMap((w) => (w === 'meter' ? ['meter', 'bill'] : [w])));
+      for (const l of labels) l.toggleAttribute('data-active', lit.has(l.dataset.label ?? ''));
+      readout.textContent = says[i]!;
+      count.textContent = `Step ${i} of ${last}`;
+      back.disabled = i === 0;
+      next.textContent = i === last ? 'Start again' : 'Next step';
+    }
+
+    next.addEventListener('click', () => {
+      at = at === last ? 0 : at + 1;
+      show(at);
+    });
+    back.addEventListener('click', () => {
+      at = Math.max(0, at - 1);
+      show(at);
+      if (at === 0) next.focus();
+    });
+    show(0);
+  }
+</script>

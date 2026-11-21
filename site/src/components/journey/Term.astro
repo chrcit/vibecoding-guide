@@ -1,0 +1,19 @@
+---
+/*
+  A term from the glossary (src/journey/terms.ts) inside step text, defined where it is used.
+
+    <Term id="worktree" />                the term's own word
+    <Term id="worktree">worktrees</Term>  your wording of it
+
+  Hover, focus or a tap shows the term's one sentence; a link under it opens the wiki page in the
+  side view. Use it the first time a lesson needs the word, not on every mention.
+*/
+import SiteTerm from '../site/Term.astro';
+import { term, termHref, type TermId } from '../../journey/terms';
+import { url } from '../../lib/nav';
+interface Props { id: TermId }
+const { id } = Astro.props;
+const t = term(id);
+const own = Astro.slots.has('default') ? await Astro.slots.render('default') : t.word;
+---
+<SiteTerm def={t.def} name={t.word} more={{ href: url(termHref(id)), text: `More on ${t.word}` }}><Fragment set:html={own} /></SiteTerm>

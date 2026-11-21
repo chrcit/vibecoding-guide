@@ -1,0 +1,57 @@
+---
+// The one page shell. Shared wiring: change it only through the lead.
+import '../styles/global.css';
+import Head from '../components/site/Head.astro';
+import Header from '../components/site/Header.astro';
+import Footer from '../components/site/Footer.astro';
+import LevelBoot from '../components/level/LevelBoot.astro';
+import LevelOffer from '../components/level/LevelOffer.astro';
+import SideView from '../components/site/SideView.astro';
+import type { SectionId } from '../lib/nav';
+
+export interface Props {
+  title: string;
+  description: string;
+  /** Which top-level section this page belongs to (highlights the nav). */
+  section?: SectionId;
+  /** Thin reading-progress bar under the header. */
+  progress?: boolean;
+  /** Keep the page out of search engines and the sitemap. */
+  noindex?: boolean;
+  /** Open Graph type. */
+  type?: 'website' | 'article';
+  /** Legacy prop from the first version; ignored. */
+  current?: string;
+}
+const { title, description, section, progress = false, noindex = false, type = 'website' } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head title={title} description={description} noindex={noindex} type={type} />
+    <LevelBoot />
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Header section={section} progress={progress} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+    <LevelOffer />
+    <SideView />
+  </body>
+</html>
+
+<script>
+  // A slider's label often holds its live value in an <output>. An output is labelable, so the
+  // label names the output and leaves the slider without a name. Name it from the label's own words.
+  for (const el of document.querySelectorAll<HTMLInputElement | HTMLSelectElement>('label input, label select')) {
+    if (el.labels?.length || el.hasAttribute('aria-label') || el.hasAttribute('aria-labelledby')) continue;
+    const label = el.closest('label')!.cloneNode(true) as HTMLElement;
+    label.querySelectorAll('output, input, select').forEach((n) => n.remove());
+    const name = label.textContent?.replace(/\s+/g, ' ').trim();
+    if (name) el.setAttribute('aria-label', name);
+  }
+</script>

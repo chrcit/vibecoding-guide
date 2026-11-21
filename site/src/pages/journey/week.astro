@@ -1,0 +1,31 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import PartSwitch from '../../components/journey/PartSwitch.astro';
+import OverviewStep from '../../components/journey/OverviewStep.astro';
+import { rungs } from '../../journey/rungs';
+import { url } from '../../lib/nav';
+import { overviewData } from '../../lib/journey-data';
+
+// The overview plays each lesson's own loop, so it gets the same sourced names and prices.
+const data = overviewData();
+---
+<Journey
+  chapter="week"
+  first="meter"
+  data={data}
+  title="Part 3 · From one job to a working week"
+  description="Part three of the guide: cost, a second model's review, proof you can read, your turn, several jobs, a growing project, other people and other machines."
+>
+  <PartSwitch active={3} />
+
+  {rungs.filter((r) => r.part === 3).map((r, i, all) => (
+    <OverviewStep rung={r}>
+      {i === all.length - 1 && (
+        <a class="j-next" href={url('start/')}>
+          <span>That is the guide. Next, the first hour</span>
+          <b>Build the club list</b>
+        </a>
+      )}
+    </OverviewStep>
+  ))}
+</Journey>

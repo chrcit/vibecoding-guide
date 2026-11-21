@@ -1,0 +1,27 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import PartSwitch from '../../components/journey/PartSwitch.astro';
+import OverviewStep from '../../components/journey/OverviewStep.astro';
+import { rungs, parts } from '../../journey/rungs';
+import { url } from '../../lib/nav';
+---
+<Journey
+  chapter="foundations"
+  first="ai"
+  title="Part 1 · Before your first code"
+  description="Part one of the guide: what an AI model does, the providers and where the model runs, Git, GitHub and hosting, and your first real loop."
+>
+  <PartSwitch active={1} />
+
+  {rungs.filter((r) => r.part === 1).map((r, i, all) => (
+    <OverviewStep rung={r}>
+      {i === all.length - 1 && (
+        <a class="j-next" href={url(parts[1]!.href)}>
+          <span>Part two · Lessons {parts[1]!.range}</span>
+          <b>{parts[1]!.title}</b>
+          <span>{parts[1]!.blurb}</span>
+        </a>
+      )}
+    </OverviewStep>
+  ))}
+</Journey>

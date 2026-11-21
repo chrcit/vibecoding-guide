@@ -1,0 +1,218 @@
+/*
+ * The figure frame and the drawing tones. Every colour here is a site token or a color-mix of
+ * tokens. The tone table is defined three times, like the tokens: light, system dark, forced dark.
+ * See site/FIGURES.md for what each tone is for.
+ */
+
+.fig, .tile {
+  /* Light: faces get darker as they turn from the light. */
+  --fig-top: var(--card);
+  --fig-left: color-mix(in oklab, var(--ink) 8%, var(--card));
+  --fig-right: color-mix(in oklab, var(--ink) 17%, var(--card));
+  --fig-shadow: color-mix(in oklab, var(--ink) 27%, var(--card));
+  --fig-base-top: color-mix(in oklab, var(--ink) 5%, var(--paper));
+  --fig-base-left: color-mix(in oklab, var(--ink) 13%, var(--paper));
+  --fig-base-right: color-mix(in oklab, var(--ink) 22%, var(--paper));
+  --fig-edge: color-mix(in oklab, var(--ink) 78%, var(--card));
+  --fig-line: color-mix(in oklab, var(--ink) 45%, var(--card));
+  --fig-faint: color-mix(in oklab, var(--ink) 22%, var(--card));
+  --fig-inlay: color-mix(in oklab, var(--ink) 10%, var(--paper));
+  --fig-lit: var(--accent);
+  --fig-lit-top: color-mix(in oklab, var(--accent) 55%, var(--card));
+  --fig-lit-left: color-mix(in oklab, var(--accent) 75%, var(--card));
+  --fig-lit-right: color-mix(in oklab, var(--accent) 88%, var(--ink));
+  --fig-lit-shadow: color-mix(in oklab, var(--accent) 70%, var(--ink));
+  --fig-water: color-mix(in oklab, var(--blue) 30%, var(--card));
+  --fig-water-top: color-mix(in oklab, var(--blue) 18%, var(--card));
+  --fig-water-edge: var(--blue);
+  --fig-glass: color-mix(in oklab, var(--blue) 6%, transparent);
+  --fig-halo: color-mix(in oklab, var(--ink) 22%, transparent);
+  --fig-stroke: 1.25px;
+  --fig-stroke-detail: 1px;
+  --fig-ease: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .fig, :root:not([data-theme='light']) .tile {
+    /* Dark: the top catches the light, sides fall away towards the page colour. */
+    --fig-top: color-mix(in oklab, var(--ink) 17%, var(--card));
+    --fig-left: color-mix(in oklab, var(--ink) 10%, var(--card));
+    --fig-right: color-mix(in oklab, var(--ink) 5%, var(--card));
+    --fig-shadow: var(--card);
+    --fig-base-top: color-mix(in oklab, var(--ink) 8%, var(--paper));
+    --fig-base-left: color-mix(in oklab, var(--ink) 4%, var(--paper));
+    --fig-base-right: var(--paper);
+    --fig-edge: color-mix(in oklab, var(--ink) 62%, var(--card));
+    --fig-line: color-mix(in oklab, var(--ink) 38%, var(--card));
+    --fig-faint: color-mix(in oklab, var(--ink) 18%, var(--card));
+    --fig-inlay: color-mix(in oklab, var(--ink) 4%, var(--paper));
+    --fig-lit-top: color-mix(in oklab, var(--accent) 80%, var(--ink));
+    --fig-lit-left: var(--accent);
+    --fig-lit-right: color-mix(in oklab, var(--accent) 72%, var(--card));
+    --fig-lit-shadow: color-mix(in oklab, var(--accent) 50%, var(--card));
+    --fig-water: color-mix(in oklab, var(--blue) 34%, var(--card));
+    --fig-water-top: color-mix(in oklab, var(--blue) 52%, var(--card));
+    --fig-glass: color-mix(in oklab, var(--blue) 7%, transparent);
+    --fig-halo: color-mix(in oklab, var(--paper) 85%, transparent);
+  }
+}
+:root[data-theme='dark'] .fig, :root[data-theme='dark'] .tile {
+  --fig-top: color-mix(in oklab, var(--ink) 17%, var(--card));
+  --fig-left: color-mix(in oklab, var(--ink) 10%, var(--card));
+  --fig-right: color-mix(in oklab, var(--ink) 5%, var(--card));
+  --fig-shadow: var(--card);
+  --fig-base-top: color-mix(in oklab, var(--ink) 8%, var(--paper));
+  --fig-base-left: color-mix(in oklab, var(--ink) 4%, var(--paper));
+  --fig-base-right: var(--paper);
+  --fig-edge: color-mix(in oklab, var(--ink) 62%, var(--card));
+  --fig-line: color-mix(in oklab, var(--ink) 38%, var(--card));
+  --fig-faint: color-mix(in oklab, var(--ink) 18%, var(--card));
+  --fig-inlay: color-mix(in oklab, var(--ink) 4%, var(--paper));
+  --fig-lit-top: color-mix(in oklab, var(--accent) 80%, var(--ink));
+  --fig-lit-left: var(--accent);
+  --fig-lit-right: color-mix(in oklab, var(--accent) 72%, var(--card));
+  --fig-lit-shadow: color-mix(in oklab, var(--accent) 50%, var(--card));
+  --fig-water: color-mix(in oklab, var(--blue) 34%, var(--card));
+  --fig-water-top: color-mix(in oklab, var(--blue) 52%, var(--card));
+  --fig-glass: color-mix(in oklab, var(--blue) 7%, transparent);
+  --fig-halo: color-mix(in oklab, var(--paper) 85%, transparent);
+}
+
+/* ---------- the frame ---------- */
+
+.fig {
+  container-type: inline-size;
+  margin: 2.5rem 0;
+  padding: 1.25rem 1.25rem 1rem;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  color: var(--ink);
+  font-family: var(--serif);
+  scroll-margin-top: 5rem;
+}
+.fig[data-wide] { max-width: 60rem; }
+/* Inside a board tile: the tile is the frame and carries the title. */
+.fig[data-bare] { margin: 0; padding: 0; border: 0; border-radius: 0; background: none; max-width: none; font-family: inherit; }
+.fig[data-bare] > .fig-head { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.fig[data-bare] > .fig-drawing { margin-top: 0; }
+.fig-head { display: flex; align-items: baseline; gap: 0.75rem; margin: 0; }
+.fig-n { font-family: var(--mono); font-size: 0.875rem; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fig-n a { text-decoration: none; color: inherit; }
+.fig-n a:hover { color: var(--accent); }
+.fig-title { font-size: 1.25rem; line-height: 1.25; font-weight: 600; margin: 0; text-wrap: balance; }
+.fig-hint { margin: 0.35rem 0 0; font-size: 1rem; line-height: 1.4; color: var(--muted); }
+
+.fig-drawing { position: relative; margin: 0.75rem 0 0; }
+.fig-drawing .k-svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+/* HTML labels laid over the drawing at anchors from the kit. */
+.fig-label {
+  position: absolute; transform: translate(-50%, -50%);
+  font-family: var(--mono); font-size: 0.875rem; line-height: 1.2; white-space: nowrap;
+  color: var(--ink-2); background: color-mix(in oklab, var(--card) 82%, transparent);
+  padding: 0.1rem 0.35rem; border-radius: 6px; pointer-events: none;
+  transition: color 200ms ease, opacity 200ms ease;
+}
+.fig-label[data-active] { color: var(--ink); font-weight: 600; }
+.fig-label .fig-key { display: none; }
+.fig-legend { display: none; margin: 0.5rem 0 0; padding: 0; list-style: none; font-family: var(--mono); font-size: 0.875rem; color: var(--ink-2); }
+.fig-legend li { display: inline-flex; gap: 0.4rem; align-items: baseline; margin: 0 1rem 0.25rem 0; }
+.fig-key {
+  display: inline-grid; place-items: center; min-width: 1.5rem; height: 1.5rem; border-radius: 999px;
+  border: 1px solid var(--rule); background: var(--card); font-family: var(--mono); font-size: 0.8125rem; color: var(--ink);
+}
+
+/* Narrow figures: labels become numbered keys, names move to the legend. */
+@container (max-width: 34rem) {
+  .fig-label { padding: 0; background: none; }
+  .fig-label .fig-key { display: inline-grid; }
+  .fig-label .fig-name { display: none; }
+  .fig-legend { display: block; }
+}
+
+.fig-foot { display: grid; gap: 0.75rem; margin-top: 0.75rem; }
+.fig-control { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; font-family: var(--mono); font-size: 0.875rem; }
+.fig-control[hidden] { display: none; }
+.fig-readout {
+  margin: 0; min-height: 3.2em; font-size: 1.0625rem; line-height: 1.5; color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.fig-caption { margin: 0.25rem 0 0; padding-top: 0.75rem; border-top: 1px solid var(--rule); font-size: 0.9375rem; line-height: 1.5; color: var(--muted); }
+.fig-caption:empty { display: none; }
+.fig-source { display: block; margin-top: 0.35rem; font-family: var(--mono); font-size: 0.8125rem; }
+
+/* Controls. Step buttons use the site's .btn; a slider uses .fig-range. */
+.fig-control .btn { min-height: 40px; min-width: 40px; font-size: 0.875rem; }
+.fig-range { display: grid; gap: 0.35rem; flex: 1 1 16rem; color: var(--ink-2); }
+.fig-range span { display: flex; justify-content: space-between; gap: 1rem; }
+.fig-range output { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.fig-range input { width: 100%; min-height: 40px; margin: 0; accent-color: var(--accent); }
+
+/* ---------- drawing tones (kit classes) ---------- */
+
+.k-svg path, .k-svg circle { vector-effect: non-scaling-stroke; }
+.k-solid .k-fill, .k-pipe .k-fill { fill: var(--fig-top); stroke: none; }
+.k-left { fill: var(--fig-left); }
+.k-right { fill: var(--fig-right); }
+.k-shadow { fill: var(--fig-shadow); }
+.k-top { fill: var(--fig-top); }
+.k-solid[data-tone='base'] .k-fill, .k-solid[data-tone='base'] .k-top { fill: var(--fig-base-top); }
+.k-solid[data-tone='base'] .k-left { fill: var(--fig-base-left); }
+.k-solid[data-tone='base'] .k-right, .k-solid[data-tone='base'] .k-shadow { fill: var(--fig-base-right); }
+.k-solid[data-tone='lit'] .k-fill, .k-solid[data-tone='lit'] .k-top { fill: var(--fig-lit-top); }
+.k-solid[data-tone='lit'] .k-left { fill: var(--fig-lit-left); }
+.k-solid[data-tone='lit'] .k-right { fill: var(--fig-lit-right); }
+.k-solid[data-tone='lit'] .k-shadow { fill: var(--fig-lit-shadow); }
+.k-left, .k-right, .k-shadow, .k-top { stroke: none; }
+.k-edge, .k-crease, .k-line { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.k-edge { stroke: var(--fig-edge); stroke-width: var(--fig-stroke); }
+.k-crease { stroke: var(--fig-line); stroke-width: var(--fig-stroke-detail); }
+.k-solid[data-tone='lit'] .k-edge { stroke: var(--fig-lit); }
+.k-solid[data-tone='lit'] .k-crease { stroke: var(--fig-lit); }
+.k-line { stroke: var(--fig-line); stroke-width: var(--fig-stroke-detail); }
+.k-line[data-tone='edge'] { stroke: var(--fig-edge); stroke-width: var(--fig-stroke); }
+.k-line[data-tone='faint'] { stroke: var(--fig-faint); }
+.k-line[data-tone='lit'] { stroke: var(--fig-lit); stroke-width: 2px; }
+.k-line[data-tone='green'] { stroke: var(--green); stroke-width: 2px; }
+.k-flat { fill: var(--fig-inlay); stroke: var(--fig-faint); stroke-width: var(--fig-stroke-detail); }
+.k-flat[data-tone='lit'] { fill: var(--fig-lit); stroke: none; }
+.k-flat[data-tone='faint'] { fill: var(--fig-faint); stroke: none; }
+.k-dots circle { fill: var(--fig-line); }
+.k-hub { fill: var(--fig-edge); }
+.k-halo { fill: var(--fig-halo); filter: blur(6px); transform: translateY(3px); }
+
+/* Comparison figures: panes side by side, stacked when narrow (see Pane.astro). */
+.fig-panes { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.fig-pane { position: relative; min-width: 0; }
+@container (max-width: 34rem) {
+  .fig-panes { grid-template-columns: 1fr; }
+}
+
+/* Glass and water, for tanks and vessels. */
+.k-glass-back { fill: color-mix(in oklab, var(--fig-inlay) 55%, transparent); stroke: var(--fig-faint); stroke-width: var(--fig-stroke-detail); }
+.k-glass-front { fill: var(--fig-glass); stroke: none; }
+.k-glass-edges { fill: none; stroke: var(--fig-edge); stroke-width: var(--fig-stroke); stroke-linejoin: round; }
+.k-water .k-fill, .k-water .k-left, .k-water .k-right, .k-water .k-shadow { fill: var(--fig-water); }
+.k-water .k-top { fill: var(--fig-water-top); }
+.k-water .k-edge, .k-water .k-crease { stroke: var(--fig-water-edge); }
+
+/* Motion: transform and opacity only. Scripts set --fig-ms to 0 under reduced motion. */
+.k-move { transition: transform var(--fig-ms, 520ms) var(--fig-ease), opacity var(--fig-ms, 520ms) var(--fig-ease); }
+@media (prefers-reduced-motion: reduce) {
+  .k-move, .fig-label { transition: none; }
+}
+
+/* ---------- flat charts (kit/chart.ts) ---------- */
+
+.c-grid { stroke: var(--fig-faint); stroke-width: 1px; }
+.c-axis { stroke: var(--fig-line); stroke-width: 1px; }
+.c-label { fill: var(--muted); font-family: var(--mono); font-size: 13px; }
+.c-series { fill: none; stroke: var(--fig-edge); stroke-width: 2px; stroke-linejoin: round; stroke-linecap: round; }
+.c-series[data-tone='lit'] { stroke: var(--accent); }
+.c-series[data-tone='green'] { stroke: var(--green); }
+.c-series[data-tone='blue'] { stroke: var(--blue); }
+.c-points circle { fill: var(--card); stroke: var(--fig-edge); stroke-width: 1.5px; }
+.c-points[data-tone='lit'] circle { fill: var(--accent); stroke: var(--accent); }
+.c-points[data-tone='green'] circle { stroke: var(--green); }
+.c-points[data-tone='blue'] circle { stroke: var(--blue); }

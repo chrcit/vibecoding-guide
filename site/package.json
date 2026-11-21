@@ -1,0 +1,24 @@
+{
+  "name": "agentic-coding-guide-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "node scripts/check-facts.mjs && astro build && node scripts/check-dist.mjs dist",
+    "preview": "astro preview",
+    "check-links": "node scripts/check-links.mjs dist",
+    "check-facts": "node scripts/check-facts.mjs",
+    "check-dist": "node scripts/check-dist.mjs dist",
+    "check-figures": "node scripts/check-figures.mjs",
+    "comments": "node scripts/comments.mjs",
+    "judge": "pnpm build && pnpm check-links"
+  },
+  "dependencies": {
+    "astro": "5.18.2",
+    "three": "0.187.0"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "devDependencies": {
+    "playwright": "1.65.1"
+  }
+}
