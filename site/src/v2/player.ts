@@ -1,18 +1,30 @@
 /*
- * Guide v2 in the browser: plays a lesson thread part by part and point by point, keeps the
- * sidebar (the table of contents), the chips under the thread and the thread details in step, and
- * drives the journey's picture engine for each turn's picture. The page holds every turn's HTML
- * (pages/v2/index.astro); this only shows, hides and animates.
+ * Guide v2 in the browser: plays a lesson thread part by part and point by point. It keeps the
+ * sidebar (the table of contents), the turns in the chat, the chips under the controls, the thread
+ * details and the browser panel in step. The browser panel holds one picture for the whole lesson
+ * (the journey's engine), so a new part glides from the last one instead of starting blank. The
+ * page holds every turn's HTML (pages/v2/index.astro); this only shows, hides and animates.
  */
-import { Scene } from '../journey/scene';
-import { route, reverse } from '../journey/picture';
-import { LESSONS, TOC, STATUS, whereIs, uiAt, type Move, type Point, type Ui } from './content';
+import { Scene, type Script } from '../journey/scene';
+import { route, reverse, type SceneState } from '../journey/picture';
+import { LESSONS, TOC, STATUS, whereIs, uiAt, type Move, type Point, type Ui, type Part } from './content';
+import type { Preview } from './preview';
 import { LEVEL_EVENT, isLevel, type Level } from '../lib/levels';
+import { esc } from './html';
+import { fitStage, markLabels } from './ui/fit';
+import { splitter } from './ui/splitter';
+import { sheet } from './ui/sheet';
+import { projectFilter } from './ui/filter';
+import { previewPane } from './ui/preview';
+import { groups } from './ui/summary';
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+const phone = matchMedia('(max-width: 47.99rem)');
 const STORE = 'acg-v2-done';
 
 interface Here { lesson: string; part: number; point: number }
+/** How a move was asked for. Only a pointer or playback animates; keys and jumps land still. */
+type Via = 'play' | 'pointer' | 'still';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const readLevel = (): Level => { const l = document.documentElement.dataset.level; return isLevel(l) ? l : 'plain'; };
@@ -24,46 +36,51 @@ export function boot(root: HTMLElement) {
   const scroller = $('[data-scroll]');
   const turns = $$('[data-turn]');
   const soon = $('[data-soon]');
-  const turnEl = (lesson: string, part: number) => turns.find((t) => t.dataset.lesson === lesson && Number(t.dataset.part) === part);
-  const scenes = new Map<HTMLElement, Scene>();
-  const settled = new Map<HTMLElement, string>();
+  const turnEl = (lesson: string, part: number) => turns.find((t) => t.dataset.lesson === lesson && Number(t.dataset.part) === part)!;
 
   let here: Here = { lesson: 'l1', part: 0, point: 0 };
   let playing = false;
+  /** Bumped by every playback start and stop: an older loop sees it and quits. */
   let token = 0;
+  /** Bumped by every show(): a reply waiting for its pucks lands only if nothing moved since. */
+  let shown = 0;
   let lastUi: Ui = {};
-  let detailsTimer = 0;
+  let lastPart = '';
+  let tab: 'ex' | 'preview' = 'ex';
+  let lastStage = '';
   let done = new Set<string>();
   try { done = new Set(JSON.parse(localStorage.getItem(STORE) ?? '[]')); } catch { /* private window */ }
   const saveDone = () => { try { localStorage.setItem(STORE, JSON.stringify([...done])); } catch { /* ignore */ } };
 
   root.setAttribute('data-ready', '');
 
+  const lesson = () => LESSONS[here.lesson];
+  const partOf = (): Part => lesson()!.parts[here.part]!;
+  const pointOf = (): Point => partOf().points[here.point]!;
+  const lastPointOf = (part: number) => lesson()!.parts[part]!.points.length - 1;
+  const isLast = () => here.point === lastPointOf(here.part);
+  const isAtEnd = () => { const l = lesson(); return !!l && here.part === l.parts.length - 1 && isLast(); };
+
   // ---------- the picture ----------
 
-  function sceneFor(turn: HTMLElement): Scene {
-    let s = scenes.get(turn);
-    if (!s) {
-      s = new Scene(turn.querySelector<HTMLElement>('[data-stage]')!);
-      s.base = base;
-      s.level = readLevel();
-      scenes.set(turn, s);
-    }
-    return s;
-  }
+  const stage = $('[data-stage]');
+  const scene = new Scene(stage);
+  scene.base = base;
+  scene.level = readLevel();
+  let mini: Scene | null = null;
 
-  async function travel(scene: Scene, p: Point) {
-    return scene.run(async (h) => {
-      if (p.think) {
-        h.set((s) => { s.agents[0]!.busy = true; s.agents[0]!.scan = true; });
-        await h.wait(p.think);
-      }
-      for (const m of p.moves) await move(scene, h, m);
-      h.check();
-      scene.set(p.state);
-    });
+  /** Annotation words new at each point: what changed since the point before. */
+  const words = (p: Point) => new Set((p.state.labels ?? []).map((l) => l.text ?? '').filter(Boolean));
+  function freshWords(): Set<string> {
+    const pts = partOf().points;
+    const now = words(pts[here.point]!);
+    // Point 1 of a part: what isn't on every point of it (the part's own frame doesn't count).
+    const was = here.point > 0 ? words(pts[here.point - 1]!) : new Set([...now].filter((w) => pts.every((p) => words(p).has(w))));
+    return new Set([...now].filter((w) => !was.has(w)));
   }
-  async function move(scene: Scene, h: Parameters<Parameters<Scene['run']>[0]>[0], m: Move) {
+  const fit = fitStage($('[data-view]'), stage, reduced, () => { if (lesson()) markLabels(stage, freshWords()); });
+
+  async function move(sc: Scene, h: Script, m: Move) {
     if (m.to === 'agent') return h.send(route.youToAgent(), 'you', { ms: 560 });
     if (m.to === 'you') return h.send(reverse(route.youToAgent()), m.kind, { ms: 560 });
     if (m.to === 'gate') {
@@ -71,7 +88,7 @@ export function boot(root: HTMLElement) {
       if (m.through) await h.send(route.gateToYou(), m.kind, { ms: 420 });
       return;
     }
-    const tools = scene.state.tools, project = scene.state.project;
+    const tools = sc.state.tools, project = sc.state.project;
     if (!tools) return;
     h.set((s) => { s.tools!.on = m.tool; s.agents[0]!.busy = true; });
     await h.send(route.agentToTool(tools, m.tool), 'model', { ms: 420 });
@@ -80,14 +97,45 @@ export function boot(root: HTMLElement) {
     await h.send(reverse(route.agentToTool(tools, m.tool)), m.back, { ms: 420 });
     h.set((s) => { s.tools!.on = null; s.agents[0]!.busy = false; });
   }
+  function travel(sc: Scene, p: Point): Promise<boolean> {
+    return sc.run(async (h) => {
+      if (p.think) {
+        h.set((s) => { s.agents[0]!.busy = true; s.agents[0]!.scan = true; });
+        await h.wait(p.think);
+      }
+      for (const m of p.moves) await move(sc, h, m);
+      h.check();
+      sc.set(p.state);
+    });
+  }
+  /** Where a point's pucks start: the point before, or for a part's first point its own state with an empty window. */
+  function before(): SceneState {
+    const pts = partOf().points;
+    if (here.point > 0) return pts[here.point - 1]!.state;
+    const s = structuredClone(pts[0]!.state);
+    for (const a of s.agents) a.blocks = [];
+    return s;
+  }
+  /** Draw the point. Animated, the pucks play into it; resolves when they land (false if replaced). */
+  async function draw(via: Via): Promise<boolean> {
+    const p = pointOf();
+    const animate = via !== 'still' && !reduced.matches;
+    if (!animate) {
+      scene.stop(); scene.set(p.state, true);
+      mini?.stop(); mini?.set(p.state, true);
+      fit.refit(false);
+      return true;
+    }
+    scene.set(before());
+    mini?.set(before(), true);
+    if (mini) void travel(mini, p);
+    return travel(scene, p);
+  }
 
-  // ---------- drawing the page for where we are ----------
+  // ---------- the chat ----------
 
-  const lesson = () => LESSONS[here.lesson];
-  const partOf = () => lesson()!.parts[here.part]!;
-  const pointOf = () => partOf().points[here.point]!;
-
-  function showTurns() {
+  /** The turns on show: from the part that started this thread up to the current one. */
+  function showThread(enter: boolean) {
     const l = lesson();
     soon.hidden = !!l;
     let from = 0;
@@ -96,45 +144,95 @@ export function boot(root: HTMLElement) {
       const mine = t.dataset.lesson === here.lesson;
       const p = Number(t.dataset.part);
       t.hidden = !mine || p > here.part || p < from;
-      t.toggleAttribute('data-current', mine && p === here.part);
-      if (!t.hidden && mine && p < here.part) {
-        // An earlier turn rests on its last point.
-        const pts = l!.parts[p]!.points;
-        const key = `${p}:${readLevel()}`;
-        if (settled.get(t) !== key) { fillTurn(t, pts.length - 1, pts.length); sceneFor(t).set(pts.at(-1)!.state, true); settled.set(t, key); }
-      }
+      const current = mine && p === here.part;
+      t.toggleAttribute('data-current', current);
+      // An earlier turn rests on its end: every row, the summary closed, the reply in.
+      if (!t.hidden && !current) fillTurn(t, Infinity);
+    }
+    const cur = l && turnEl(here.lesson, here.part);
+    if (cur && enter && !reduced.matches) {
+      cur.removeAttribute('data-enter'); void cur.offsetWidth; cur.setAttribute('data-enter', '');
+      setTimeout(() => cur.removeAttribute('data-enter'), 400);
     }
   }
 
-  function fillTurn(t: HTMLElement, point: number, count: number) {
+  /** A turn at a point: the rows done by then, the summary's groups, and the reply only at the end. */
+  function fillTurn(t: HTMLElement, point: number) {
+    const part = LESSONS[t.dataset.lesson!]!.parts[Number(t.dataset.part)]!;
+    const last = part.points.length - 1;
+    const end = point >= last;
+    t.toggleAttribute('data-ended', end);
+    if (end) t.setAttribute('data-landed', '');
+    else t.removeAttribute('data-landed');
+    const rows = part.log?.rows ?? [];
     for (const li of t.querySelectorAll<HTMLElement>('[data-at]')) {
       const at = Number(li.dataset.at);
       li.hidden = at > point;
-      li.toggleAttribute('data-now', at === point && point < count - 1);
+      li.toggleAttribute('data-now', at === point && !end);
     }
-    const sum = t.querySelector<HTMLElement>('[data-log-sum]');
-    if (sum) sum.textContent = point === count - 1 ? sum.dataset.done! : STATUS.working;
-    t.querySelector('[data-answer]')?.toggleAttribute('data-later', point < count - 1);
-    const n = t.querySelector('[data-cap-n]'), cap = t.querySelector('[data-cap]');
-    const p = LESSONS[t.dataset.lesson!]!.parts[Number(t.dataset.part)]!.points[point]!;
-    if (n) n.textContent = `${point + 1} of ${count}`;
-    if (cap) cap.textContent = p.say;
-    t.querySelectorAll('[data-points] li').forEach((li, i) => li.toggleAttribute('data-current', i === point));
+    const sum = t.querySelector<HTMLElement>('[data-sum-text]');
+    if (sum) sum.textContent = end ? sum.dataset.done! : STATUS.working;
+    const g = t.querySelector<HTMLElement>('[data-groups]');
+    if (g) g.innerHTML = groups(rows, Math.min(point, last)).map((x) =>
+      `<span class="v2-group" data-kind="${x.kind}"${x.tone ? ` data-tone="${x.tone}"` : ''}${x.now && !end ? ' data-now' : ''}>${esc(x.text)}</span>`).join('');
+    // The live line: the newest row at this point, so the evidence shows without opening the log.
+    const now = t.querySelector<HTMLElement>('[data-sum-now]');
+    if (now) {
+      const latest = [...t.querySelectorAll<HTMLElement>('[data-at]')].filter((li) => Number(li.dataset.at) === point).at(-1);
+      now.hidden = end || !latest;
+      if (latest) { now.innerHTML = latest.innerHTML; now.dataset.tone = latest.dataset.tone ?? ''; }
+    }
   }
 
+  /** The reply lands: it fades in, and the chat scrolls just enough to show it. */
+  function land(t: HTMLElement, still: boolean) {
+    if (t.hasAttribute('data-landed')) return;
+    t.toggleAttribute('data-still', still || reduced.matches);
+    t.setAttribute('data-landed', '');
+    requestAnimationFrame(() => keepInView(t.querySelector<HTMLElement>('[data-reply]')!, t.querySelector<HTMLElement>('[data-try]') ?? undefined, still));
+  }
+
+  /** Scroll so `top`..`bottom` is in view, `top` first; smooth only over a short way. */
+  function keepInView(top: HTMLElement, bottom: HTMLElement = top, still = false) {
+    const view = scroller.getBoundingClientRect();
+    const a = top.getBoundingClientRect(), b = bottom.getBoundingClientRect();
+    let dy = 0;
+    if (b.bottom > view.bottom - 12) dy = b.bottom - view.bottom + 12;
+    if (a.top - dy < view.top + 12) dy = a.top - view.top - 12;
+    if (Math.abs(dy) < 2) return;
+    scroller.scrollBy({ top: dy, behavior: still || reduced.matches || Math.abs(dy) > 400 ? 'auto' : 'smooth' });
+  }
+  /** A new part: its turn moves to the top of the chat. */
+  function scrollToTurn(t: HTMLElement, still: boolean) {
+    const dy = t.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 12;
+    if (Math.abs(dy) < 2) return;
+    scroller.scrollBy({ top: dy, behavior: still || reduced.matches || Math.abs(dy) > 400 ? 'auto' : 'smooth' });
+  }
+  /** Within a part: the request and the summary under it stay in view as the summary grows. */
+  function keepWorkInView(t: HTMLElement, still: boolean) {
+    const top = t.querySelector<HTMLElement>('.v2-user')!;
+    keepInView(top, t.querySelector<HTMLElement>('[data-sum]:not([hidden])') ?? top, still);
+  }
+
+  // ---------- what the app shows ----------
+
+  function flash(el: HTMLElement, animate: boolean) {
+    if (!animate || reduced.matches) return;
+    el.removeAttribute('data-new'); void el.offsetWidth; el.setAttribute('data-new', '');
+    setTimeout(() => el.removeAttribute('data-new'), 900);
+  }
+
+  /** Features appear at the point that teaches them and stay; each gets a short ring when it does. */
   function showUi(animate: boolean) {
     const ui = lesson() ? uiAt(here.lesson, here.part, here.point) : uiAt(here.lesson, 0, -1);
-    const flash = (el: HTMLElement) => { if (!animate || reduced.matches) return; el.removeAttribute('data-new'); void el.offsetWidth; el.setAttribute('data-new', ''); setTimeout(() => el.removeAttribute('data-new'), 2400); };
     const model = $('[data-ui="model"]');
     model.hidden = !ui.model;
-    if (ui.model && !lastUi.model) flash(model);
+    if (ui.model && !lastUi.model) flash(model, animate);
     const perm = $('[data-ui="perm"]');
     perm.hidden = !ui.perm;
     if (ui.perm) {
-      $('[data-perm]').textContent = ui.perm;
-      perm.setAttribute('aria-label', perm.dataset.permTpl!.replace('{mode}', ui.perm));
-      perm.title = perm.getAttribute('aria-label')!;
-      if (ui.perm !== lastUi.perm) flash(perm);
+      perm.textContent = perm.dataset.permTpl!.replace('{mode}', ui.perm);
+      if (ui.perm !== lastUi.perm) flash(perm, animate);
     }
     const details = $('[data-ui="context"]');
     details.hidden = ui.context == null;
@@ -143,34 +241,56 @@ export function boot(root: HTMLElement) {
       text.textContent = text.dataset.tpl!.replace('{used}', String(ui.context));
       $('[data-ctx-bar]').style.transform = `scaleX(${Math.max(0.01, ui.context / 100)})`;
       $('[data-ctx-short]').textContent = `${ui.context}%`;
-      if (lastUi.context == null) {
-        // Taught here: the details open once, then fold back to the button, which keeps the number.
-        setDetails(true); flash(details);
-        clearTimeout(detailsTimer);
-        detailsTimer = window.setTimeout(() => { if (!dPop.matches(':focus-within')) setDetails(false); }, 6000);
-      }
-      else if (ui.context !== lastUi.context) flash(details);
-    }
+      // Taught or changed here: the button rings once. It never opens by itself over the thread.
+      if (ui.context !== lastUi.context) flash($('[data-details-btn]'), animate);
+    } else setDetails(false);
     root.toggleAttribute('data-has-log', !!ui.log);
+    $('[data-foot]').hidden = !ui.model && !ui.perm;
     lastUi = ui;
   }
 
+  /** The story threads of the lesson so far, in order: a part with a new title and `fresh` starts one. */
+  function threadsSoFar(): { title: string; part: number }[] {
+    const l = lesson();
+    if (!l) return [];
+    const out: { title: string; part: number }[] = [];
+    l.parts.slice(0, here.part + 1).forEach((pt, j) => {
+      const title = pt.thread ?? whereIs(here.lesson).lesson.title;
+      if (!out.length || (pt.fresh && out.at(-1)!.title !== title)) out.push({ title, part: j });
+    });
+    return out;
+  }
+  const threadOf = (): string => threadsSoFar().at(-1)?.title ?? whereIs(here.lesson).lesson.title;
+
+  /**
+   * The lesson rows, and under the lesson on show its story threads as child rows. A new thread
+   * appears as its own row when the lesson starts it. The live status (Working, Approval) sits on
+   * the thread that is running; the lesson row says Done once the lesson has been played through.
+   */
   function showSidebar() {
-    for (const a of $$('[data-lesson]')) {
-      if (!a.classList.contains('v2-row')) continue;
+    const live = lesson() ? (pointOf().status ?? (playing ? STATUS.working : '')) : '';
+    const setPill = (pill: HTMLElement, status: string) => { pill.textContent = status; pill.dataset.s = status; };
+    for (const a of $$('a.v2-row[data-lesson]')) {
       const id = a.dataset.lesson!;
       const cur = id === here.lesson;
-      a.toggleAttribute('aria-current', cur);
-      if (cur) a.setAttribute('aria-current', 'page');
-      const pill = a.querySelector<HTMLElement>('[data-status]')!;
-      let status = '';
-      if (cur && lesson()) {
-        const l = lesson()!;
-        const atEnd = here.part === l.parts.length - 1 && here.point === partOf().points.length - 1;
-        status = pointOf().status ?? (atEnd && done.has(id) ? STATUS.done : playing ? STATUS.working : '');
-      } else if (done.has(id)) status = STATUS.done;
-      pill.textContent = status;
-      pill.dataset.s = status;
+      if (cur) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+      setPill(a.querySelector<HTMLElement>('[data-status]')!, done.has(id) && !(cur && live) ? STATUS.done : '');
+    }
+    for (const ol of $$('[data-threads]')) {
+      const list = ol.dataset.threads === here.lesson ? threadsSoFar() : [];
+      const key = list.map((t) => t.title).join('|');
+      if (ol.dataset.key !== key) {
+        const before = ol.childElementCount;
+        ol.dataset.key = key;
+        ol.innerHTML = list.map((t, i) => `<li${before > 0 && i >= before ? ' data-enter' : ''}><button type="button" class="v2-thread-row" data-thread-part="${t.part}"><span class="v2-row-title">${esc(t.title)}</span><span class="v2-pill"></span></button></li>`).join('');
+      }
+      ol.hidden = !list.length;
+      const rows = [...ol.querySelectorAll<HTMLElement>('.v2-thread-row')];
+      rows.forEach((b, i) => {
+        const last = i === rows.length - 1;
+        if (last) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
+        setPill(b.querySelector<HTMLElement>('.v2-pill')!, last ? live : '');
+      });
     }
   }
 
@@ -178,73 +298,8 @@ export function boot(root: HTMLElement) {
     const { chapter, lesson: tl } = whereIs(here.lesson);
     $('[data-crumb-fav]').textContent = chapter.n ? String(chapter.n) : 'S';
     $('[data-crumb-project]').textContent = chapter.title;
-    const fresh = lesson() && partOf().fresh;
-    $('[data-crumb-thread]').textContent = fresh ? 'New thread' : tl.title;
-  }
-
-  function showControls() {
-    const l = lesson();
-    const btn = (c: string) => $<HTMLButtonElement>(`[data-c="${c}"]`);
-    const play = btn('play');
-    play.setAttribute('aria-pressed', String(playing));
-    play.setAttribute('aria-label', playing ? 'Pause' : 'Play');
-    if (!l) {
-      for (const c of ['part-prev', 'pt-prev', 'pt-next', 'part-next', 'play']) btn(c).disabled = true;
-      $('[data-c-title]').textContent = whereIs(here.lesson).lesson.title;
-      $('[data-c-where]').textContent = 'Not built yet';
-      $('[data-dots]').replaceChildren();
-      return;
-    }
-    const part = partOf(), lastPart = l.parts.length - 1, lastPoint = part.points.length - 1;
-    btn('play').disabled = false;
-    btn('part-prev').disabled = here.part === 0 && here.point === 0;
-    btn('pt-prev').disabled = here.part === 0 && here.point === 0;
-    btn('pt-next').disabled = here.part === lastPart && here.point === lastPoint;
-    const nextLesson = nextPlayable(here.lesson);
-    btn('part-next').disabled = here.part === lastPart && !nextLesson;
-    btn('part-next').setAttribute('aria-label', here.part === lastPart && nextLesson ? 'Next lesson' : 'Next part');
-    $('[data-c-title]').textContent = part.title;
-    $('[data-c-where]').textContent = `Part ${here.part + 1} of ${l.parts.length} · point ${here.point + 1} of ${part.points.length}`;
-    const dots = $('[data-dots]');
-    dots.replaceChildren(...part.points.map((_, i) => { const d = document.createElement('i'); if (i === here.point) d.dataset.on = ''; else if (i < here.point) d.dataset.past = ''; return d; }));
-  }
-
-  /** Draw everything for `here`. `animate` plays the way into the point; otherwise the picture glides there. */
-  async function show(animate: boolean, scroll = false): Promise<boolean> {
-    showTurns();
-    showHead();
-    showUi(animate);
-    showSidebar();
-    showControls();
-    try { history.replaceState(null, '', `#${here.lesson}${lesson() ? `-p${here.part + 1}` : ''}`); } catch { /* sandboxed */ }
-    const l = lesson();
-    if (!l) {
-      soon.querySelector('[data-soon-title]')!.textContent = whereIs(here.lesson).lesson.title;
-      const { chapter, lesson: tl } = whereIs(here.lesson);
-      soon.querySelector('[data-soon-meta]')!.textContent = chapter.n ? `Chapter ${chapter.n} · ${chapter.title} › Lesson ${tl.n} · ${tl.title}` : `${chapter.title} › ${tl.title}`;
-      scroller.scrollTo({ top: 0 });
-      return true;
-    }
-    const turn = turnEl(here.lesson, here.part)!;
-    settled.delete(turn);
-    fillTurn(turn, here.point, partOf().points.length);
-    const behavior: ScrollBehavior = reduced.matches || !animate ? 'auto' : 'smooth';
-    if (scroll) requestAnimationFrame(() => scroller.scrollTo({ top: Math.max(0, turn.offsetTop - 12), behavior }));
-    else requestAnimationFrame(() => keepInView(turn.querySelector<HTMLElement>('.v2-fig')!, behavior));
-    const scene = sceneFor(turn);
-    if (animate) return travel(scene, pointOf());
-    scene.stop();
-    scene.set(pointOf().state);
-    return true;
-  }
-
-  /** Scroll just enough that the picture and its caption are in view, top first. */
-  function keepInView(el: HTMLElement, behavior: ScrollBehavior) {
-    const box = el.getBoundingClientRect(), view = scroller.getBoundingClientRect();
-    let dy = 0;
-    if (box.bottom > view.bottom - 8) dy = box.bottom - view.bottom + 8;
-    if (box.top - dy < view.top + 8) dy = box.top - view.top - 8;
-    if (Math.abs(dy) > 2) scroller.scrollBy({ top: dy, behavior });
+    // The story thread's own title, as T3 Code titles a thread from its first message.
+    $('[data-crumb-thread]').textContent = lesson() ? threadOf() : tl.title;
   }
 
   function nextPlayable(id: string): string | undefined {
@@ -252,157 +307,352 @@ export function boot(root: HTMLElement) {
     return ids[ids.indexOf(id) + 1];
   }
 
+  function showControls() {
+    const l = lesson();
+    for (const play of $$('[data-c="play"]')) {
+      play.setAttribute('aria-pressed', String(playing));
+      play.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+      play.title = `${playing ? 'Pause' : 'Play'} (Space)`;
+      (play as HTMLButtonElement).disabled = !l;
+    }
+    const prev = $<HTMLButtonElement>('[data-c="prev"]'), next = $<HTMLButtonElement>('[data-c="next"]');
+    if (!l) {
+      prev.disabled = next.disabled = true;
+      $('[data-c-title]').textContent = whereIs(here.lesson).lesson.title;
+      $('[data-c-where]').textContent = 'Not built yet';
+      $('[data-dots]').replaceChildren();
+      for (const n of $$('[data-n]')) n.textContent = '';
+      return;
+    }
+    const part = partOf(), total = part.points.length;
+    const nx = nextPlayable(here.lesson);
+    prev.disabled = here.part === 0 && here.point === 0;
+    next.disabled = isAtEnd() && !nx;
+    const nextLabel = isAtEnd() && nx ? 'Next lesson' : isLast() ? 'Next part' : 'Forward one point';
+    next.setAttribute('aria-label', nextLabel);
+    next.title = `${nextLabel} (→)`;
+    $('[data-c-title]').textContent = part.title;
+    $('[data-c-where]').textContent = `Part ${here.part + 1} of ${l.parts.length} · point ${here.point + 1} of ${total}`;
+    for (const n of $$('[data-n]')) n.textContent = `${here.point + 1} / ${total}`;
+    // One button per point, so any point is a click away.
+    const dots = $('[data-dots]');
+    if (dots.childElementCount !== total || dots.dataset.part !== `${here.lesson}:${here.part}`) {
+      dots.dataset.part = `${here.lesson}:${here.part}`;
+      dots.innerHTML = part.points.map((p, i) => `<li><button type="button" class="v2-dot" data-go="${i}" aria-label="Point ${i + 1} of ${total}: ${esc(p.say)}"><span></span></button></li>`).join('');
+    }
+    $$('.v2-dot').forEach((d, i) => {
+      d.dataset.state = i === here.point ? 'now' : i < here.point ? 'past' : 'later';
+      if (i === here.point) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current');
+    });
+  }
+
+  // ---------- the browser panel ----------
+
+  const preview = previewPane($('[data-preview]'));
+  const tabPreview = $('[data-tab="preview"]');
+
+  /** The app at this point: the newest preview so far in the lesson, or its app before anything is built. */
+  function previewAt(): Preview | null {
+    const l = lesson();
+    if (!l) return null;
+    let found: Preview | undefined, first: Preview | undefined;
+    l.parts.forEach((pt, j) => pt.points.forEach((p, i) => {
+      const v = p.preview;
+      if (!v) return;
+      first ??= v;
+      if (j < here.part || (j === here.part && i <= here.point)) found = v;
+    }));
+    if (!first) return null;
+    return found ?? { app: first.app, stage: 'none', url: first.url };
+  }
+
+  function setTab(t: 'ex' | 'preview', focus = false) {
+    if (t === 'preview' && tabPreview.hidden) t = 'ex';
+    tab = t;
+    for (const b of $$('[data-tab]')) {
+      const on = b.dataset.tab === t;
+      b.setAttribute('aria-selected', String(on));
+      b.tabIndex = on ? 0 : -1;
+      if (on && focus) b.focus();
+    }
+    for (const pane of $$('[data-pane]')) pane.hidden = pane.dataset.pane !== t;
+    root.dataset.browserTab = t;
+    if (t === 'preview') {
+      setBadge(false);
+      // Trying the app by hand: hold the lesson still so the page doesn't change underneath.
+      if (playing) pause();
+    } else fit.refit(false);
+    showAddress();
+  }
+  let address = '';
+  function showAddress() {
+    const addr = $('[data-addr]');
+    if (tab === 'preview') addr.innerHTML = `<span class="v2-mono">${esc(address || ' ')}</span>`;
+    else addr.innerHTML = `<span>Explainer</span>${lesson() ? `<span class="v2-addr-sub">· ${esc(partOf().title)}</span>` : ''}`;
+  }
+  /**
+   * A dot on the Preview tab, and the same in the phone's mini player. `testing` is the stage where
+   * the agent's own test runs in the app, which it only does once the Preview is on screen, so the
+   * badge says where to look.
+   */
+  function setBadge(on: boolean, testing = false) {
+    const badge = $('[data-badge]'), mini = $('[data-mini-badge]');
+    badge.hidden = mini.hidden = !on;
+    badge.querySelector('.visually-hidden')!.textContent = testing ? ': the test runs here' : ': changed';
+    mini.textContent = testing ? 'Test runs in Preview' : 'Preview';
+  }
+
+  function showBrowser() {
+    const l = lesson();
+    const say = $('[data-say]');
+    const text = l ? pointOf().say : 'This lesson isn’t built yet.';
+    if (say.textContent !== text) { say.textContent = text; say.removeAttribute('data-in'); void say.offsetWidth; say.setAttribute('data-in', ''); }
+    $('[data-mini-say]').textContent = text;
+    stage.setAttribute('aria-label', l ? `${partOf().title}: ${pointOf().say}` : text);
+    const p = previewAt();
+    tabPreview.hidden = !p;
+    if (!p && tab === 'preview') setTab('ex');
+    const key = p ? `${here.lesson}:${p.app}:${p.stage}` : '';
+    if (key !== lastStage) {
+      // The app changed while the reader looks elsewhere, or its test is about to run: a dot on the tab says so.
+      const testing = p?.stage === 'testing';
+      const changed = !!p && lastStage.startsWith(`${here.lesson}:`);
+      setBadge(tab !== 'preview' && (testing || changed), testing);
+      lastStage = key;
+      void preview.set(p).then((a) => { if (lastStage === key) { address = a; showAddress(); } });
+    }
+    showAddress();
+  }
+
+  // ---------- drawing the page for where we are ----------
+
+  /** Draw everything for `here`. Resolves when the point has landed (false if something moved on). */
+  async function show(via: Via): Promise<boolean> {
+    const mine = ++shown;
+    const key = `${here.lesson}:${here.part}`;
+    const newPart = key !== lastPart;
+    lastPart = key;
+    showThread(newPart && via !== 'still');
+    showHead();
+    showUi(via !== 'still');
+    showSidebar();
+    showControls();
+    showBrowser();
+    try { history.replaceState(null, '', `#${here.lesson}${lesson() ? `-p${here.part + 1}` : ''}`); } catch { /* sandboxed */ }
+    const l = lesson();
+    if (!l) {
+      scene.stop(); scene.set({ agents: [] }, true);
+      scroller.scrollTo({ top: 0 });
+      return true;
+    }
+    const turn = turnEl(here.lesson, here.part);
+    fillTurn(turn, here.point);
+    // The reply waits for the pucks; fillTurn only lets it in at once when nothing animates.
+    const animate = via !== 'still' && !reduced.matches;
+    if (isLast() && animate) turn.removeAttribute('data-landed');
+    requestAnimationFrame(() => { if (newPart) scrollToTurn(turn, !animate); else if (!isLast()) keepWorkInView(turn, !animate); });
+    const ok = await draw(via);
+    if (ok && mine === shown && isLast()) {
+      turn.removeAttribute('data-landed');
+      land(turn, !animate);
+    }
+    return ok && mine === shown;
+  }
+
   // ---------- moving ----------
 
-  function lastPointOf(part: number) { return lesson()!.parts[part]!.points.length - 1; }
-
-  /** One point forward; across parts and into the next lesson. Returns false at the very end. */
+  /** One point forward, across parts. 'end' at the lesson's last point. */
   function stepForward(): 'point' | 'part' | 'end' {
     const l = lesson()!;
-    if (here.point < lastPointOf(here.part)) { here.point++; return 'point'; }
-    if (here.part < l.parts.length - 1) { here.part++; here.point = 0; return 'part'; }
+    if (!isLast()) { here = { ...here, point: here.point + 1 }; return 'point'; }
+    if (here.part < l.parts.length - 1) { here = { ...here, part: here.part + 1, point: 0 }; return 'part'; }
     return 'end';
   }
   function stepBack(): boolean {
-    if (here.point > 0) { here.point--; return true; }
-    if (here.part > 0) { here.part--; here.point = lastPointOf(here.part); return true; }
+    if (here.point > 0) { here = { ...here, point: here.point - 1 }; return true; }
+    if (here.part > 0) { here = { ...here, part: here.part - 1, point: lastPointOf(here.part - 1) }; return true; }
     return false;
   }
-
   function markEnd() {
-    const l = lesson();
-    if (l && here.part === l.parts.length - 1 && here.point === lastPointOf(here.part)) { done.add(here.lesson); saveDone(); }
+    if (isAtEnd()) { done.add(here.lesson); saveDone(); showSidebar(); }
   }
 
-  const dwell = (p: Point, last: boolean) => (reduced.matches ? 1400 : 1800) + p.say.length * 32 + (last ? 3200 : 0);
+  const dwell = (p: Point, last: boolean) => 1800 + p.say.length * 32 + (last ? 3600 : 0);
 
-  async function playLoop() {
+  /** Play from here. `first` is how the current point is drawn. */
+  async function playLoop(first: Via) {
     const mine = ++token;
     playing = true;
     showSidebar(); showControls();
-    let ok = await show(true, false);
-    while (playing && mine === token && ok) {
-      const last = here.point === lastPointOf(here.part);
-      await sleep(dwell(pointOf(), last));
+    let ok = await show(first);
+    while (playing && mine === token) {
+      if (!ok) return;
+      await sleep(dwell(pointOf(), isLast()));
       if (!playing || mine !== token) return;
-      const step = stepForward();
-      if (step === 'end') { markEnd(); playing = false; showSidebar(); showControls(); return; }
-      ok = await show(true, step === 'part');
+      if (stepForward() === 'end') { playing = false; markEnd(); showSidebar(); showControls(); return; }
+      ok = await show('play');
     }
   }
-
   function pause() {
     playing = false;
     token++;
     showSidebar(); showControls();
   }
+  function play() {
+    if (!lesson()) return;
+    // From the end, play starts the lesson again; the first point lands still, then it plays on.
+    if (isAtEnd()) { here = { lesson: here.lesson, part: 0, point: 0 }; void playLoop('still'); return; }
+    void playLoop('play');
+  }
 
-  function go(to: Here, opts: { play?: boolean; animate?: boolean; scroll?: boolean } = {}) {
-    pause();
-    const changedLesson = to.lesson !== here.lesson;
+  /** Go somewhere. Moving never changes play state: playing goes on from there, paused stays paused. */
+  function go(to: Here, via: Via, opts: { play?: boolean } = {}) {
+    const keep = opts.play ?? playing;
+    if (playing) { playing = false; token++; }
+    if (to.lesson !== here.lesson) { lastStage = ''; lastPart = ''; }
     here = to;
-    if (changedLesson) { for (const s of scenes.values()) s.stop(); settled.clear(); }
-    if (opts.play && lesson()) { void playLoop().then(() => markEnd()); return; }
-    void show(!!opts.animate, opts.scroll ?? true).then(() => { markEnd(); showSidebar(); });
+    if (keep && lesson()) { void playLoop(via); return; }
+    showSidebar(); showControls();
+    void show(via).then(() => markEnd());
+  }
+
+  function forward(via: Via) {
+    const was = here;
+    const step = stepForward();
+    if (step !== 'end') { const to = here; here = was; go(to, via); return; }
+    const nx = nextPlayable(here.lesson);
+    if (nx) go({ lesson: nx, part: 0, point: 0 }, 'still');
+  }
+  function back() {
+    const was = here;
+    if (!stepBack()) return;
+    const to = here; here = was;
+    go(to, 'still');
   }
 
   // ---------- controls ----------
 
+  const viaClick = (e: MouseEvent): Via => (e.detail > 0 ? 'pointer' : 'still');
   root.addEventListener('click', (e) => {
-    const c = (e.target as HTMLElement).closest<HTMLElement>('[data-c]')?.dataset.c;
-    if (!c || !lesson()) return;
-    if (c === 'play') { if (playing) { pause(); } else { if (isAtEnd()) here = { lesson: here.lesson, part: 0, point: 0 }; void playLoop(); } return; }
-    if (c === 'pt-next') { const step = stepForward(); if (step !== 'end') go(here, { animate: true, scroll: step === 'part' }); return; }
-    if (c === 'pt-prev') { if (stepBack()) go(here, { scroll: false }); return; }
-    if (c === 'part-next') {
-      if (here.part < lesson()!.parts.length - 1) go({ ...here, part: here.part + 1, point: 0 }, { play: true });
-      else { const nx = nextPlayable(here.lesson); if (nx) go({ lesson: nx, part: 0, point: 0 }, { play: true }); }
+    const t = e.target as HTMLElement;
+    const c = t.closest<HTMLElement>('[data-c]')?.dataset.c;
+    if (c && lesson()) {
+      if (c === 'play') { if (playing) pause(); else play(); }
+      else if (c === 'next') forward(viaClick(e));
+      else if (c === 'prev') back();
       return;
     }
-    if (c === 'part-prev') {
-      if (here.point > 0) go({ ...here, point: 0 });
-      else if (here.part > 0) go({ ...here, part: here.part - 1, point: 0 });
+    const dot = t.closest<HTMLElement>('[data-go]');
+    if (dot && lesson()) {
+      const i = Number(dot.dataset.go);
+      if (i !== here.point) go({ ...here, point: i }, i === here.point + 1 ? viaClick(e) : 'still');
     }
   });
-  const isAtEnd = () => { const l = lesson(); return !!l && here.part === l.parts.length - 1 && here.point === lastPointOf(here.part); };
 
-  root.addEventListener('keydown', (e) => {
+  // Space plays and pauses, ← → move by point and Shift+← → by part, from anywhere outside a field.
+  document.addEventListener('keydown', (e) => {
     const t = e.target as HTMLElement;
-    if (t.closest('input, textarea, [data-filter-pop]') || e.altKey || e.metaKey || e.ctrlKey) return;
-    const map: Record<string, string> = { ArrowRight: e.shiftKey ? 'part-next' : 'pt-next', ArrowLeft: e.shiftKey ? 'part-prev' : 'pt-prev' };
-    const c = map[e.key];
-    if (!c || !t.closest('.v2-main')) return;
+    if (e.altKey || e.metaKey || e.ctrlKey || !lesson() || (root.dataset.view === 'list' && phone.matches)) return;
+    if (t.closest('input, textarea, select, [contenteditable="true"], [role="tablist"], [role="separator"], [data-parts], [data-filter-pop], [data-preview]')) return;
+    if (e.key === ' ' && !t.closest('button, a, summary')) { e.preventDefault(); if (playing) pause(); else play(); return; }
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    if (t.closest('.v2-side')) return;
     e.preventDefault();
-    $<HTMLButtonElement>(`[data-c="${c}"]`).click();
+    if (e.shiftKey) {
+      const l = lesson()!;
+      if (e.key === 'ArrowRight' && here.part < l.parts.length - 1) go({ ...here, part: here.part + 1, point: 0 }, 'still');
+      if (e.key === 'ArrowLeft') go({ ...here, part: here.point > 0 ? here.part : Math.max(0, here.part - 1), point: 0 }, 'still');
+      return;
+    }
+    if (e.key === 'ArrowRight') forward('still'); else back();
   });
 
-  // Lessons in the sidebar, and links to them: a click plays the lesson from its start.
+  // ---------- the part list ----------
+
+  const partsBtn = $('[data-parts-btn]'), parts = $('[data-parts]');
+  function renderParts() {
+    const l = lesson();
+    if (!l) return;
+    const { lesson: tl } = whereIs(here.lesson);
+    $('[data-parts-head]').textContent = `Lesson ${tl.n} · ${tl.title}`;
+    const finished = done.has(here.lesson);
+    const nx = nextPlayable(here.lesson);
+    $('[data-parts-list]').innerHTML = l.parts.map((pt, j) => {
+      const s = j === here.part ? 'now' : j < here.part || finished ? 'done' : 'todo';
+      return `<li><button type="button" class="v2-part" data-part-go="${j}"${j === here.part ? ' aria-current="step"' : ''}><span class="v2-part-mark" data-s="${s}" aria-hidden="true">${s === 'done' ? '✓' : s === 'now' ? '●' : '○'}</span><span>${esc(pt.title)}</span><em>${j === here.part ? 'from the start' : ''}</em></button></li>`;
+    }).join('') + (nx ? `<li class="v2-part-next"><button type="button" class="v2-part" data-lesson-go="${nx}"><span class="v2-part-mark" aria-hidden="true">→</span><span>Next lesson: ${esc(whereIs(nx).lesson.title)}</span><em></em></button></li>` : '');
+  }
+  function setParts(on: boolean, e?: MouseEvent) {
+    if (on) renderParts();
+    parts.toggleAttribute('data-still', !e || e.detail === 0);
+    parts.hidden = !on;
+    partsBtn.setAttribute('aria-expanded', String(on));
+    if (on) parts.querySelector<HTMLElement>('[aria-current]')?.focus({ preventScroll: true });
+  }
+  partsBtn.addEventListener('click', (e) => { if (lesson()) setParts(parts.hidden, e); });
+  parts.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('[data-part-go], [data-lesson-go]');
+    if (!b) return;
+    setParts(false);
+    partsBtn.focus({ preventScroll: true });
+    if (b.dataset.lessonGo) go({ lesson: b.dataset.lessonGo, part: 0, point: 0 }, 'still', { play: true });
+    else go({ ...here, part: Number(b.dataset.partGo), point: 0 }, 'still', { play: true });
+  });
+  parts.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.stopPropagation(); setParts(false); partsBtn.focus(); }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      const all = [...parts.querySelectorAll<HTMLElement>('button')];
+      const i = all.indexOf(document.activeElement as HTMLElement);
+      e.preventDefault();
+      all[(i + (e.key === 'ArrowDown' ? 1 : all.length - 1)) % all.length]?.focus();
+    }
+  });
+  document.addEventListener('pointerdown', (e) => { if (!parts.hidden && !(e.target as HTMLElement).closest('[data-parts], [data-parts-btn]')) setParts(false); });
+
+  // ---------- the summary cards: open one, and they stay open ----------
+
+  root.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('[data-sum-toggle]');
+    if (!b) return;
+    const open = b.getAttribute('aria-expanded') !== 'true';
+    root.toggleAttribute('data-log-open', open);
+    for (const x of $$('[data-sum-toggle]')) x.setAttribute('aria-expanded', String(open));
+  });
+
+  // ---------- tabs ----------
+
+  for (const b of $$('[data-tab]')) b.addEventListener('click', () => setTab(b.dataset.tab as 'ex' | 'preview'));
+  $('.v2-tabs').addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    setTab(tab === 'ex' ? 'preview' : 'ex', true);
+  });
+
+  // ---------- lessons in the sidebar, their threads, and links to them ----------
+
+  root.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('[data-thread-part]');
+    if (!b) return;
+    root.dataset.view = 'thread';
+    go({ ...here, part: Number(b.dataset.threadPart), point: 0 }, 'still');
+  });
+
   root.addEventListener('click', (e) => {
     const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[data-lesson], a[data-lesson-link]');
     if (!a) return;
     e.preventDefault();
     const id = a.dataset.lesson ?? a.dataset.lessonLink!;
     root.dataset.view = 'thread';
-    go({ lesson: id, part: 0, point: 0 }, { play: !!LESSONS[id] });
-    if (matchMedia('(max-width: 47.99rem)').matches) $('[data-to-list]').focus({ preventScroll: true });
+    // The lesson on show carries on where it is; another one plays from its start.
+    if (id !== here.lesson) go({ lesson: id, part: 0, point: 0 }, 'still', { play: !!LESSONS[id] && !reduced.matches });
+    else if (!playing && lesson() && !isAtEnd() && !reduced.matches) play();
+    if (phone.matches) $('[data-to-list]').focus({ preventScroll: true });
   });
-  $('[data-to-list]').addEventListener('click', (e) => { e.preventDefault(); pause(); root.dataset.view = 'list'; root.querySelector<HTMLElement>('.v2-row[aria-current]')?.focus(); });
-
-  // ---------- the filter: threads by project ----------
-
-  const fBtn = $<HTMLButtonElement>('[data-filter-btn]'), fPop = $('[data-filter-pop]'), fQ = $<HTMLInputElement>('[data-filter-q]');
-  let scope = new Set<string>();
-  const setPop = (open: boolean) => {
-    fPop.hidden = !open;
-    fBtn.setAttribute('aria-expanded', String(open));
-    if (open) { fQ.value = ''; filterOptions(''); fQ.focus(); }
-  };
-  const filterOptions = (q: string) => {
-    for (const b of fPop.querySelectorAll<HTMLElement>('[data-scope]')) {
-      const li = b.parentElement!;
-      li.hidden = b.dataset.scope !== 'all' && !b.textContent!.toLowerCase().includes(q.trim().toLowerCase());
-      if (q.trim() && b.dataset.scope === 'all') li.hidden = true;
-    }
-  };
-  const applyScope = () => {
-    for (const f of $$('[data-project]')) f.hidden = scope.size > 0 && !scope.has(f.dataset.project!);
-    for (const b of fPop.querySelectorAll<HTMLElement>('[data-scope]')) b.setAttribute('aria-selected', String(b.dataset.scope === 'all' ? scope.size === 0 : scope.has(b.dataset.scope!)));
-    const icon = $('[data-filter-icon]');
-    if (!icon.dataset.svg) icon.dataset.svg = icon.innerHTML;
-    if (scope.size === 0) icon.innerHTML = icon.dataset.svg;
-    else icon.replaceChildren(...[...scope].slice(0, 2).map((id) => { const s = document.createElement('span'); s.className = 'v2-fav'; const c = TOC.find((x) => x.id === id)!; s.textContent = c.n ? String(c.n) : 'S'; return s; }));
-    const names = [...scope].map((id) => TOC.find((x) => x.id === id)!.title);
-    const label = names.length ? `${fBtn.title}: ${names.join(', ')}` : fBtn.title;
-    fBtn.setAttribute('aria-label', label);
-  };
-  fBtn.addEventListener('click', () => setPop(fPop.hidden));
-  fQ.addEventListener('input', () => filterOptions(fQ.value));
-  fQ.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { const first = [...fPop.querySelectorAll<HTMLElement>('[data-scope]')].find((b) => !b.parentElement!.hidden); first?.click(); }
-    if (e.key === 'ArrowDown') { e.preventDefault(); [...fPop.querySelectorAll<HTMLElement>('[data-scope]')].find((b) => !b.parentElement!.hidden)?.focus(); }
-  });
-  fPop.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { setPop(false); fBtn.focus(); }
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      const opts = [...fPop.querySelectorAll<HTMLElement>('[data-scope]')].filter((b) => !b.parentElement!.hidden);
-      const i = opts.indexOf(document.activeElement as HTMLElement);
-      if (i < 0) return;
-      e.preventDefault();
-      opts[(i + (e.key === 'ArrowDown' ? 1 : opts.length - 1)) % opts.length]!.focus();
-    }
-  });
-  fPop.addEventListener('click', (e) => {
-    const b = (e.target as HTMLElement).closest<HTMLElement>('[data-scope]');
-    if (!b) return;
-    const id = b.dataset.scope!;
-    if (id === 'all') scope = new Set();
-    else if (e.shiftKey) { if (scope.has(id)) scope.delete(id); else scope.add(id); }
-    else scope = new Set([id]);
-    applyScope();
-    if (!e.shiftKey) { setPop(false); fBtn.focus(); }
-  });
-  document.addEventListener('click', (e) => {
-    if (!fPop.hidden && !(e.target as HTMLElement).closest('.v2-filter')) setPop(false);
+  $('[data-to-list]').addEventListener('click', (e) => {
+    e.preventDefault();
+    pause();
+    root.dataset.view = 'list';
+    root.querySelector<HTMLElement>('.v2-row[aria-current]')?.focus();
   });
 
   // ---------- thread details ----------
@@ -410,42 +660,77 @@ export function boot(root: HTMLElement) {
   const dBtn = $<HTMLButtonElement>('[data-details-btn]'), dPop = $('[data-details-pop]');
   function setDetails(open: boolean) { dPop.hidden = !open; dBtn.setAttribute('aria-expanded', String(open)); }
   dBtn.addEventListener('click', () => setDetails(dPop.hidden));
+  document.addEventListener('pointerdown', (e) => { if (!dPop.hidden && !(e.target as HTMLElement).closest('.v2-details')) setDetails(false); });
+  dPop.addEventListener('keydown', (e) => { if (e.key === 'Escape') { setDetails(false); dBtn.focus(); } });
 
   // ---------- copy ----------
 
   root.addEventListener('click', async (e) => {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-copy]');
     if (!b) return;
-    const text = b.parentElement!.querySelector('[data-prompt]')!.textContent ?? '';
+    const code = b.parentElement!.querySelector('[data-prompt]')!;
     const word = b.querySelector('span')!;
-    try { await navigator.clipboard.writeText(text); word.textContent = 'Copied'; }
-    catch { const r = document.createRange(); r.selectNodeContents(b.parentElement!.querySelector('[data-prompt]')!); getSelection()?.removeAllRanges(); getSelection()?.addRange(r); word.textContent = 'Selected'; }
+    try { await navigator.clipboard.writeText(code.textContent ?? ''); word.textContent = 'Copied'; }
+    catch { const r = document.createRange(); r.selectNodeContents(code); getSelection()?.removeAllRanges(); getSelection()?.addRange(r); word.textContent = 'Selected'; }
     setTimeout(() => { word.textContent = 'Copy'; }, 1600);
   });
 
-  // ---------- reader level ----------
+  // ---------- the rest of the frame ----------
+
+  projectFilter(root);
+  splitter($('[data-main]'), $('[data-split]'), $('[data-browser]'), root);
+  const sh = sheet({ browser: $('[data-browser]'), scrim: $('[data-scrim]'), top: $('[data-top]'), behind: $('[data-chat]'), close: $('[data-close]'), opener: $('[data-mini]'), phone });
+  // The mini opens the browser; while it carries the Preview badge, it opens on that tab.
+  $('[data-mini]').addEventListener('click', () => {
+    if (!$('[data-mini-badge]').hidden) setTab('preview');
+    sh.set(true);
+    fit.refit(false);
+  });
+
+  // On a phone the picture also plays small in the mini player above the controls.
+  function phoneChange() {
+    if (phone.matches && !mini) {
+      mini = new Scene($('[data-mini-stage]'));
+      mini.base = base;
+      mini.level = readLevel();
+      if (lesson()) mini.set(pointOf().state, true);
+    } else if (!phone.matches && mini) {
+      mini.stop();
+      mini = null;
+      $('[data-mini-stage]').replaceChildren();
+    }
+  }
+  phoneChange();
+  phone.addEventListener('change', phoneChange);
 
   document.addEventListener(LEVEL_EVENT, (e) => {
     const lv = (e as CustomEvent).detail;
     if (!isLevel(lv)) return;
-    for (const s of scenes.values()) { s.level = lv; s.set(s.state, true); }
+    for (const s of [scene, mini]) if (s) { s.level = lv; s.set(s.state, true); }
   });
 
   // ---------- start ----------
 
-  const m = /^#(l\d+|s-[\w-]+)(?:-p(\d+))?$/.exec(location.hash);
+  const HASH = /^#(l\d+|s-[\w-]+)(?:-p(\d+))?$/;
   const known = (id: string) => TOC.some((c) => c.lessons.some((l) => l.id === id));
-  if (m && known(m[1]!)) {
-    const id = m[1]!;
-    const part = LESSONS[id] ? Math.min(Math.max(0, Number(m[2] ?? 1) - 1), LESSONS[id]!.parts.length - 1) : 0;
-    here = { lesson: id, part, point: 0 };
-    root.dataset.view = 'thread';
-  }
-  void show(false, true);
+  const fromHash = (h: RegExpExecArray): Here => {
+    const id = h[1]!;
+    const part = LESSONS[id] ? Math.min(Math.max(0, Number(h[2] ?? 1) - 1), LESSONS[id]!.parts.length - 1) : 0;
+    return { lesson: id, part, point: 0 };
+  };
+  const m = HASH.exec(location.hash);
+  if (m && known(m[1]!)) { here = fromHash(m); root.dataset.view = 'thread'; }
+  setTab('ex');
+  // The thread plays as soon as it is on screen: at once on a wide screen, or from a link to a lesson.
+  // Under reduced motion it waits on the first point; the reader starts it.
+  if (lesson() && !reduced.matches && (!phone.matches || root.dataset.view === 'thread')) play();
+  else void show('still');
   addEventListener('hashchange', () => {
-    const h = /^#(l\d+|s-[\w-]+)(?:-p(\d+))?$/.exec(location.hash);
-    if (!h || !known(h[1]!) || (h[1] === here.lesson && Number(h[2] ?? 1) - 1 === here.part)) return;
+    const h = HASH.exec(location.hash);
+    if (!h || !known(h[1]!)) return;
+    const to = fromHash(h);
+    if (to.lesson === here.lesson && to.part === here.part) return;
     root.dataset.view = 'thread';
-    go({ lesson: h[1]!, part: LESSONS[h[1]!] ? Math.max(0, Number(h[2] ?? 1) - 1) : 0, point: 0 }, { play: !!LESSONS[h[1]!] });
+    go(to, 'still', { play: !!LESSONS[to.lesson] && !reduced.matches });
   });
 }

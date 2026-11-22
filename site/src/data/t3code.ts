@@ -50,6 +50,18 @@ export const t3code = {
     { verified: '2026-11-22' },
   ),
   defaultMode: fact('Full access', 'The initial default permission mode for new threads is Full access.', doc('permission-modes')),
+  fullAccessClaude: fact(
+    'bypassPermissions',
+    "In Full access, T3 Code runs Claude Code in its bypassPermissions mode. In Supervised it uses Claude Code's default mode, which asks.",
+    `${REPO}/blob/main/apps/server/src/orchestration-v2/Adapters/ClaudeAdapterV2.ts`,
+    { verified: '2026-11-22', note: 'permissionModeForClaudeRuntimePolicy, read at commit 3806763. If Claude Code has bypass turned off, T3 Code falls back to auto or default.' },
+  ),
+  fullAccessCodex: fact(
+    'danger-full-access',
+    "In Full access, T3 Code runs Codex with its sandbox policy set to full access (dangerFullAccess) and no approval prompts. In Supervised Codex gets a read-only sandbox and asks before untrusted commands.",
+    `${REPO}/blob/main/apps/server/src/orchestration-v2/Adapters/CodexAdapterV2.ts`,
+    { verified: '2026-11-22', note: 'codexRuntimeModeTurnDefaults, read at commit 3806763.' },
+  ),
   modeSwitch: fact(
     'model picker → Permissions',
     'A new thread names its permission mode under the composer. To change it, open the model picker and choose Permissions at its bottom, or press mod+shift+a. New threads start on the default set in Settings → Threads → New threads → Permissions.',
@@ -266,6 +278,30 @@ export const t3code = {
       'A thread\'s work log lists what the agent did in rows such as "Searched files", "Read members.ts", "Changed files" and "Ran command".',
       `${REPO}/blob/main/packages/shared/src/toolActivity.ts`,
       { verified: '2026-11-22' },
+    ),
+    readRow: fact(
+      'Read {path}',
+      'A work-log row for a file read names the file, as "Read {path}". It says "Read file" only when no path is known.',
+      `${REPO}/blob/main/packages/shared/src/toolActivity.ts`,
+      { verified: '2026-11-22', note: 'formatReadToolLabel, read at commit 3806763.' },
+    ),
+    searchRow: fact(
+      'Searched {query} in {target}',
+      'A work-log row for a search names what was searched and where, as "Searched {query} in {target}" (or "Searched files {glob}"). It says "Searched files" only when neither is known.',
+      `${REPO}/blob/main/packages/shared/src/toolActivity.ts`,
+      { verified: '2026-11-22', note: 'formatSearchToolLabel, read at commit 3806763.' },
+    ),
+    rowDetail: fact(
+      'command or path',
+      'A "Ran command" row carries the command as its detail, and a "Changed files" row carries the changed file\'s path.',
+      `${REPO}/blob/main/packages/shared/src/toolActivity.ts`,
+      { verified: '2026-11-22', note: 'deriveToolActivityPresentation, read at commit 3806763.' },
+    ),
+    skillRow: fact(
+      'Skill: {name}',
+      'When Claude uses a skill through its Skill tool, the work-log row reads "Skill: {name}".',
+      `${REPO}/blob/main/packages/shared/src/toolActivity.ts`,
+      { verified: '2026-11-22', note: 'claudeSkillInvocation and dynamicToolTitle, read at commit 3806763. The label is for Claude\'s Skill tool; other providers name skill use their own way.' },
     ),
   },
 } as const;
