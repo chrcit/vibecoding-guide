@@ -11,7 +11,7 @@ const images = { '3d': img3d, app: imgApp, site: imgSite };
 <ul class="fh">
   {builds.map((b) => (
     <li>
-      <a href={url('start/')} data-build={b.id}>
+      <a href={url('start/first-hour/')} data-build={b.id}>
         <img src={images[b.id].src} width={images[b.id].width} height={images[b.id].height} alt={b.alt} loading="lazy" decoding="async" />
         <span>{b.label}</span>
       </a>

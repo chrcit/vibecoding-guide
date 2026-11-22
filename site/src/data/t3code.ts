@@ -50,6 +50,18 @@ export const t3code = {
     { verified: '2026-11-20' },
   ),
   defaultMode: fact('Full access', 'The initial default permission mode for new threads is Full access.', doc('permission-modes')),
+  modeSwitch: fact(
+    'model picker → Permissions',
+    'A new thread names its permission mode under the composer. To change it, open the model picker and choose Permissions at its bottom, or press mod+shift+a. New threads start on the default set in Settings → Threads → New threads → Permissions.',
+    doc('permission-modes'),
+    { verified: '2026-11-21' },
+  ),
+  newThreadButton: fact(
+    'New thread in the sidebar',
+    "The sidebar's New thread button starts a thread; with more than one open project it asks which project to use. Shift-click it, or use a project's own new-thread action, to start in that project.",
+    doc('thread-sidebar'),
+    { verified: '2026-11-21' },
+  ),
   voice: {
     exists: fact(true, 'T3 Code has voice dictation in the composer, in comments and in review replies.', doc('voice-input')),
     where: fact(
@@ -90,7 +102,7 @@ export const t3code = {
   maker: fact('T3 Tools Inc.', 'T3 Code is copyright T3 Tools Inc. Its FAQ is written by Theo in the first person and links his own posts.', doc('faq')),
   welcome: fact(
     'Welcome page',
-    'A new installation opens on a Welcome page that lists the agents found on the computer. For Claude Code, Install or Sign in opens a terminal with the command ready to run; for Codex, Set up offers sign-in with a ChatGPT account.',
+    'A new installation opens on a Welcome page that lists the agents found on the computer. For Claude Code, Install or Sign in opens a terminal with the command ready to run; for Codex, Set up offers sign-in with a ChatGPT account. Start finishes the page once one agent is ready.',
     doc('welcome-page'),
   ),
   codexWithChatGPT: fact(true, 'Codex can be connected with a ChatGPT account from inside T3 Code, which then installs Codex itself; no terminal is needed.', doc('providers-codex')),

@@ -191,7 +191,7 @@ export const archiveEntries: ArchiveEntry[] = [
   // ---------- DISCARD / SUPERSEDED ----------
   {
     title: 'Old Start page (“Build something in an hour”)',
-    href: 'start/',
+    href: 'start/first-hour/',
     group: 'Start & T3 Code',
     disposition: 'discard',
     targetLabel: 'Replaced by Part 1 · Steps 1–4',

@@ -41,6 +41,7 @@ const week = start('meter');
           <a class="home-alt" href={first.href}>or from {first.text}</a>
         </ForLevel>
       </div>
+      <p class="home-guided">Or learn on your own work: <a href={url('start/')}>install the guide in T3 Code and start it</a>, in four steps.</p>
     </header>
 
     {parts.map((p) => {
@@ -75,6 +76,8 @@ const week = start('meter');
   .home-lead { margin: 0; font-size: var(--text-l); line-height: 1.45; color: var(--ink-2); }
   .home-start .for-level { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
   .home-alt { min-height: 2.75rem; display: inline-flex; align-items: center; color: var(--ink-2); }
+  .home-guided { margin: 0; color: var(--ink-2); }
+  .home-guided a { color: var(--ink); font-weight: 600; text-decoration-color: var(--accent); text-underline-offset: 0.2em; }
 
   .home-part { display: grid; gap: var(--space-4); padding-block: var(--space-6); border-top: 1px solid var(--rule); }
   .home-part-head { display: grid; gap: 0.6rem; align-content: start; max-width: 40rem; }

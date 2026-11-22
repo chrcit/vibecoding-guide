@@ -125,3 +125,45 @@ export const describeEngineer = `${describe.app.replace(ending, '')}Before you w
 Then: strict TypeScript, the rules in a pure module with unit tests (empty list, a member with two seasons), npm test and npx tsc --noEmit green before you report, one commit per working step, and an AGENTS.md with the commands to run and check it.
 
 ${ending}`;
+
+/*
+ * The guide skill (skills/agentic-guide) and how the getting-started page installs it.
+ * The repository and branch are the owner's default: this repo's public GitHub path.
+ * Until the skill is merged to main, a clone of main does not contain it.
+ */
+export const skill = {
+  name: 'agentic-guide',
+  repo: 'chrcit/vibecoding-guide',
+  branch: 'main',
+  path: 'skills/agentic-guide',
+  project: 'practice',
+};
+const repoUrl = `https://github.com/${skill.repo}`;
+export const skillUrl = `${repoUrl}/tree/${skill.branch}/${skill.path}`;
+
+/**
+ * What the install button drafts in T3 Code, and what the copy fallback copies.
+ * Two turns: the agent reads and summarises the skill, then waits for "yes" before copying.
+ * The copy is described as "this folder into these two places", so the agent can do it with
+ * whatever the machine has (macOS, Linux or Windows); no bash-only commands.
+ */
+export const installPrompt = `Install the ${skill.name} skill into this project, so I can start the guide here.
+
+1. Check where this thread works. It should be my T3 Code project called "${skill.project}", not a folder under a "scratch" folder. If it is not, stop and tell me to pick ${skill.project} at the top of a new draft and send this message again there. If I have no ${skill.project} project yet, tell me to make one (Cmd/Ctrl+K, New project, "${skill.project}"). Never create a second one.
+2. Get the folder ${skill.path} from ${repoUrl} (branch ${skill.branch}) into a new temporary folder, with whatever this computer has.
+3. Read its SKILL.md and tell me in two plain sentences what it will make you do. Then stop and wait until I say yes. Copy nothing before that. If I say no, delete the temporary folder and stop.
+4. When I say yes, copy the whole ${skill.name} folder, with all its files and subfolders, into two places in this project: .claude/skills/${skill.name} and .agents/skills/${skill.name}. If a place already holds an earlier ${skill.name}, delete that one first and then copy, so the new copy replaces it instead of landing inside it. If a place holds anything else, delete the temporary folder, then stop and tell me. Change nothing else on my computer.
+5. Delete the temporary folder. Show me that both places now hold SKILL.md, moves.md and the folders mechanisms and figures.
+6. Finish with one short line: start a new thread in this project, type $, pick ${skill.name} from the list and press Enter.`;
+
+/** A T3 Code prompt link: opens a draft, never runs anything (docs/user/prompt-links.md). */
+export const promptLink = (prompt: string) => `https://app.t3.codes/new?prompt=${encodeURIComponent(prompt)}`;
+
+/**
+ * The terminal route, for macOS and Linux. Run it inside the project folder. It clones into a
+ * temporary folder and removes that folder afterwards, whatever happens. `flags` go to install.sh.
+ */
+export const installTerminalFor = (flags = '') =>
+  `(d="$(mktemp -d)" && trap 'rm -rf "$d"' EXIT && git clone --depth 1 --branch ${skill.branch} ${repoUrl}.git "$d/guide" && bash "$d/guide/${skill.path}/install.sh"${flags ? ` ${flags}` : ''})`;
+export const installTerminal = installTerminalFor();
+export const installTerminalGlobal = installTerminalFor('--global');

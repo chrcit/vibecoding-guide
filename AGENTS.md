@@ -20,7 +20,8 @@ Guides and skills for people learning to build software by directing AI agents. 
 │   ├── vibe-coder-base.md
 │   ├── ui-builder.md
 │   ├── project-audit.md
-│   └── web-fundamentals.md
+│   ├── web-fundamentals.md
+│   └── agentic-guide/     # The interactive guide skill (SKILL.md, mechanisms/, moves.md, figures/, install.sh)
 ├── site/                  # Astro site: visual essay (src/pages/index.astro + components) and
 │                          #   reference pages rendered straight from guides/ and skills/
 └── guides/
