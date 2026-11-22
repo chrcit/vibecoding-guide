@@ -52,6 +52,10 @@
 .j-step[data-active], .j-step:focus-within { opacity: 1; }
 .j-root:not([data-ready]) .j-step { opacity: 1; }
 
+/* A step fragment changes the picture in place. Stop a native smooth scroll from carrying the
+   viewport past it while the stepper is starting. */
+html.js:has(.j-root[data-panel]) { scroll-behavior: auto; }
+
 /* The frame: the picture, and the step buttons (on it on a wide page, under it on a narrow one). */
 .j-frame {
   position: relative; display: grid; grid-template-columns: minmax(0, 1fr); min-height: 0;
@@ -221,7 +225,7 @@ main:has(> .j-root) { container: journey / inline-size; }
 .j-bubble[hidden] { display: none; }
 .j-bubble[data-instant] { transition: none; }
 .j-bubble p {
-  margin: 0; max-width: none; overflow: hidden;
+  margin: 0; max-width: none; overflow: hidden; overflow-wrap: anywhere;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
 }
 /* The pointer, on the side that faces the part, aimed at its middle (--along). */
@@ -265,10 +269,10 @@ main:has(> .j-root) { container: journey / inline-size; }
 }
 .j-say:empty { border-left-color: transparent; }
 .j-say b { margin-right: 0.15rem; font-family: var(--mono); font-size: var(--text-xs); font-weight: 600; color: var(--muted); }
-.j-stats { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); gap: 0.15rem 0.875rem; margin: 0; }
+.j-stats { display: grid; grid-template-columns: fit-content(50%) minmax(0, 1fr); gap: 0.15rem 0.875rem; margin: 0; }
 .j-stats:empty { display: none; }
 .j-stats div { display: contents; }
-.j-stats dt { font-size: var(--text-xs); line-height: 1.6; color: var(--muted); }
+.j-stats dt { font-size: var(--text-xs); line-height: 1.6; color: var(--muted); overflow-wrap: anywhere; }
 .j-stats dd { margin: 0; font-family: var(--mono); font-size: var(--text-s); font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
 /* The assumption behind a number ("example", "cache on"), beside it. */
 .j-tag { display: inline-block; margin-left: 0.15rem; padding: 0 0.35rem; border: 1px solid var(--rule-strong); border-radius: var(--radius-pill); font-family: var(--sans); font-size: var(--text-xs); font-weight: 500; line-height: 1.35; color: var(--muted); vertical-align: 0.05em; }

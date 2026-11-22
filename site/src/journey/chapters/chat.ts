@@ -64,7 +64,7 @@ export const chat: Chapter = {
       ctx.scene.stop();
       ctx.scene.change((s) => { s.agents[0]!.blocks = []; s.agents[0]!.busy = false; s.agents[0]!.scan = false; s.labels![2] = tankLabel(0); });
       // Your press is the line on the picture: it replaces the old answer, which this window no longer holds.
-      ctx.say('you', 'New chat.');
+      ctx.say('model', '');
       ctx.say(null, 'A new chat: an empty window.');
       ctx.stat([['in the window', '0 messages']]);
     },

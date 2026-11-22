@@ -143,59 +143,80 @@ export class Overlay {
     return { l: this.chip.offsetLeft, t: this.chip.offsetTop, w: this.chip.offsetWidth, h: this.chip.offsetHeight };
   }
 
-  /**
-   * Put the bubble beside its part, never over it: above it, to its right or left at the height of
-   * its top (a station's cap, a pawn's head; narrower if that is what fits), or below it. Of those
-   * inside the stage, the one clear of the chip and the step buttons that covers least of the other
-   * parts wins. When none fits, the side with most room, pulled inside the stage.
-   */
+  /** Try each side of the speaker, sliding along that side to clear obstacles. */
   private place(instant: boolean) {
     const part = this.at ? this.scene.partBox(this.at) : null;
     if (!part) return;
     const W = this.stage.clientWidth, H = this.stage.clientHeight;
     const b = this.bubble;
-    const pad = 6, gap = 10, narrowest = 170;
-    b.style.maxWidth = '';
-    const full = b.offsetWidth;
-    const keep = this.scene.reserved();
-    const cx = part.l + part.w / 2;
-    const sizeAt = (maxW: number) => { b.style.maxWidth = `${Math.round(maxW)}px`; return { w: b.offsetWidth, h: b.offsetHeight }; };
-    type Spot = { side: string; l: number; t: number; w: number; h: number };
-    const make = (side: string): Spot | null => {
-      if (side === 'above' || side === 'below') {
-        const { w, h } = sizeAt(full);
-        const l = Math.max(pad, Math.min(W - pad - w, cx - w / 2));
-        return { side, l, t: side === 'above' ? part.t - gap - h : part.t + part.h + gap, w, h };
-      }
-      const room = (side === 'right' ? W - (part.l + part.w) : part.l) - gap - pad;
-      if (room < narrowest) return null;
-      const { w, h } = sizeAt(Math.min(full, room));
-      const t = Math.max(pad, Math.min(H - pad - h, part.ay - h / 2));
-      return { side, l: side === 'right' ? part.l + part.w + gap : part.l - gap - w, t, w, h };
+    const pad = 6, gap = 8;
+    const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+    const measure = (maxWidth = '') => {
+      b.style.maxWidth = maxWidth;
+      const { width: w, height: h } = b.getBoundingClientRect();
+      return { w, h, maxWidth };
     };
-    const inside = (c: Spot) => c.l >= pad - 0.5 && c.t >= pad - 0.5 && c.l + c.w <= W - pad + 0.5 && c.t + c.h <= H - pad + 0.5;
-    const overlap = (c: Spot, k: Box) => Math.max(0, Math.min(c.l + c.w, k.l + k.w) - Math.max(c.l, k.l)) * Math.max(0, Math.min(c.t + c.h, k.t + k.h) - Math.max(c.t, k.t));
-    // The other main parts on the picture: better not covered either, but they may be when the
-    // picture is full.
+    const full = measure();
+    const keep = this.scene.reserved();
+    const labels = this.scene.labelBoxes();
     const s = this.scene.state;
-    const own = this.at!.replace(/^(tool|tank):.*/, (m) => (m.startsWith('tool') ? 'tools' : m.slice(5)));
-    const others = ['you', 'tools', 'project', ...s.agents.map((a) => a.id), ...(s.gates ?? []).map((g) => g.id)]
+    const own = this.at!.replace(/^tool:.*/, 'tools').replace(/^tank:/, '').replace(/^card:.*/, 'tray');
+    const parts = ['you', 'tools', 'project', 'tray', ...s.agents.map((a) => a.id), ...(s.gates ?? []).map((g) => g.id)]
       .filter((id) => id !== own && id !== this.at)
       .map((id) => this.scene.partBox(id)).filter((x): x is NonNullable<typeof x> => !!x);
-    // Inside the stage first; then clear of the chip and the buttons; then covering the least; then
-    // the order above, right, left, below.
-    const cost = (c: Spot, i: number) => (keep.some((k) => overlap(c, k) > 0) ? 1e7 : 0) + others.reduce((n, k) => n + overlap(c, k), 0) + i;
-    const spots = ['above', 'right', 'left', 'below'].map(make).filter((c): c is Spot => !!c);
-    let pick = spots.map((c, i) => ({ c, n: cost(c, i) })).filter((x) => inside(x.c)).sort((a, b) => a.n - b.n)[0]?.c;
+    const obstacles = [...keep, ...labels, ...parts];
+    const overlap = (a: Box, b: Box) =>
+      Math.max(0, Math.min(a.l + a.w, b.l + b.w) - Math.max(a.l, b.l)) *
+      Math.max(0, Math.min(a.t + a.h, b.t + b.h) - Math.max(a.t, b.t));
+    const { l, t, w, h, ax, ay } = part;
+    const sides = [
+      { side: 'above', vertical: true, before: true, room: t },
+      { side: 'right', vertical: false, before: false, room: W - l - w },
+      { side: 'left', vertical: false, before: true, room: l },
+      { side: 'below', vertical: true, before: false, room: H - t - h },
+    ] as const;
+    const spots = sides.flatMap(({ side, vertical, before, room }, order) => {
+      const space = room - gap - pad;
+      if (space <= 0) return [];
+      const size = vertical || space >= full.w ? full : measure(`${Math.floor(space)}px`);
+      const depth = vertical ? size.h : size.w;
+      if (depth > space || (size !== full && this.text.scrollHeight > this.text.clientHeight + 1)) return [];
+
+      const fixed = before ? room - gap - depth : (vertical ? H : W) - room + gap;
+      const span = vertical ? size.w : size.h;
+      const limit = (vertical ? W : H) - pad - span;
+      const anchor = vertical ? ax : ay;
+      const centred = clamp(anchor - span / 2, pad, limit);
+      const positions = [centred];
+      // Try just past either end of an obstacle in this strip, with the pointer over the speaker.
+      for (const box of obstacles) {
+        const cross = vertical ? box.t : box.l, thickness = vertical ? box.h : box.w;
+        if (cross + thickness <= fixed || cross >= fixed + depth) continue;
+        const near = vertical ? box.l : box.t, length = vertical ? box.w : box.h;
+        for (const edge of [near - span - 2, near + length + 2]) {
+          const pos = clamp(edge, pad, limit);
+          if (pos <= anchor && anchor <= pos + span) positions.push(pos);
+        }
+      }
+      return positions.map((pos) => {
+        const box = { ...size, side, l: vertical ? pos : fixed, t: vertical ? fixed : pos };
+        const score = keep.reduce((n, k) => n + overlap(box, k), 0) * 1000
+          + labels.reduce((n, k) => n + overlap(box, k), 0) * 2
+          + parts.reduce((n, k) => n + overlap(box, k), 0)
+          + (size === full ? 0 : sides.length) + order + Math.abs(pos - centred) / (vertical ? W : H);
+        return { box, score };
+      });
+    });
+    let pick = spots.sort((a, b) => a.score - b.score)[0]?.box;
     if (!pick) {
-      const room = (side: string) => side === 'above' ? part.t : side === 'below' ? H - part.t - part.h : side === 'right' ? W - part.l - part.w : part.l;
-      const side = ['above', 'below', 'right', 'left'].sort((x, y) => room(y) - room(x))[0]!;
-      const { w, h } = sizeAt(full);
-      const l = side === 'right' ? part.l + part.w + gap : side === 'left' ? part.l - gap - w : cx - w / 2;
-      const t = side === 'above' ? part.t - gap - h : side === 'below' ? part.t + part.h + gap : part.ay - h / 2;
-      pick = { side, w, h, l: Math.max(pad, Math.min(W - pad - w, l)), t: Math.max(pad, Math.min(H - pad - h, t)) };
+      // A crowded stage can have no room on any side. Keep the text inside the stage.
+      const { side, vertical, before, room } = [...sides].sort((a, b) => b.room - a.room)[0]!;
+      const fixed = before ? room - gap - (vertical ? full.h : full.w) : (vertical ? H : W) - room + gap;
+      pick = { ...full, side,
+        l: clamp(vertical ? ax - full.w / 2 : fixed, pad, W - pad - full.w),
+        t: clamp(vertical ? fixed : ay - full.h / 2, pad, H - pad - full.h) };
     }
-    sizeAt(pick.w === full ? full : pick.w);
+    b.style.maxWidth = pick.maxWidth;
     b.dataset.side = pick.side;
     // The pointer aims at the part's top along the side the bubble sits on.
     const along = pick.side === 'above' || pick.side === 'below'

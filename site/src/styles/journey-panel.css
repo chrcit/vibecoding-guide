@@ -99,6 +99,7 @@ html:not(.js) .jp-toc { display: none; }
   }
   html.js .j-root[data-panel] .j-step > p, html.js .j-root[data-panel] .j-lead { max-width: 40ch; }
   html.js .j-root[data-panel] .j-step-extra { margin-top: 1rem; padding-top: 0.25rem; }
+  html.js .j-root[data-panel] .j-step { scroll-margin-top: 100svh; }
   html.js .j-root[data-panel] .j-more-info { max-width: none; }
   html.js .j-root[data-panel] .control select { width: 100%; min-width: 0; text-overflow: ellipsis; }
   /* The next lesson is the box at the foot of the panel; the step keeps its "more" links. */

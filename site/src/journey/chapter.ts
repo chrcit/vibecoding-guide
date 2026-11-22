@@ -19,9 +19,9 @@ export interface Ctx {
   /**
    * A line someone said, or (who = null) the guide's own line about the picture. A speaker with a
    * part on the picture (you, the model or a named model, the check, a tool, a helper, a colleague…)
-   * gets a speech bubble at that part, which replaces the line before (overlay.ts). Narration, and a
-   * speaker with no part on the picture, go in the narration line in the step text. Keep a bubble
-   * line to about 38 characters: the bubble shows two lines and cuts the rest.
+   * gets a speech bubble at that part, which replaces the line before (overlay.ts). An empty
+   * line with a speaker clears the bubble. Narration and speakers with no part on the picture
+   * go in the narration line. Keep bubble text short: the bubble shows two lines.
    */
   say(who: string | null, text: string): void;
   /** Gone: the chat screen was removed. Every call does nothing until the chapters drop them. */

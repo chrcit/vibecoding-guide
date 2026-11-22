@@ -84,6 +84,11 @@ export function boot(root: HTMLElement) {
     data: dataEl ? JSON.parse(dataEl.textContent || '{}') : {},
     screen: noScreen,
     say(who, text) {
+      if (who && !text) {
+        overlay.clear();
+        saidEl.textContent = '';
+        return;
+      }
       // Someone in the picture said it: a bubble at their part, and the same line for screen
       // readers (the bubble is part of the picture, which they hear as one description).
       if (who && text && overlay.say(who, text)) {
@@ -135,7 +140,10 @@ export function boot(root: HTMLElement) {
       const chipBefore = overlay.chipBox();
       overlay.counter(pairs, defOf(current)?.counter ?? chapter.counter, ctx, restarted);
       const chipAfter = overlay.chipBox();
-      if (chipBefore?.w !== chipAfter?.w || chipBefore?.h !== chipAfter?.h) scene.relayout();
+      if (chipBefore?.w !== chipAfter?.w || chipBefore?.h !== chipAfter?.h) {
+        scene.relayout();
+        overlay.follow();
+      }
     },
   };
   scene.onKinds = (kinds) => {
@@ -211,6 +219,7 @@ export function boot(root: HTMLElement) {
     // The reader asked for this step: bring it into place. A step picked by the scroll already is.
     if (cause === 'start' || cause === 'control' || cause === 'resume') return;
     panel.scrollTop = 0;
+    if (cause === 'link') window.scrollTo({ top: 0, behavior: 'instant' });
   });
 
   /** Back, Next, "2 of 4 · title", and what the narrow layout shows around the step. */
@@ -308,10 +317,13 @@ export function boot(root: HTMLElement) {
   // A link to one step (#many) opens it; else the first step.
   const linked = nav.start();
   if (linked) {
-    // The browser may have scrolled the page to the step: both layouts are one screen tall.
-    const top = () => { if (scrollY > 0 && root.getBoundingClientRect().top < 0) scrollTo({ top: 0 }); };
-    top();
-    addEventListener('load', top, { once: true });
+    // The browser can finish its initial fragment scroll after the stepper has started.
+    const reset = () => requestAnimationFrame(() => {
+      panel.scrollTop = 0;
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
+    if (document.readyState === 'complete') reset();
+    else addEventListener('load', reset, { once: true });
   }
 
   function pressOnly(btn: HTMLElement) {

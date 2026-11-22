@@ -238,6 +238,12 @@ export class Scene {
 
   reserved(): Box[] { return this.reserve?.() ?? []; }
 
+  /** The boxes of the live labels after layout, in stage pixels. */
+  labelBoxes(): Box[] {
+    const W = this.root.clientWidth, H = this.root.clientHeight;
+    return [...this.labelEls.values()].map((el) => this.labelBox(el, W, H));
+  }
+
   /** The anchor of the label whose words are this name ("Opus 5.5"), or null. */
   labelFor(name: string): string | null {
     const want = name.trim().toLowerCase();
@@ -250,8 +256,7 @@ export class Scene {
   }
 
   /**
-   * Where a part is on the stage, with its label: a box in pixels, from where the part is going
-   * (not where it is mid-glide). Null when the part is not drawn or the camera leaves it out.
+   * Where a part ends up on the stage, in pixels. Null when the part is absent or out of frame.
    * `anchor` is a label's anchor name ("you", "a0", "gate", "tool:run", "card:sum", "peer", …).
    */
   partBox(anchor: string): (Box & { ax: number; ay: number }) | null {
@@ -267,15 +272,8 @@ export class Scene {
     const xy = pts.map(([x, y, z]) => { const [fx, fy] = flat(x, y, z); return [(fx * cam.s + cam.tx) * sc, (fy * cam.s + cam.ty) * sc] as const; });
     // The anchor point itself: the top of the part (a station's cap, a pawn's head).
     const [ax, ay] = point ? xy[xy.length - 1]! : [0, 0];
-    let l = Math.min(...xy.map((p) => p[0])), r = Math.max(...xy.map((p) => p[0]));
-    let t = Math.min(...xy.map((p) => p[1])), b = Math.max(...xy.map((p) => p[1]));
-    // The part's own labels count as the part: its name, and for a station the label on its window.
-    for (const at of [anchor, `tank:${anchor}`]) {
-      const label = this.labelEls.get(at + '|a') ?? this.labelEls.get(at + '|s');
-      if (!label || label.style.opacity === '0') continue;
-      const lb = this.labelBox(label, W, H);
-      l = Math.min(l, lb.l); t = Math.min(t, lb.t); r = Math.max(r, lb.l + lb.w); b = Math.max(b, lb.t + lb.h);
-    }
+    const l = Math.min(...xy.map((p) => p[0])), r = Math.max(...xy.map((p) => p[0]));
+    const t = Math.min(...xy.map((p) => p[1])), b = Math.max(...xy.map((p) => p[1]));
     if (r < 0 || b < 0 || l > W || t > H) return null;
     return point ? { l, t, w: r - l, h: b - t, ax, ay } : { l, t, w: r - l, h: b - t, ax: (l + r) / 2, ay: t };
   }

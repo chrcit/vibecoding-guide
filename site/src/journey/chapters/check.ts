@@ -37,8 +37,7 @@ const NAME: Record<CheckId, string> = {
   spec: 'a test from your rule',
 };
 /** Which check catches which kind of wrong, and what it says when it does. */
-// Each line is a bubble at the check. On a wide page the bubble can be squeezed to 170 px beside
-// the check (overlay.ts), so keep these to about 28 characters.
+// Each line is a bubble at the check.
 const CATCH: Record<CheckId, Partial<Record<Flaw, string>>> = {
   run: { types: 'The list page crashed: blank.', logic: 'Wrong date: 3 December.' },
   phone: { layout: 'The table spills off a phone.' },

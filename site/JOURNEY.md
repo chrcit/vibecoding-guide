@@ -127,8 +127,9 @@ There is no chat screen and no caption under the picture. A step's run is shown 
    - a speech bubble at the part that speaks. `ctx.say(who, text)` with a speaker who has a part on
      the picture (you, the model or a named model, the agent, the check, a tool, a helper, the
      reviewer, a colleague, a client, a user) shows one bubble with a pointer to that part. The
-     latest line replaces the one before. It never covers the speaker, stays inside the picture and
-     shows two lines at most. Which part a speaker stands for is decided in one place, `SPEAKERS`
+     latest line replaces the one before. `ctx.say('model', '')` clears the bubble and its
+     screen-reader text. The bubble shows up to two lines, favouring full width and keeping clear
+     of the chip, the labels and other parts where space allows. Which part a speaker stands for is decided in one place, `SPEAKERS`
      in `overlay.ts`, after a label on the picture whose words are the speaker's name ("Opus 5.5")
      and after the chapter's own `speakers` map;
    - one counter chip in the top left corner: the readout's main number, by default the first pair
@@ -153,8 +154,8 @@ backwards in the animation/explainer."
 
 One step is on show at a time, on every width. Which one, Back and Next, and the address are
 `src/journey/steps.ts`: `goTo(index | id)`, `next()`, `prev()`, the current index, a `change`
-event, and the step id in the URL hash (`/journey/meter/#many` opens that step). `run.ts` drives it
-and runs the step; `panel.ts` draws the wide layout's navigator.
+event, and the step id in the URL hash (`/journey/meter/#many` opens that step). A step link opens
+with the picture in view. `run.ts` runs the step, and `panel.ts` draws the wide layout's navigator.
 
 Journey pages use the page's full width, and the site header spans the same width on them.
 
