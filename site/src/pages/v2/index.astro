@@ -64,7 +64,7 @@ const icon = {
             <h2 class="v2-folder-head"><span class="v2-fav" aria-hidden="true">{c.n ?? 'S'}</span>{c.title}</h2>
             <ol>
               {c.lessons.map((l) => (
-                <li>
+                <li id={l.id}>
                   <a class="v2-row" href={`#${l.id}`} data-lesson={l.id} data-plays={l.plays ? '' : undefined}>
                     <span class="v2-row-title">{l.title}</span>
                     <span class="v2-pill" data-status></span>
@@ -83,7 +83,7 @@ const icon = {
         <a class="v2-icon v2-to-list" href="#" data-to-list aria-label="All lessons" set:html={icon.back} />
         <p class="v2-crumb"><span class="v2-fav" aria-hidden="true" data-crumb-fav>1</span><span data-crumb-project>Hand it over</span><span class="v2-sep" aria-hidden="true">/</span><b data-crumb-thread>Say what you want</b></p>
         <div class="v2-details" data-ui="context" hidden>
-          <button type="button" class="v2-icon" data-details-btn aria-expanded="true" aria-controls="v2-details-pop" aria-label="Thread details" set:html={icon.details} />
+          <button type="button" class="v2-icon v2-details-btn" data-details-btn aria-expanded="true" aria-controls="v2-details-pop" aria-label="Thread details"><Fragment set:html={icon.details} /><span class="v2-details-val" data-ctx-short></span></button>
           <div class="v2-pop v2-details-pop" id="v2-details-pop" data-details-pop>
             <p class="v2-pop-title">{ctxTitle} <span class="v2-ex">example</span></p>
             <div class="v2-meter" aria-hidden="true"><span data-ctx-bar></span></div>
@@ -120,7 +120,7 @@ const icon = {
                 <h2 class="v2-title">{part.title}</h2>
                 <p class="v2-lede">{part.lede}</p>
                 <figure class="v2-fig">
-                  <div class="v2-stage j-stage" data-stage role="img" aria-label={`${part.title}: ${last.say}`}>
+                  <div class="v2-stage j-stage tile" data-stage role="img" aria-label={`${part.title}: ${last.say}`}>
                     <Fragment set:html={poster(part.points[0]!.state, { w: 800, h: 450 })} />
                   </div>
                   <figcaption class="v2-cap" aria-live="polite"><span class="v2-cap-n" data-cap-n>1 of {part.points.length}</span> <span data-cap>{part.points[0]!.say}</span></figcaption>

@@ -23,6 +23,9 @@ const [SEARCHED, READ_FILE, CHANGED, RAN] = t3code.screen.workLog.value;
 const [READ_N, , RAN_N] = t3code.screen.workLogGroups.value;
 const n = (tpl: string, count: number) => tpl.replace('{n}', String(count));
 export const MODEL = models['claude-opus-5-5'].name.replace(/^Claude /, '');
+const status = (word: string) => { const w = t3code.screen.statuses.value.find((x) => x === word); if (!w) throw new Error(`v2: T3 Code has no status ${word}`); return w; };
+/** The sidebar row labels the lessons use, from T3 Code's own list. */
+export const STATUS = { working: status('Working'), approval: status('Approval'), done: status('Done') };
 export const worked = (d: string) => t3code.screen.workedFor.value.replace('{duration}', d);
 
 // ---------- the table of contents ----------
@@ -239,7 +242,7 @@ const lesson2: Lesson = {
       request: DOOR,
       lede: 'One feature, said as an outcome. This time the model has tools in the club’s project.',
       points: points(hands(), [
-        { say: 'Now the model has tools: search, read, change and run, in the project’s folder. New threads start in Full access, so it uses them without asking.', moves: [{ to: 'agent' }], ui: { perm: FULL_ACCESS, log: true },
+        { say: 'Now the model has tools: search, read, change and run, in the project’s folder. New threads start in Full access, so it uses them without asking.', moves: [{ to: 'agent' }], ui: { perm: FULL_ACCESS, log: true, context: 2 },
           edit: (s) => { push(s, b('you', 2.4)); A(s).lamp = 'work'; withNote(s, lab('tank:a0', 'its window: your request', 'left')); } },
         { say: 'It searches the project for the guest list. The work log gets its first row.', moves: [search],
           edit: (s) => { push(s, b('model', 1.2), b('tool', 3)); file(s, 1, 'read'); withNote(s, lab('tool:search', 'search', 'right')); } },
@@ -247,7 +250,7 @@ const lesson2: Lesson = {
           edit: (s) => { push(s, b('model', 1.2), b('tool', 6)); withNote(s, lab('tank:a0', 'each result goes back in', 'left')); } },
         { say: 'It writes the door page into the project.', moves: [change],
           edit: (s) => { push(s, b('model', 2), b('tool', 1.5)); file(s, 2, 'edit'); withNote(s, lab('tool:edit', 'change', 'right')); } },
-        { say: 'Then it replies. Every step it took stays in the work log above.', moves: [{ to: 'you', kind: 'model' }],
+        { say: 'Then it replies. Every step it took stays in the work log above.', moves: [{ to: 'you', kind: 'model' }], ui: { context: 4 },
           edit: (s) => { push(s, b('model', 2.4)); A(s).lamp = 'off'; withNote(s, atYou('a reply, and a log of the work')); } },
       ]),
       log: { took: '1m 50s', rows: [{ at: 1, ...SEARCH_ROW }, { at: 2, ...READ_ROW }, { at: 3, ...CHANGE_ROW }] },
@@ -263,7 +266,7 @@ const lesson2: Lesson = {
       request: DOOR,
       lede: 'The same request. This time it tries what it wrote.',
       points: points(hands(), [
-        { say: 'Search, read, change, as before. Each tool call is a turn of its own: read the window, act, read the result.', moves: [{ to: 'agent' }, search, read, change],
+        { say: 'Search, read, change, as before. Each tool call is a turn of its own: read the window, act, read the result.', moves: [{ to: 'agent' }, search, read, change], ui: { context: 4 },
           edit: (s) => { push(s, b('you', 2.4), b('model', 1), b('tool', 3), b('model', 1), b('tool', 6), b('model', 2), b('tool', 1.5)); file(s, 1, 'read'); file(s, 2, 'edit'); A(s).lamp = 'work'; withNote(s, lab('a0', '3 turns so far', 'bottom')); } },
         { say: 'Now it runs the page at phone width and types “ana”. Nobody shows up.', moves: [{ to: 'tool', tool: 'run', back: 'bad' }],
           edit: (s) => { push(s, b('model', 1), b('bad', 4)); withNote(s, lab('tool:run', 'run', 'right'), lab('tank:a0', 'the failure goes in too', 'left')); } },
@@ -271,7 +274,7 @@ const lesson2: Lesson = {
           edit: (s) => { push(s, b('model', 1.5), b('tool', 1.5)); withNote(s, lab('tool:edit', 'change', 'right')); } },
         { say: 'It runs it again. “ana” finds Ana Lopez, and a tap marks her arrived.', moves: [{ to: 'tool', tool: 'run', back: 'tool' }],
           edit: (s) => { push(s, b('model', 1), b('tool', 3)); file(s, 2, 'ok'); withNote(s, lab('tool:run', 'passed', 'right')); } },
-        { say: 'One message from you, seven turns of its own. Each one is a row in the work log.', moves: [{ to: 'you', kind: 'model' }],
+        { say: 'One message from you, seven turns of its own. Each one is a row in the work log.', moves: [{ to: 'you', kind: 'model' }], ui: { context: 7 },
           edit: (s) => { push(s, b('model', 2.4)); A(s).lamp = 'ok'; withNote(s, lab('a0', '7 turns, 1 message', 'bottom')); } },
       ]),
       log: {
@@ -298,15 +301,15 @@ const lesson2: Lesson = {
       request: DOOR,
       lede: 'The same request in Supervised mode. When it asks to run the page, you say no.',
       points: points(hands(), [
-        { say: 'In Supervised mode it asks before commands and file changes.', moves: [{ to: 'agent' }], ui: { perm: SUPERVISED },
+        { say: 'In Supervised mode it asks before commands and file changes.', moves: [{ to: 'agent' }], ui: { perm: SUPERVISED, context: 2 },
           edit: (s) => { push(s, b('you', 2.4)); A(s).lamp = 'work'; withNote(s, atYou('you approve each change')); } },
         { say: 'It searches, reads, and asks to change the file. You approve.', moves: [search, read, change],
           edit: (s) => { push(s, b('model', 1), b('tool', 3), b('model', 1), b('tool', 6), b('model', 2), b('tool', 1.5)); file(s, 1, 'read'); file(s, 2, 'edit'); withNote(s); } },
-        { say: 'It asks to run the page. The thread waits for you: Pending Approval.', moves: [{ to: 'you', kind: 'model' }], status: t3code.screen.statuses.value[2],
+        { say: 'It asks to run the page. The thread waits for you: its row in the sidebar says Approval.', moves: [{ to: 'you', kind: 'model' }], status: STATUS.approval,
           edit: (s) => { A(s).lamp = 'wait'; withNote(s, atYou('May I run it?')); } },
         { say: 'You decline. Run is off for this request.', moves: [{ to: 'agent' }],
           edit: (s) => { A(s).lamp = 'work'; s.tools!.off = ['run']; push(s, b('you', 1)); withNote(s, lab('tool:run', 'declined', 'right')); } },
-        { say: 'It replies “Done”. The work log has no Ran command row: nothing tried the page.', moves: [{ to: 'you', kind: 'bad' }],
+        { say: 'It replies “Done”. The work log has no Ran command row: nothing tried the page.', moves: [{ to: 'you', kind: 'bad' }], ui: { context: 4 },
           edit: (s) => { push(s, b('model', 2.4)); A(s).lamp = 'off'; withNote(s, lab('tool:run', 'never ran', 'right'), atYou('“Done.”')); } },
       ]),
       log: { took: '1m 35s', rows: [{ at: 1, ...SEARCH_ROW }, { at: 1, ...READ_ROW }, { at: 1, ...CHANGE_ROW }] },
@@ -323,16 +326,16 @@ const lesson2: Lesson = {
       request: DOOR + ' Done when you’ve tried it at phone size with made-up guests: a listed guest can be found and tapped in, a name that isn’t listed stays out, and nobody can be tapped in twice.',
       lede: 'The same request, with what done looks like. Back in Full access.',
       points: points(hands(true), [
-        { say: 'Your “done when” becomes a check it can run before it replies.', moves: [{ to: 'agent' }], ui: { perm: FULL_ACCESS },
-          edit: (s) => { push(s, b('you', 4)); A(s).lamp = 'work'; withNote(s, lab('gate', 'your “done when”', 'right')); } },
+        { say: 'Your “done when” becomes a check it can run before it replies.', moves: [{ to: 'agent' }], ui: { perm: FULL_ACCESS, context: 2 },
+          edit: (s) => { push(s, b('you', 4)); A(s).lamp = 'work'; withNote(s, lab('gate', 'your “done when”', 'left')); } },
         { say: 'It builds as before: search, read, change.', moves: [search, read, change],
-          edit: (s) => { push(s, b('model', 1), b('tool', 3), b('model', 1), b('tool', 6), b('model', 2), b('tool', 1.5)); file(s, 1, 'read'); file(s, 2, 'edit'); withNote(s, lab('gate', 'your “done when”', 'right')); } },
+          edit: (s) => { push(s, b('model', 1), b('tool', 3), b('model', 1), b('tool', 6), b('model', 2), b('tool', 1.5)); file(s, 1, 'read'); file(s, 2, 'edit'); withNote(s, lab('gate', 'your “done when”', 'left')); } },
         { say: 'It runs your three cases at phone width. The third fails: a second tap checks Ana in twice.', moves: [{ to: 'tool', tool: 'run', back: 'bad' }],
-          edit: (s) => { push(s, b('model', 1), b('bad', 4)); s.gates![0]!.lamp = 'bad'; withNote(s, lab('gate', '2 of 3 pass', 'right')); } },
+          edit: (s) => { push(s, b('model', 1), b('bad', 4)); s.gates![0]!.lamp = 'bad'; withNote(s, lab('gate', '2 of 3 pass', 'left')); } },
         { say: 'It fixes the check-in and runs all three again. They pass.', moves: [change, { to: 'tool', tool: 'run', back: 'tool' }],
-          edit: (s) => { push(s, b('model', 1), b('tool', 1.5), b('model', 1), b('tool', 3)); file(s, 2, 'ok'); s.gates![0]!.lamp = 'ok'; withNote(s, lab('gate', '3 of 3 pass', 'right')); } },
-        { say: 'The reply comes through the check, with the proof: what it tried and what happened.', moves: [{ to: 'gate', kind: 'model', through: true }],
-          edit: (s) => { push(s, b('model', 3)); A(s).lamp = 'ok'; withNote(s, lab('gate', '3 of 3 pass', 'right'), atYou('proof you can read')); } },
+          edit: (s) => { push(s, b('model', 1), b('tool', 1.5), b('model', 1), b('tool', 3)); file(s, 2, 'ok'); s.gates![0]!.lamp = 'ok'; withNote(s, lab('gate', '3 of 3 pass', 'left')); } },
+        { say: 'The reply comes through the check, with the proof: what it tried and what happened.', moves: [{ to: 'gate', kind: 'model', through: true }], ui: { context: 8 },
+          edit: (s) => { push(s, b('model', 3)); A(s).lamp = 'ok'; withNote(s, lab('gate', '3 of 3 pass', 'left'), atYou('proof you can read', 'left')); } },
       ]),
       log: {
         took: '5m 20s',

@@ -6,7 +6,7 @@
  */
 import { Scene } from '../journey/scene';
 import { route, reverse } from '../journey/picture';
-import { LESSONS, TOC, whereIs, uiAt, type Move, type Point, type Ui } from './content';
+import { LESSONS, TOC, STATUS, whereIs, uiAt, type Move, type Point, type Ui } from './content';
 import { LEVEL_EVENT, isLevel, type Level } from '../lib/levels';
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -32,6 +32,7 @@ export function boot(root: HTMLElement) {
   let playing = false;
   let token = 0;
   let lastUi: Ui = {};
+  let detailsTimer = 0;
   let done = new Set<string>();
   try { done = new Set(JSON.parse(localStorage.getItem(STORE) ?? '[]')); } catch { /* private window */ }
   const saveDone = () => { try { localStorage.setItem(STORE, JSON.stringify([...done])); } catch { /* ignore */ } };
@@ -112,7 +113,7 @@ export function boot(root: HTMLElement) {
       li.toggleAttribute('data-now', at === point && point < count - 1);
     }
     const sum = t.querySelector<HTMLElement>('[data-log-sum]');
-    if (sum) sum.textContent = point === count - 1 ? sum.dataset.done! : 'Working';
+    if (sum) sum.textContent = point === count - 1 ? sum.dataset.done! : STATUS.working;
     t.querySelector('[data-answer]')?.toggleAttribute('data-later', point < count - 1);
     const n = t.querySelector('[data-cap-n]'), cap = t.querySelector('[data-cap]');
     const p = LESSONS[t.dataset.lesson!]!.parts[Number(t.dataset.part)]!.points[point]!;
@@ -141,7 +142,13 @@ export function boot(root: HTMLElement) {
       const text = $('[data-ctx-text]');
       text.textContent = text.dataset.tpl!.replace('{used}', String(ui.context));
       $('[data-ctx-bar]').style.transform = `scaleX(${Math.max(0.01, ui.context / 100)})`;
-      if (lastUi.context == null) { setDetails(true); flash(details); }
+      $('[data-ctx-short]').textContent = `${ui.context}%`;
+      if (lastUi.context == null) {
+        // Taught here: the details open once, then fold back to the button, which keeps the number.
+        setDetails(true); flash(details);
+        clearTimeout(detailsTimer);
+        detailsTimer = window.setTimeout(() => { if (!dPop.matches(':focus-within')) setDetails(false); }, 6000);
+      }
       else if (ui.context !== lastUi.context) flash(details);
     }
     root.toggleAttribute('data-has-log', !!ui.log);
@@ -160,8 +167,8 @@ export function boot(root: HTMLElement) {
       if (cur && lesson()) {
         const l = lesson()!;
         const atEnd = here.part === l.parts.length - 1 && here.point === partOf().points.length - 1;
-        status = pointOf().status ?? (atEnd && done.has(id) ? 'Completed' : playing ? 'Working' : '');
-      } else if (done.has(id)) status = 'Completed';
+        status = pointOf().status ?? (atEnd && done.has(id) ? STATUS.done : playing ? STATUS.working : '');
+      } else if (done.has(id)) status = STATUS.done;
       pill.textContent = status;
       pill.dataset.s = status;
     }
@@ -221,12 +228,23 @@ export function boot(root: HTMLElement) {
     const turn = turnEl(here.lesson, here.part)!;
     settled.delete(turn);
     fillTurn(turn, here.point, partOf().points.length);
-    if (scroll) requestAnimationFrame(() => scroller.scrollTo({ top: Math.max(0, turn.offsetTop - 12), behavior: reduced.matches || !animate ? 'auto' : 'smooth' }));
+    const behavior: ScrollBehavior = reduced.matches || !animate ? 'auto' : 'smooth';
+    if (scroll) requestAnimationFrame(() => scroller.scrollTo({ top: Math.max(0, turn.offsetTop - 12), behavior }));
+    else requestAnimationFrame(() => keepInView(turn.querySelector<HTMLElement>('.v2-fig')!, behavior));
     const scene = sceneFor(turn);
     if (animate) return travel(scene, pointOf());
     scene.stop();
     scene.set(pointOf().state);
     return true;
+  }
+
+  /** Scroll just enough that the picture and its caption are in view, top first. */
+  function keepInView(el: HTMLElement, behavior: ScrollBehavior) {
+    const box = el.getBoundingClientRect(), view = scroller.getBoundingClientRect();
+    let dy = 0;
+    if (box.bottom > view.bottom - 8) dy = box.bottom - view.bottom + 8;
+    if (box.top - dy < view.top + 8) dy = box.top - view.top - 8;
+    if (Math.abs(dy) > 2) scroller.scrollBy({ top: dy, behavior });
   }
 
   function nextPlayable(id: string): string | undefined {
