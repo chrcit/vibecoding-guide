@@ -27,91 +27,41 @@ export const JOB = 'the date fix';
 const START = 18; // instructions and tool definitions, in the window before you say anything
 const ASK = 0.3;
 interface Turn { says: Record<Level, string>; tool?: string; file?: number; w: number; r: number; kind?: Kind; result?: Record<Level, string> }
+// Every line is a bubble on the picture, so about 38 characters: the model's at its cap, a tool's
+// result at the tool.
 const TURNS: Turn[] = [
   {
-    says: {
-      plain: 'Find where the member list formats dates.',
-      technical: 'Search the repo for date formatting.',
-      engineer: 'Find where dates are parsed and where they are rendered.',
-    },
+    says: { plain: 'Find where the list formats dates.', technical: 'Search the repo for date formatting.', engineer: 'Find where dates are parsed and shown.' },
     tool: 'search', file: 1, w: 0.3, r: 2,
-    result: {
-      plain: 'Found 2 files that handle dates',
-      technical: '2 matches: members.ts, dates.test.ts',
-      engineer: '2 files: members.ts (parsing and rendering in one function), dates.test.ts',
-    },
+    result: { plain: 'Found 2 files that handle dates.', technical: '2 matches: members.ts, dates.test.ts', engineer: 'members.ts parses and renders in one.' },
   },
   {
-    says: {
-      plain: 'Open the member list file.',
-      technical: 'Read members.ts and its date parser.',
-      engineer: 'Read members.ts to see the input format and the types.',
-    },
+    says: { plain: 'Open the member list file.', technical: 'Read members.ts and its date parser.', engineer: 'Read members.ts: format and types.' },
     tool: 'read', file: 1, w: 0.2, r: 6,
-    result: {
-      plain: 'Read 84 lines of the member list',
-      technical: '84 lines of members.ts, 6,000 tokens into the window',
-      engineer: '84 lines; the date is split by hand instead of parsed as ISO',
-    },
+    result: { plain: 'Read 84 lines of the member list.', technical: '84 lines of members.ts read.', engineer: '84 lines; the date is split by hand.' },
   },
   {
-    says: {
-      plain: 'Fix how the date is shown.',
-      technical: 'Change parseDate() in members.ts.',
-      engineer: 'Move parsing into a typed parseMemberDate(iso: string) in members.ts.',
-    },
+    says: { plain: 'Fix how the date is shown.', technical: 'Change parseDate() in members.ts.', engineer: 'Split out a typed parseMemberDate().' },
     tool: 'edit', file: 1, w: 0.9, r: 0.5,
-    result: {
-      plain: 'Changed the member list',
-      technical: 'members.ts changed',
-      engineer: 'members.ts changed: parser separated from rendering',
-    },
+    result: { plain: 'Changed the member list.', technical: 'members.ts changed.', engineer: 'members.ts: parser split from render.' },
   },
   {
-    says: {
-      plain: 'Check whether the dates look right now.',
-      technical: 'Run tsc --noEmit and the date tests.',
-      engineer: 'Run tsc --noEmit and the unit tests on the date edge cases.',
-    },
+    says: { plain: 'Check whether the dates look right.', technical: 'Run tsc --noEmit and the date tests.', engineer: 'Run tsc and the date edge-case tests.' },
     tool: 'run', w: 0.15, r: 4, kind: 'bad',
-    result: {
-      plain: 'Check failed: 3 March still shows the wrong way round',
-      technical: 'tsc passes; 1 of 12 tests fails: day and month swapped',
-      engineer: 'tsc clean; 1 of 12 tests fails on the DD/MM against MM/DD case',
-    },
+    result: { plain: 'Check failed: day and month swapped.', technical: '1 of 12 tests fails: day, month swapped.', engineer: '1 of 12 fails: DD/MM against MM/DD.' },
   },
   {
-    says: {
-      plain: 'Swap the day and month into the right order.',
-      technical: 'Fix the day and month order in parseDate().',
-      engineer: 'Fix the day and month order and reject anything that is not ISO.',
-    },
+    says: { plain: 'Swap the day and month back.', technical: 'Fix the day and month order.', engineer: 'Fix the order; reject non-ISO input.' },
     tool: 'edit', file: 1, w: 0.6, r: 0.8,
-    result: {
-      plain: 'Changed the member list again',
-      technical: 'members.ts changed',
-      engineer: 'members.ts changed',
-    },
+    result: { plain: 'Changed the member list again.', technical: 'members.ts changed.', engineer: 'members.ts changed.' },
   },
   {
-    says: {
-      plain: 'Check the dates again.',
-      technical: 'Run tsc --noEmit and all 12 tests again.',
-      engineer: 'Run the type check and the whole unit suite again.',
-    },
+    says: { plain: 'Check the dates again.', technical: 'Run tsc and all 12 tests again.', engineer: 'Run the type check and the suite.' },
     tool: 'run', w: 0.15, r: 2.5,
-    result: {
-      plain: 'All dates right: 12 of 12 checks pass',
-      technical: 'tsc clean; 12 of 12 tests pass',
-      engineer: 'tsc clean; 12 of 12 tests pass in 140 ms',
-    },
+    result: { plain: 'All dates right: 12 of 12 pass.', technical: 'tsc clean; 12 of 12 tests pass.', engineer: 'tsc clean; 12 of 12 pass in 140 ms.' },
   },
   {
-    says: {
-      plain: 'Fixed. The member list shows day then month, and all 12 checks pass.',
-      technical: 'Fixed. Day and month swapped back in parseDate(); tsc clean, 12 of 12 tests pass.',
-      engineer: 'Fixed. Typed date parser, DD/MM bug gone, tsc and 12 of 12 tests green.',
-    },
+    says: { plain: 'Fixed: day then month, 12 of 12 pass.', technical: 'Fixed. tsc clean, 12 of 12 pass.', engineer: 'Fixed. Typed parser, all green.' },
     w: 0.4, r: 0,
   },
 ];
@@ -241,18 +191,23 @@ async function job(ctx: Ctx, h: Script, o: JobOpts): Promise<boolean> {
   h.set((s) => { const a = s.agents[0]!; a.blocks = [{ t: 'rules', h: START }]; a.lamp = 'off'; s.project!.files = ['', '', '', '', '', '']; });
   if (o.intro) { ctx.say(null, o.intro); show(ctx, o.t, view); await h.wait(1600 * ms); }
   ctx.say('you', byLevel(level, {
-    plain: 'The dates on the member list are the wrong way round.',
-    technical: 'Fix the swapped day and month in members.ts; tsc and the date tests must pass.',
-    engineer: 'Fix the DD/MM bug in members.ts, separate parsing from rendering, and prove it with tsc and the unit tests.',
+    plain: 'The member list dates are back to front.',
+    technical: 'Fix the swapped day/month in members.ts.',
+    engineer: 'Fix DD/MM in members.ts; prove it.',
   }));
   show(ctx, o.t, view);
   await h.send(route.youToAgent(), 'you', { ms: 420 * ms });
+  await h.wait(600 * ms);
   h.set((s) => { s.agents[0]!.blocks!.push({ t: 'you', h: ASK }); s.agents[0]!.lamp = 'work'; });
   for (const [i, turn] of TURNS.entries()) {
     const b = turns[i]!;
     // The model reads its whole window, from the bottom up.
     h.set((s) => { const a = s.agents[0]!; a.busy = true; a.scan = true; });
-    if (o.cache === 'break' && i === MISS_AT) {
+    // The window says what this turn reads again, and with the cache on, how much of it is a hit.
+    const miss = o.cache === 'break' && i === MISS_AT;
+    ctx.say('window', view.cache === 'none' || o.cache === 'off' ? (i ? `Turn ${i + 1}: reads all ${tok(b.read)} again.` : `Turn 1: reads ${tok(b.read)} tokens.`)
+      : miss ? `Miss: all ${tok(b.read)} read new.` : b.cached ? `Hit: ${tok(b.cached)} of ${tok(b.read)} cached.` : `Turn 1: ${tok(b.read)} read, and stored.`);
+    if (miss) {
       ctx.say(null, byLevel(level, {
         plain: `Turn ${i + 1}: you changed the effort level, so the cache misses. All ${tok(b.read)} tokens are read new and stored again.`,
         technical: `Turn ${i + 1}: effort changed, the cache misses. ${tok(b.read)} tokens are written to the cache at ${usd2(o.p.input * cw)} a million, not read from it at ${usd2(o.p.cacheRead ?? 0)}.`,
@@ -261,11 +216,12 @@ async function job(ctx: Ctx, h: Script, o: JobOpts): Promise<boolean> {
       h.set((s) => { s.agents[0]!.lamp = 'bad'; });
       await h.wait(900 * ms);
     }
-    await h.wait(560 * ms);
+    await h.wait(1000 * ms);
     if (o.mode === 'plan') {
       const left = (scene.state.meters![0]!.level) - (DRAIN * b.read) / readAll;
       if (left <= 0) {
         h.set((s) => { const a = s.agents[0]!; a.busy = false; a.scan = false; a.lamp = 'wait'; s.meters![0]!.level = 0; s.meters![0]!.lamp = 'wait'; });
+        ctx.say('meter', 'Empty. Wait for the reset.');
         o.t.used = 1;
         show(ctx, o.t, view);
         return false;
@@ -277,6 +233,7 @@ async function job(ctx: Ctx, h: Script, o: JobOpts): Promise<boolean> {
     if (o.mode === 'api') h.set((s) => { s.meters![0]!.level = o.t.usd / COIN; });
     show(ctx, o.t, view);
     h.set((s) => { const a = s.agents[0]!; a.scan = false; a.busy = false; a.lamp = 'work'; a.blocks!.push({ t: 'model', h: turn.w }); });
+    await h.wait(300 * ms);
     ctx.say(who, turn.says[level]);
     if (!turn.tool) break;
     const tools = scene.state.tools!, project = scene.state.project!;
@@ -289,7 +246,7 @@ async function job(ctx: Ctx, h: Script, o: JobOpts): Promise<boolean> {
     await h.send(reverse(route.agentToTool(tools, turn.tool)), turn.kind ?? 'tool', { ms: 340 * ms });
     h.set((s) => { s.tools!.on = null; s.agents[0]!.blocks!.push({ t: turn.kind ?? 'tool', h: turn.r }); });
     ctx.say('tool', turn.result![level]);
-    await h.wait(240 * ms);
+    await h.wait(420 * ms);
   }
   h.set((s) => { s.agents[0]!.lamp = 'ok'; });
   await h.send(reverse(route.youToAgent()), 'model', { ms: 420 * ms });
@@ -436,6 +393,7 @@ function playMany(ctx: Ctx) {
     }
     if (empty) {
       h.set((s) => { s.meters![0]!.level = 0; s.meters![0]!.lamp = 'wait'; for (const a of s.agents) { a.busy = false; a.lamp = 'wait'; } });
+      ctx.say('meter', `Empty: all ${n} wait for the reset.`);
       t.used = 1;
       show(ctx, t, view());
       const min = Math.max(1, Math.round((tick / TICKS_PER_HOUR) * 60));
@@ -463,7 +421,22 @@ export async function demo(ctx: Ctx, h: Script) {
   await h.wait(1600);
 }
 
+/**
+ * The chip: the bill or the allowance when there is a meter, the turn before there is one. The
+ * readout's last line is always the cost.
+ */
+const costChip = (pairs: [string, string | number, string?][]) => {
+  const cost = pairs[pairs.length - 1];
+  if (!cost) return null;
+  if (cost[1] === 'no meter yet') return `turn ${pairs[0]?.[1] ?? 0}`;
+  return `${cost[0]} ${cost[1]}`;
+};
+
 export const meter: Chapter = {
+  counter: costChip,
+  // The window says what each turn reads again; the meter says when it is empty. Tool results
+  // stay at the tools.
+  speakers: { window: 'tank:a0', meter: 'meter:m0' },
   steps: {
     count: { scene: (ctx) => base(ctx, 'none'), enter: (ctx) => playCount(ctx) },
     api: { scene: (ctx) => base(ctx, 'api', price(ctx).name), enter: (ctx) => playApi(ctx) },

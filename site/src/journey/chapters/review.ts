@@ -30,6 +30,11 @@ const CHECKS = [
   'To see it: export after marking one member paid; the file still has last season’s rows.',
 ];
 const FIXED = ['Fixed: a second mark is ignored.', 'Fixed: only the treasurer can mark.', 'Fixed: the export reads this season.'];
+/** The same flaws and fixes as a bubble on the picture says them: a few words each. */
+const FLAW_TAG = ['double pay', 'anyone can mark', 'export shows last season'];
+const FIX_TAG = ['one mark only', 'treasurer only', 'export reads this season'];
+const flawTag = (ids: number[]) => `${ids.length} ${ids.length === 1 ? 'flaw' : 'flaws'}: ${ids.map((i) => FLAW_TAG[i]).join(', ')}.`;
+const fixedTag = (ids: number[]) => `Fixed: ${ids.map((i) => FIX_TAG[i]).join(', ')}.`;
 /** Which flaws each round of a real review finds. Round three finds nothing. */
 const ROUNDS = [[0, 1], [2], []];
 /** What a reviewer with no rule to stop finds once the real flaws are gone. */
@@ -39,6 +44,13 @@ const TASTE = [
 ];
 export const ATTACK = 'You did not write this change. Find the three most likely ways it is wrong, and for each one say how to see it fail. Skip style.';
 export const STOP = 'Report only what breaks. Three rounds at most.';
+/** What you say on the picture: the short form of each brief. The whole prompt is in the step. */
+const SAY = {
+  attack: 'Find 3 ways it’s wrong, and show each.',
+  polite: 'Review this.',
+  rule: 'Only what breaks. 3 rounds at most.',
+  none: 'Find what’s wrong. Keep going.',
+};
 
 // ---------- the picture ----------
 
@@ -59,15 +71,19 @@ const base = (ctx: Ctx, o: Look = {}): SceneState => {
       ...(o.reviewer ? [termLabel('r0', 'review', 'top', n.r)] : []),
       ...(o.meters ? [
         // Short names, one above and one below, so the four labels on the left fit at 390 wide.
-        termLabel([M_BUILDER[0] + 3, M_BUILDER[1] - 5, 40], 'allowance', 'top', `${ctx.data.builderLab ?? 'its'} allowance`),
-        termLabel([M_REVIEWER[0] + 13, M_REVIEWER[1] + 13, 0], 'allowance', 'bottom', `${ctx.data.reviewerLab ?? 'its'} allowance`),
+        // The lab's name and what is left: "Anthropic: 88% left". The word allowance is in the step
+        // text and on hover; spelled out here it ran into the model's name at 390 wide.
+        termLabel([M_BUILDER[0] + 3, M_BUILDER[1] - 5, 40], 'allowance', 'top', `${ctx.data.builderLab ?? 'builder'}: 100% left`),
+        termLabel([M_REVIEWER[0] + 13, M_REVIEWER[1] + 13, 0], 'allowance', 'bottom', `${ctx.data.reviewerLab ?? 'reviewer'}: 100% left`),
       ] : []),
     ],
   });
   if (o.meters) s.tracks!.push([[M_REVIEWER[0] + 14, M_REVIEWER[1]], [SPOT.reviewer[0] - 18, SPOT.reviewer[1]]]);
   // Two meters make the left of the floor crowded: frame the models, their meters, the gate and you.
   // The tools and the project stay in the frame too, so nothing is cut at the right edge.
-  if (o.meters) s.focus = ['you', 'a0', 'r0', 'gate', 'meter:b', 'meter:r', 'tools', 'project'];
+  // A point high above the models lowers the picture in its frame: the allowance labels above them get room
+  // below the counter chip instead of running into it (390 wide, where the width sets the scale).
+  if (o.meters) s.focus = ['you', 'a0', 'r0', 'gate', 'meter:b', 'meter:r', 'tools', 'project', [-70, 30, 130]];
   return s;
 };
 
@@ -122,7 +138,7 @@ async function fix(ctx: Ctx, h: Script, found: number[], t: Tally, drain = 0, ta
   h.set((s) => { const a = s.agents[0]!; a.busy = false; a.blocks!.push({ t: 'tool', h: 2 }); s.tools!.on = null; });
   if (!taste) t.fixed += found.length;
   show(ctx, t);
-  if (!(taste && ctx.scene.speed >= 4)) ctx.say(n.b, taste ? 'Changed it.' : found.map((i) => FIXED[i]).join(' '));
+  if (!(taste && ctx.scene.speed >= 4)) ctx.say(n.b, taste ? 'Changed it.' : fixedTag(found));
   await h.wait(taste ? 500 : 800);
 }
 
@@ -137,18 +153,23 @@ async function sendAcross(ctx: Ctx, h: Script, extra: Kind[] = []) {
 }
 
 /** The reviewer reads what it was sent and says what it found. */
-async function look(ctx: Ctx, h: Script, found: number[] | string[], t: Tally, o: { drain?: number; attack?: boolean } = {}) {
+async function look(ctx: Ctx, h: Script, ids: number[] | string[], t: Tally, o: { drain?: number; attack?: boolean } = {}) {
   const n = names(ctx);
   h.set((s) => { const r = s.agents.find((a) => a.id === 'r0')!; r.busy = true; r.scan = true; r.lamp = 'work'; if (o.drain) spend(s, 'r', o.drain); });
   await h.wait(1000);
-  const real = found.length > 0 && typeof found[0] === 'number';
-  h.set((s) => { const r = s.agents.find((a) => a.id === 'r0')!; r.busy = false; r.scan = false; r.lamp = real ? 'bad' : found.length ? 'off' : 'ok'; r.blocks!.push({ t: real ? 'bad' : 'model', h: 1.6 }); });
-  if (real) t.found += found.length; else t.taste += found.length;
+  const real = ids.length > 0 && typeof ids[0] === 'number';
+  h.set((s) => { const r = s.agents.find((a) => a.id === 'r0')!; r.busy = false; r.scan = false; r.lamp = real ? 'bad' : ids.length ? 'off' : 'ok'; r.blocks!.push({ t: real ? 'bad' : 'model', h: 1.6 }); });
+  if (real) t.found += ids.length; else t.taste += ids.length;
   show(ctx, t);
-  const lines = found.map((f) => (typeof f === 'number' ? FLAWS[f] + (o.attack ? ' ' + CHECKS[f] : '') : f));
-  // In the fast taste-only rounds the line under the picture keeps saying what is going on.
-  if (!real && found.length && ctx.scene.speed >= 4) return;
-  ctx.say(n.r, !found.length ? 'Nothing found that breaks.' : !real ? lines.join(' ') : (found.length === 1 ? 'One problem. ' : `${found.length} problems. `) + lines.join(' '));
+  if (!ids.length) { ctx.say(n.r, 'Nothing found that breaks.'); return; }
+  // A matter of taste: the remark itself, short, at the reviewer (in the fast rounds too, so the
+  // builder's last fix does not stay over the labels while the narration line says the point).
+  if (!real) { ctx.say(n.r, (ids as string[]).join(' ').replace(/^One more thing: /, '')); return; }
+  const nums = ids as number[];
+  // The bubble names the flaws in a few words; the narration line says them in full, and with an
+  // adversarial brief, how to see each one fail.
+  ctx.say(n.r, flawTag(nums));
+  ctx.say(null, nums.map((i) => FLAWS[i] + (o.attack ? ' ' + CHECKS[i] : '')).join(' '));
 }
 
 /** Findings travel back to the builder, the way the reader picked. A matter of taste travels pale. */
@@ -164,7 +185,7 @@ async function back(ctx: Ctx, h: Script, count: number, by: 'gate' | 'you', tast
     }
   }
   if (by === 'you') {
-    ctx.say('you', `Pasting the findings into ${names(ctx).b}’s thread.`);
+    ctx.say('you', `Pasting it into ${names(ctx).b}’s thread.`);
     await h.wait(700);
     await h.send(route.youToAgent(), kind, { ms: 420 });
   }
@@ -194,7 +215,8 @@ async function selfCheck(ctx: Ctx, h: Script) {
   t.rounds = 1;
   t.found = 1;
   show(ctx, t);
-  ctx.say(n.b, 'One problem. ' + FLAWS[0]);
+  ctx.say(n.b, flawTag([0]));
+  ctx.say(null, FLAWS[0]);
   await h.wait(900);
   await fix(ctx, h, [0], t);
   ctx.say(n.b, 'The rest looks right.');
@@ -213,13 +235,13 @@ async function rounds(ctx: Ctx, h: Script, o: RoundOpts = {}) {
   if (o.meters) h.set((s) => { spend(s, 'b', 0.12); spend(s, 'r', 0); });
   await build(ctx, h, t);
   if (o.polite || o.attack) {
-    ctx.say('you', o.polite ? 'Review this.' : ATTACK);
+    ctx.say('you', o.polite ? SAY.polite : SAY.attack);
     await h.wait(o.attack ? 2200 : 900);
   } else if (o.rule !== undefined) {
-    ctx.say('you', o.rule ? `Find what is wrong. ${STOP}` : 'Find what is wrong. Keep going until you are happy.');
+    ctx.say('you', o.rule ? SAY.rule : SAY.none);
     await h.wait(1600);
   }
-  const plan: (number[] | string[])[] = o.polite ? [['Looks good. One small thing: markPaid could be called setPaid.']]
+  const plan: (number[] | string[])[] = o.polite ? [['Looks good. Maybe rename markPaid.']]
     : o.rule === false ? [...ROUNDS.slice(0, 2), ...TASTE.map((x) => ['One more thing: ' + x])]
     : ROUNDS;
   for (const found of plan) {
@@ -275,7 +297,7 @@ async function led(ctx: Ctx, h: Script) {
   const at = (id: string) => ctx.scene.agent(id).at;
   const agent = (s: SceneState, id: string) => s.agents.find((a) => a.id === id)!;
   show(ctx, t);
-  ctx.say('you', ASK + ' Have it reviewed until nothing that breaks is found.');
+  ctx.say('you', 'Build mark-paid. Review until clean.');
   await h.send(route.youToAgent(), 'you', { ms: 420 });
   h.set((s) => { agent(s, 'a0').blocks!.push({ t: 'you', h: 2.4 }); });
   await h.send(route.agentToWorker(at('w0')), 'model');
@@ -293,7 +315,7 @@ async function led(ctx: Ctx, h: Script) {
     h.set((s) => { const r = agent(s, 'w1'); r.busy = false; r.scan = false; r.lamp = found.length ? 'bad' : 'ok'; });
     t.found += found.length;
     show(ctx, t);
-    ctx.say(n.r, found.length ? found.map((i) => FLAWS[i]).join(' ') : 'Nothing found that breaks.');
+    ctx.say(n.r, found.length ? flawTag(found) : 'Nothing found that breaks.');
     await h.wait(700);
     if (!found.length) break;
     await h.send(between(at('w1'), at('w0')), 'bad', { ms: 520 });
@@ -302,12 +324,12 @@ async function led(ctx: Ctx, h: Script) {
     h.set((s) => { const w = agent(s, 'w0'); w.blocks!.push({ t: 'tool', h: 2 }); w.busy = false; });
     t.fixed += found.length;
     show(ctx, t);
-    ctx.say(n.b, found.map((i) => FIXED[i]).join(' '));
+    ctx.say(n.b, fixedTag(found));
     await h.wait(600);
   }
   await h.send(reverse(route.agentToWorker(at('w1'))), 'tool', { ms: 520 });
   h.set((s) => { agent(s, 'a0').blocks!.push({ t: 'tool', h: 1.6 }); s.gates![0]!.lamp = 'ok'; });
-  ctx.say('the lead', `${t.rounds} rounds, ${t.fixed} fixed, nothing left. Passing it on.`);
+  ctx.say('the lead', `${t.rounds} rounds, ${t.fixed} fixed, nothing left.`);
   await h.send(route.agentToGate(), 'model', { ms: 340 });
   await arrive(ctx, h, 0, t);
   ctx.say(null, `The lead ran ${t.rounds} rounds and sent you one short report.`);
@@ -355,6 +377,8 @@ export async function demo(ctx: Ctx, h: Script) {
 }
 
 export const review: Chapter = {
+  // The chip: which round, and how many of the three flaws have been found so far.
+  counter: (p) => (p.length ? `round ${p[0]![1]} · found ${p[1]![1]}` : null),
   steps: {
     self: { scene: (ctx) => base(ctx), enter: (ctx) => { note(ctx, 'self'); void ctx.scene.run((h) => selfCheck(ctx, h)); } },
     second: { scene: (ctx) => base(ctx, { reviewer: true }), enter: (ctx) => { note(ctx, 'second'); play(ctx, {}); } },
@@ -364,11 +388,11 @@ export const review: Chapter = {
   },
   actions: {
     brief: (ctx, val) => {
-      ctx.say('you', val === 'polite' ? 'Review this.' : ATTACK);
+      ctx.say('you', val === 'polite' ? SAY.polite : SAY.attack);
       play(ctx, val === 'polite' ? { polite: true } : { attack: true });
     },
     rule: (ctx, val) => {
-      ctx.say('you', val === 'none' ? 'Find what is wrong. Keep going until you are happy.' : `Find what is wrong. ${STOP}`);
+      ctx.say('you', val === 'none' ? SAY.none : SAY.rule);
       play(ctx, { meters: true, rule: val !== 'none' });
     },
     how: (ctx, val) => { ctx.say(null, HOW_SAY[val as How]); playHow(ctx, val as How); },

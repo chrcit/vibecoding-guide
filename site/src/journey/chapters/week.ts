@@ -1,5 +1,5 @@
 // Overview of Part 3 (The working week): one short loop per chapter with level-aware mental-model notes.
-import type { Chapter, Ctx } from '../chapter';
+import type { Chapter, Ctx, StepDef } from '../chapter';
 import type { Script } from '../scene';
 import { rung } from '../rungs';
 import { meter, demo as meterDemo } from './meter';
@@ -19,7 +19,10 @@ const again = (ctx: Ctx, fn: (ctx: Ctx, h: Script) => Promise<void>, pause = 140
     }
   });
 
-const of = (id: string, ch: Chapter, demo: (ctx: Ctx, h: Script) => Promise<void>) => ({
+// Each loop keeps its lesson's speaker map (a job speaks at its own station) and its chip.
+const of = (id: string, ch: Chapter, demo: (ctx: Ctx, h: Script) => Promise<void>): StepDef => ({
+  speakers: ch.speakers,
+  counter: ch.counter,
   scene: (ctx: Ctx) => Object.values(ch.steps)[0]!.scene(ctx),
   enter: (ctx: Ctx) => {
     const r = rung(id);

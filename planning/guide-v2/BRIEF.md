@@ -138,8 +138,38 @@ These parts are starting points; tighten or change them as the material needs.
 
 ## What the real app does (sidebar, filter, chat)
 
-<!-- research-notes -->
-Research into the sidebar filter control, thread nesting, the composer and the work-log labels was still running at handoff. If this section is empty, check the T3 Code repo yourself (`apps/web/src/components/Sidebar*.tsx`, `chat/`, `packages/shared/src/toolActivity.ts`) and add sourced facts to `t3code.ts` before drawing any of it.
+Read from the T3 Code source on GitHub, `pingdotgg/t3code`, main branch, on 2026-11-22. Paths are relative to `https://github.com/pingdotgg/t3code/blob/main/`. The quoted words are the English source strings inside the i18n helpers. Each one still needs a `fact()` in `t3code.ts` before it is drawn.
+
+- **The filter icon is a project filter.** It is a funnel (`ListFilterIcon`) labelled "Filter threads by project". It opens a list with a "Search projects..." field, "All projects", and one row per project; Shift-click selects several. Once projects are picked, the icon shows their favicons. There is no sort, status or archive option in it. Source: `apps/web/src/components/Sidebar.tsx`.
+  - So in v2 it maps cleanly to "show the threads of this chapter": chapters are projects. The relay's idea of switching between lessons and the story's own threads is not what the real control does. Showing a lesson's helpers is the job of the subagent rows (below).
+- **The sidebar sorts threads by state by default**, into the sections "Pinned", "Active", "Working" (with a count), "Snoozed" and "Settled". Project folders are a Labs setting ("Boring sidebar (group by project)"). With folders on, the folder header has a "New thread in {project}" button. Sources: `Sidebar.tsx`, `apps/web/src/components/settings/LabsSettingsPanel.tsx`, `apps/web/src/components/sidebar/SidebarProjectFolderHeader.tsx`.
+  - The header buttons are "Add project" and "New thread", and the thread search has the placeholder "Search". Source: `apps/web/src/components/sidebar/SidebarThreadHeader.tsx`.
+- **Status labels:**
+  - "Pending Approval", "Awaiting Input", "Guest Request", "Working", "Connecting", "Waiting", "Failed", "Plan Ready" and "Completed". Source: `Sidebar.logic.ts` (`resolveThreadStatusPill`).
+  - "Limited". Source: `sidebar/SidebarThreadRow.tsx`.
+- **Subagents are not listed at the top level of the sidebar.** In the parent's timeline they form a group row, "{n} subagents", with a status line, the elapsed time and stacked avatars; expanding it gives one row per subagent. A child thread shows a "Subagent of {parent}" divider, and its composer is replaced by "Runs on its own" with an "Open parent" button. Sources: `chat/TimelineV2EventRow.tsx`, `chat/MessagesTimeline.tsx`, `chat/ProviderSubagentBar.tsx`, and `Sidebar.logic.ts` (`filterSidebarV2VisibleThreads`). How nested child rows look in the sidebar was not found.
+- **The chat header is a breadcrumb:** the project favicon and name, then "/", then the parent thread if there is one, then the title. A thread without a project shows "No project". "Open in {editor}" and the git controls ("Uncommitted", "vs {ref}") live elsewhere; leave them out. Source: `chat/ChatHeader.tsx`.
+- **Composer:**
+  - The placeholder is "Ask anything. @ files, $ skills, / commands". The collapsed mobile form shows "Ask anything...". Source: `apps/web/src/composerPlaceholder.ts`.
+  - The permission chip reads "Permissions: {mode}", with the modes Supervised, Auto-accept edits, Auto and Full access. Source: `chat/runtimeModeConfig.ts`.
+  - There is no context ring in the composer. Context sits in a thread-details usage popover:
+    - "Context window", "{used}% used", and "{used} of {max} tokens".
+    - "Usage limits": "{label}: {left}% left" and "Resets in {duration}".
+
+    Sources: `chat/ThreadDetailsUsage.tsx`, `apps/web/src/lib/contextWindow.ts`.
+  - When usage runs out, a banner reads "{provider} is out of usage · resets {time}". Source: `chat/ComposerUsageLimits.tsx`.
+- **Work log:**
+  - The summary line is "Worked for {duration}"; after an interrupt it reads "You stopped after {duration}".
+  - Row labels (source: `packages/shared/src/toolActivity.ts`):
+    - "Ran command";
+    - "Read {path}" or "Read file";
+    - "Changed files";
+    - "Searched files";
+    - "Web search";
+    - "Skill: {name}";
+    - while a command runs, "Running {program}", "Ran {program}" and "Failed {program}".
+  - Grouped rows read "Read {n} files", "Changed {n} files", "Ran {n} commands" and "Created {n} threads". Source: `packages/client-runtime/src/work-log/presentation.ts`.
+  - There is no "Edited" label.
 
 ## Working on this
 

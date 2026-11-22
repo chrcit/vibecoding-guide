@@ -21,11 +21,63 @@ export function closing(t: Tally, o: FleetOpts) {
   return parts.join(' ');
 }
 
+/** How many helpers are working now, read from their lamps (amber while a helper works). */
+export function working(ctx: Ctx) {
+  return ctx.scene.state.agents.filter((a) => /^w\d/.test(a.id) && (a.busy || a.lamp === 'work')).length;
+}
+/**
+ * The chip for the fleet lessons: tasks on main, and how many helpers are working. The thread
+ * list beside the picture used to show each helper's state; the lamps carry it now, and the chip
+ * counts them.
+ */
+export const fleetChip = (pairs: [string, string | number, string?][], ctx: Ctx) => {
+  const landed = String(pairs.find(([n]) => n.startsWith('tasks on main'))?.[1] ?? '').replace(' of ', '/');
+  if (!landed) return null;
+  const n = working(ctx);
+  return n ? `${landed} on main · ${n} working` : `${landed} on main`;
+};
+
+/**
+ * The fleet simulation (sim.ts) speaks only through its readout. This wraps ctx so each change in
+ * that readout also becomes what the picture says: the check sends one back, two edits clash on
+ * main, broken work lands, the lead's window is compacted, the first report comes in.
+ */
+export function watched(ctx: Ctx, o: FleetOpts): Ctx {
+  const prev = new Map<string, number>();
+  let first = true;
+  const num = (v: string | number | undefined) => parseFloat(String(v ?? '')) || 0;
+  const boss = o.name === 'the agent' ? 'agent' : 'lead';
+  const w = Object.create(ctx) as Ctx;
+  w.stat = (pairs) => {
+    const get = (start: string) => pairs.find(([n]) => n.startsWith(start));
+    const up = (p: ReturnType<typeof get>) => { if (!p) return false; const was = prev.get(p[0]) ?? 0, now = num(p[1]); prev.set(p[0], now); return now > was; };
+    const win = pairs.find(([n]) => n.endsWith('window'));
+    const winWas = prev.get('window') ?? 0, winNow = num(win?.[1]);
+    prev.set('window', winNow);
+    const landed = up(get('tasks on main')), clash = up(get('clashes')), wrong = up(get('wrong on main')), back = up(get('sent back'));
+    if (clash) ctx.say('main', 'Clash: one edit landed on another.');
+    else if (wrong) ctx.say('main', `Wrong, and on main: ${num(get('wrong on main')?.[1])}.`);
+    else if (back) ctx.say('check', 'Sent back: it fails the check.');
+    else if (winNow < winWas - 15) ctx.say(boss, 'Window full: compacted.');
+    else if (landed && first) {
+      ctx.say(boss, boss === 'agent' ? 'Merged into main.' : o.shortReports === false ? 'Report: diff, logs, every read.' : 'Report: five lines.');
+    }
+    if (landed) first = false;
+    ctx.stat(pairs);
+  };
+  return w;
+}
+/** The last line of a run, said at main. */
+export const landedLine = (t: Tally) => (t.wrong ? `All ${t.landed} landed. ${t.wrong} wrong.` : `All ${t.landed} landed. None wrong.`);
+/** Where the fleet's speakers stand: the check in front of main, and main itself. */
+export const FLEET_SPEAKERS = { check: 'mgate', main: 'project' };
+
 function go(ctx: Ctx, scene: SceneState, o: FleetOpts) {
   void ctx.scene.run(async (h) => {
     h.set((s) => { Object.assign(s, scene); });
-    const t = await fleet(ctx, h, o);
-    // Every run ends, and says what came of it.
+    const t = await fleet(watched(ctx, o), h, o);
+    // Every run ends, and says what came of it: in the step text, and in one line at main.
+    ctx.say('main', landedLine(t));
     ctx.say(null, closing(t, o));
   });
 }
@@ -41,6 +93,8 @@ const runSide = (ctx: Ctx) => {
   go(ctx, side(n, own), { shared: !own, until: n * 2, name: 'the agent', clashes: true, flaws: false });
 };
 export const parallel: Chapter = {
+  counter: fleetChip,
+  speakers: FLEET_SPEAKERS,
   steps: {
     three: { scene: () => side(3, false), enter: (ctx) => { ctx.mem.n = 3; ctx.mem.own = false; runSide(ctx); } },
     copies: { scene: () => side(3, true), enter: (ctx) => { ctx.mem.n = 3; ctx.mem.own = true; runSide(ctx); } },
@@ -79,6 +133,8 @@ const shaped = (shape: Shape): SceneState => {
   s.agents[roles.length]!.model = 'b';
   return s;
 };
+/** Who speaks in the shapes: each role at its own station (the shared map puts a planner at the lead). */
+const SHAPE_SPEAKERS = { helper: 'w0', builder: 'w0', 'second builder': 'w1', planner: 'w1', reviewer: 'w1', 'the reviewer': 'w2', judge: 'w2' };
 const between = (a: XY, b: XY): XY[] => [[a[0], a[1] + 14], [a[0], BUS_Y], [b[0], BUS_Y], [b[0], b[1] + 14]];
 
 async function playShape(ctx: Ctx, h: Script, shape: Exclude<Shape, 'fan'>) {
@@ -122,25 +178,25 @@ async function playShape(ctx: Ctx, h: Script, shape: Exclude<Shape, 'fan'>) {
     ctx.say('helper', 'Built. Tests pass.');
     await pass(between(at(0), at(1)), 'model'); give(1, 'tool', 7);
     await work(1, 2);
-    ctx.say('reviewer', 'Hidden ratings still show in the export.');
+    ctx.say('reviewer', 'Hidden ratings still in the export.');
     caught++;
     await pass(between(at(1), at(0)), 'bad'); give(0, 'bad', 3);
     await work(0, 2);
     await pass(between(at(0), at(1)), 'model'); give(1, 'tool', 3);
     await work(1, 1);
-    ctx.say('reviewer', 'The export hides them now. Passing it on.');
+    ctx.say('reviewer', 'Export hides them now. Passing it.');
     await land(1);
     tally('The reviewer sent it back once: hidden ratings still showed in the export.');
   } else if (shape === 'line') {
     await pass(route.agentToWorker(at(1)), 'model'); give(1, 'model', 4);
     await work(1, 3);
-    ctx.say('planner', 'Plan: the list, the member page, the export. A test for each.');
+    ctx.say('planner', 'Plan: list, page, export, a test each.');
     await pass(between(at(1), at(0)), 'model'); give(0, 'model', 5);
     await work(0, 6);
     ctx.say('helper', 'Built to the plan. Tests pass.');
     await pass(between(at(0), at(2)), 'model'); give(2, 'tool', 7);
     await work(2, 2);
-    ctx.say('reviewer', 'Matches the plan. Nothing to send back.');
+    ctx.say('the reviewer', 'Matches the plan. Nothing to fix.');
     await land(2);
     tally('The plan named the export, so nothing was sent back.');
   } else {
@@ -150,10 +206,13 @@ async function playShape(ctx: Ctx, h: Script, shape: Exclude<Shape, 'fan'>) {
     give(0, 'model', 4); give(1, 'model', 4);
     await Promise.all([work(0, 5), work(1, 6)]);
     ctx.say(null, 'Two helpers, the same brief, two answers.');
+    ctx.say('helper', 'Build one: done.');
+    await h.wait(700);
+    ctx.say('second builder', 'Build two: done.');
     await Promise.all([pass(between(at(0), at(2)), 'model'), pass(between(at(1), at(2)), 'model')]);
     give(2, 'tool', 7); give(2, 'tool', 8);
     await work(2, 2);
-    ctx.say('judge', 'Keeping the second: the first forgot the export.');
+    ctx.say('judge', 'Keeping the second: export is in.');
     caught++;
     h.set((s) => { s.agents[1]!.blocks = []; s.agents[1]!.lamp = 'off'; });
     await land(2);
@@ -166,11 +225,15 @@ const runShape = (ctx: Ctx, shape: Shape) => {
   void ctx.scene.run((h) => playShape(ctx, h, shape));
 };
 export const leadCh: Chapter = {
+  counter: fleetChip,
+  speakers: FLEET_SPEAKERS,
   steps: {
     roles: { scene: () => led(false), enter: (ctx) => { ctx.mem.gate = false; runLead(ctx); } },
-    shapes: { scene: () => shaped('pair'), enter: (ctx) => runShape(ctx, 'pair') },
+    // One task passed between roles: the chip says where it is. Who speaks is the role's station.
+    shapes: { scene: () => shaped('pair'), counter: (pairs) => `on main: ${pairs[0]?.[1] ?? 'not yet'}`, speakers: SHAPE_SPEAKERS, enter: (ctx) => runShape(ctx, 'pair') },
     gate: { scene: () => led(true), enter: (ctx) => { ctx.mem.gate = true; runLead(ctx); } },
-    reports: { scene: () => led(true), enter: (ctx) => { ctx.mem.gate = true; ctx.mem.short = false; runLead(ctx); } },
+    // What the lead reads: the chip is the lead's window.
+    reports: { scene: () => led(true), counter: (pairs) => { const w = pairs.find(([n]) => n.endsWith('window')); return w ? `lead’s window ${w[1]}` : null; }, enter: (ctx) => { ctx.mem.gate = true; ctx.mem.short = false; runLead(ctx); } },
   },
   actions: {
     shape: (ctx, val) => runShape(ctx, val as Shape),
@@ -196,15 +259,20 @@ const runFleet = (ctx: Ctx) => {
   const o: FleetOpts = { gate, until: 40, showTurns: turns };
   void ctx.scene.run(async (h) => {
     h.set((s) => { Object.assign(s, many(n, gate)); });
-    const t = await fleet(ctx, h, o);
+    const t = await fleet(watched(ctx, o), h, o);
+    ctx.say('main', landedLine(t));
     ctx.say(null, closing(t, o) + (turns ? ` The helpers took ${t.turns} turns, and each turn read a whole window again.` : ''));
   });
 };
 export const fleetCh: Chapter = {
+  counter: fleetChip,
+  speakers: FLEET_SPEAKERS,
   steps: {
     twenty: { scene: () => many(20, true), enter: (ctx) => { ctx.mem.n = 20; ctx.mem.gate = true; runFleet(ctx); } },
-    nogate: { scene: () => many(20, false), enter: (ctx) => { ctx.mem.n = 20; ctx.mem.gate = false; runFleet(ctx); } },
-    yours: { scene: () => many(20, true), enter: (ctx) => { ctx.mem.n = 20; ctx.mem.gate = true; ctx.mem.turns = true; runFleet(ctx); } },
+    // Without the check the picture is about what landed wrong.
+    nogate: { scene: () => many(20, false), counter: (pairs) => { const w = pairs.find(([n]) => n.startsWith('wrong on main')); return w ? `wrong on main ${w[1]}` : null; }, enter: (ctx) => { ctx.mem.n = 20; ctx.mem.gate = false; runFleet(ctx); } },
+    // What is left for you: the turns every helper takes, each reading its window again.
+    yours: { scene: () => many(20, true), counter: (pairs) => { const t = pairs.find(([n]) => n.startsWith('helper turns')); return t ? `helper turns ${t[1]}` : null; }, enter: (ctx) => { ctx.mem.n = 20; ctx.mem.gate = true; ctx.mem.turns = true; runFleet(ctx); } },
   },
   inputs: { n: (ctx, val) => { ctx.mem.n = Number(val); runFleet(ctx); } },
   actions: {

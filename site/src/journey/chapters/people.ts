@@ -132,11 +132,11 @@ async function pr(ctx: Ctx, h: Script) {
   stats(ctx);
   await brief(ctx, h, 'you', 'you', 'Let members pay their fee online.');
   await build(h, 4);
-  ctx.say('the agent', 'Done. Opened a pull request: a summary, the test run and a screenshot.');
+  ctx.say('the agent', 'Done. Pull request open, with proof.');
   await open(ctx, h, undefined, true);
   ctx.say('the check', ctx.level === 'plain'
-    ? 'The automatic tests ran on it and pass. Now it waits for a person.'
-    : 'CI ran on the branch: tsc --noEmit clean, 31 tests pass. Waiting for a reviewer.');
+    ? 'Tests pass. Now it waits for a person.'
+    : 'CI: tsc clean, 31 tests pass. Waiting.');
   await h.wait(1400);
   ctx.say(null, 'A pull request: the agent’s branch, stopped in front of main with its proof beside it until a person says yes. Nothing has reached main.');
 }
@@ -153,7 +153,7 @@ async function client(ctx: Ctx, h: Script, link: boolean) {
   await merge(ctx, h);
   await toClient(h, link ? 'tool' : 'model');
   if (!link) {
-    ctx.say('a client', 'I can’t tell from this whether it works.');
+    ctx.say('a client', 'I can’t tell if this works.');
     await h.wait(1200);
     ctx.say(null, 'The client saw code, not the page, and had nothing to ask for. Nothing came back.');
     return;
@@ -176,14 +176,14 @@ async function users(ctx: Ctx, h: Script, test: boolean) {
   stats(ctx);
   await backAndOn(ctx, h, USERS[0]!, 'bad', 'Fix this. Here is what the user saw.');
   await build(h, 2);
-  ctx.say('the agent', test ? 'Fixed. A test now checks the fee on the receipt.' : 'Fixed.');
+  ctx.say('the agent', test ? 'Fixed. A test now checks the fee.' : 'Fixed.');
   await open(ctx, h);
   await merge(ctx, h);
   // A later, unrelated job brings the same mistake back.
   await brief(ctx, h, 'you', 'you', 'A week later: tidy the payment page.');
   await build(h, 2);
   if (test) {
-    const ok = await open(ctx, h, 'The receipt test fails: it shows last season’s fee.');
+    const ok = await open(ctx, h, 'Receipt test fails: last season’s fee.');
     if (!ok) {
       await build(h, 2);
       await open(ctx, h);
@@ -231,13 +231,13 @@ async function loop(ctx: Ctx, h: Script) {
       ctx.say('a client', job.then.line);
       tally(ctx).asked++;
       stats(ctx);
-      await backAndOn(ctx, h, SPOT.client, 'you', `Next job, from the client: ${next.toLowerCase()}`);
+      await backAndOn(ctx, h, SPOT.client, 'you', `From the client: ${next.toLowerCase()}`);
     } else {
       await toUsers(h);
       ctx.say('a user', job.then.line);
       tally(ctx).reported++;
       stats(ctx);
-      await backAndOn(ctx, h, USERS[0]!, 'bad', `Next job, from a user’s report: ${next.toLowerCase()}`);
+      await backAndOn(ctx, h, USERS[0]!, 'bad', `From a user: ${next.toLowerCase()}`);
     }
   }
   const t = tally(ctx);
@@ -249,9 +249,9 @@ async function loop(ctx: Ctx, h: Script) {
 type Size = 'big' | 'proof' | 'small';
 /** Made-up rates. Build and review times in milliseconds of the picture's day; one in `back` is sent back. */
 const RATES: Record<Size, { build: number; review: number; back: number; words: string }> = {
-  big: { build: 4200, review: 2400, back: 2, words: 'Twelve hundred lines and no way to see it run. This takes me a while.' },
-  proof: { build: 4200, review: 1200, back: 4, words: 'Big, but the screenshots and the test run tell me where to look.' },
-  small: { build: 3400, review: 300, back: 8, words: 'Forty lines, a test and a screenshot. Quick to read.' },
+  big: { build: 4200, review: 2400, back: 2, words: '1,200 lines, no way to run it. Slow.' },
+  proof: { build: 4200, review: 1200, back: 4, words: 'Big, but the proof shows where to look.' },
+  small: { build: 3400, review: 300, back: 8, words: 'Forty lines and proof. Quick to read.' },
 };
 const DAY = 22000;
 const N = 10;
@@ -304,7 +304,8 @@ function timetable(size: Size) {
 async function day(ctx: Ctx, h: Script, size: Size) {
   const r = RATES[size];
   h.set((s) => { Object.assign(s, scene(['peer'], N)); s.rest = []; if (size !== 'big') s.tray!.cards = PROOF.map((c) => ({ ...c })); });
-  ctx.say('a colleague', `${r.words} (A made-up day: ${N} agents, one colleague.)`);
+  ctx.say('a colleague', r.words);
+  ctx.say(null, `A made-up day: ${N} agents, one colleague who reads every change before it lands.`);
   stats(ctx);
   const t = tally(ctx);
   const plan = timetable(size);
