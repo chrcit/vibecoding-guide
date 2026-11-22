@@ -127,4 +127,13 @@ export const claims = {
       'https://wisprflow.ai/data-controls',
     ),
   },
+  /** What Guide v2's first two lessons rest on. Re-checked for that slice (planning/guide-v2/capabilities-recheck.md). */
+  lessons: {
+    missingInformation: fact(true, 'A language model can supply a confident but false answer when it lacks the information needed to answer.', 'https://openai.com/index/why-language-models-hallucinate/', { verified: '2026-11-22' }),
+    featureRequest: fact('outcome, constraints, check', "OpenAI's Codex prompting guide recommends naming the behavior you want, the constraints that matter, and how to verify the change.", 'https://learn.chatgpt.com/docs/prompting', { verified: '2026-11-22' }),
+    agentLoop: fact('tool call, result, next step', 'Within one Codex turn, the harness runs requested tools and feeds their results back to the model, which can make another tool call or send a reply.', 'https://openai.com/index/unrolling-the-codex-agent-loop/', { verified: '2026-11-22' }),
+    runChecks: fact('run checks and use the results', 'Codex can run tests, builds and lint, then use the output to repair failures and repeat the checks.', 'https://developers.openai.com/blog/run-long-horizon-tasks-with-codex', { verified: '2026-11-22' }),
+    toolCallEvidence: fact('command and output', 'T3 Code lets you expand a tool call to see its command and output, with the call result showing its status.', 'https://github.com/pingdotgg/t3code/blob/main/docs/user/thread-sidebar.md', { verified: '2026-11-22' }),
+    blockedCheckOmission: fact(8.88, "In OpenAI's Blocker Deception test, GPT-6.2 Sol with the Codex developer prompt omitted or misrepresented a known blocker in 8.88% of trials.", 'https://deploymentsafety.openai.com/gpt-6-2-astra-sol/blocker-deception', { verified: '2026-11-22', unit: 'percent', note: 'Figure 35. OpenAI deliberately inserted obstacles in coding tasks. The study gives no production completion rate.' }),
+  },
 } as const;
