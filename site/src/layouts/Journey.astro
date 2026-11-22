@@ -13,6 +13,13 @@ import Base from './Base.astro';
 import '../styles/board.css';
 import '../components/fig/fig.css';
 import '../styles/journey.css';
+/* ==== Lesson panel (wide pages): components and styles. See styles/journey-panel.css ==== */
+import '../styles/journey-panel.css';
+import PanelHead from '../components/journey/PanelHead.astro';
+import StepNav from '../components/journey/StepNav.astro';
+import NextLesson from '../components/journey/NextLesson.astro';
+import LessonSheet from '../components/journey/LessonSheet.astro';
+/* ==== end lesson panel ==== */
 import { url } from '../lib/nav';
 import { rungs, parts, partOf } from '../journey/rungs';
 import { chapters } from '../journey/chapters';
@@ -27,7 +34,7 @@ if (!def) throw new Error(`Journey: chapter "${chapter}" has no step "${first}"`
 const still = poster(def.scene({ level: 'plain', mem: {}, keep: {}, data: data ?? {}, say() {}, model() {}, stat() {} } as any));
 ---
 <Base title={`${title} · Agentic Coding Guide`} description={description} section="guide" type="article">
-  <div class="j-root" data-journey data-chapter={chapter} data-base={url('')}>
+  <div class="j-root" data-journey data-chapter={chapter} data-base={url('')} data-panel>
     {data && <script type="application/json" data-journey-data set:html={JSON.stringify(data)} />}
     <div class="j-view">
       <nav class="j-rail" aria-label="The 21 lessons">
@@ -74,14 +81,20 @@ const still = poster(def.scene({ level: 'plain', mem: {}, keep: {}, data: data ?
       <p class="j-model" hidden></p>
       <ul class="j-key" aria-label="What the colours are"></ul>
     </div>
-    <div class="j-steps">
-      <header class="j-head">
-        {here && <p class="j-count">Lesson {here.n} of {rungs.length}</p>}
-        <h1>{title}</h1>
-      </header>
-      <slot />
-      {Astro.slots.has('foot') && <footer class="j-foot"><slot name="foot" /></footer>}
+    {/* ==== Lesson panel: on a wide page a column of fixed height beside the picture (head, the
+         step on show, the step navigator, the box to the next lesson); on a narrow page the head
+         and the steps that scroll past the picture. journey/panel.ts, styles/journey-panel.css. ==== */}
+    <div class="jp">
+      <PanelHead chapter={chapter} title={title} />
+      <div class="j-steps">
+        <slot />
+        {Astro.slots.has('foot') && <footer class="j-foot"><slot name="foot" /></footer>}
+      </div>
+      <StepNav />
+      <NextLesson chapter={chapter} />
     </div>
+    <LessonSheet chapter={chapter} />
+    {/* ==== end lesson panel ==== */}
   </div>
 </Base>
 

@@ -1,0 +1,242 @@
+/*
+  The lesson panel (layouts/Journey.astro, journey/panel.ts, components/journey/PanelHead,
+  StepNav, NextLesson, LessonSheet). Loaded after journey.css and overrides it where the two meet.
+
+  Journey pages use the page's full width, and so does the site header on them.
+
+  On a wide page (the journey container at 60rem or more, with scripts on) the lesson is a small
+  app under the header, one screen high: a panel on the left, the picture filling the right.
+  The panel, top to bottom:
+    head       Lesson 7 of 21 · the lesson's title · the button for the guide's contents
+    body       the step on show: its title stays at the top, the text, controls, note and key
+               scroll under it when they are long
+    navigator  a segment per step, Back, "2 of 5", Next
+    next box   on the last step only, flush at the bottom: the next lesson
+  Below 60rem nothing here changes the layout: the steps scroll past the picture as before, and
+  only the head's contents button is added.
+*/
+
+/* ---------- full width ---------- */
+
+.j-root { max-width: none; }
+body:has(.j-root) .topbar .bar { max-width: none; }
+
+/* ---------- the head (every width) ---------- */
+
+.jp-head-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.5rem; }
+.jp-head-row .j-count { margin: 0; }
+.jp-toc {
+  flex: none; display: inline-flex; align-items: center; gap: 0.45rem;
+  min-height: 2.25rem; padding: 0 0.7rem 0 0.6rem;
+  border: 1px solid var(--rule-strong); border-radius: var(--radius-pill); background: var(--card);
+  font-family: var(--sans); font-size: var(--text-xs); font-weight: 600; color: var(--ink-2); cursor: pointer;
+  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease, background-color var(--dur-fast) ease;
+}
+.jp-toc:hover { color: var(--ink); border-color: var(--ink); }
+.jp-toc[aria-expanded='true'] { color: var(--ink); border-color: var(--ink); }
+html:not(.js) .jp-toc { display: none; }
+
+/* The navigator and the next box belong to the wide layout only. */
+.jp-nav, .jp-next { display: none; }
+
+/* ---------- the wide layout ---------- */
+
+@container journey (min-width: 60rem) {
+  html.js .j-root[data-panel] {
+    --jp-w: clamp(24rem, 27cqi, 31rem);
+    --jp-pad: 1.5rem;
+    display: grid; grid-template-columns: var(--jp-w) minmax(0, 1fr); gap: 0; align-items: stretch;
+    /* The header is its height plus its 1px rule. */
+    height: calc(100svh - var(--header-h) - 1px); min-height: 34rem;
+    padding: 0;
+  }
+
+  /* The picture: fills the right, inset a little, the frame as one card. */
+  html.js .j-root[data-panel] > .j-view {
+    grid-column: 2; grid-row: 1; position: relative; top: auto; z-index: auto;
+    height: auto; min-height: 0; grid-template-rows: minmax(0, 1fr);
+    margin: 0; padding: 0.75rem 0.75rem 0.75rem 0.75rem; background: var(--paper-2); border: 0;
+  }
+  html.js .j-root[data-panel] .j-rail { display: none; }
+  html.js .j-root[data-panel] .j-frame { height: 100%; }
+
+  /* The panel. */
+  html.js .j-root[data-panel] > .jp {
+    grid-column: 1; grid-row: 1; min-width: 0; min-height: 0;
+    display: flex; flex-direction: column;
+    background: var(--paper); border-right: 1px solid var(--rule);
+  }
+  html.js .j-root[data-panel] .jp-head {
+    flex: none; padding: 1rem var(--jp-pad) 0.9rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  html.js .j-root[data-panel] .jp-head .j-count { font-size: var(--text-xs); }
+  html.js .j-root[data-panel] .jp-head h1 { font-size: clamp(1.375rem, 1.1rem + 0.6vw, 1.75rem); line-height: 1.12; letter-spacing: -0.02em; }
+
+  /* The body: one step at a time; it scrolls on its own when the step is long. */
+  html.js .j-root[data-panel] .j-steps {
+    flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin;
+    display: flex; flex-direction: column;
+    padding: 0 var(--jp-pad) 1.25rem;
+  }
+  html.js .j-root[data-panel] .j-steps > * { flex-shrink: 0; }
+  html.js .j-root[data-panel] .j-step {
+    order: 1; min-height: 0; max-width: none; margin: 0; padding: 0;
+    display: block; opacity: 1; transition: none;
+  }
+  html.js .j-root[data-panel] .j-step:not([data-active]) { display: none; }
+  /* Before the script has picked a step, the first one is on show. */
+  html.js .j-root[data-panel]:not([data-ready]) .j-steps > .j-step:first-of-type { display: block; }
+  html.js .j-root[data-panel]:not([data-ready]) .j-steps > .j-step:not(:first-of-type) { display: none; }
+
+  /* The step's title stays at the top of the body while its text scrolls under it. */
+  html.js .j-root[data-panel] .j-step > h2 {
+    position: sticky; top: 0; z-index: 2;
+    margin: 0 calc(var(--jp-pad) * -1) 0.75rem; padding: 1.1rem var(--jp-pad) 0.6rem;
+    background: var(--paper);
+    font-size: var(--text-xl); line-height: 1.15;
+    box-shadow: 0 1px 0 transparent;
+  }
+  html.js .j-root[data-panel] .j-step > p, html.js .j-root[data-panel] .j-lead { max-width: 40ch; }
+  html.js .j-root[data-panel] .j-step-extra { margin-top: 1rem; padding-top: 0.25rem; }
+  html.js .j-root[data-panel] .j-more-info { max-width: none; }
+  html.js .j-root[data-panel] .control select { width: 100%; min-width: 0; text-overflow: ellipsis; }
+  /* The next lesson is the box at the foot of the panel; the step keeps its "more" links. */
+  html.js .j-root[data-panel] .j-step .j-next { display: none; }
+  html.js .j-root[data-panel] .j-end .j-more { margin-top: 1rem; }
+  /* Sources and the date they were checked: under the last step. */
+  html.js .j-root[data-panel] .j-foot { order: 3; display: none; margin-top: 1.5rem; padding-top: 0.75rem; border-top: 1px solid var(--rule); }
+  html.js .j-root[data-panel][data-last] .j-foot { display: block; }
+
+  /* An overview: the part cards give way to the contents sheet; the part's own intro (recap,
+     lessons, where to start) comes under the first step. */
+  html.js .j-root[data-panel] .j-parts { display: none; }
+  html.js .j-root[data-panel] .j-part-intro { order: 2; display: none; margin: 1.5rem 0 0; padding-top: 1rem; border-top: 1px solid var(--rule); }
+  html.js .j-root[data-panel] .j-steps:has(> .j-step:first-of-type[data-active]) > .j-part-intro { display: grid; }
+  html.js .j-root[data-panel] .j-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  /* The navigator. */
+  html.js .j-root[data-panel] .jp-nav {
+    flex: none; display: grid; gap: 0.5rem;
+    padding: 0.625rem var(--jp-pad) 0.75rem;
+    border-top: 1px solid var(--rule); background: var(--paper);
+  }
+  .jp-dots { display: flex; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+  .jp-dots li { flex: 1 1 0; min-width: 0; }
+  .jp-dot {
+    position: relative; display: block; width: 100%; height: 1.25rem; padding: 0;
+    border: 0; background: none; cursor: pointer;
+  }
+  .jp-dot::before {
+    content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 4px; margin-top: -2px;
+    border-radius: 2px; background: var(--rule-strong);
+    transition: background-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out);
+  }
+  .jp-dot[data-done]::before { background: color-mix(in oklab, var(--ink) 45%, var(--paper)); }
+  .jp-dot[aria-current='step']::before { background: var(--ink); transform: scaleY(1.5); }
+  .jp-dot:hover::before { background: color-mix(in oklab, var(--ink) 70%, var(--paper)); }
+  .jp-dot:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; border-radius: 3px; }
+
+  .jp-ctl { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0.5rem; }
+  .jp-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;
+    min-height: 2.5rem; padding: 0 0.875rem;
+    border: 1px solid var(--rule-strong); border-radius: var(--radius-s); background: var(--card);
+    font-family: var(--sans); font-size: var(--text-s); font-weight: 600; color: var(--ink); cursor: pointer;
+    transition: border-color var(--dur-fast) ease, background-color var(--dur-fast) ease, opacity var(--dur-fast) ease;
+  }
+  .jp-btn:first-child { justify-self: start; }
+  .jp-btn-next { justify-self: end; background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .jp-btn:hover:not(:disabled) { border-color: var(--ink); }
+  .jp-btn-next:hover:not(:disabled) { background: color-mix(in oklab, var(--ink) 86%, var(--paper)); }
+  .jp-btn:disabled { opacity: 0.35; cursor: default; }
+  /* On the last step the box below takes Next's place. */
+  .j-root[data-last] .jp-btn-next { visibility: hidden; }
+  .jp-pos { margin: 0; font-family: var(--mono); font-size: var(--text-xs); color: var(--muted); white-space: nowrap; }
+  .jp-pos b { font-weight: 600; color: var(--ink); }
+
+  /* The next lesson: flush at the foot of the panel, on the last step. */
+  html.js .j-root[data-panel] .jp-next {
+    flex: none; position: relative;
+    display: none; grid-template-columns: minmax(0, 1fr) auto; column-gap: 1rem; row-gap: 0.15rem;
+    padding: 1rem var(--jp-pad) 1.1rem;
+    border-top: 1px solid var(--rule-strong); background: var(--card);
+    color: var(--ink); text-decoration: none;
+    transition: background-color var(--dur-fast) ease;
+  }
+  html.js .j-root[data-panel][data-last] .jp-next { display: grid; animation: jp-next-in 260ms var(--ease-out) both; }
+  html.js .j-root[data-panel][data-last] .jp-nav { border-top-color: var(--rule); }
+  .jp-next:hover { background: color-mix(in oklab, var(--ink) 4%, var(--card)); }
+  .jp-next:hover .jp-next-arrow { transform: translateX(3px); }
+  .jp-next:focus-visible { outline: 2px solid var(--ink); outline-offset: -4px; }
+  .jp-next-kicker { grid-column: 1; font-family: var(--mono); font-size: var(--text-xs); color: var(--muted); }
+  .jp-next-title { grid-column: 1; font-family: var(--serif); font-size: var(--text-xl); font-weight: 520; line-height: 1.15; letter-spacing: -0.015em; }
+  .jp-next-line {
+    grid-column: 1; font-size: var(--text-s); line-height: 1.4; color: var(--ink-2);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .jp-next-arrow { grid-column: 2; grid-row: 1 / span 3; align-self: center; color: var(--ink); transition: transform var(--dur-fast) var(--ease-out); }
+  @keyframes jp-next-in { from { opacity: 0; transform: translateY(6px); } }
+}
+
+/* With the lesson as an app, the site footer would only pull the page away from it. */
+html:has(.j-root[data-mode='panel']) .site-footer { display: none; }
+
+/* ---------- the guide's contents, a full-height sheet (LessonSheet.astro, journey/sheet.ts) ---------- */
+
+.jp-sheet {
+  position: fixed; inset: var(--header-h) auto 0 0; margin: 0;
+  width: min(100vw, 26rem); max-width: 100vw; height: auto; max-height: none;
+  padding: 0; border: 0; border-right: 1px solid var(--rule-strong);
+  background: var(--paper); color: var(--ink); box-shadow: var(--shadow-pop);
+}
+/* Darkens in both themes: --ink is light in the dark theme, so the veil is a fixed near-black. */
+.jp-sheet::backdrop { inset: var(--header-h) 0 0 0; background: rgb(20 17 13 / 0.32); }
+.jp-sheet[open] { animation: jp-sheet-in 220ms var(--ease-out); }
+.jp-sheet[open]::backdrop { animation: jp-fade 220ms var(--ease-out); }
+@keyframes jp-sheet-in { from { opacity: 0; transform: translateY(-0.5rem); } }
+@keyframes jp-fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .jp-sheet[open], .jp-sheet[open]::backdrop, .j-root[data-last] .jp-next { animation: none; }
+}
+.jp-sheet-in { display: flex; flex-direction: column; height: 100%; }
+.jp-sheet-head {
+  flex: none; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  padding: 0.75rem 0.75rem 0.75rem 1.5rem; border-bottom: 1px solid var(--rule);
+}
+.jp-sheet-head h2 { margin: 0; font-family: var(--serif); font-size: var(--text-xl); font-weight: 520; letter-spacing: -0.015em; color: var(--ink); }
+.jp-sheet-head h2 span { margin-left: 0.4rem; font-family: var(--mono); font-size: var(--text-xs); font-weight: 400; letter-spacing: 0; color: var(--muted); }
+.jp-sheet-x {
+  display: grid; place-items: center; width: 2.5rem; height: 2.5rem; padding: 0;
+  border: 0; border-radius: var(--radius-s); background: none; color: var(--ink-2); cursor: pointer;
+}
+.jp-sheet-x:hover { background: color-mix(in oklab, var(--ink) 7%, transparent); color: var(--ink); }
+.jp-sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 0.5rem 0.75rem 1rem; }
+.jp-part + .jp-part { margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--rule); }
+.jp-part-head, .jp-lessons a {
+  display: grid; align-items: center; border-radius: var(--radius-s); text-decoration: none;
+  transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.jp-part-head { gap: 0.1rem; padding: 0.5rem 0.75rem; color: var(--ink); }
+.jp-part-n { font-family: var(--mono); font-size: var(--text-xs); color: var(--muted); }
+.jp-part-title { font-size: var(--text-s); font-weight: 600; line-height: 1.3; }
+.jp-lessons { margin: 0; padding: 0; list-style: none; }
+.jp-lessons a {
+  grid-template-columns: 2rem minmax(0, 1fr) auto; min-height: 2.25rem; padding: 0 0.75rem;
+  font-size: var(--text-s); color: var(--ink-2);
+}
+.jp-l-n { font-family: var(--mono); font-size: var(--text-xs); color: var(--muted); }
+.jp-l-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jp-part-head:hover, .jp-lessons a:hover { background: color-mix(in oklab, var(--ink) 5%, transparent); color: var(--ink); }
+.jp-part-head:focus-visible, .jp-lessons a:focus-visible, .jp-sheet-x:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+/* The page on show. */
+.jp-part-head[aria-current='page'], .jp-lessons a[aria-current='page'] { background: var(--card); color: var(--ink); box-shadow: inset 0 0 0 1px var(--rule-strong); }
+.jp-lessons a[aria-current='page'] { font-weight: 600; }
+.jp-lessons a[aria-current='page'] .jp-l-n { color: var(--ink); }
+.jp-lessons a[aria-current='page']::after { content: 'here'; font-family: var(--mono); font-size: var(--text-xs); font-weight: 400; color: var(--muted); }
+.jp-sheet-foot { flex: none; padding: 0.75rem 1.5rem 1rem; border-top: 1px solid var(--rule); font-size: var(--text-s); }
+.jp-sheet-foot a { color: var(--ink-2); }
+.jp-sheet-foot a:hover { color: var(--ink); }
+
+/* On the wide layout the sheet covers the panel exactly. */
+@media (min-width: 60rem) { .jp-sheet { width: clamp(24rem, 27vw, 31rem); } }

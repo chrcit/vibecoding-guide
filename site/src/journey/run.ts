@@ -6,6 +6,10 @@ import { STEP_NOTES } from './notes';
 import type { Ctx } from './chapter';
 import type { Kind } from './picture';
 import { getLevel } from '../lib/levels';
+/* ==== Lesson panel (wide pages): the step on show comes from the stepper, not the scroll ==== */
+import { Steps, type StepEvent } from './steps';
+import { bootPanel, type Mode } from './panel';
+/* ==== end lesson panel ==== */
 
 const KIND_NAMES: Record<Kind, string> = { rules: 'instructions', you: 'you', model: 'the model', tool: 'tool results', sum: 'summary', bad: 'problem' };
 const KIND_ORDER: Kind[] = ['rules', 'you', 'model', 'tool', 'sum', 'bad'];
@@ -40,6 +44,14 @@ export function boot(root: HTMLElement) {
   const steps = [...root.querySelectorAll<HTMLElement>('[data-step]')];
   const dataEl = root.querySelector<HTMLScriptElement>('script[data-journey-data]');
   const isOverview = root.dataset.chapter === 'foundations' || root.dataset.chapter === 'whole' || root.dataset.chapter === 'week';
+  /* ==== Lesson panel: on a wide page (layout 'panel') one step is on show at a time and the
+     stepper (steps.ts) picks it: Back, Next, the arrow keys, the URL hash. On a narrow page the
+     scroll picks it, as before, and the stepper only keeps count. ==== */
+  const stepper = new Steps(root);
+  let layout: Mode = 'scroll';
+  const panelMode = () => layout === 'panel';
+  stepper.addEventListener('change', (e) => { if (panelMode()) activate((e as StepEvent).detail.step, !current); });
+  /* ==== end lesson panel ==== */
 
   const ctx: Ctx = {
     scene,
@@ -125,6 +137,7 @@ export function boot(root: HTMLElement) {
     if (el === current) return;
     current?.removeAttribute('data-active');
     current = el;
+    stepper.sync(el); // lesson panel
     el.setAttribute('data-active', '');
     const def = chapter.steps[el.dataset.step!];
     if (!def) return;
@@ -169,6 +182,7 @@ export function boot(root: HTMLElement) {
   // Two columns or one is decided in the stylesheet, by the room the page has.
   const wide = () => getComputedStyle(root).display === 'grid';
   function pick() {
+    if (panelMode()) return; // lesson panel: the stepper picks the step
     const view = root.querySelector<HTMLElement>('.j-view')!.getBoundingClientRect();
     const line = wide() ? innerHeight * 0.62 : view.bottom + (innerHeight - view.bottom) * 0.55;
     let best: HTMLElement | null = null;
@@ -188,12 +202,24 @@ export function boot(root: HTMLElement) {
   document.addEventListener('acg:level', () => {
     ctx.level = getLevel();
     syncDetails();
+    /* ==== lesson panel: stay on the step, or the nearest one the level still shows ==== */
+    if (panelMode()) { current?.removeAttribute('data-active'); current = null; stepper.refresh(); return; }
+    /* ==== end lesson panel ==== */
     const el = current;
     current = null;
     el?.removeAttribute('data-active');
     if (el?.offsetParent) activate(el, true);
     else pick();
   });
+  /* ==== Lesson panel: switch between one step at a time (wide) and the scroll (narrow) ==== */
+  bootPanel(root, stepper, {
+    onMode(mode) {
+      layout = mode;
+      if (mode === 'panel') { const at = current ?? stepper.initial(); if (at) stepper.goTo(at, { reason: 'init' }); }
+      else if (current) { const el = current; requestAnimationFrame(() => el.scrollIntoView({ block: 'center' })); }
+    },
+  });
+  /* ==== end lesson panel ==== */
   pick();
 
   function pressOnly(btn: HTMLElement) {
