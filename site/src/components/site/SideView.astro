@@ -207,8 +207,7 @@
     .side-view { width: var(--side-w); box-shadow: none; }
     /* Docked: under the header, and the page makes room, so nothing is covered. */
     html[data-sideview='open'] .side-view { top: var(--header-h); }
-    html[data-sideview='open'] main,
-    html[data-sideview='open'] .site-footer { margin-right: var(--side-w); }
+    html[data-sideview='open'] main { margin-right: var(--side-w); }
   }
   html[data-sideview='max'] .side-view { width: min(100vw, 84rem); box-shadow: var(--shadow-pop); }
   @media (min-width: 700px) { html[data-sideview='max'] .side-view { width: min(100vw - 3rem, 84rem); } }
@@ -262,7 +261,6 @@
   /* A page shown inside a side view: no site chrome, tighter margins. */
   html[data-embed] .skip-link,
   html[data-embed] .topbar,
-  html[data-embed] .site-footer,
   html[data-embed] .level-offer,
   html[data-embed] .side-view,
   html[data-embed] .sv-pill,

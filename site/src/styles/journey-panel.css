@@ -179,9 +179,6 @@ html:not(.js) .jp-toc { display: none; }
   @keyframes jp-next-in { from { opacity: 0; transform: translateY(6px); } }
 }
 
-/* With the lesson as an app, the site footer would only pull the page away from it. */
-html:has(.j-root[data-mode='panel']) .site-footer { display: none; }
-
 /* ---------- the guide's contents, a full-height sheet (LessonSheet.astro, journey/sheet.ts) ---------- */
 
 .jp-sheet {

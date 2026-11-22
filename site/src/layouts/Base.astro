@@ -3,7 +3,6 @@
 import '../styles/global.css';
 import Head from '../components/site/Head.astro';
 import Header from '../components/site/Header.astro';
-import Footer from '../components/site/Footer.astro';
 import LevelBoot from '../components/level/LevelBoot.astro';
 import LevelOffer from '../components/level/LevelOffer.astro';
 import SideView from '../components/site/SideView.astro';
@@ -38,7 +37,6 @@ const { title, description, section, progress = false, noindex = false, type = '
     <main id="main">
       <slot />
     </main>
-    <Footer />
     <LevelOffer />
     <SideView />
   </body>

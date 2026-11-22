@@ -1,7 +1,8 @@
 ---
 /*
-  The site header: brand, main nav, reader-level picker, theme toggle and an
-  optional reading-progress bar. Sticky.
+  The site header: brand, main nav, the source links (Sources, the code on GitHub), reader-level
+  picker, theme toggle and an optional reading-progress bar. Sticky. There is no site footer: what
+  it held lives here, so pages end on their content.
   Props: section? (SectionId, marks the current nav item), progress? (boolean).
   Nav items come from `sections.filter(s => s.ready)` in lib/nav.ts. With up
   to three items the nav sits inline from tablet width; with more it collapses
@@ -15,6 +16,8 @@ interface Props { section?: SectionId; progress?: boolean }
 const { section, progress = false } = Astro.props;
 const items = sections.filter((s) => s.ready);
 const many = items.length > 4;
+const hasSources = Object.keys(import.meta.glob('../../pages/sources/index.astro')).length > 0;
+const repo = 'https://github.com/chrcit/vibecoding-guide';
 ---
 <header class="topbar" data-topbar data-many={many ? '' : undefined}>
   <div class="bar">
@@ -32,6 +35,13 @@ const many = items.length > 4;
         {items.map((s) => (
           <li><a href={url(s.path)} aria-current={s.id === section ? 'page' : undefined}>{s.label}</a></li>
         ))}
+        {hasSources && <li class="aux aux-first"><a href={url('sources/')}>Sources</a></li>}
+        <li class={hasSources ? 'aux' : 'aux aux-first'}>
+          <a class="gh" href={repo} title="The guide's source on GitHub">
+            <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+            <span class="gh-text">Source on GitHub</span>
+          </a>
+        </li>
       </ul>
     </nav>
 
@@ -203,8 +213,8 @@ const many = items.length > 4;
   .topbar[data-open] .nav a[aria-current='page']::after { left: auto; right: var(--space-2); bottom: auto; top: 50%; width: 0.5rem; height: 0.5rem; border-radius: 50%; margin-top: -0.25rem; }
   @keyframes menu-in { from { opacity: 0; transform: translateY(-6px); } }
 
-  /* Few sections: inline from tablet width. */
-  @media (min-width: 44rem) {
+  /* Few sections: inline once the sections, the source links and the tools fit in one row. */
+  @media (min-width: 64rem) {
     .topbar:not([data-many]) .menu-btn { display: none; }
     .topbar:not([data-many]) .nav { display: block; position: static; animation: none; box-shadow: none; border: 0; padding: 0; background: none; }
     .topbar:not([data-many]) .nav ul { flex-direction: row; }
@@ -218,6 +228,24 @@ const many = items.length > 4;
     .topbar[data-many] .nav ul { flex-direction: row; }
     .topbar[data-many] .nav a { min-height: 2.75rem; font-size: var(--text-m); border-bottom: 0; padding: 0 0.6rem; }
     .topbar[data-many] .nav a[aria-current='page']::after { left: 0.6rem; right: 0.6rem; top: auto; bottom: 0.45rem; width: auto; height: 2px; margin: 0; border-radius: 2px; }
+  }
+
+  /* The source links: after the sections, set apart by a thin rule; GitHub as an icon inline,
+     with its words in the menu. */
+  .nav .aux a { color: var(--muted); }
+  .nav .aux a:hover { color: var(--ink); }
+  .gh { gap: 0.5rem; }
+  .gh svg { flex: none; }
+  .topbar[data-open] .nav .aux-first { margin-top: var(--space-2); border-top: 1px solid var(--rule); }
+  @media (min-width: 64rem) {
+    .topbar:not([data-many]) .nav ul { align-items: center; }
+    .topbar:not([data-many]) .nav .aux-first { margin-left: var(--space-2); padding-left: var(--space-2); border-left: 1px solid var(--rule); }
+    .topbar:not([data-many]) .nav .gh-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  }
+  @media (min-width: 72rem) {
+    .topbar[data-many] .nav ul { align-items: center; }
+    .topbar[data-many] .nav .aux-first { margin-left: var(--space-2); padding-left: var(--space-2); border-left: 1px solid var(--rule); }
+    .topbar[data-many] .nav .gh-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   }
 
   .progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; pointer-events: none; }
