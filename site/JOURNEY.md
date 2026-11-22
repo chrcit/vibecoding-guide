@@ -176,6 +176,51 @@ Layout: stacked on a phone (the screen as a band of the latest lines over the pi
 as a strip), side by side when the view is 44rem wide or more. The caption keeps one height through
 a run: with room, the readout stands beside the line as a small table.
 
+### Layout
+
+The owner's brief, in their words: "always use up full-width of the page for the guide", "It needs
+to be a lot more controlled and dashboardy."
+
+Journey pages use the page's full width, and the site header spans the same width on them (other
+pages keep `--full`).
+
+**Wide** (the journey container, `main`, at 60rem or more, with scripts on): the lesson is a small
+app one screen high under the header, and the site footer is not shown. The picture fills the
+right, inset on a quiet ground. The left is the lesson panel, a column of fixed height:
+
+1. **Head**: "Lesson 7 of 21" (an overview: "Overview · lessons 5–13"), the page's title (the one
+   `<h1>`) and the "All lessons" button for the guide's contents.
+2. **The step on show**, one at a time. Its title stays at the top while its text, controls, note
+   and key scroll under it when they are long. On the last step the sources and the date they were
+   checked follow it.
+3. **The step navigator**: a segment per step the reader's level shows, Back, "2 of 5", Next. Left
+   and right arrows do the same, unless the reader is in a field or a slider.
+4. **The next lesson**, on the last step only: a box flush at the bottom that takes Next's place
+   (the next lesson; the next part's overview where a part ends; the first hour after the last).
+   The `<Next>` card in the step is hidden there and its "more" links stay.
+
+The step id is in the URL hash (`/journey/meter/#many` opens on that step). The guide's contents
+is a sheet as high as the page, over the panel: the three parts and their lessons by number and
+short name, the page on show marked "here". It is a modal dialog: Escape or a click beside it
+closes it, Tab stays inside, and focus returns to the button. It replaces the lesson rail, which is
+not shown on a wide page. On an overview the part cards give way to it, and the part's intro
+(recap, lessons, where to start) follows the first step.
+
+**Narrow** (below 60rem): the steps scroll past the sticky picture as before, the rail on top. The
+head carries the same "All lessons" button and sheet.
+
+Why the old `<Next>` card failed: it sat inside the last step's text, after the note, the key and
+the links, so on a wide page it was one more block in a long column, and on a narrow page it
+scrolled up under the sticky picture, which then took the taps (`elementFromPoint` at the card's
+centre is `.j-view`). On a wide page the box replaces it; on a narrow page it is unchanged until
+the phone stepper puts the steps in their own scroll panel.
+
+Files: `src/journey/steps.ts` (the stepper: `goTo`, `next`, `prev`, `index`, a `change` event, the
+hash), `src/journey/panel.ts` (which layout is on, the navigator, the arrow keys), `src/journey/
+sheet.ts` (the contents sheet), `components/journey/PanelHead.astro`, `StepNav.astro`,
+`NextLesson.astro`, `LessonSheet.astro`, `src/styles/journey-panel.css`. `run.ts` and
+`Journey.astro` hold the hooks in blocks marked "Lesson panel".
+
 ## Part two: the work around the agents
 
 The owner's brief, in their words: "essential concepts also getting the same full animation
@@ -379,5 +424,6 @@ its `inputs`. `level="technical"` or `"engineer"` on a `<Step>` adds a step for 
 
 ## Checks
 
-Open the page at 1440 and 390 wide, light and dark, and scroll every step. With reduced motion
+Open the page at 1280×800, 1440×900, 1920×1080, around the switch at 60rem and at 390 wide, light
+and dark; step through every step (Back, Next, the arrows), open and close the contents. With reduced motion
 pucks do not travel and each script jumps to its result. `pnpm judge` both ways as usual.
