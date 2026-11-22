@@ -16,7 +16,7 @@ Four layers: **model** (writes), **harness** (gives it hands), **tools** (the ha
 
 **plain.** "You talk. A model writes. The program around it lets it act on your computer: read, write, run things, show you a page. It loops until it thinks it's finished. That picture came from one of those actions."
 
-**some.** The harness is the loop: send the window to the model, run what it asks, append the result, repeat. Permission modes decide which calls need your OK (Supervised asks before commands and file changes; Full access asks for nothing). The model can be confidently wrong; the loop only checks what someone told it to check.
+**some.** The harness sends the window to the model, runs what it asks, appends the result and repeats. In T3 Code, Supervised requests approval for commands and file edits. Full access allows those actions without approval prompts. The harness enforces the mode, and rules vary by provider. The model can be confidently wrong. The loop only checks what someone told it to check.
 
 **deep.** Tools are described to the model as schemas in its context; the model emits a structured call; the harness executes and returns the output as the next message. MCP servers add tools (T3 Code's own tools, such as the one that renders pages, arrive this way). Checking is an instruction to the loop: "run the tests and don't stop until they pass" changes when the model decides to stop. Thinking is extra text the model writes before answering; the effort setting decides how much. Models differ in temperament: judgement over long context versus grinding through many variants.
 

@@ -39,11 +39,11 @@ On examples: "we want to teach people to let the how disappear for a bit and foc
    Clicking a lesson in the sidebar starts it playing. The reader moves back and forth through the points of an animation. There is no before/after comparison view and no guess-first quiz.
 4. **The sidebar is there from the first lesson, and it is the table of contents.**
    - A chapter is a project and a lesson is a thread.
-   - A thread's state shows where the reader is: Completed for a finished lesson, Working for the one playing.
+   - A thread's status shows where the reader is. Use Done for a finished lesson and Working for the one playing.
    - The sidebar's filter control switches between the lessons and the threads of the story inside the current lesson (for example a lead and its helpers).
    - Check what the filter icon does in the real app before giving it this job; `site/src/data/t3code.ts` has no fact about it yet. Add a sourced fact for it, and for any other piece of the app you draw. Research notes are under "What the real app does" below.
 5. **Everything else in the app appears only when its lesson teaches it**, and is highlighted when it appears: model name, branch, permission mode, context indicator, usage limits, device name. Leave out what does not matter (an open-in-editor button and the like).
-6. **Use the app's own words** from `site/src/data/t3code.ts`: the thread states Working, Completed, Pending Approval, Awaiting Input and Plan Ready; the work-log rows; "Ask anything...". The page is a drawing of the app marked "example", never a copy of it. Accuracy of tool claims is this repo's first priority.
+6. **Use the app's own words** from `site/src/data/t3code.ts` for the sidebar status labels, work-log rows and composer placeholder. Use a schematic drawing and mark it "example". Accuracy of tool claims is this repo's first priority.
 7. **Names**, in text and in the interface: chapter, lesson, part. A stop inside a part's animation is a **point**. Words on the picture are **annotations**. The owner does not want "bubble", "counter" or "readout". (v1's code uses chapter and part the other way round; do not rename v1.)
 8. **Requests are outcome-level** and use the same sentence at every reader level. The level changes how much of the how the work log and the reply show. Each request carries a "done when" or a "must never".
 9. **Phone and desktop:**
@@ -124,7 +124,7 @@ These parts are starting points; tighten or change them as the material needs.
 **Layout.** `Base.astro` (`section` prop) is the shell, and `LevelBoot` handles reader levels (`lib/levels.ts`: plain, technical, engineer; `LEVEL_EVENT` on document).
 
 **T3 Code's words already sourced** are in `site/src/data/t3code.ts`:
-- `screen.composer` ("Ask anything...");
+- `screen.composer`;
 - `screen.newThread`;
 - `screen.statuses`;
 - `screen.workLog`;
@@ -144,9 +144,7 @@ Read from the T3 Code source on GitHub, `pingdotgg/t3code`, main branch, on 2026
   - So in v2 it maps cleanly to "show the threads of this chapter": chapters are projects. The relay's idea of switching between lessons and the story's own threads is not what the real control does. Showing a lesson's helpers is the job of the subagent rows (below).
 - **The sidebar sorts threads by state by default**, into the sections "Pinned", "Active", "Working" (with a count), "Snoozed" and "Settled". Project folders are a Labs setting ("Boring sidebar (group by project)"). With folders on, the folder header has a "New thread in {project}" button. Sources: `Sidebar.tsx`, `apps/web/src/components/settings/LabsSettingsPanel.tsx`, `apps/web/src/components/sidebar/SidebarProjectFolderHeader.tsx`.
   - The header buttons are "Add project" and "New thread", and the thread search has the placeholder "Search". Source: `apps/web/src/components/sidebar/SidebarThreadHeader.tsx`.
-- **Status labels:**
-  - "Pending Approval", "Awaiting Input", "Guest Request", "Working", "Connecting", "Waiting", "Failed", "Plan Ready" and "Completed". Source: `Sidebar.logic.ts` (`resolveThreadStatusPill`).
-  - "Limited". Source: `sidebar/SidebarThreadRow.tsx`.
+- **Status labels.** Use the row labels from `screen.statuses`. Source: `apps/web/src/components/sidebar/SidebarThreadRow.tsx`.
 - **Subagents are not listed at the top level of the sidebar.** In the parent's timeline they form a group row, "{n} subagents", with a status line, the elapsed time and stacked avatars; expanding it gives one row per subagent. A child thread shows a "Subagent of {parent}" divider, and its composer is replaced by "Runs on its own" with an "Open parent" button. Sources: `chat/TimelineV2EventRow.tsx`, `chat/MessagesTimeline.tsx`, `chat/ProviderSubagentBar.tsx`, and `Sidebar.logic.ts` (`filterSidebarV2VisibleThreads`). How nested child rows look in the sidebar was not found.
 - **The chat header is a breadcrumb:** the project favicon and name, then "/", then the parent thread if there is one, then the title. A thread without a project shows "No project". "Open in {editor}" and the git controls ("Uncommitted", "vs {ref}") live elsewhere; leave them out. Source: `chat/ChatHeader.tsx`.
 - **Composer:**

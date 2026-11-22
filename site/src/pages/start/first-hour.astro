@@ -17,7 +17,7 @@ import * as p from '../../lib/start';
 
 const factIds = [
   'plans.claude.pro.price', 'plans.claude.pro.claudeCode', 'plans.chatgpt.limits.codexOnEveryPlan',
-  't3code.price', 't3code.welcome', 't3code.codexWithChatGPT', 't3code.newProject', 't3code.defaultMode', 't3code.permissionModes', 't3code.localServers',
+  't3code.price', 't3code.welcome', 't3code.codexWithChatGPT', 't3code.newProject', 't3code.modeSwitch', 't3code.permissionModes', 't3code.localServers',
   't3code.worktrees', 't3code.manyModels', 't3code.githubAuth', 't3code.providerMissing', 't3code.editFromHere',
   't3code.usagePage', 'harnesses.claudeCode.contextFile', 'harnesses.codex.contextFile',
   'harnesses.claudeCode.usageCommand', 'harnesses.codex.sandbox',
@@ -42,9 +42,9 @@ const factIds = [
     <ol class="moves">
       <li>Get one plan: Claude Pro (<Fact id="plans.claude.pro.price" /> a month), or ChatGPT, where Codex is on every plan from Free.</li>
       <li>Download <a href={links.t3codeDownload.url}>T3 Code</a> and open it. It is <Fact id="t3code.price" />.</li>
-      <li>On its Welcome page, connect your agent. Codex: <b>Set up</b>, then <b>Continue with ChatGPT</b>. Claude Code: <b>Install</b>, then <b>Sign in</b>.</li>
+      <li>On its Welcome page, connect your agent. For Codex, choose <b>Set up</b>, then <b>Continue with ChatGPT</b>. For Claude Code, choose <b>Install</b>, then <b>Sign in</b>. Press <b>Start</b> when the agent is ready.</li>
       <li><kbd>Cmd</kbd>+<kbd>K</kbd> (<kbd>Ctrl</kbd>+<kbd>K</kbd> on Windows), <b>New project</b>, call it <code>club-list</code>. The folder goes in <code><Fact id="t3code.newProject" /></code>.</li>
-      <li>Under the message box, change <b>Full access</b> to <b>Supervised</b>.</li>
+      <li>Open the model picker under the message box. Choose <b>Permissions</b>, then <b>Supervised</b>.</li>
     </ol>
     <p class="then">You see an empty thread: one conversation with the agent, and a box to type in.</p>
   </Tile>
@@ -113,7 +113,7 @@ const factIds = [
   </Tile>
 
   <Tile title="Two models, one prompt" span={4} level="engineer" side="explain/orchestration/">
-    <p>In a new thread, shift-click two models and send. Each gets its own thread and worktree. Keep the better result.</p>
+    <p><Fact id="t3code.manyModels" show="claim" /> Keep the better result.</p>
   </Tile>
 
   <Tile title="A different model reviews" span={4} level="engineer" side="wiki/review/">

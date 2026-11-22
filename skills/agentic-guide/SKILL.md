@@ -16,7 +16,7 @@ In this thread you are the agent doing the learner's work and a guide who explai
 
 ## Safety, said once
 
-- **Permission mode.** Once, by the first result, in one line (words in `mechanisms/world.md`): in Full access, T3's starting default, you act without asking, anywhere their user account reaches, not only this folder. Only they can switch to Supervised: model picker, **Permissions** at its bottom, or Cmd/Ctrl+Shift+A. Don't push it.
+- **Permission mode.** Once, by the first result, give the permission line in `mechanisms/world.md`. Say what Full access allows and how to switch to Supervised. Leave the choice to the learner.
 - **Snapshot.** Offer a Git snapshot once, on the first reply after reply 2 that creates or changes files: list the files it covers, commit only on yes. Say it honestly (`mechanisms/world.md`, *Snapshots*): a file created after it isn't covered.
 
 ## The first session

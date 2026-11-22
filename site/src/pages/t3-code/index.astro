@@ -28,9 +28,10 @@ const headings = [
 ];
 
 const factIds = [
-  't3code.stable', 't3code.version', 't3code.price', 't3code.licence', 't3code.providers', 't3code.install',
+  't3code.stable', 't3code.price', 't3code.licence', 't3code.providers', 't3code.install',
   't3code.ownLogins', 't3code.worktrees', 't3code.handoff', 't3code.queueSteer', 't3code.voice.maxRecording',
-  't3code.permissionModes', 't3code.defaultMode', 't3code.connectMachines', 't3code.phoneIsRemote',
+  't3code.voice.where', 't3code.shortcuts.background', 't3code.shortcuts.opposite',
+  't3code.permissionModes', 't3code.modeMeaning', 't3code.defaultMode', 't3code.connectMachines', 't3code.phoneIsRemote',
   't3code.contributing', 't3code.maker', 't3code.welcome', 't3code.codexWithChatGPT', 't3code.newProject',
   't3code.manyModels', 't3code.branchPrefix', 't3code.handoffCap', 't3code.handoffLeavesOut', 't3code.delegate',
   't3code.usagePage', 't3code.noLocalModels', 't3code.codeNotToT3', 'plans.claude.pro.price', 'plans.chatgpt.plus.price',
@@ -88,7 +89,7 @@ Keep it short. Do not change any files yet.`;
     For most readers that means a monthly plan. A <Fact id="plans.claude.pro.price" /> a month Claude Pro plan includes Claude Code, and a <Fact id="plans.chatgpt.plus.price" /> a month ChatGPT Plus plan includes Codex. What each plan gets you, and when an API key makes more sense, is in <a href={url('explain/plans-and-api/')}>Plans and the API</a>.
   </p>
   <p>
-    When you first open the app it shows a Welcome page with the agents it found on your computer and a button to set up the ones it did not. With a ChatGPT account you can connect Codex from inside the app without touching a terminal. For Claude Code, the app opens a terminal window with the install or sign-in command already typed, and you press Enter.
+    <Fact id="t3code.welcome" show="claim" />
   </p>
 
   <Deeper level="technical" title="Setup, step by step">
@@ -117,7 +118,7 @@ Keep it short. Do not change any files yet.`;
 
   <h2 id="tour">A tour of the working surface</h2>
   <p>
-    What follows is the screen as you will meet it, in the order you will need it. T3 Code changes weekly; this tour was checked against version <Fact id="t3code.stable" /> and the newest nightly, <Fact id="t3code.version" />.
+    This tour uses version <Fact id="t3code.stable" /> as its baseline and follows changes in the <a href={links.t3codeDocs.url}>user docs</a>.
   </p>
 
   <h3 id="projects">Projects</h3>
@@ -127,7 +128,7 @@ Keep it short. Do not change any files yet.`;
 
   <h3 id="threads">Threads</h3>
   <p>
-    One thread, one task. Start a new one for each separate piece of work rather than piling everything into one long conversation: a fresh thread starts with a clean head, and the sidebar becomes a list of what is in progress. In a new thread, <kbd><Fact id="t3code.shortcuts.background" /></kbd> sends the prompt, leaves the thread running in the background and opens another empty one, so you can hand out three tasks in a minute.
+    One thread, one task. Start a new one for each piece of work so the sidebar shows what is in progress. <Fact id="t3code.shortcuts.background" show="claim" />
   </p>
 
   <h3 id="model-and-effort">Choosing the model and the effort</h3>
@@ -137,7 +138,8 @@ Keep it short. Do not change any files yet.`;
 
   <h3 id="steer-or-queue">Sending a message while the agent works</h3>
   <p>
-    You do not have to wait for an answer before typing the next thing. A message sent while the agent works either <em>queues</em>, waiting until the current turn ends, or <em>steers</em>, landing in the running turn straight away. You choose the default in <strong>Settings → Chat</strong>, and <kbd><Fact id="t3code.shortcuts.opposite" /></kbd> does the opposite for one message. Queued messages show at the end of the thread and can be edited or removed before they go. <Fact id="t3code.queueSteer" show="claim" />
+    A message sent while the agent works either <em>queues</em>, waiting until the current turn ends, or <em>steers</em>, landing in the running turn straight away. Choose the default in <strong>Settings → Chat</strong>. <Fact id="t3code.shortcuts.opposite" show="claim" />
+    Queued messages appear at the end of the thread, where you can edit or remove them before they send. Steering needs provider support.
   </p>
 
   <h3 id="diff">The diff and review</h3>
@@ -147,7 +149,7 @@ Keep it short. Do not change any files yet.`;
 
   <h3 id="worktrees">Worktrees</h3>
   <p>
-    When you start a thread you can choose <strong>New worktree</strong>. A <Term def="A second working folder for the same Git repository, on its own branch. Changes in one worktree do not touch the others until you merge them.">worktree</Term> gives that thread its own copy of the project on its own branch, so parallel threads cannot trip over each other. When the work is good, the Git buttons commit it, push it and open a pull request (<Fact id="t3code.worktrees" show="claim" />). To try the same task on several models, shift-click them in a new thread's model picker: each gets its own thread and worktree.
+    When you start a thread you can choose <strong>New worktree</strong>. A <Term def="A second working folder for the same Git repository, on its own branch. Changes in one worktree do not touch the others until you merge them.">worktree</Term> gives that thread its own copy of the project on its own branch, so parallel threads cannot trip over each other. When the work is good, the Git buttons commit it, push it and open a pull request (<Fact id="t3code.worktrees" show="claim" />). <Fact id="t3code.manyModels" show="claim" />
   </p>
 
   <h3 id="handoff">Handing a thread to another provider</h3>
@@ -157,7 +159,7 @@ Keep it short. Do not change any files yet.`;
 
   <h3 id="voice">Voice input</h3>
   <p>
-    The microphone in the message box, or <kbd><Fact id="t3code.shortcuts.dictate" /></kbd>, turns speech into text in your draft. Nothing goes to the agent until you send it, so you can read it over first. On desktop you choose where the transcription runs before the first use. One recording can last up to <Fact id="t3code.voice.maxRecording" />. The <a href={url('explain/voice/')}>voice explainer</a> covers why talking through what you want works so well with agents.
+    The microphone in the message box, or <kbd><Fact id="t3code.shortcuts.dictate" /></kbd>, turns speech into text in your draft. Read it over before you send it. One recording can last up to <Fact id="t3code.voice.maxRecording" />. <Fact id="t3code.voice.where" show="claim" /> See the <a href={url('explain/voice/')}>voice explainer</a> for more on dictation.
   </p>
 
   <h3 id="previews">Previews and the browser</h3>
@@ -178,8 +180,8 @@ Keep it short. Do not change any files yet.`;
           <tr><td><kbd><Fact id="t3code.shortcuts.effort" /></kbd></td><td>Choose the effort</td></tr>
           <tr><td><kbd><Fact id="t3code.shortcuts.permissions" /></kbd></td><td>Choose the permission mode</td></tr>
           <tr><td><kbd><Fact id="t3code.shortcuts.workspace" /></kbd></td><td>Workspace: current checkout, new worktree, or the previous worktree</td></tr>
-          <tr><td><kbd><Fact id="t3code.shortcuts.background" /></kbd></td><td>In a new thread: send, keep it running and open another</td></tr>
-          <tr><td><kbd><Fact id="t3code.shortcuts.opposite" /></kbd></td><td>While the agent works: queue instead of steer, or the reverse</td></tr>
+          <tr><td><kbd><Fact id="t3code.shortcuts.background" /></kbd></td><td><Fact id="t3code.shortcuts.background" show="claim" /></td></tr>
+          <tr><td><kbd><Fact id="t3code.shortcuts.opposite" /></kbd></td><td><Fact id="t3code.shortcuts.opposite" show="claim" /></td></tr>
           <tr><td><kbd><Fact id="t3code.shortcuts.dictate" /></kbd></td><td>Start and finish dictation</td></tr>
           <tr><td><kbd><Fact id="t3code.shortcuts.usage" /></kbd></td><td>Open the Usage page</td></tr>
         </tbody>
@@ -222,7 +224,7 @@ Keep it short. Do not change any files yet.`;
 
   <h2 id="permissions">Who decides what the agent may do</h2>
   <p>
-    Each thread has a permission mode: <Fact id="t3code.permissionModes" />. Supervised asks you before every command and file change. Full access lets the agent do both without asking. The starting default for new threads is <Fact id="t3code.defaultMode" />, which is convenient and worth changing on purpose. For your first hour, or for any project you do not know well, pick Supervised (<kbd><Fact id="t3code.shortcuts.permissions" /></kbd>) and watch what the agent asks for.
+    Each thread has a permission mode: <Fact id="t3code.permissionModes" />. <Fact id="t3code.modeMeaning" /> The starting default for new threads is <Fact id="t3code.defaultMode" />. For your first hour, or for any project you do not know well, pick Supervised (<kbd><Fact id="t3code.shortcuts.permissions" /></kbd>) and watch what the agent asks for.
   </p>
 
   <Deeper level="technical" title="How the modes are enforced">
@@ -239,7 +241,7 @@ Keep it short. Do not change any files yet.`;
     <li>The computer does the work. If the agents run on a laptop that goes to sleep, the work stops. The phone app is a remote control, not a second computer.</li>
     <li>Previews are local. The built-in browser sees the app running on your machine; someone on another device does not, until you deploy it or share it over a private network.</li>
     <li>Full access is the default for new threads, as above.</li>
-    <li>It is not looking for outside features. <Fact id="t3code.contributing" show="claim" /> Ideas go to the project's discussions.</li>
+    <li><Fact id="t3code.contributing" show="claim" /> Share feature ideas in the project's discussions.</li>
   </ul>
   <Note title="Where your code goes">
     <p><Fact id="t3code.codeNotToT3" show="claim" /></p>

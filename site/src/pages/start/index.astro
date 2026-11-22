@@ -16,7 +16,7 @@ const installHref = promptLink(installPrompt);
 const factIds = [
   'plans.claude.pro.price', 'plans.claude.pro.claudeCode', 'plans.chatgpt.plus.price', 'plans.chatgpt.limits.codexOnEveryPlan',
   't3code.price', 't3code.maker', 't3code.welcome', 't3code.newProject', 't3code.defaultMode', 't3code.modeSwitch', 't3code.skillsInComposer',
-  't3code.screen.composer', 't3code.codeNotToT3',
+  't3code.newThreadButton', 't3code.screen.composer', 't3code.codeNotToT3',
 ];
 ---
 <Board
@@ -78,12 +78,13 @@ const factIds = [
   <Tile title="4 · Start the guide" span={12} id="go">
     <div class="go">
       <div>
-        <p>It's installed. In your <code>{skill.project}</code> project, start a new thread with the <a class="src" href={url(`sources/#${anchor('t3code.newThreadButton')}`)}><b>New thread</b> button in the sidebar</a> (if it asks which project, pick <code>{skill.project}</code>). Type <code>$</code> in the message box. A list of skills opens: pick <code>{skill.name}</code>, then press <kbd>Enter</kbd> to send.</p>
+        <p><Fact id="t3code.newThreadButton" show="claim" /> If the picker opens, choose <code>{skill.project}</code>.</p>
+        <p>Type <code>$</code> in the message box, pick <code>{skill.name}</code>, then press <kbd>Enter</kbd> to send.</p>
         <div class="composer" aria-label="The message box with $agentic-guide typed in it">
           <span class="typed">${skill.name}</span>
           <span class="enter" aria-hidden="true">Enter ↵</span>
         </div>
-        <p class="small">An empty message box reads "<Fact id="t3code.screen.composer" />". Not in the list? Open the command palette, choose <b>Restart agent session</b>, or start another new thread.</p>
+        <p class="small">By default on web and desktop, the empty message box reads "<Fact id="t3code.screen.composer" />". If the skill is missing from the list, choose <b>Restart agent session</b> in the command palette or start another thread.</p>
       </div>
       <div>
         <h3>What to expect</h3>
@@ -93,7 +94,7 @@ const factIds = [
           <li>You change anything you don't like, including how the guide talks to you, with a sentence.</li>
           <li>Use made-up examples at first. What you type goes to your AI provider, <a class="src" href={url(`sources/#${anchor('t3code.codeNotToT3')}`)}>not to T3 Code's servers</a>.</li>
         </ul>
-        <p class="small">New threads start in <Fact id="t3code.defaultMode" /> mode: the agent runs commands and changes files without asking, anywhere your user account can reach, not only in the practice folder. To have it ask first, switch to Supervised yourself: <a class="src" href={url(`sources/#${anchor('t3code.modeSwitch')}`)}>open the model picker in the message box and choose <b>Permissions</b></a> at its bottom, or press <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> on Windows and Linux). The agent can't switch it for you. Every new thread starts on your default again, so check it there too.</p>
+        <p class="small">The initial default for new threads is <Fact id="t3code.defaultMode" />. The mode allows the agent to run commands and edit files without approval prompts, including outside the practice folder. To have it ask first, choose <b>Supervised</b> under <a class="src" href={url(`sources/#${anchor('t3code.modeSwitch')}`)}><b>Permissions</b> at the bottom of the model picker</a> or press <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> on Windows and Linux). Check the mode when you start another thread. It uses your configured default.</p>
       </div>
     </div>
   </Tile>

@@ -14,7 +14,7 @@ Say this before any real data comes in, in these words or close to them: "Files 
 
 Say it once, by the first result, in one line close to these words:
 
-- **plain:** "I'm in Full access: I can change files and run things anywhere your account reaches, without asking. To make me ask first, pick Supervised under Permissions in the model picker, or press Cmd/Ctrl+Shift+A."
+- **plain:** "I'm in Full access. This mode lets me run commands and edit files without approval prompts, including outside this folder. To make me ask first, pick Supervised under Permissions in the model picker, or press Cmd/Ctrl+Shift+A."
 - **some** and up: the same line. Later, when permissions come up or they ask: the four modes (Supervised, Auto-accept edits, Auto, Full access), that only they can switch it, and that the default for new threads is under **Settings → Threads → New threads → Permissions**. T3 Code is not a sandbox; the harness enforces the mode, and providers differ.
 
 A new thread shows its mode under the message box; a thread on another mode than the default shows it next to the model. Offer it once. Don't push it, and never claim the project folder limits what the agent can reach.
