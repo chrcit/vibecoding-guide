@@ -1,0 +1,23 @@
+# Round 4 fix report
+
+2026-11-21 · branch `next-version`, uncommitted. These are the five bugs from the brief and nothing else. Evidence came from `round-3/verify-sol.md`. `round-3/verify-neon.md` does not exist, so I had no Neon evidence.
+
+| # | Change (file:line) | How verified |
+| --- | --- | --- |
+| 1 | `skills/agentic-guide/SKILL.md:27`: besides the result, reply 2 writes four lines only (permission, tool call vs by hand, level, "Anything you'd change?"). Together they come to at most 60 words, or 90 at deep, and the agent has to count them. It restates nothing the page shows (no result, recommendation or number), and there is no snapshot offer. `SKILL.md:20`: the snapshot is now offered on "the first reply after reply 2 that creates or changes files". | I counted words. `world.md`'s plain permission line is 33 words. A typical computed/by-hand line is about 11 words, the level line about 10 and the question 3, which totals about 57, so the limit can be met with the required lines. The 49-word Sedge paragraph and the 26-word snapshot offer from verify-sol T2 are both now ruled out by name. |
+| 2 | `SKILL.md:32`: step 7 now says to give where data goes "with the four sentences in `mechanisms/world.md`, *Where data goes*, as written". It also says to keep the last sentence on optional T3-run features and never to say T3's servers get nothing. | I read it against verify-sol T8 and `world.md:11`. That line is unchanged and still contains the optional-extras sentence. Caveat: `world.md:11` still says "in these words or close to them". SKILL.md's "as written" now overrides that, but I left world.md alone to stay in scope. |
+| 3 | `skills/agentic-guide/figures/layers.html:22-25`: the plain-level instructions now give two more exact replacements. The Model row's `what` line changes "Writes the answer, or a tool call." to "Writes the answer, or asks to act.". The figcaption changes "the model writes text and tool calls, the harness runs the tools," to "the model writes text or asks to act, the program carries out its actions,". | The old strings in the instructions match the markup verbatim (figcaption `layers.html:107`, Model row `layers.html:132`). The figure markup itself is unchanged. |
+| 4 | `site/src/pages/start/index.astro:81`: step 4 now reads "start a new thread with the **New thread** button in the sidebar (if it asks which project, pick practice). Type `$` …". The text links to a new fact. That fact starts in the data: `site/src/data/t3code.ts:59` `t3code.newThreadButton` (verified 2026-11-21) records that the sidebar's New thread button asks which project to use when more than one is open, and that Shift-click or a project's own new-thread action starts the thread in that project. `guides/fact-check.md` was regenerated. Note: round-3 `fix-report.md` #11 did not claim this hint. It covered steps 1 and 2 only, and round-2 `build-report.md:37` had already listed the hint as not done. | Source: [thread-sidebar.md](https://github.com/pingdotgg/t3code/blob/main/docs/user/thread-sidebar.md), lines 8–15. Built page: the link resolves to `sources/#f-t3code.newThreadButton`, and that id exists once in `dist/sources/index.html`. |
+| 5 | `site/src/lib/start.ts:155`: if a destination already holds an earlier agentic-guide, the prompt says to delete it first and then copy, "so the new copy replaces it instead of landing inside it". If a destination holds anything else, the agent deletes the temporary folder, then stops and tells the user. | Read through the prompt. The rendered text appears in `dist/start/index.html`. Not replayed in a T3 thread. |
+
+## Checks run
+
+- `node scripts/check-facts.mjs --write` reported 492 facts, 0 warnings and 0 errors.
+- `cd site && pnpm judge` passed with the default base: 173 pages, check-dist clean, 8658 internal links, 0 broken.
+- `BASE_PATH=/agentic-coding-guide/ pnpm judge` passed with the same counts.
+- SKILL.md size is 1,425 words / 8,433 characters, against 1,430 / 8,431 before. To offset the additions, I cut wording only: the content-request sentence at line 24, which reply 3's "Do what they asked first" already covers; "Anything is a sentence away…" became one sentence at line 54; "The page is theirs to bend…" at line 58; "Let the work show it." at line 63; and the long file index at line 72 became a short list.
+- Lab: `install.sh --dir ~/Developer/agentic-coding-lab` exited 0. `diff -r` shows both installed copies identical to `skills/agentic-guide`. `git status --short` in the lab lists only `.agents/`, `.claude/` and `README.md`, the same as before this pass.
+
+## Not verified
+
+No new learner session was run. Fixes 1–3 are instruction changes, and I checked them by reading them against verify-sol, not in a live run.
