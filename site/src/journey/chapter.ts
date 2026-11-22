@@ -17,17 +17,19 @@ export interface Ctx {
   /** Current reader level: 'plain' (Vibe coding), 'technical', or 'engineer'. */
   level: Level;
   /**
-   * A line someone said, or (who = null) the guide's own line about the picture. What a person or
-   * program says in the reader's app (you, the model, a tool, the check) appears on the screen
-   * beside the picture; narration and people outside the app (a colleague, a client) appear in the
-   * caption under it. Each line appears in one place only.
+   * A line someone said, or (who = null) the guide's own line about the picture. A speaker with a
+   * part on the picture (you, the model or a named model, the check, a tool, a helper, a colleague…)
+   * gets a speech bubble at that part, which replaces the line before (overlay.ts). Narration, and a
+   * speaker with no part on the picture, go in the narration line in the step text. Keep a bubble
+   * line to about 38 characters: the bubble shows two lines and cuts the rest.
    */
   say(who: string | null, text: string): void;
-  /** The screen beside the picture: its form, work-log rows with real file names, earlier lines. */
+  /** Gone: the chat screen was removed. Every call does nothing until the chapters drop them. */
   screen: ScreenApi;
   /** Persistent note under the drawing explaining how this guide element joins the mental model. */
   model(part: string, text: string): void;
-  /** The readout under the drawing: [name, value] or [name, value, tag]. See StatPair. */
+  /** The readout, in the step text, as a small table: [name, value] or [name, value, tag]. Its
+   *  main number is also the counter chip on the picture (see CounterPin). See StatPair. */
   stat(pairs: StatPair[]): void;
   /** The chapter's own state. Emptied when the reader moves to another step. */
   mem: Record<string, any>;
@@ -51,13 +53,37 @@ export interface Ctx {
  */
 export type StatPair = [name: string, value: string | number, tag?: string];
 
+/**
+ * Which readout number the counter chip on the picture shows. A readout name, or its start
+ * ('beat' pins "beat, this round"); the chip then reads the name up to its first comma and the
+ * value: "beat round 1 · you ask". Or a function that writes the chip's words itself (null or ''
+ * hides the chip). Without a pin the chip shows the first pair.
+ */
+export type CounterPin = string | ((pairs: StatPair[], ctx: Ctx) => string | null);
+
+/**
+ * Where a speaker stands on the picture, keyed by the speaker as the script names it in
+ * ctx.say (any case): the anchor name a label takes ('you', 'a0', 'gate', 'r0', 'tool:run',
+ * 'card:<id>', 'peer', 'client', 'user0', 'gear:<id>', …), or null for the narration line.
+ * Adds to the shared map in overlay.ts (SPEAKERS); needed only for speakers it does not know.
+ */
+export type Speakers = Record<string, string | null>;
+
 export interface StepDef {
   scene(ctx: Ctx): SceneState;
   /** Runs when the step comes into view, after its scene is set. */
   enter?(ctx: Ctx): void;
+  /** This step's counter, when it differs from the chapter's. */
+  counter?: CounterPin;
+  /** This step's speakers, on top of the chapter's. */
+  speakers?: Speakers;
 }
 export interface Chapter {
   steps: Record<string, StepDef>;
+  /** The readout number the counter chip shows on every step. Default: the first pair. */
+  counter?: CounterPin;
+  /** Speakers the shared map does not place. */
+  speakers?: Speakers;
   /** Buttons: <button data-do="name" data-val="…">. */
   actions?: Record<string, (ctx: Ctx, val: string, el: HTMLElement) => void>;
   /** Sliders and selects: <input data-bind="name">. */
