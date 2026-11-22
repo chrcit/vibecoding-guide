@@ -1,0 +1,187 @@
+---
+/*
+  Guide v2: a drawing of T3 Code that plays the lessons. The sidebar is the table of contents
+  (chapters are projects, lessons are threads), the chat column shows the lesson as a thread, and
+  the controls sit where the composer would be. Every turn is in the HTML; v2/player.ts moves
+  through the parts and points. Brief: planning/guide-v2/BRIEF.md. Notes: planning/guide-v2/NOTES.md.
+*/
+import Base from '../../layouts/Base.astro';
+import '../../components/fig/fig.css';
+import '../../styles/journey.css';
+import '../../styles/v2.css';
+import { TOC, LESSONS, MODEL, worked, whereIs, type Part, type Lv } from '../../v2/content';
+import { lvHtml, esc } from '../../v2/html';
+import { poster } from '../../journey/picture';
+import { fact, anchor } from '../../lib/facts';
+import { url } from '../../lib/nav';
+import { t3code } from '../../data/t3code';
+
+const [ctxTitle, ctxUsed] = t3code.screen.contextWindow.value;
+const filterLabel = t3code.screen.filter.value;
+const permLabel = t3code.screen.permissionChip.value;
+const lv = (t: Lv) => lvHtml(t);
+const total = TOC.flatMap((c) => c.lessons).filter((l) => l.n).length;
+
+function meta(lessonId: string, i: number, part: Part) {
+  const { chapter, lesson } = whereIs(lessonId);
+  return `Chapter ${chapter.n} · ${chapter.title} › Lesson ${lesson.n} · ${lesson.title} › Part ${i + 1} of ${LESSONS[lessonId]!.parts.length}`;
+}
+const icon = {
+  filter: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M7 12h10M10 18h4"/></svg>',
+  partPrev: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 6l-8 6 8 6z"/></svg>',
+  partNext: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 5v14M6 6l8 6-8 6z"/></svg>',
+  prev: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
+  next: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+  play: '<svg class="i-play" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg><svg class="i-pause" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor"><rect x="6.5" y="5" width="4" height="14" rx="1"/><rect x="13.5" y="5" width="4" height="14" rx="1"/></svg>',
+  back: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
+  details: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8v.01" stroke-linecap="round"/></svg>',
+  copy: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15V6a1 1 0 0 1 1-1h9"/></svg>',
+};
+---
+<Base title="Guide v2 · Agentic Coding Guide" description="The guide as a drawing of T3 Code: every lesson is a thread, every part a turn with its picture inline." section="v2">
+  <div class="v2" data-v2 data-view="list" data-base={url('')}>
+    <aside class="v2-side" aria-label="Lessons">
+      <div class="v2-side-head">
+        <span class="v2-app">T3 Code <span class="v2-ex">example</span></span>
+        <div class="v2-filter">
+          <button type="button" class="v2-icon" data-filter-btn aria-expanded="false" aria-controls="v2-filter-pop" aria-label={filterLabel} title={filterLabel}>
+            <span data-filter-icon set:html={icon.filter} />
+          </button>
+          <div class="v2-pop" id="v2-filter-pop" data-filter-pop hidden>
+            <input type="search" class="v2-pop-search" placeholder="Search projects..." aria-label="Search projects" data-filter-q />
+            <ul role="listbox" aria-label="Projects" data-filter-list>
+              <li><button type="button" role="option" data-scope="all" aria-selected="true"><span class="v2-fav v2-fav-all" aria-hidden="true"></span>All projects</button></li>
+              {TOC.map((c) => (
+                <li><button type="button" role="option" data-scope={c.id} aria-selected="false"><span class="v2-fav" aria-hidden="true">{c.n ?? 'S'}</span>{c.title}</button></li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+      <nav class="v2-toc" data-toc>
+        {TOC.map((c) => (
+          <section class="v2-folder" data-project={c.id}>
+            <h2 class="v2-folder-head"><span class="v2-fav" aria-hidden="true">{c.n ?? 'S'}</span>{c.title}</h2>
+            <ol>
+              {c.lessons.map((l) => (
+                <li>
+                  <a class="v2-row" href={`#${l.id}`} data-lesson={l.id} data-plays={l.plays ? '' : undefined}>
+                    <span class="v2-row-title">{l.title}</span>
+                    <span class="v2-pill" data-status></span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </section>
+        ))}
+      </nav>
+      <p class="v2-side-foot">A drawing of T3 Code, not the app. The club, its guests and the numbers are made up. Lessons 1 and 2 of {total} play.</p>
+    </aside>
+
+    <section class="v2-main" aria-label="Lesson thread">
+      <header class="v2-head">
+        <a class="v2-icon v2-to-list" href="#" data-to-list aria-label="All lessons" set:html={icon.back} />
+        <p class="v2-crumb"><span class="v2-fav" aria-hidden="true" data-crumb-fav>1</span><span data-crumb-project>Hand it over</span><span class="v2-sep" aria-hidden="true">/</span><b data-crumb-thread>Say what you want</b></p>
+        <div class="v2-details" data-ui="context" hidden>
+          <button type="button" class="v2-icon" data-details-btn aria-expanded="true" aria-controls="v2-details-pop" aria-label="Thread details" set:html={icon.details} />
+          <div class="v2-pop v2-details-pop" id="v2-details-pop" data-details-pop>
+            <p class="v2-pop-title">{ctxTitle} <span class="v2-ex">example</span></p>
+            <div class="v2-meter" aria-hidden="true"><span data-ctx-bar></span></div>
+            <p class="v2-pop-val" data-ctx-text data-tpl={ctxUsed}></p>
+          </div>
+        </div>
+      </header>
+
+      <div class="v2-scroll" data-scroll>
+        {Object.values(LESSONS).map((lesson) => lesson.parts.map((part, i) => {
+          const last = part.points.at(-1)!;
+          return (
+            <article class="v2-turn" data-turn data-lesson={lesson.id} data-part={i} data-fresh={part.fresh ? '' : undefined}>
+              {part.fresh && <p class="v2-divider"><span>{t3code.screen.newThread.value}</span></p>}
+              <div class="v2-user">
+                <p>{part.request}</p>
+                {part.attach && <p class="v2-attach">{part.attach}</p>}
+              </div>
+              {part.log && (
+                <details class="v2-log" data-log open>
+                  <summary><span data-log-sum data-done={worked(part.log.took)}>{worked(part.log.took)}</span></summary>
+                  <ol>
+                    {part.log.rows.map((r) => (
+                      <li data-at={r.at} data-tone={r.tone}>
+                        <span class="v2-log-label" set:html={lv(r.label)} />
+                        {r.detail && <span class="v2-log-detail" set:html={lv(r.detail)} />}
+                      </li>
+                    ))}
+                  </ol>
+                </details>
+              )}
+              <div class="v2-reply">
+                <p class="v2-meta">{meta(lesson.id, i, part)}</p>
+                <h2 class="v2-title">{part.title}</h2>
+                <p class="v2-lede">{part.lede}</p>
+                <figure class="v2-fig">
+                  <div class="v2-stage j-stage" data-stage role="img" aria-label={`${part.title}: ${last.say}`}>
+                    <Fragment set:html={poster(part.points[0]!.state, { w: 800, h: 450 })} />
+                  </div>
+                  <figcaption class="v2-cap" aria-live="polite"><span class="v2-cap-n" data-cap-n>1 of {part.points.length}</span> <span data-cap>{part.points[0]!.say}</span></figcaption>
+                  <ol class="v2-points" data-points>
+                    {part.points.map((p) => <li>{p.say}</li>)}
+                  </ol>
+                </figure>
+                <div class="v2-answer" data-answer>
+                  {part.answer.map((a) => <p set:html={lv(a)} />)}
+                  {part.deeper && <p class="v2-deeper" data-min={part.deeper.level}>{part.deeper.text}</p>}
+                </div>
+                <div class="v2-try">
+                  <div class="v2-try-prompt">
+                    <code data-prompt>{part.tryIt.prompt}</code>
+                    <button type="button" class="v2-copy" data-copy aria-label="Copy the prompt"><Fragment set:html={icon.copy} /><span>Copy</span></button>
+                  </div>
+                  <p class="v2-try-t3"><b>In T3 Code</b> {part.tryIt.t3}</p>
+                </div>
+                <details class="v2-src">
+                  <summary>Sources ({part.sources.length})</summary>
+                  <ul>
+                    {part.sources.map((id) => { const f = fact(id); return <li><a href={url(`sources/#${anchor(id)}`)}>{f.claim}</a></li>; })}
+                  </ul>
+                </details>
+              </div>
+            </article>
+          );
+        }))}
+        <article class="v2-turn v2-soon" data-soon hidden>
+          <div class="v2-reply">
+            <p class="v2-meta" data-soon-meta></p>
+            <h2 class="v2-title" data-soon-title></h2>
+            <p class="v2-lede">This lesson is in the table of contents only. Lessons 1 and 2 play.</p>
+            <p><a href="#l1" data-lesson-link="l1">Play lesson 1, Say what you want</a></p>
+          </div>
+        </article>
+      </div>
+
+      <div class="v2-dock">
+        <div class="v2-chips" data-chips>
+          <span class="v2-chip" data-ui="model" hidden>{MODEL}</span>
+          <span class="v2-chip" data-ui="perm" hidden aria-label="" data-perm-tpl={permLabel}><span data-perm></span></span>
+        </div>
+        <div class="v2-ctl" role="group" aria-label="Lesson controls">
+          <button type="button" class="v2-btn" data-c="part-prev" aria-label="Previous part" set:html={icon.partPrev} />
+          <button type="button" class="v2-btn" data-c="pt-prev" aria-label="Back one point" set:html={icon.prev} />
+          <div class="v2-ctl-mid">
+            <p class="v2-ctl-title" data-c-title>Text in, text out</p>
+            <p class="v2-ctl-where"><span data-c-where>Part 1 of 3</span><span class="v2-dots" data-dots aria-hidden="true"></span></p>
+          </div>
+          <button type="button" class="v2-btn" data-c="pt-next" aria-label="Forward one point" set:html={icon.next} />
+          <button type="button" class="v2-btn" data-c="part-next" aria-label="Next part" set:html={icon.partNext} />
+          <button type="button" class="v2-btn v2-play" data-c="play" aria-label="Play" aria-pressed="false" set:html={icon.play} />
+        </div>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<script>
+  import { boot } from '../../v2/player';
+  const root = document.querySelector<HTMLElement>('[data-v2]');
+  if (root) boot(root);
+</script>

@@ -62,6 +62,12 @@ export const t3code = {
     doc('thread-sidebar'),
     { verified: '2026-11-22' },
   ),
+  newThreadCarries: fact(
+    'model and mode',
+    'A new thread carries your model and mode selections, unless the destination project has its own model default.',
+    doc('thread-sidebar'),
+    { verified: '2026-11-22' },
+  ),
   voice: {
     exists: fact(true, 'T3 Code has voice dictation in the composer, in comments and in review replies.', doc('voice-input')),
     where: fact(

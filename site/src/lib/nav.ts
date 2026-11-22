@@ -10,6 +10,7 @@ export const sections = [
   { id: 'library', label: 'Library', path: 'library/', ready: true },
   { id: 'models', label: 'Models', path: 'models/', ready: true },
   { id: 'archive', label: 'Archive', path: 'archive/', ready: true },
+  { id: 'v2', label: 'Guide v2', path: 'v2/', ready: true },
   { id: 'start', label: 'Start', path: 'start/', ready: false },
   { id: 'explain', label: 'Explainers', path: 'explain/', ready: false },
   { id: 't3-code', label: 'T3 Code', path: 't3-code/', ready: false },
