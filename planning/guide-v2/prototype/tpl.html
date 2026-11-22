@@ -1,0 +1,236 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson as a thread: prototype</title>
+<style>
+/*PICCSS*/
+</style>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--font-sans); color: var(--foreground); font-size: 14px; line-height: 1.5; }
+.note { color: var(--muted-foreground); font-size: 13px; margin: 0 0 10px; }
+.app { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; display: grid; grid-template-columns: 190px 1fr; background: var(--background); }
+.side { border-right: 1px solid var(--border); background: var(--card); padding: 10px 8px; font-size: 12.5px; }
+.side h3 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--muted-foreground); margin: 2px 6px 8px; }
+.th { display: grid; grid-template-columns: 10px 1fr; gap: 6px; align-items: start; padding: 6px; border-radius: 6px; transition: opacity .25s; }
+.th[data-cur] { background: var(--secondary); }
+.th[data-child] { margin-left: 12px; }
+.th[hidden] { display: none; }
+.th .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; background: var(--muted-foreground); }
+.th[data-s='Working'] .dot { background: var(--warning); animation: pulse 1.2s infinite; }
+.th[data-s='Completed'] .dot { background: var(--success); }
+.th b { display: block; font-weight: 500; line-height: 1.3; }
+.th small { color: var(--muted-foreground); }
+@keyframes pulse { 50% { opacity: .35; } }
+.main { min-width: 0; display: flex; flex-direction: column; }
+.bar { display: flex; gap: 8px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--border); font-size: 12.5px; color: var(--muted-foreground); }
+.bar b { color: var(--foreground); font-weight: 600; }
+.bar .ex { margin-left: auto; border: 1px solid var(--border); border-radius: 99px; padding: 0 8px; font-size: 11px; }
+.thread { padding: 14px; display: grid; gap: 14px; }
+.user { justify-self: end; max-width: 85%; background: var(--secondary); color: var(--secondary-foreground); border-radius: var(--radius); padding: 8px 12px; }
+.log { border: 1px solid var(--border); border-radius: var(--radius); font-size: 12.5px; }
+.log summary { padding: 7px 10px; cursor: pointer; color: var(--muted-foreground); }
+.log ol { list-style: none; margin: 0; padding: 0 0 4px; }
+.log li { display: grid; grid-template-columns: 104px 1fr; gap: 8px; padding: 4px 10px; border-top: 1px solid var(--border); transition: opacity .25s, background .25s; }
+.log li span { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted-foreground); }
+.log li[data-later] { opacity: .45; }
+.log li[data-now] { background: var(--accent-surface, var(--secondary)); }
+.meta { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted-foreground); margin: 0 0 2px; }
+.reply h2 { font-size: 17px; margin: 0 0 4px; }
+.reply p { margin: 0 0 8px; }
+.figure { border: 1px solid var(--border); border-radius: var(--radius); margin: 10px 0 12px; background: var(--card); overflow: hidden; }
+.stage { position: relative; aspect-ratio: 2 / 1; }
+.cap { padding: 8px 12px 0; min-height: 3.2em; font-weight: 500; }
+.ctl { display: flex; align-items: center; gap: 8px; padding: 6px 8px 8px; }
+.ctl button { font: inherit; min-width: 44px; min-height: 44px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--background); color: var(--foreground); cursor: pointer; padding: 0 12px; }
+.ctl button.go { background: var(--primary); color: var(--primary-foreground); border-color: transparent; font-weight: 600; }
+.ctl button:disabled { opacity: .4; cursor: default; }
+.dots { display: flex; gap: 2px; margin: 0 auto; }
+.dots button { min-width: 28px; padding: 0; border: 0; background: none; }
+.dots button::before { content: ''; display: block; width: 9px; height: 9px; margin: auto; border-radius: 50%; background: var(--border); }
+.dots button[aria-current]::before { background: var(--primary); transform: scale(1.3); }
+.done[data-later] { opacity: .45; }
+.done { transition: opacity .25s; }
+.composer { border-top: 1px solid var(--border); padding: 10px 14px 12px; display: grid; gap: 8px; }
+.sugg { display: flex; flex-wrap: wrap; gap: 6px; }
+.sugg button { font: inherit; font-size: 12.5px; border: 1px solid var(--border); background: var(--card); color: var(--foreground); border-radius: 99px; padding: 6px 12px; min-height: 36px; cursor: pointer; text-align: left; }
+.sugg button[data-next] { border-color: var(--primary); }
+.box { display: flex; gap: 8px; align-items: center; border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; color: var(--muted-foreground); min-height: 44px; }
+.box span { flex: 1; }
+.box em { font-style: normal; font-size: 11.5px; border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; }
+button:focus-visible, summary:focus-visible, textarea:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.pic .j-label { font-size: 11.5px; }
+@media (max-width: 560px) {
+  .app { grid-template-columns: 1fr; }
+  .side { border-right: 0; border-bottom: 1px solid var(--border); display: flex; gap: 6px; overflow-x: auto; padding: 8px; }
+  .side h3 { display: none; }
+  .th { flex: 0 0 auto; max-width: 170px; border: 1px solid var(--border); }
+  .th[data-child] { margin-left: 0; }
+  .log li { grid-template-columns: 1fr; gap: 0; }
+  .pic .j-label { font-size: 10.5px; padding: 0 .25rem; }
+  .thread { padding: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+/* the site's tokens, read from the thread's theme */
+.pic { --ink: var(--foreground); --ink-2: var(--foreground); --paper: var(--background); --paper-2: var(--secondary); --accent: var(--destructive); --blue: var(--info); --green: var(--success); --sans: var(--font-sans); --text-xs: 12px; --j-shade: var(--foreground); --j-work: #c58f0c; }
+@media (prefers-color-scheme: dark) { .pic { --j-shade: var(--background); --j-work: #e7bd45; } }
+.pic .j-ent, .pic .j-cam { transition: none; }
+/* round 2 form */
+.form { margin-top: 28px; }
+.form h1 { font-size: 17px; margin: 0 0 4px; }
+.q { border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin: 0 0 10px; background: var(--card); }
+.q h2 { font-size: 14.5px; margin: 0 0 6px; } .q h2 span { color: var(--muted-foreground); margin-right: 6px; }
+.q p { margin: 0 0 6px; }
+.rec { border-left: 3px solid var(--primary); padding-left: 10px; margin: 8px 0; }
+.rec .k { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted-foreground); }
+.pick { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.pick label { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 12px; min-height: 40px; cursor: pointer; }
+.pick label:has(input:checked) { border-color: var(--primary); background: var(--secondary); }
+textarea { width: 100%; font: inherit; color: inherit; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; resize: vertical; }
+#copy { font: inherit; font-weight: 600; background: var(--primary); color: var(--primary-foreground); border: 0; border-radius: var(--radius); padding: 10px 16px; min-height: 44px; cursor: pointer; }
+#status { color: var(--muted-foreground); font-size: 13px; margin-left: 10px; }
+#compiled { font-family: var(--font-mono); font-size: 12px; margin-top: 8px; }
+</style>
+
+<p class="note">Prototype. One lesson part shown as one turn in a thread. Use the arrows under the picture: the work log and the thread list follow it. The picture is drawn by the site's own code; the app around it is a sketch.</p>
+
+<div class="app">
+  <aside class="side" aria-label="Threads">
+    <h3>Threads</h3>
+    <div class="th" data-cur data-t="lead"><i class="dot"></i><div><b>Door list for tonight</b><small></small></div></div>
+    <div class="th" data-child data-t="h" hidden><i class="dot"></i><div><b>Import the spreadsheet</b><small></small></div></div>
+    <div class="th" data-child data-t="h" hidden><i class="dot"></i><div><b>Check-in screen</b><small></small></div></div>
+    <div class="th" data-child data-t="h" hidden><i class="dot"></i><div><b>Live head count</b><small></small></div></div>
+  </aside>
+  <div class="main">
+    <div class="bar"><b>Door list for tonight</b> · Opus 5.5 <span class="ex">example</span></div>
+    <div class="thread">
+      <div class="user">Door staff need tonight’s guest list on their phones by ten. They tick people in and see plus-ones. I want to see how full we are.</div>
+
+      <details class="log" open>
+        <summary>Worked for 14 min · 3 threads started</summary>
+        <ol id="log">
+          <li data-b="1"><span>Read file</span><div>guest-list.xlsx: 412 names on 3 sheets</div></li>
+          <li data-b="1"><span>Plan</span><div>Three jobs that do not touch the same files</div></li>
+          <li data-b="2"><span>Started thread</span><div>Import the spreadsheet</div></li>
+          <li data-b="2"><span>Started thread</span><div>Check-in screen</div></li>
+          <li data-b="2"><span>Started thread</span><div>Live head count</div></li>
+          <li data-b="3"><span>Waiting</span><div>3 threads working, each in its own copy of the project</div></li>
+          <li data-b="4"><span>Report</span><div>Import: 412 names in, 9 listed twice</div></li>
+          <li data-b="4"><span>Report</span><div>Check-in: works on a phone, also without signal</div></li>
+          <li data-b="4"><span>Report</span><div>Head count: 0 of 600, moves with every tick</div></li>
+          <li data-b="5"><span>Ran command</span><div>The check: 41 tests, and the page opened at phone size. Passed</div></li>
+          <li data-b="5"><span>Changed files</span><div>3 changes merged into main</div></li>
+        </ol>
+      </details>
+
+      <div class="reply">
+        <p class="meta">Chapter 2 · The agents › Lesson 12 · A lead › Part 1 of 4</p>
+        <h2>One plans, three build</h2>
+        <p>The agent you talk to stops building. Watch its window stay small while three others fill.</p>
+
+        <div class="figure">
+          <div class="stage pic tile" id="stage"></div>
+          <p class="cap" id="cap" aria-live="polite"></p>
+          <div class="ctl">
+            <button type="button" id="prev" aria-label="Back one point">←</button>
+            <div class="dots" id="dots"></div>
+            <button type="button" id="next" class="go" aria-label="Forward one point">→</button>
+          </div>
+        </div>
+
+        <div class="done" id="done">
+          <p>The door list is ready at <u>door.example</u>. Staff search a name and tap to check someone in. Plus-ones count when they arrive, and the head count sits at the top of every screen.</p>
+          <p>I split the work into three jobs and gave each to a helper with its own copy of the project, so all three could build at once. I read their three short reports, not their work.</p>
+          <p>One thing for you: nine people are on the spreadsheet twice with different plus-ones. I kept the higher number. Look at those nine before the doors open.</p>
+        </div>
+      </div>
+    </div>
+    <div class="composer">
+      <div class="sugg">
+        <button type="button">← Lesson 11 · Side by side</button>
+        <button type="button" data-next>Next: what does the lead read? →</button>
+        <button type="button">Break it: let all three share one folder</button>
+      </div>
+      <div class="box"><span>Ask anything…</span><em>Opus 5.5</em><em>Auto-accept edits</em></div>
+    </div>
+  </div>
+</div>
+
+<div class="form">
+  <h1>Round 2</h1>
+  <p class="note">“Yes” accepts the recommendation.</p>
+  <div id="qs"></div>
+  <div><button type="button" id="copy">Copy answers</button><span id="status" role="status"></span></div>
+  <textarea id="compiled" rows="8" readonly aria-label="Your answers as text"></textarea>
+</div>
+
+<script>
+const D = /*DATA*/;
+const CAPS = [
+  'You say what you want, once.',
+  'The lead reads the spreadsheet and splits the work into three jobs.',
+  'It starts three helpers. Each gets a brief and an empty window.',
+  'The helpers build at the same time, each in its own copy of the project.',
+  'Each sends back a short report. The lead reads those, not the work.',
+  'A check runs in front of main. Three changes land, and you get one summary.',
+];
+const stage = document.getElementById('stage'), cap = document.getElementById('cap'), dots = document.getElementById('dots');
+const prev = document.getElementById('prev'), next = document.getElementById('next');
+let beat = 0;
+CAPS.forEach((_, i) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', 'Point ' + (i + 1) + ' of ' + CAPS.length); b.onclick = () => show(i); dots.append(b); });
+function show(i) {
+  beat = Math.max(0, Math.min(CAPS.length - 1, i));
+  const f = D.beats[beat];
+  stage.innerHTML = D.head[beat] + f.ents.map((n) => D.chunks[n]).join('') + '</g></svg><div class="j-labels">' +
+    f.labels.map((l) => `<span class="j-label" data-place="${l.place}" style="left:${l.x}%;top:${l.y}%">${l.text}</span>`).join('') + '</div>';
+  cap.textContent = (beat + 1) + ' of ' + CAPS.length + ' · ' + CAPS[beat];
+  [...dots.children].forEach((d, n) => n === beat ? d.setAttribute('aria-current', 'step') : d.removeAttribute('aria-current'));
+  prev.disabled = beat === 0; next.disabled = beat === CAPS.length - 1;
+  document.querySelectorAll('#log li').forEach((li) => { const b = +li.dataset.b; li.toggleAttribute('data-later', b > beat); li.toggleAttribute('data-now', b === beat); });
+  document.getElementById('done').toggleAttribute('data-later', beat < CAPS.length - 1);
+  document.querySelectorAll('.th').forEach((t) => {
+    const lead = t.dataset.t === 'lead';
+    const s = lead ? (beat === 5 ? 'Completed' : 'Working') : (beat >= 4 ? 'Completed' : 'Working');
+    if (!lead) t.hidden = beat < 2;
+    t.dataset.s = s; t.querySelector('small').textContent = s;
+  });
+}
+prev.onclick = () => show(beat - 1); next.onclick = () => show(beat + 1);
+show(0);
+
+const Q = [
+  { t: 'A lesson part is one turn in a thread',
+    b: '<p>As above: your request, the work log, then a reply that opens with where you are in the guide, shows the picture, and ends with what the agent actually answered. On the site this is scripted. In the skill the learner’s own agent writes it.</p>',
+    r: 'Yes, this is the shape for every lesson part, on phone and desktop.' },
+  { t: 'Two kinds of moving',
+    b: '<p>The arrows under the picture move through the points of one animation, and the work log and thread list follow. Moving to the next lesson part is “sending” the suggested next message: a new turn appears below and the old ones stay above, as in a real thread.</p>',
+    r: 'Yes to both. Back through lesson parts is scrolling up, plus a Back suggestion.' },
+  { t: 'Breaking it is a message too',
+    b: '<p>The buttons and sliders that let the reader break the mechanism become suggested messages (“let all three share one folder”). The reply is a new turn with its own picture.</p>',
+    r: 'Yes for either-or choices. A slider (how many helpers) stays a control inside the picture, because nobody types a number twenty times.' },
+  { t: 'Same request at every level',
+    b: '<p>Your two audiences: people who only ever say what they want, and people who do the small changes themselves today. The request can be the same sentence for both.</p>',
+    r: 'The request never changes with the level. The level changes how much of the how the work log and the reply show: plain sees outcomes, technical sees files, tests and commands, engineer sees the trade-offs and the cost.' },
+  { t: 'The nightclub, everywhere',
+    b: '<p>I read “B, but a nightclub” as: the nightclub replaces the football club. Open point is whether chapter 1 (what a model is, providers, Git, the first loop) uses it too.</p>',
+    r: 'One nightclub in all three chapters. Chapter 1 shows the owner’s side before any software (a photo of the paper guest list, a voice note after closing); chapters 2 and 3 build and run the software.' },
+  { t: 'The story is one club over time',
+    b: '<p>You want the narrative to sit in the example. Each chapter could cover a stretch of time with one goal the reader cares about.</p>',
+    r: 'Chapter 1: the owner tries AI for the first time. Chapter 2: one Friday, the door list has to work by ten. Chapter 3: the weeks after, when it costs money, a co-owner reviews it, guests use it, and it runs while the laptop is shut. The size of each request waits for the research.' },
+  { t: 'Names',
+    b: '<p>You chose chapter, lesson, part. The code uses the same words the other way round today (a “chapter” file is a lesson, a “part” is one of the three).</p>',
+    r: 'Chapter (3), lesson (21), part (4 or 5 per lesson). A <b>point</b> is one stop in a part’s animation. A <b>thread</b> is T3 Code’s own word for one conversation in its list, as in the sketch. Words on the picture are <b>annotations</b>. The code is renamed to match later, as its own job.' },
+];
+const root = document.getElementById('qs');
+Q.forEach((q, i) => { const n = i + 1; const el = document.createElement('section'); el.className = 'q';
+  el.innerHTML = `<h2><span>Q${n}</span>${q.t}</h2>${q.b}<div class="rec"><b class="k">Recommended</b>${q.r}</div>
+  <div class="pick" role="radiogroup" aria-label="Answer to question ${n}"><label><input type="radio" name="a${n}" value="Yes"> Yes</label><label><input type="radio" name="a${n}" value="No"> No</label><label><input type="radio" name="a${n}" value="Other"> Other</label></div>
+  <textarea rows="2" id="n${n}" placeholder="Notes (optional)" aria-label="Notes for question ${n}"></textarea>`; root.append(el); });
+const out = document.getElementById('compiled');
+const compile = () => { out.value = 'Round 2 answers\n' + Q.map((q, i) => { const n = i + 1; const a = document.querySelector(`input[name=a${n}]:checked`); const note = document.getElementById('n' + n).value.trim(); return `Q${n} (${q.t}): ${a ? a.value : 'no answer'}${note ? ' — ' + note : ''}`; }).join('\n'); };
+document.querySelector('.form').addEventListener('input', compile); compile();
+document.getElementById('copy').addEventListener('click', async () => { compile(); const s = document.getElementById('status');
+  try { await navigator.clipboard.writeText(out.value); s.textContent = 'Copied.'; }
+  catch { out.focus(); out.select(); let ok = false; try { ok = document.execCommand('copy'); } catch {} s.textContent = ok ? 'Copied.' : 'Copy was blocked here: the text is selected, press Ctrl or Cmd + C.'; } });
+</script>
