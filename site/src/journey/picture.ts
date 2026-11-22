@@ -383,7 +383,7 @@ export interface Picture { ents: Ent[]; labels: PlacedLabel[]; cam: Camera; kind
 const depth = ([x, y]: XY) => x + y;
 const blockSig = (blocks?: Block[]) => (blocks ?? []).map((b) => b.t[0] + b.h.toFixed(1)).join('');
 
-function anchorOf(s: SceneState, name: string): P3 | null {
+export function anchorOf(s: SceneState, name: string): P3 | null {
   const [what, id] = name.split(':') as [string, string | undefined];
   const agent = (aid: string) => s.agents.find((a) => a.id === aid);
   if (what === 'you' && s.you) return [s.you[0], s.you[1], 27];
@@ -413,7 +413,7 @@ function anchorOf(s: SceneState, name: string): P3 | null {
 }
 
 /** Corner points of a part, for the camera. */
-function extent(s: SceneState, key: string): P3[] {
+export function extent(s: SceneState, key: string): P3[] {
   const boxPts = ([x, y]: XY, rx: number, ry: number, h: number): P3[] => [
     [x - rx, y - ry, 0], [x + rx, y - ry, 0], [x - rx, y + ry, 0], [x + rx, y + ry, 0], [x - rx, y - ry, h], [x + rx, y + ry, h], [x - rx, y + ry, h], [x + rx, y - ry, h],
   ];

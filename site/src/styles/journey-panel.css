@@ -240,3 +240,17 @@ html:has(.j-root[data-mode='panel']) .site-footer { display: none; }
 
 /* On the wide layout the sheet covers the panel exactly. */
 @media (min-width: 60rem) { .jp-sheet { width: clamp(24rem, 27vw, 31rem); } }
+
+/* ---------- with the phone stepper (journey.css, "journey-mobile") ---------- */
+
+/* Wide: the panel's navigator replaces the step buttons on the picture. */
+@container journey (min-width: 60rem) {
+  html.js .j-root[data-panel] .j-nav { display: none; }
+}
+/* Narrow: the panel is the column under the picture; the head comes with the first step only,
+   and the step panel (.j-steps) takes the rest of the screen and scrolls on its own. */
+@container journey (width < 60rem) {
+  .j-root[data-ready] > .jp { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+  .j-root[data-ready]:not([data-at-first]) .jp-head { display: none; }
+  .j-root[data-ready] .jp-head { flex: none; }
+}

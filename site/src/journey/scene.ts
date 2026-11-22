@@ -4,10 +4,13 @@
  * scrolls on. Browser only. What is drawn is decided in picture.ts.
  */
 import type { Level } from '../lib/levels';
-import { picture, puckMarkup, flat, type SceneState, type XY, type Kind, type Camera, type Agent, type Block } from './picture';
+import { picture, puckMarkup, flat, anchorOf, extent, type SceneState, type XY, type Kind, type Camera, type Agent, type Block, type PlacedLabel, type P3 } from './picture';
 
 const NS = 'http://www.w3.org/2000/svg';
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+/** A box on the stage, in pixels from its top left corner. */
+export interface Box { l: number; t: number; w: number; h: number }
 
 /** Thrown inside a script when it has been replaced; `run` swallows it. */
 class Stopped extends Error {}
@@ -42,6 +45,9 @@ export class Scene {
   onDraw?: (state: SceneState) => void;
   /** Called when a script starts. */
   onRun?: () => void;
+  /** Boxes on the stage that labels keep clear of: the counter chip, the step buttons (run.ts). */
+  reserve?: () => Box[];
+  private placed: PlacedLabel[] = [];
   speed = 1;
   /** The site's base path, put in front of a label's side-view link. */
   base = '/';
@@ -177,6 +183,7 @@ export class Scene {
       this.labelEls.delete(key);
       setTimeout(() => el.remove(), 300);
     }
+    this.placed = pic.labels;
     this.spread(pic.labels);
     this.onKinds?.(pic.kinds);
     this.onDraw?.(this.state);
@@ -201,14 +208,15 @@ export class Scene {
       boxes.push({ el, l, t, w, h, place: lab.place });
     }
     const pad = 4, gap = 2;
-    const hit = (a: typeof boxes[0], b: typeof boxes[0]) => a.l < b.l + b.w + gap && b.l < a.l + a.w + gap && a.t < b.t + b.h + gap && b.t < a.t + a.h + gap;
+    const hit = (a: Box, b: Box) => a.l < b.l + b.w + gap && b.l < a.l + a.w + gap && a.t < b.t + b.h + gap && b.t < a.t + a.h + gap;
     const placed: typeof boxes = [];
+    const kept = this.reserved();
     for (const b of [...boxes].sort((a, c) => a.t - c.t)) {
       const t0 = b.t;
       b.l = Math.max(pad, Math.min(W - pad - b.w, b.l));
       b.t = Math.max(pad, Math.min(H - pad - b.h, b.t));
       for (let i = 0; i < 6; i++) {
-        const other = placed.find((o) => hit(o, b));
+        const other: Box | undefined = placed.find((o) => hit(o, b)) ?? kept.find((o) => hit(o, b));
         if (!other) break;
         // Move away from the label it hits: above it for a label that sits on top of its part,
         // below it otherwise, and the other way when that would leave the frame.
@@ -223,6 +231,63 @@ export class Scene {
       const l0 = b.place === 'left' ? x - b.w - 8 : b.place === 'right' ? x + 8 : x - b.w / 2;
       b.el.style.setProperty('--dx', `${Math.round(b.l - l0)}px`);
     }
+  }
+
+  /** Lay the labels out again, when a reserved box changed size (run.ts). */
+  relayout() { this.spread(this.placed); }
+
+  reserved(): Box[] { return this.reserve?.() ?? []; }
+
+  /** The anchor of the label whose words are this name ("Opus 5.5"), or null. */
+  labelFor(name: string): string | null {
+    const want = name.trim().toLowerCase();
+    if (!want) return null;
+    for (const [key, el] of this.labelEls) {
+      const text = (el.dataset.text ?? '').trim().toLowerCase();
+      if (text === want || (text.startsWith(want) && /[^a-z0-9]/.test(text[want.length] ?? ''))) return key.slice(0, key.lastIndexOf('|'));
+    }
+    return null;
+  }
+
+  /**
+   * Where a part is on the stage, with its label: a box in pixels, from where the part is going
+   * (not where it is mid-glide). Null when the part is not drawn or the camera leaves it out.
+   * `anchor` is a label's anchor name ("you", "a0", "gate", "tool:run", "card:sum", "peer", …).
+   */
+  partBox(anchor: string): (Box & { ax: number; ay: number }) | null {
+    const s = this.state;
+    const W = this.root.clientWidth, H = this.root.clientHeight;
+    if (!W || !H) return null;
+    const point = /^-?[\d.]+,-?[\d.]+,-?[\d.]+$/.test(anchor) ? (anchor.split(',').map(Number) as P3) : anchorOf(s, anchor);
+    const key = anchor.startsWith('tool:') ? 'tools' : anchor.startsWith('card:') ? 'tray' : anchor.startsWith('tank:') ? anchor.slice(5)
+      : /^(rules|skills|main)$/.test(anchor) ? 'project' : anchor;
+    const pts = [...extent(s, key), ...(point ? [point] : [])];
+    if (!pts.length) return null;
+    const sc = W / this.frame.w, cam = this.camera;
+    const xy = pts.map(([x, y, z]) => { const [fx, fy] = flat(x, y, z); return [(fx * cam.s + cam.tx) * sc, (fy * cam.s + cam.ty) * sc] as const; });
+    // The anchor point itself: the top of the part (a station's cap, a pawn's head).
+    const [ax, ay] = point ? xy[xy.length - 1]! : [0, 0];
+    let l = Math.min(...xy.map((p) => p[0])), r = Math.max(...xy.map((p) => p[0]));
+    let t = Math.min(...xy.map((p) => p[1])), b = Math.max(...xy.map((p) => p[1]));
+    // The part's own labels count as the part: its name, and for a station the label on its window.
+    for (const at of [anchor, `tank:${anchor}`]) {
+      const label = this.labelEls.get(at + '|a') ?? this.labelEls.get(at + '|s');
+      if (!label || label.style.opacity === '0') continue;
+      const lb = this.labelBox(label, W, H);
+      l = Math.min(l, lb.l); t = Math.min(t, lb.t); r = Math.max(r, lb.l + lb.w); b = Math.max(b, lb.t + lb.h);
+    }
+    if (r < 0 || b < 0 || l > W || t > H) return null;
+    return point ? { l, t, w: r - l, h: b - t, ax, ay } : { l, t, w: r - l, h: b - t, ax: (l + r) / 2, ay: t };
+  }
+
+  /** Where a label ends up, from its place and its nudge (spread), not where it is mid-glide. */
+  private labelBox(el: HTMLElement, W: number, H: number): Box {
+    const x = (parseFloat(el.style.left) / 100) * W + (parseFloat(el.style.getPropertyValue('--dx')) || 0);
+    const y = (parseFloat(el.style.top) / 100) * H + (parseFloat(el.style.getPropertyValue('--dy')) || 0);
+    const w = el.offsetWidth, h = el.offsetHeight, place = el.dataset.place;
+    const l = place === 'left' ? x - w - 8 : place === 'right' ? x + 8 : x - w / 2;
+    const t = place === 'top' || !place ? y - h - 6 : place === 'bottom' ? y + 8 : y - h / 2;
+    return { l, t, w, h };
   }
 
   private showTip(el: HTMLElement) {

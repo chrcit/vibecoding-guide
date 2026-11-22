@@ -63,21 +63,21 @@ only through `termLabel()` (below), so the word, the definition and the page agr
   one prompt to copy, or one small table. That is where the sourced numbers, the command and "how a
   named tool does it" go back in. The step reads complete without it.
 - Name real things. A station is labelled "Opus 5.5" or "GPT-6.2 Sol" when the step is about those
-  two, with the names read from `src/data/models.ts`, and the line under the picture is spoken by
-  that name. The guide still does not say one is better than the other.
+  two, with the names read from `src/data/models.ts`, and a line on the picture is spoken by
+  that name, in a bubble at that station. The guide still does not say one is better than the other.
 - Levels decide the output. plain sees what got done and what to do next; technical also sees the
   type check, the tests, the commands and the files; engineer also sees architecture, invariants,
   failure modes and cost. Three places carry it: the step text (`<Step level>` for a whole step,
   `<ForLevel is inline>` inside one), the script (`ctx.level`, `byLevel(ctx.level, {...})` for
-  the line under the picture, the readout and the note), and the picture (a label that names a
+  the bubble and the narration line, the readout and the note), and the picture (a label that names a
   term picks its word per level: the check reads "check", "typecheck · tests", "tsc --noEmit ·
   npm test"). Changing the level re-runs the step on show; nothing has to listen for it.
 - Every chapter lets the reader break the thing it teaches: take a tool away, drop the gate, send a
   thin brief, share one folder. Show what happens; do not warn about it.
 - A part keeps its place and its meaning in every chapter. New parts go into `picture.ts` with a
   place on the floor plan, never into one chapter.
-- What is said on the screen and under the picture is what the people and programs in it said (see
-  "The screen and the picture"). Numbers under it are counted from what just happened.
+- What is said on the picture and in the narration line is what the people and programs in it said
+  (see "The picture and the step text"). The numbers are counted from what just happened.
 - One of a step's two sentences says what the reader is looking at, using the label on the part.
   Ten test readers found the steps short enough and the pictures one sentence short.
 - The first step of a chapter says where its parts were met before, with a link by the lesson's
@@ -95,8 +95,8 @@ only through `termLabel()` (below), so the word, the definition and the page agr
   "example", "example hour", "cache on", "Opus 5.5 prices". Readers took a "made-up" pill for
   placeholder data, so the pill says "example" and the sentence beside the number says the job or
   rate is made up. The `StatPair` comment in `chapter.ts` has the rules.
-  The numbers in the text and the line under the picture are the readout's numbers.
-- A control answers in the same tick: it changes the line under the picture before the script
+  The numbers in the text, the narration line and the chip are the readout's numbers.
+- A control answers in the same tick: it changes the narration line or the bubble before the script
   plays. Switches that are each on or off go in `<div class="pick" data-multi>`; a plain `.pick` is
   one of several.
 - The part in front of you or of main is called the check in text, as on its label.
@@ -114,112 +114,83 @@ only through `termLabel()` (below), so the word, the definition and the page agr
 - A term the reader might not know is a label on the picture that opens its wiki page in the side
   view. Deeper play lives on a board (`/explain/...`, `/models/`) linked from the chapter's end.
 
-## The screen and the picture
+## The picture and the step text
 
-The owner's brief, in their words: "What I feel is missing the most in the visual explainers is the
-connection to the actual chat environment people will have", and "get the user closer to the
-concept of the chat as well. We want people who have only used ChatGPT on the web to be able to
-pick this up and go deeper and deeper."
+The owner's brief, in their words: "The chat is not readable and honestly I feel like we should ban
+this ui below the illustration. Strike it away in each lesson and think through how to get the
+minimal needed version of the information directly inside the animated illustration." The full
+brief, and the notes for chapter authors, are in `planning/journey-mobile/SPEC.md`.
 
-The sticky view is one frame with three parts, read in this order:
+There is no chat screen and no caption under the picture. A step's run is shown in two places:
 
-1. **The screen**: a schematic of the app the reader types into, marked "example". A chat app in
-   part one and lesson 5; T3 Code once the model has tools and a project; a coding tool in a
-   terminal where a lesson is about one. It is a drawing of the app, never a screenshot.
-2. **The picture**: what happens behind that screen.
-3. **The caption**: one line in the guide's voice and the readout beside it.
+1. **On the picture**, at most two small things at a time (`src/journey/overlay.ts`):
+   - a speech bubble at the part that speaks. `ctx.say(who, text)` with a speaker who has a part on
+     the picture (you, the model or a named model, the agent, the check, a tool, a helper, the
+     reviewer, a colleague, a client, a user) shows one bubble with a pointer to that part. The
+     latest line replaces the one before. It never covers the speaker, stays inside the picture and
+     shows two lines at most. Which part a speaker stands for is decided in one place, `SPEAKERS`
+     in `overlay.ts`, after a label on the picture whose words are the speaker's name ("Opus 5.5")
+     and after the chapter's own `speakers` map;
+   - one counter chip in the top left corner: the readout's main number, by default the first pair
+     of `ctx.stat`, or the one the chapter pins with `counter`. It flashes when a control restarts
+     the count.
+2. **In the step text**, under the step's own text and controls (`placeExtras()` in `run.ts`): the
+   narration line (`ctx.say(null, …)`, and lines from a speaker with no part on the picture), the
+   full readout as a small table, the note and the colour key. A `<More>` and the closing card come
+   after them.
 
-The note and the colour key are reading, not watching: they sit in the step, under its text.
+What someone says is still what the people and programs in the run said; the narration line is the
+guide's voice. The numbers in the text, the chip and the readout are the same numbers.
 
-Each line appears in one place only. What someone says in the app (you, the model or a named
-model, a tool, the check) goes on the screen; narration (`ctx.say(null, …)`) and people outside
-the app (a colleague, a client, users) go in the caption. The screen never makes up a line: it shows
-what a script said, plus what the picture is doing at that moment, read off the scene state
-(`src/journey/screen.ts`):
+`ctx.screen` still exists so the chapters keep working, but every call does nothing. Chapters drop
+their calls as they are adapted.
 
-| In the picture | On the screen |
-| --- | --- |
-| a slab of yours lands in the window | your message, a dark bubble (the slab's colour) |
-| the model's reply | a pale bubble; a named model's name above it |
-| a tool cube lights | a row in the work log ("Read file", "Changed files", "Ran command") |
-| the check's lamp | a "check" row, green or accent like the lamp |
-| the model works | "Working" at the end of the thread |
-| the window you talk to is emptied | the thread is emptied: a new chat is an empty screen |
-| a second station (helper, reviewer, job) | a row in the thread list, its state from the lamp |
-
-Lamp to thread state: working is "Working", a lamp that waits for you is "Awaiting Input", a passed
-one "Completed". A helper's waiting lamp means it waits for the lead, so its row keeps the blue dot
-and no word; a failed lamp has an accent dot and no word, because T3 Code has none. Several jobs
-(`jobs(n)`, no `a0`) show the thread list only: what a job says belongs in that job's thread, so it
-goes in the caption. With nothing in your thread yet, the thread list takes the whole screen.
-
-The words on the T3 Code form ("Ask anything...", "New thread", the thread states, the work-log
-rows, the permission modes) come from `src/data/t3code.ts`, with their sources.
-
-How it deepens: lesson 1 opens on the chat alone with the picture dimmed, and turns to the picture
-once the answer is in (`ctx.screen.focus`). Part one stays close to the chat the reader knows: the
-same chat with a model name, with a drive connected, then T3 Code with a work log. From lesson 6
-the screen is T3 Code with the permission mode on the composer; from lesson 10 the thread list
-fills with helpers, until in lesson 13 it is twenty threads and their states, one per station.
-
-A chapter needs nothing to get this. Where it knows more, it says so through `ctx.screen`:
-
-- `setup({ form, app, project, chips })`: the app for this step, a model name or a permission mode
-  on the composer. Lasts until the reader moves on.
-- `row(kind, label, detail?, state?)`: a work-log row with the real file name, `row('read', 'Read
-  members.ts')`. Once a step adds its own rows, the screen stops making generic ones.
-- `result(text, state?)`: what that row's tool gave back, on the same row.
-- `history(lines)`: the lines already in the thread when a step starts part-way into one.
-- `focus('screen' | 'both')`: look at the screen alone, the picture dimmed, or both.
-
-Layout: stacked on a phone (the screen as a band of the latest lines over the picture, the threads
-as a strip), side by side when the view is 44rem wide or more. The caption keeps one height through
-a run: with room, the readout stands beside the line as a small table.
-
-### Layout
+## Layout and moving between steps
 
 The owner's brief, in their words: "always use up full-width of the page for the guide", "It needs
-to be a lot more controlled and dashboardy."
+to be a lot more controlled and dashboardy", and "on mobile people only want to go forward and
+backwards in the animation/explainer."
 
-Journey pages use the page's full width, and the site header spans the same width on them (other
-pages keep `--full`).
+One step is on show at a time, on every width. Which one, Back and Next, and the address are
+`src/journey/steps.ts`: `goTo(index | id)`, `next()`, `prev()`, the current index, a `change`
+event, and the step id in the URL hash (`/journey/meter/#many` opens that step). `run.ts` drives it
+and runs the step; `panel.ts` draws the wide layout's navigator.
+
+Journey pages use the page's full width, and the site header spans the same width on them.
 
 **Wide** (the journey container, `main`, at 60rem or more, with scripts on): the lesson is a small
 app one screen high under the header, and the site footer is not shown. The picture fills the
-right, inset on a quiet ground. The left is the lesson panel, a column of fixed height:
+right. The left is the lesson panel, a column of fixed height:
 
 1. **Head**: "Lesson 7 of 21" (an overview: "Overview · lessons 5–13"), the page's title (the one
    `<h1>`) and the "All lessons" button for the guide's contents.
-2. **The step on show**, one at a time. Its title stays at the top while its text, controls, note
-   and key scroll under it when they are long. On the last step the sources and the date they were
-   checked follow it.
+2. **The step on show.** Its title stays at the top while its text, controls, narration, readout,
+   note and key scroll under it. On the last step the sources follow it.
 3. **The step navigator**: a segment per step the reader's level shows, Back, "2 of 5", Next. Left
    and right arrows do the same, unless the reader is in a field or a slider.
 4. **The next lesson**, on the last step only: a box flush at the bottom that takes Next's place
    (the next lesson; the next part's overview where a part ends; the first hour after the last).
    The `<Next>` card in the step is hidden there and its "more" links stay.
 
-The step id is in the URL hash (`/journey/meter/#many` opens on that step). The guide's contents
-is a sheet as high as the page, over the panel: the three parts and their lessons by number and
-short name, the page on show marked "here". It is a modal dialog: Escape or a click beside it
-closes it, Tab stays inside, and focus returns to the button. It replaces the lesson rail, which is
-not shown on a wide page. On an overview the part cards give way to it, and the part's intro
-(recap, lessons, where to start) follows the first step.
+**Narrow** (below 60rem: a phone, or a page with the side view open): one screen under the header:
+the lesson rail, the picture, a row with Back, "2 of 4 · step title" and Next, and a panel holding
+only the step on show, which scrolls on its own and goes back to its top on every change. The first
+step brings the head (and on an overview the part switch); the last brings the sources, and its
+Next becomes the link the closing card leads to. A swipe left or right across the picture steps
+too; scrolling inside the panel never does. Buttons are 44px high; 360px wide has no sideways
+scroll.
 
-**Narrow** (below 60rem): the steps scroll past the sticky picture as before, the rail on top. The
-head carries the same "All lessons" button and sheet.
+The guide's contents is a sheet as high as the page, opened from the head: the three parts and
+their lessons by number and short name, the page on show marked "here". It is a modal dialog:
+Escape or a click beside it closes it, Tab stays inside, and focus returns to the button. On a wide
+page it replaces the lesson rail, and on an overview the part cards give way to it.
 
-Why the old `<Next>` card failed: it sat inside the last step's text, after the note, the key and
-the links, so on a wide page it was one more block in a long column, and on a narrow page it
-scrolled up under the sticky picture, which then took the taps (`elementFromPoint` at the card's
-centre is `.j-view`). On a wide page the box replaces it; on a narrow page it is unchanged until
-the phone stepper puts the steps in their own scroll panel.
+Changing the level re-runs the step on show and keeps the reader on it, or on the nearest step
+before it if it was hidden. Without JavaScript the steps read as one page under the picture.
 
-Files: `src/journey/steps.ts` (the stepper: `goTo`, `next`, `prev`, `index`, a `change` event, the
-hash), `src/journey/panel.ts` (which layout is on, the navigator, the arrow keys), `src/journey/
-sheet.ts` (the contents sheet), `components/journey/PanelHead.astro`, `StepNav.astro`,
-`NextLesson.astro`, `LessonSheet.astro`, `src/styles/journey-panel.css`. `run.ts` and
-`Journey.astro` hold the hooks in blocks marked "Lesson panel".
+Files: `src/journey/steps.ts`, `run.ts`, `panel.ts` (the wide navigator and next box), `sheet.ts`
+(the contents sheet), `components/journey/PanelHead.astro`, `StepNav.astro`, `NextLesson.astro`,
+`LessonSheet.astro`, `src/styles/journey.css` and `journey-panel.css`.
 
 ## Part two: the work around the agents
 
@@ -293,7 +264,7 @@ Sol", from data. A made-up job with three planted flaws, fixed in the script.
 - `second` *A different model, an empty window.* The work goes to the gate and sideways to the
   reviewer, which gets the change and the brief and nothing else. Findings come back as accent
   pucks; the builder fixes; round two finds one; round three finds nothing; the gate turns green
-  and the work reaches you. Lines under the picture are spoken by the two model names. Readout:
+  and the work reaches you. Bubbles on the picture are spoken by the two model names. Readout:
   rounds, findings, wrong when it reached you.
 - `attack` *Tell it to break the thing.* Pick: "Review this." or "Find what is wrong. Try to break
   it." The polite brief gets "Looks good" and a remark about naming. `<More title="A prompt for this">`.
@@ -310,7 +281,7 @@ Sol", from data. A made-up job with three planted flaws, fixed in the script.
   would have to read to know (made-up). The tray is empty.
 - `cards` *Ask for proof with the work.* The agent runs the tests, opens the page, and four cards
   land on the tray one by one, each labelled on the picture: summary, test run, screenshot, a link
-  to try. Each answers one question; the line under the picture says which.
+  to try. Each answers one question; the bubble says which.
 - `catch` *Each card shows one kind of wrong.* Six made-up jobs that all pass the check, three of
   them not what you asked for. Toggle the cards; the readout counts what you catch at a glance
   and what lands unnoticed. Different from chapter 5: the gate is green every time.
@@ -401,8 +372,12 @@ Each chapter file also exports `demo(ctx, h)`: one short loop for the part-two o
 - `src/journey/sim.ts`: the fleet simulation used by steps 7 to 9 and the home page.
 - `src/journey/chapters/*.ts`: one file per chapter: a scene and a script per step, plus the
   actions its buttons and sliders call.
-- `src/journey/run.ts`: picks the step on show from the scroll position and wires the controls.
-- `src/journey/screen.ts`: the screen beside the picture, fed by `ctx.say` and the scene state.
+- `src/journey/steps.ts`: which step is on show, Back and Next, and the step id in the address.
+- `src/journey/run.ts`: drives `steps.ts` (scroll, buttons, keys, swipe), runs the step on show and
+  wires the controls.
+- `src/journey/overlay.ts`: the speech bubble and the counter chip on the picture, and the
+  speaker-to-part map.
+- `src/journey/screen.ts`: a stub that keeps `ctx.screen` calls working; it does nothing.
 - `src/journey/rungs.ts`: the seventeen steps and the two parts.
 - `src/layouts/Journey.astro`, `src/components/journey/Step.astro`, `More.astro`, `Next.astro`,
   `src/styles/journey.css`.
@@ -424,6 +399,7 @@ its `inputs`. `level="technical"` or `"engineer"` on a `<Step>` adds a step for 
 
 ## Checks
 
-Open the page at 1280×800, 1440×900, 1920×1080, around the switch at 60rem and at 390 wide, light
-and dark; step through every step (Back, Next, the arrows), open and close the contents. With reduced motion
+Open the page at 1280×800, 1440×900, 1920×1080, around the switch at 60rem, and at 390 wide, light
+and dark. Go through every step (Back, Next, the step bars and the arrows on a wide page; Next and a
+swipe on a narrow one), and open and close the contents. With reduced motion
 pucks do not travel and each script jumps to its result. `pnpm judge` both ways as usual.

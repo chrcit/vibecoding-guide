@@ -1,7 +1,8 @@
 ---
 /*
-  Layout for the journey: one picture that stays in view, and short steps that scroll past it.
-  The concept is in site/JOURNEY.md.
+  Layout for the journey: one picture that stays in view, and short steps beside it. On a wide page
+  the steps scroll past the picture; on a narrow one the step on show stands alone in a panel under
+  it, with Back and Next (journey/run.ts). The concept is in site/JOURNEY.md.
   Props:
     chapter      a key of journey/chapters ('whole' for the overview)
     title, description
@@ -24,6 +25,7 @@ import { url } from '../lib/nav';
 import { rungs, parts, partOf } from '../journey/rungs';
 import { chapters } from '../journey/chapters';
 import { poster } from '../journey/picture';
+import { noScreen } from '../journey/screen';
 
 interface Props { chapter: string; title: string; description: string; first: string; data?: Record<string, unknown> }
 const { chapter, title, description, first, data } = Astro.props;
@@ -31,7 +33,7 @@ const here = rungs.find((r) => r.id === chapter);
 const part = partOf(chapter);
 const def = chapters[chapter]?.steps[first];
 if (!def) throw new Error(`Journey: chapter "${chapter}" has no step "${first}"`);
-const still = poster(def.scene({ level: 'plain', mem: {}, keep: {}, data: data ?? {}, say() {}, model() {}, stat() {} } as any));
+const still = poster(def.scene({ level: 'plain', mem: {}, keep: {}, data: data ?? {}, screen: noScreen, say() {}, model() {}, stat() {} } as any));
 ---
 <Base title={`${title} · Agentic Coding Guide`} description={description} section="guide" type="article">
   <div class="j-root" data-journey data-chapter={chapter} data-base={url('')} data-panel>
@@ -56,31 +58,28 @@ const still = poster(def.scene({ level: 'plain', mem: {}, keep: {}, data: data ?
         </ol>
       </nav>
       <div class="j-frame">
-        <section class="j-screen" data-form="chat" data-empty aria-label="An example of the app's screen, schematic">
-          <header class="j-scr-bar">
-            <span class="j-scr-app" data-scr-app>Chat</span>
-            <span class="j-scr-title" data-scr-title></span>
-            <span class="j-tag">example</span>
-          </header>
-          <div class="j-scr-body">
-            <ul class="j-scr-side" data-scr-side aria-label="Threads" hidden></ul>
-            <div class="j-scr-scroll" role="log" aria-label="Messages" tabindex="0"><ol class="j-scr-log" data-scr-log></ol></div>
-          </div>
-          <div class="j-scr-comp" aria-hidden="true"><span class="j-scr-ph" data-scr-ph>Message</span><span class="j-scr-chips" data-scr-chips></span><span class="j-scr-send"></span></div>
-        </section>
         <div class="j-stage tile" role="img" aria-label={here ? `Lesson ${here.n}, ${here.short}: ${here.title}. ${here.line}` : `The picture that grows through the journey. ${part.title}.`}>
           <Fragment set:html={still} />
         </div>
-        <div class="j-cap">
-          <p class="j-say" aria-live="polite"></p>
-          <dl class="j-stats"></dl>
-        </div>
+        {/* journey-mobile: the step buttons. On the picture on a wide page, under it on a narrow one (run.ts, steps.ts). */}
+        <nav class="j-nav" aria-label="Steps" hidden>
+          <button type="button" class="j-nav-btn" data-nav="back" aria-label="Previous step"><span aria-hidden="true">←</span><span class="j-nav-word">Back</span></button>
+          <p class="j-nav-where" aria-live="polite"><span data-nav-count></span><span class="j-nav-title" data-nav-title></span></p>
+          <button type="button" class="j-nav-btn" data-nav="next" aria-label="Next step"><span class="j-nav-word">Next</span><span aria-hidden="true">→</span></button>
+          <a class="j-nav-btn j-nav-on" data-nav="on" href={url('')} hidden><span class="j-nav-word">Next</span><span aria-hidden="true">→</span></a>
+        </nav>
+        {/* end journey-mobile: the step buttons */}
       </div>
     </div>
-    <div class="j-extras" hidden>
+    {/* journey-mobile: what the run says beyond the picture; run.ts moves it into the step on show. */}
+    <div class="j-step-extra" hidden>
+      <p class="j-say" aria-live="polite"></p>
+      <p class="j-said visually-hidden" aria-live="polite"></p>
+      <dl class="j-stats" aria-label="Counted so far"></dl>
       <p class="j-model" hidden></p>
       <ul class="j-key" aria-label="What the colours are"></ul>
     </div>
+    {/* end journey-mobile: step extras */}
     {/* ==== Lesson panel: on a wide page a column of fixed height beside the picture (head, the
          step on show, the step navigator, the box to the next lesson); on a narrow page the head
          and the steps that scroll past the picture. journey/panel.ts, styles/journey-panel.css. ==== */}

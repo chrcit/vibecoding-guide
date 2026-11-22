@@ -10,6 +10,7 @@ import { Scene } from './scene';
 import { chapters } from './chapters';
 import { parts, rung } from './rungs';
 import type { Ctx } from './chapter';
+import { noScreen } from './screen';
 import { getLevel } from '../lib/levels';
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -34,7 +35,7 @@ function mount(el: HTMLElement, data: Record<string, unknown>) {
   const scene = new Scene(stage);
   scene.base = document.querySelector<HTMLElement>('[data-thumbs]')?.dataset.base ?? '/';
   scene.speed = 1.4;
-  const ctx: Ctx = { scene, level: getLevel(), mem: {}, keep: {}, data, say() {}, model() {}, stat() {} };
+  const ctx: Ctx = { scene, level: getLevel(), mem: {}, keep: {}, data, screen: noScreen, say() {}, model() {}, stat() {} };
   scene.level = ctx.level;
   try { scene.set(def.scene(ctx), true); } catch { return null; }
   const one = { el, scene, ctx, def };

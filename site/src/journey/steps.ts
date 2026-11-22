@@ -1,100 +1,114 @@
 /*
-  The steps of a journey page as a list you move through: which one is on show, go to one, next,
-  back, and a `change` event when it moves. The step id is kept in the URL hash, so
-  /journey/meter/#many opens on that step.
+ * Which step of a journey page is on show, and how the reader moves to another. Knows nothing
+ * about layout or the picture: whoever drives it (a scroll position, Back and Next, a swipe, the
+ * arrow keys, a link) calls goTo, next or prev, and whoever shows the step listens for "change".
+ *
+ *   const nav = new Steps([...root.querySelectorAll('[data-step]')], { shown: (el) => … });
+ *   nav.addEventListener('change', (e) => { const { el, index, total, cause } = e.detail; … });
+ *   nav.start();           // the step named in the address (#many), else the first one shown
+ *   nav.next(); nav.prev(); nav.goTo(2); nav.goTo('many');
+ *
+ * The step on show is kept in the address as #<step id> (history.replaceState, so Back in the
+ * browser still leaves the page), and a change of the address (a link to #many on the same page)
+ * moves to that step. A page opened without a hash keeps a clean address until the reader moves.
+ */
 
-  Minimal on purpose: the desktop panel (panel.ts) drives it, and run.ts plays the step it lands
-  on. A step that the reader's level hides (`data-for-level`) is skipped.
-
-    const steps = new Steps(root);
-    steps.addEventListener('change', (e) => play((e as StepEvent).detail.step));
-    steps.next(); steps.prev(); steps.goTo('many');
-*/
-import { getLevel } from '../lib/levels';
+/** What moved the reader: the layout uses it to decide whether to scroll the step into place. */
+export type Cause = 'start' | 'button' | 'key' | 'swipe' | 'link' | 'control' | 'level' | 'resume';
 
 export interface StepChange {
-  /** Where it is now, counted over the steps the reader's level shows. */
+  el: HTMLElement;
+  /** Its place among the steps shown, from 0. */
   index: number;
-  step: HTMLElement;
-  /** Where it was, or -1 when nothing was on show. */
-  from: number;
-  /** Why it moved: a button or key, the URL hash, the first load, or a change of level. */
-  reason: 'nav' | 'hash' | 'init' | 'level' | 'sync';
+  /** How many steps are shown. */
+  total: number;
+  cause: Cause;
+  /** The same step again (the level changed, the tab came back): run it again. */
+  again: boolean;
 }
-export type StepEvent = CustomEvent<StepChange>;
 
-/** Whether the reader's level shows this step. Same test as levels.css. */
-export function levelShows(el: HTMLElement): boolean {
-  const only = el.dataset.forLevel;
-  return !only || only.split(' ').includes(getLevel());
+export interface StepsOptions {
+  /** Whether a step is shown now (steps for higher reader levels may be hidden). Default: all. */
+  shown?: (el: HTMLElement) => boolean;
+  /** Keep the step on show in the address. Default true. */
+  hash?: boolean;
 }
 
 export class Steps extends EventTarget {
-  readonly root: HTMLElement;
-  #current: HTMLElement | null = null;
-  #hash: boolean;
+  private cur: HTMLElement | null = null;
+  private started = false;
+  private readonly shownFn: (el: HTMLElement) => boolean;
+  private readonly hash: boolean;
 
-  constructor(root: HTMLElement, opts: { hash?: boolean } = {}) {
+  constructor(readonly all: HTMLElement[], opts: StepsOptions = {}) {
     super();
-    this.root = root;
-    this.#hash = opts.hash ?? true;
-    if (this.#hash) addEventListener('hashchange', () => { const el = this.#fromHash(); if (el) this.goTo(el, { reason: 'hash' }); });
+    this.shownFn = opts.shown ?? (() => true);
+    this.hash = opts.hash ?? true;
+    if (this.hash) addEventListener('hashchange', () => { const el = this.fromHash(); if (el) this.goTo(el, 'link'); });
   }
 
-  /** Every step on the page, in order, whatever the level. */
-  get all(): HTMLElement[] { return [...this.root.querySelectorAll<HTMLElement>('[data-step]')]; }
-  /** The steps the reader's level shows. */
-  get list(): HTMLElement[] { return this.all.filter(levelShows); }
-  get count(): number { return this.list.length; }
-  get current(): HTMLElement | null { return this.#current; }
-  get index(): number { return this.#current ? this.list.indexOf(this.#current) : -1; }
-  get isFirst(): boolean { return this.index <= 0; }
-  get isLast(): boolean { const n = this.count; return n > 0 && this.index === n - 1; }
+  /** The steps shown now, in page order. */
+  get list() { return this.all.filter(this.shownFn); }
+  get current() { return this.cur; }
+  /** The current step's place among the steps shown, or -1 before start. */
+  get index() { return this.cur ? this.list.indexOf(this.cur) : -1; }
+  get total() { return this.list.length; }
+  get atFirst() { return this.index <= 0; }
+  get atLast() { return this.index === this.total - 1; }
 
-  /** The step the page should open on: the one in the URL hash, else the first. */
-  initial(): HTMLElement | null { return this.#fromHash() ?? this.list[0] ?? null; }
+  /** Show the step named in the address, or else the first step shown (or `fallback`). */
+  start(fallback?: HTMLElement | null) {
+    const linked = this.fromHash();
+    const el = linked ?? fallback ?? this.list[0];
+    if (el) this.set(el, linked ? 'link' : 'start', false);
+    this.started = true;
+    return !!linked;
+  }
 
-  /** Show a step by index, id or element. Returns false when there is nowhere to go. */
-  goTo(target: number | string | HTMLElement, opts: { reason?: StepChange['reason']; hash?: boolean } = {}): boolean {
+  /** Move to a step: by its place among the steps shown (clamped), its id, or the element. */
+  goTo(to: number | string | HTMLElement, cause: Cause = 'button') {
     const list = this.list;
-    let el: HTMLElement | undefined;
-    if (typeof target === 'number') el = list[Math.max(0, Math.min(list.length - 1, target))];
-    else if (typeof target === 'string') el = list.find((s) => s.dataset.step === target);
-    else el = list.includes(target) ? target : undefined;
-    if (!el) return false;
-    const from = this.index;
-    const moved = el !== this.#current;
-    this.#current = el;
-    if (this.#hash && opts.hash !== false) this.#writeHash(el);
-    if (moved || opts.reason === 'init') this.dispatchEvent(new CustomEvent<StepChange>('change', { detail: { index: list.indexOf(el), step: el, from, reason: opts.reason ?? 'nav' } }));
-    return moved;
+    const el = typeof to === 'number' ? list[Math.max(0, Math.min(list.length - 1, to))]
+      : typeof to === 'string' ? this.all.find((s) => s.id === to || s.dataset.step === to)
+      : to;
+    if (!el || el === this.cur) return false;
+    this.set(el, cause, false);
+    return true;
   }
-  next(): boolean { return this.index < this.count - 1 && this.goTo(this.index + 1); }
-  prev(): boolean { return this.index > 0 && this.goTo(this.index - 1); }
+  next(cause: Cause = 'button') { return this.goTo(Math.max(0, this.index) + 1, cause); }
+  prev(cause: Cause = 'button') { return this.goTo(Math.max(0, this.index - 1), cause); }
 
-  /** Record a step something else put on show (the scroll, on a narrow page), without a change event. */
-  sync(el: HTMLElement) { this.#current = el; }
-
-  /** After a change of level: stay on the step, or move to the nearest one the level still shows. */
-  refresh() {
-    const el = this.#current;
-    if (el && levelShows(el)) { this.dispatchEvent(new CustomEvent<StepChange>('change', { detail: { index: this.index, step: el, from: this.index, reason: 'level' } })); return; }
-    const all = this.all, at = el ? all.indexOf(el) : 0;
-    const near = all.slice(at).find(levelShows) ?? all.slice(0, at).reverse().find(levelShows);
-    this.#current = null;
-    if (near) this.goTo(near, { reason: 'level' });
+  /**
+   * The steps shown have changed (a new reader level): stay on the current step if it is still
+   * shown, else go to the nearest one before it (or after it), and announce it again either way.
+   */
+  refresh(cause: Cause = 'level') {
+    const list = this.list;
+    const was = this.cur;
+    let el = was && list.includes(was) ? was : null;
+    if (!el && was) {
+      const at = this.all.indexOf(was);
+      el = [...list].reverse().find((s) => this.all.indexOf(s) < at) ?? list.find((s) => this.all.indexOf(s) > at) ?? null;
+    }
+    el ??= list[0] ?? null;
+    if (el) this.set(el, cause, el === was);
   }
 
-  #fromHash(): HTMLElement | null {
+  /** Announce the current step again without moving (the tab came back into view). */
+  again(cause: Cause = 'resume') { if (this.cur) this.set(this.cur, cause, true); }
+
+  private set(el: HTMLElement, cause: Cause, again: boolean) {
+    this.cur = el;
+    if (this.hash && el.id && (this.started || location.hash) && location.hash !== `#${el.id}`) {
+      history.replaceState(history.state, '', `#${el.id}`);
+    }
+    const list = this.list;
+    this.dispatchEvent(new CustomEvent<StepChange>('change', { detail: { el, index: list.indexOf(el), total: list.length, cause, again } }));
+  }
+
+  private fromHash() {
     const id = decodeURIComponent(location.hash.slice(1));
-    return id ? this.list.find((s) => s.dataset.step === id) ?? null : null;
-  }
-  #writeHash(el: HTMLElement) {
-    const id = el.dataset.step!;
-    const first = this.list[0] === el;
-    // The first step needs no hash: the plain lesson URL stays clean.
-    const want = first ? location.pathname + location.search : `#${id}`;
-    if (first ? location.hash === '' : location.hash === `#${id}`) return;
-    history.replaceState(history.state, '', want);
+    const el = id ? this.all.find((s) => s.id === id) : undefined;
+    return el && this.shownFn(el) ? el : undefined;
   }
 }
