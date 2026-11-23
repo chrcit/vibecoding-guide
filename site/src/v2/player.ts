@@ -26,6 +26,7 @@ import { previewPane } from './ui/preview';
 import { guideMenu } from './ui/menu';
 import { follower } from './ui/follow';
 import { sidebarTree } from './ui/tree';
+import { fillExtras, paintCheckout, wireExtras } from './ui/turnextras';
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 const phone = matchMedia('(max-width: 47.99rem)');
@@ -57,6 +58,8 @@ const STATUS_ICON: Record<string, string> = {
   // Lessons 14–17: T3 Code's Limited (CircleAlert, warning colour) and a guest's Request (UserRound).
   limited: ico(`<circle ${ln} cx="12" cy="12" r="10"/><path ${ln} d="M12 8v4M12 16h.01"/>`),
   request: ico(`<circle ${ln} cx="12" cy="8" r="5"/><path ${ln} d="M20 21a8 8 0 0 0-16 0"/>`),
+  // Lesson 3: T3 Code draws Goal with Working's icon and colour (SidebarThreadRow.tsx).
+  goal: ico(`<path ${ln} d="M10.1 2.18a9.93 9.93 0 0 1 3.8 0M17.6 3.71a9.95 9.95 0 0 1 2.69 2.7M21.82 10.1a9.93 9.93 0 0 1 0 3.8M20.29 17.6a9.95 9.95 0 0 1-2.7 2.69M13.9 21.82a9.94 9.94 0 0 1-3.8 0M6.4 20.29a9.95 9.95 0 0 1-2.69-2.7M2.18 13.9a9.93 9.93 0 0 1 0-3.8M3.71 6.4a9.95 9.95 0 0 1 2.7-2.69"/>`),
   approval: ico(`<path ${ln} d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path ${ln} d="M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3M12 17h.01"/>`),
   // Lesson 7: Input, T3 Code's MessageCircleQuestion.
   input: ico(`<path ${ln} d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path ${ln} d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>`),
@@ -233,8 +236,10 @@ export function boot(root: HTMLElement) {
       li.toggleAttribute('data-look', current && li.dataset.tone === 'bad' && point !== Infinity && pointOf()?.look === 'log' && here.lesson === t.dataset.lesson);
     }
     const working = t.querySelector<HTMLElement>('[data-working]')!;
-    working.hidden = end;
-    if (!end) {
+    // Lesson 4: a queued request has no turn of its own until it is sent.
+    const waiting = !!part.queued && point < part.queued.at;
+    working.hidden = end || waiting;
+    if (!end && !waiting) {
       const took = working.dataset.took ? seconds(working.dataset.took) : 0;
       // The timer stands where the agent is: a share of the turn's time, by point.
       const text = took ? working.dataset.tpl!.replace('{duration}', duration(Math.max(3, Math.round((took * (point + 1)) / (answered + 1))))) : working.dataset.plain!;
@@ -249,6 +254,7 @@ export function boot(root: HTMLElement) {
       fold.setAttribute('aria-expanded', String(open));
       t.toggleAttribute('data-folded', !open);
     }
+    fillExtras(t, part, point, current);
   }
 
   /** The reply lands: it rises in when the move was animated, and the chat shows its start. */
@@ -312,7 +318,14 @@ export function boot(root: HTMLElement) {
       if (ui.context !== lastUi.context) flash($('[data-details-btn]'), animate);
     } else setDetails(false);
     root.toggleAttribute('data-has-log', !!ui.log);
-    $('[data-foot]').hidden = !ui.model && !ui.perm && !ui.env;
+    // Lesson 4: the workspace and branch controls, once taught.
+    const work = $('[data-ui="checkout"]'), branch = $('[data-ui="branch"]');
+    const hadBranch = !branch.hidden;
+    if (paintCheckout(work, branch, ui.checkout) && ui.checkout) {
+      flash(work, animate);
+      if (ui.checkout.branch && !hadBranch) flash(branch, animate);
+    }
+    $('[data-foot]').hidden = !ui.model && !ui.perm && !ui.env && !ui.checkout;
     lastUi = ui;
   }
 
@@ -366,7 +379,13 @@ export function boot(root: HTMLElement) {
   function showSidebar() {
     const live = lesson() ? (pointOf().status ?? (playing ? STATUS.working : '')) : '';
     const threads = threadsSoFar();
-    const many = threads.length > 1;
+    // Lesson 4: the point lists every story thread with its own status; otherwise the threads so
+    // far, the newest one live.
+    const story = lesson() ? pointOf().threads : undefined;
+    const shownThreads = story
+      ? story.map((t) => ({ title: t.title, part: t.part, status: t.status ?? '', current: t.title === threadOf() }))
+      : threads.map((t, i) => ({ title: t.title, part: t.part as number | undefined, status: i === threads.length - 1 ? live : '', current: i === threads.length - 1 }));
+    const many = story ? story.length > 0 : threads.length > 1;
     for (const a of $$('a.v2-row[data-lesson]')) {
       const id = a.dataset.lesson!;
       const cur = id === here.lesson;
@@ -376,19 +395,19 @@ export function boot(root: HTMLElement) {
       setStatus(a.querySelector<HTMLElement>('[data-status]')!, s);
     }
     for (const ol of $$('[data-threads]')) {
-      const list = ol.dataset.threads === here.lesson && many ? threads : [];
-      const key = list.map((t) => t.title).join('|');
+      const list = ol.dataset.threads === here.lesson && many ? shownThreads : [];
+      const key = list.map((t) => `${t.title}:${t.part ?? ''}`).join('|');
       if (ol.dataset.key !== key) {
         const before = ol.childElementCount;
         ol.dataset.key = key;
-        ol.innerHTML = list.map((t, i) => `<li${before > 0 && i >= before ? ' data-enter' : ''}><button type="button" class="v2-row v2-row-child" data-thread-part="${t.part}"><span class="v2-row-title">${esc(t.title)}</span><span class="v2-status"></span></button></li>`).join('');
+        ol.innerHTML = list.map((t, i) => `<li${before > 0 && i >= before ? ' data-enter' : ''}><button type="button" class="v2-row v2-row-child"${t.part != null ? ` data-thread-part="${t.part}"` : ' disabled'}><span class="v2-row-title">${esc(t.title)}</span><span class="v2-status"></span></button></li>`).join('');
       }
       ol.hidden = !list.length;
       const rows = [...ol.querySelectorAll<HTMLElement>('.v2-row-child')];
       rows.forEach((b, i) => {
-        const last = i === rows.length - 1;
-        if (last) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
-        setStatus(b.querySelector<HTMLElement>('.v2-status')!, last ? live : '');
+        const t = list[i]!;
+        if (t.current) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
+        setStatus(b.querySelector<HTMLElement>('.v2-status')!, t.status);
       });
     }
     tree.refresh();
@@ -800,6 +819,7 @@ export function boot(root: HTMLElement) {
   // ---------- the rest of the frame ----------
 
   projectFilter(root);
+  wireExtras(root);
   splitter($('[data-main]'), $('[data-split]'), $('[data-browser]'), root);
   const sh = sheet({ browser: $('[data-browser]'), scrim: $('[data-scrim]'), top: $('[data-top]'), behind: $('[data-chat]'), close: $('[data-close]'), opener: $('[data-mini]'), phone });
   // The mini opens the browser; while it carries the Preview badge, it opens on that tab.

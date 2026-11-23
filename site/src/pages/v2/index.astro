@@ -42,6 +42,9 @@ const lv = (t: Lv) => lvHtml(t);
 const skill = t3code.screen.skillRow.value.replace('{name}', 'agentic-guide');
 const firstPart = LESSONS.l1!.parts[0]!;
 const fav = (n?: number) => (n ? String(n) : 'S');
+// Lessons 3 and 4: T3 Code's words for the queued message, the goal line and the workspace.
+const [sendNow, editQueued, removeQueued] = t3code.screen.queued.value;
+const goalClear = t3code.screen.goalLine.value[3];
 
 // The site's nav, as the site header shows it (components/site/Header.astro).
 const navItems = sections.filter((s) => s.ready);
@@ -87,6 +90,16 @@ const icon = {
   failed: svg(`<path ${ln} d="M18 6 6 18M6 6l12 12"/>`, 12),
   shield: svg(`<path ${ln} d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>`, 12),
   passed: svg(`<path ${ln} d="M20 6 9 17l-5-5"/>`, 12),
+  // Lessons 3 and 4: the goal line's target, and the queued message's controls.
+  target: svg(`<circle ${ln} cx="12" cy="12" r="10"/><circle ${ln} cx="12" cy="12" r="6"/><circle ${ln} cx="12" cy="12" r="2"/>`, 14),
+  arrowUp: svg(`<path ${ln} d="m5 12 7-7 7 7M12 19V5"/>`, 12),
+  pencil: svg(`<path ${ln} d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5zM15 5l4 4"/>`, 12),
+};
+/** A work-log row as markup, for the rows of an earlier turn still running (lesson 4). */
+const rowHtml = (r: { at: number; label: Lv; detail?: Lv; tone?: 'bad' | 'ok' }) => {
+  const k = kindOf(r as never);
+  const mark = r.tone === 'bad' ? `<span class="v2-wmark">${icon.failed}<span class="visually-hidden">failed</span></span>` : r.tone === 'ok' ? `<span class="v2-wmark">${icon.passed}<span class="visually-hidden">passed</span></span>` : '';
+  return `<li class="v2-wrow v2-logrow" data-run-at="${r.at}" data-kind="${k}"${r.tone ? ` data-tone="${r.tone}"` : ''}><span class="v2-wicon">${icon.kind[k]}</span><span class="v2-wbody"><span class="v2-wline"><span class="v2-wlabel">${lv(r.label)}</span>${mark}</span>${r.detail ? `<span class="v2-wdetail">${lv(r.detail)}</span>` : ''}</span></li>`;
 };
 // The site's own mark (components/site/Header.astro), small.
 const mark = `<svg class="v2-mark" viewBox="0 0 32 32" width="18" height="18" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="8" class="v2-mark-bg"/><path d="M9 21.5 16 9l7 12.5" fill="none" class="v2-mark-line" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="21.5" r="2.5" class="v2-mark-dot"/></svg>`;
@@ -184,15 +197,35 @@ const mark = `<svg class="v2-mark" viewBox="0 0 32 32" width="18" height="18" ar
             {Object.values(LESSONS).map((lesson) => lesson.parts.map((part, i) => (
               <article class="v2-turn" data-turn data-lesson={lesson.id} data-part={i} aria-label={`Part ${i + 1}: ${part.title}`}>
                 <div class="v2-turn-head">
-                  <p class="v2-part-n">Part {i + 1} of {lesson.parts.length}{part.fresh && <span> · {t3code.screen.newThread.value}</span>}</p>
+                  <p class="v2-part-n">Part {i + 1} of {lesson.parts.length}{part.fresh && !part.resumes && <span> · {t3code.screen.newThread.value}</span>}</p>
                   <h2 class="v2-part-title">{part.title}</h2>
                   <p class="v2-lede">{part.lede}</p>
                 </div>
+                {part.running && (
+                  <div class="v2-run" data-running>
+                    <div class="v2-user"><div class="v2-bubble"><p>{part.running.request}</p></div></div>
+                    <div class="v2-work">
+                      <div class="v2-working" data-run-working data-tpl={workingFor}><span class="v2-wlabel" data-run-working-text>{workingPlain}</span></div>
+                      <button type="button" class="v2-fold" aria-expanded="false" data-run-fold hidden>
+                        <span>{worked(part.running.took)}</span><span class="v2-fold-chev" set:html={icon.chevDown} />
+                      </button>
+                      <ol class="v2-wrows" set:html={part.running.rows.map(rowHtml).join('')} />
+                    </div>
+                    <div class="v2-run-reply" data-run-reply hidden>{part.running.answer.map((a) => <p set:html={lv(a)} />)}</div>
+                  </div>
+                )}
                 <div class="v2-user" data-user>
                   <div class="v2-bubble">
                     <p>{part.request}</p>
                     {part.attach && <p class="v2-attach"><Fragment set:html={icon.paperclip} /><span>{part.attach}</span></p>}
                   </div>
+                  {part.queued && (
+                    <p class="v2-queued-actions" data-queued-actions hidden>
+                      <span class="v2-q-send"><Fragment set:html={icon.arrowUp} />{sendNow}</span>
+                      <span class="v2-q-icon" title={editQueued}><Fragment set:html={icon.pencil} /><span class="visually-hidden">{editQueued}</span></span>
+                      <span class="v2-q-icon" title={removeQueued}><Fragment set:html={icon.x} /><span class="visually-hidden">{removeQueued}</span></span>
+                    </p>
+                  )}
                 </div>
                 <div class="v2-work" data-work>
                   <div class="v2-working" data-working data-plain={workingPlain} data-tpl={workingFor} data-took={part.log?.took ?? ''} hidden>
@@ -246,6 +279,13 @@ const mark = `<svg class="v2-mark" viewBox="0 0 32 32" width="18" height="18" ar
                   {part.answer.map((a) => <p set:html={lv(a)} />)}
                   {part.deeper && <p class="v2-deeper" data-min={part.deeper.level}>{part.deeper.text}</p>}
                 </div>
+                {part.goal && (
+                  <p class="v2-goal" data-goal data-state="active">
+                    <span class="v2-goal-icon" set:html={icon.target} />
+                    <span class="v2-goal-text"><span class="v2-goal-title" data-goal-title></span> <span class="v2-goal-obj">{part.goal.objective}</span></span>
+                    <span class="v2-goal-clear">{goalClear}</span>
+                  </p>
+                )}
                 <div class="v2-try" data-try>
                   <p class="v2-try-label">Try it yourself</p>
                   <div class="v2-try-prompt">
@@ -298,6 +338,8 @@ const mark = `<svg class="v2-mark" viewBox="0 0 32 32" width="18" height="18" ar
                 <span class="v2-chip" data-ui="model" hidden>{MODEL}</span>
                 <span class="v2-chip" data-ui="perm" hidden data-perm-tpl={permLabel}></span>
                 <span class="v2-chip v2-chip-env" data-ui="env" hidden title={runOn}><Fragment set:html={icon.machine} /><span data-env-name></span></span>
+                <span class="v2-chip v2-chip-ico" data-ui="checkout" hidden></span>
+                <span class="v2-chip v2-chip-ico v2-mono" data-ui="branch" hidden></span>
               </span>
               <span class="v2-transport">
                 <button type="button" class="v2-ctl" data-c="prev" aria-label="Back one point" title="Back one point (←)" set:html={icon.prev} />

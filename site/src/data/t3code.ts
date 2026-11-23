@@ -141,7 +141,44 @@ export const t3code = {
     'Edit from here rewinds a thread to before a message. Reverting the files too is offered only for threads in a worktree; a thread in the project folder rewinds the conversation only.',
     doc('composer'),
   ),
-  localServers: fact(true, 'The thread details card lists local servers the thread started, with their ports; selecting one opens it in the browser panel.', doc('thread-sidebar')),
+  // Guide v2, lessons 3 and 4 (goals, several threads, queueing, worktrees). Read on main at 7b47a21.
+  goal: fact(
+    '/goal',
+    'With Codex, Claude and OpenCode 2.2.5 or later, /goal followed by what done means keeps the agent working across turns until it judges the goal met. The thread shows Goal while it works, and a line at the end of the thread shows the goal and its progress. /goal alone shows it, /goal clear removes it. Stopping Claude ends the turn but leaves the goal set; stopping Codex or OpenCode pauses it, and Codex also pauses when its work ends with the goal unmet.',
+    doc('composer'),
+    { verified: '2026-11-23' },
+  ),
+  workingSection: fact(
+    'Working',
+    'By default, threads that are working fold into a collapsed Working section below the active list, and a thread returns to the top of the active list when it finishes, fails, or needs an approval or answer. With project folders on ("Boring sidebar (group by project)"), the Working section is off.',
+    `${doc('thread-sidebar')}#fold-working-threads-beta`,
+    { verified: '2026-11-23' },
+  ),
+  sameCheckout: fact(
+    'New worktree for a separate branch',
+    'Use a new thread for a separate task. Choose New worktree when its code changes need a separate branch and working directory. Threads in the same checkout share its branch, so T3 Code refuses a branch switch there while one of them is working.',
+    doc('thread-sidebar'),
+    { verified: '2026-11-23' },
+  ),
+  worktreeHandoff: fact(
+    'Handed off thread to a git worktree',
+    'An agent running in a T3 Code thread can move that thread into a new Git worktree on a new branch. The move ends the live session; the thread carries on there at its next turn. The work log row reads "Handed off thread to a git worktree".',
+    `${REPO}/blob/main/apps/server/src/mcp/toolkits/worktree/tools.ts`,
+    { verified: '2026-11-23', note: 't3_worktree_handoff; the row is from packages/client-runtime/src/work-log/t3ToolSentences.ts.' },
+  ),
+  followUpDefault: fact(
+    'Steer',
+    'On web and desktop, a message sent while the agent works steers the running turn by default (Settings → Chat → Follow-up behavior); mod+Enter uses the other action and queues it.',
+    `${REPO}/blob/main/packages/contracts/src/settings.ts`,
+    { verified: '2026-11-23', note: 'followUpBehavior defaults to "steer". The opposite-action shortcut is in docs/user/composer.md.' },
+  ),
+  threadTitles: fact(
+    'F2 renames',
+    'T3 Code titles a thread from the conversation; Regenerate title in the thread\'s menu writes a fresh one, and F2 renames the focused thread in the sidebar.',
+    doc('keyboard-focus'),
+    { verified: '2026-11-23', note: 'Regenerate title is in docs/user/thread-sidebar.md.' },
+  ),
+  localServers: fact(true,'The thread details card lists local servers the thread started, with their ports; selecting one opens it in the browser panel.', doc('thread-sidebar')),
   shortcuts: {
     model: fact('mod+shift+m', 'mod+shift+m opens the model picker (mod is Command on macOS, Ctrl elsewhere).', doc('keybindings')),
     effort: fact('mod+shift+e', 'mod+shift+e opens the effort picker.', doc('keybindings')),
@@ -311,6 +348,25 @@ export const t3code = {
       ['Working for {duration}', 'Working...'],
       'While a turn runs, the timeline shows "Working for {duration}" with a running timer, or "Working..." before the start time is known.',
       `${REPO}/blob/main/apps/web/src/components/chat/TimelineWorkGroupRows.tsx`,
+      { verified: '2026-11-23' },
+    ),
+    // Guide v2, lessons 3 and 4.
+    goalLine: fact(
+      ['Pursuing goal', 'Goal complete', '{count} checks', 'Clear'],
+      'The goal line at the end of a thread shows a target icon, "Pursuing goal" while the agent works on it (or "Goal complete" once met), the progress such as "{count} checks", the objective, and a Clear button.',
+      `${REPO}/blob/main/apps/web/src/components/chat/ThreadActivityBanners.tsx`,
+      { verified: '2026-11-23', note: 'goalNowItem; the titles and the checks count are presentProviderGoal in packages/client-runtime/src/state/threadExecution.ts.' },
+    ),
+    queued: fact(
+      ['Send now', 'Edit queued message', 'Remove queued message'],
+      'A queued message waits at the end of the thread as a dashed, unfilled bubble, with Send now, Edit queued message and Remove queued message under it, until the running turn ends.',
+      `${REPO}/blob/main/apps/web/src/components/chat/QueuedRunsControl.tsx`,
+      { verified: '2026-11-23' },
+    ),
+    workspace: fact(
+      ['Current checkout', 'New worktree'],
+      'The workspace control under the composer reads "Current checkout" or "New worktree"; a thread in a worktree shows its folder, and the branch control beside it shows the branch.',
+      `${REPO}/blob/main/apps/web/src/components/BranchToolbar.logic.ts`,
       { verified: '2026-11-23' },
     ),
     sections: fact(

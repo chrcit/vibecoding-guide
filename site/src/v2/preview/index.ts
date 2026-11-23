@@ -33,7 +33,11 @@ export type DoorStage =
   /** The agent tries four cases in the shared browser at phone size (lesson 8, part 2). */
   | 'proof'
   /** Practice mode: made-up guests that never reach tonight's list, tried by the reader (lesson 8, part 4). */
-  | 'practice';
+  | 'practice'
+  /** Lesson 3: the first promoter version, which left the promoters' guests off the door. */
+  | 'promo-missing'
+  /** Lessons 3–4: Kai's and Noor's lists are the guests they added through their own links. */
+  | 'promo';
 
 export interface PreviewApp { set(stage: string): void; destroy(): void }
 export type MountApp = (el: HTMLElement, stage: string) => PreviewApp;

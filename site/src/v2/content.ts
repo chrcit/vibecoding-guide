@@ -34,7 +34,7 @@ export const searchRow = (query: string, target: string) => fill(t3code.screen.s
 export const MODEL = models['claude-opus-5-5'].name.replace(/^Claude /, '');
 export const status = (word: string) => { const w = t3code.screen.statuses.value.find((x) => x === word); if (!w) throw new Error(`v2: T3 Code has no status ${word}`); return w; };
 /** The sidebar row labels the lessons use, from T3 Code's own list. */
-export const STATUS = { working: status('Working'), approval: status('Approval'), done: status('Done') };
+export const STATUS = { working: status('Working'), approval: status('Approval'), done: status('Done'), /* lesson 3 */ goal: status('Goal') };
 export const worked = (d: string) => t3code.screen.workedFor.value.replace('{duration}', d);
 
 // ---------- the table of contents ----------
@@ -114,7 +114,18 @@ export interface Ui {
   modelName?: string;
   /** The "Run on" picker under the composer (t3code.screen.runOn): the machine the thread runs on. Lesson 17 teaches it; an empty string hides it. */
   env?: string;
+  /**
+   * Lesson 4: the workspace and branch controls under the composer (t3code.screen.workspace).
+   * `label` is "Current checkout" or the worktree's folder; `branch` adds the branch control.
+   */
+  checkout?: { label: string; worktree?: boolean; branch?: string };
 }
+
+/**
+ * Lesson 4: a story thread in the sidebar, drawn under the lesson's row with its own status.
+ * `part` is the part of this lesson that opens it when clicked (none: the row only shows).
+ */
+export interface StoryThread { title: string; status?: string; part?: number }
 
 export interface Point {
   say: string;
@@ -140,6 +151,11 @@ export interface Point {
    * inside the composer (t3code.questionPanel). Left out when nothing is being asked.
    */
   ask?: Ask;
+  /**
+   * Lesson 4: every story thread in the sidebar at this point, each with its own status. Without
+   * it the sidebar shows the lesson's threads so far, the newest one live (lesson 1).
+   */
+  threads?: StoryThread[];
 }
 
 /** A question in T3 Code's question panel: its header, the question and the options to pick from. */
@@ -176,6 +192,8 @@ export interface Part {
   attach?: string;
   /** The part starts a new thread: earlier turns leave the chat. */
   fresh?: boolean;
+  /** Lesson 4: with `fresh`, the chat switches to a story thread that already exists, so it isn't labelled a new thread. */
+  resumes?: boolean;
   /**
    * The story thread this turn is sent in, by its title in the sidebar (made up, as T3 Code would
    * title it from the first message). Parts with the same title share one thread and follow each
@@ -186,6 +204,21 @@ export interface Part {
   points: Point[];
   /** The work log, when the lesson has taught it: rows appear at their point. */
   log?: { took: string; rows: Row[] };
+  /**
+   * Lesson 4: a turn of the same thread that is still running when this part starts. It shows
+   * above the request, its rows appear at their points and its reply lands at point `ends`.
+   */
+  running?: { request: string; took: string; rows: Row[]; answer: Lv[]; ends: number };
+  /**
+   * Lesson 4: the request was sent while that turn ran, so it waits as a queued message (T3 Code's
+   * dashed bubble, t3code.screen.queued) until point `at`, when it is sent.
+   */
+  queued?: { at: number };
+  /**
+   * Lesson 3: a /goal is set. The goal line at the end of the thread says "Pursuing goal" until
+   * point `met`, then "Goal complete"; `checks[i]` is its count of checks at point i.
+   */
+  goal?: { objective: string; met: number; checks: number[] };
   /** What the agent answered. */
   answer: Lv[];
   /** Shown to technical and engineer readers under the answer. */

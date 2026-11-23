@@ -10,6 +10,11 @@
  *
  * Who is in lives at module level, so it survives `set()` and a remount while the reader moves
  * through the lesson. Everything here is made up.
+ *
+ * Lessons 3 and 4 add two stages: 'promo-missing', where the first promoter version left the
+ * promoters' guests off the door, and 'promo', where Kai's and Noor's lists are the guests they
+ * added through their own links (lantern/store.ts). Both open with "lea" typed, Lea Brandt being
+ * one of Kai's guests.
  */
 import './door.css';
 import './door-late.css';
@@ -20,6 +25,7 @@ import { runAgent, type Run } from './door/agent';
 // Lessons 7 and 8: do-not-admit, the agent's four-case proof, and practice mode (door/late.ts).
 import { LATE_STAGES, DNA_STAGES, FULL_STAGES, dnaRow, dnaDeck, dnaSheet, dnaLists, practiceBar } from './door/late';
 import { runProof } from './door/proof';
+import { doorGuests } from './lantern/store';
 
 // ---------- tonight's state, shared by every mount ----------
 
@@ -101,12 +107,24 @@ export const door: MountApp = (el, initial) => {
   const clock = window.setInterval(() => { const c = $('[data-clock]'); if (c) c.textContent = hhmm(now()); }, 15_000);
 
   function normalize(s: string): DoorStage {
-    return (['none', 'first', 'buggy', 'testing', 'fixed', 'listed', 'dna', 'dnaFull', 'proof', 'practice'] as const).includes(s as DoorStage) ? (s as DoorStage) : 'first';
+    return (['none', 'first', 'buggy', 'testing', 'fixed', 'promo-missing', 'promo', 'listed', 'dna', 'dnaFull', 'proof', 'practice'] as const).includes(s as DoorStage) ? (s as DoorStage) : 'first';
+  }
+  const PROMO = (s: DoorStage) => s === 'promo' || s === 'promo-missing';
+  /**
+   * Tonight's lists at this stage. From lesson 3 the promoters' lists are what they added themselves
+   * (lantern/store); from lesson 7 guests who join later (Rico) come in with the stage that adds them.
+   */
+  function roster(): Guest[] {
+    if (LATE_STAGES.includes(stage)) return [...GUESTS, ...LATER];
+    if (!PROMO(stage)) return GUESTS;
+    const own = GUESTS.filter((g) => g.list !== 'kai' && g.list !== 'noor');
+    if (stage === 'promo-missing') return own;
+    const promo = doorGuests();
+    for (const g of promo) if (!byId.has(g.id)) byId.set(g.id, g);
+    return [...own, ...promo];
   }
   /** The first version counts a second tap again; the fixed one and every later stage refuse it. */
-  const refusesSecondTap = () => stage === 'fixed' || LATE_STAGES.includes(stage);
-  /** Tonight's lists at this stage: guests who join later (Rico) only from the stage that adds them. */
-  const pool = () => (LATE_STAGES.includes(stage) ? [...GUESTS, ...LATER] : GUESTS);
+  const refusesSecondTap = () => stage === 'fixed' || PROMO(stage) || LATE_STAGES.includes(stage);
   /** Do-not-admit, from lesson 7 on: red, no tap-in. */
   const isDna = (g: Guest) => DNA_STAGES.includes(stage) && g.id === RICO;
   const full = () => FULL_STAGES.includes(stage);
@@ -232,12 +250,13 @@ export const door: MountApp = (el, initial) => {
   function listsHtml() {
     const order: ListId[] = ['kai', 'noor', 'guest', 'staff'];
     const inIds = new Set(arrivals.map((a) => a.id));
-    const GUESTS = pool();
+    const GUESTS = roster();
     return `<section class="dr-lists" aria-label="Tonight’s lists">
       <h2 class="dr-lists-head">Tonight’s lists</h2>
       <ul>${order.map((l) => {
-        const on = GUESTS.filter((g) => g.list === l);
+        const on = roster().filter((g) => g.list === l);
         const n = on.filter((g) => inIds.has(g.id)).length;
+        if (!on.length) return '';
         return `<li class="dr-l-${l}"><span class="dr-lists-name"><i class="dr-dot"></i>${esc(LISTS[l].label)}</span><span class="dr-lists-n"><b>${n}</b> of ${on.length} in</span><span class="dr-lists-bar" aria-hidden="true"><i style="transform:scaleX(${(n / on.length).toFixed(3)})"></i></span></li>`;
       }).join('')}</ul>
       ${dnaLists(GUESTS.filter(isDna))}
@@ -248,7 +267,7 @@ export const door: MountApp = (el, initial) => {
     const $r = $('[data-results]'), $s = $('[data-scroll]');
     if (!$r || !$s) return;
     const tokens = tokensOf(query);
-    const hits = find(pool(), query);
+    const hits = find(roster(), query);
     root.dataset.view = !tokens.length ? 'idle' : hits.length ? 'hits' : 'none';
     if (root.dataset.view === 'none') tick(1);
     if (hits.some((h) => isDna(h.guest))) tick(3);
@@ -272,7 +291,7 @@ export const door: MountApp = (el, initial) => {
   function hint() {
     const tokens = tokensOf(query);
     if (!tokens.length) return 'Type any part of a name';
-    const n = find(pool(), query).length;
+    const n = find(roster(), query).length;
     return n ? `${n} on the list · tap a name to check them in` : '';
   }
 
@@ -465,7 +484,7 @@ export const door: MountApp = (el, initial) => {
   }
   root.addEventListener('submit', (e) => {
     e.preventDefault();
-    const hits = find(pool(), query);
+    const hits = find(roster(), query);
     if (hits.length === 1) pick(hits[0]!.guest.id);
   });
   root.addEventListener('keydown', (e) => {
@@ -534,7 +553,9 @@ export const door: MountApp = (el, initial) => {
     }
     if (from === 'practice' && s !== 'practice' && saved) { arrivals.splice(0, arrivals.length, ...saved); saved = null; }
     stage = s;
-    if (s === 'fixed' || LATE_STAGES.includes(s)) dedupe();
+    if (s === 'fixed' || PROMO(s) || LATE_STAGES.includes(s)) dedupe();
+    // Lessons 3 and 4: the agent's check searched for Lea Brandt, one of Kai's guests.
+    if (PROMO(s) && (!from || !PROMO(from))) query = 'lea';
     if (sheetFor) closeSheet(false);
     if (deckTimer) clearTimeout(deckTimer);
     deck = { kind: 'hint' };
