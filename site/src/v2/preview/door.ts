@@ -76,6 +76,14 @@ const ICON = {
 };
 
 const UNDO_MS = 5000;
+
+/** Lesson 6: guests who came three Fridays in a row, with when they came in last Friday. Made up. */
+const REGULARS: Record<string, string> = Object.fromEntries(
+  [['Ana Lopez', '22:41'], ['Mina Park', '23:12'], ['Jonas Weber', '23:58'], ['Kofi Mensah', '00:37']]
+    .map(([name, t]) => [GUESTS.find((g) => g.name === name)?.id ?? '', t!]).filter(([id]) => id),
+);
+/** The time as the first regulars thread wrote it, before AGENTS.md said 24-hour: 10:41 PM. */
+const twelve = (t: string) => { const [h, m] = t.split(':').map(Number); return `${((h! + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h! >= 12 ? 'PM' : 'AM'}`; };
 const MAX_ROWS = 40;
 
 type Deck =
@@ -107,7 +115,7 @@ export const door: MountApp = (el, initial) => {
   const clock = window.setInterval(() => { const c = $('[data-clock]'); if (c) c.textContent = hhmm(now()); }, 15_000);
 
   function normalize(s: string): DoorStage {
-    return (['none', 'first', 'buggy', 'testing', 'fixed', 'promo-missing', 'promo', 'listed', 'dna', 'dnaFull', 'proof', 'practice'] as const).includes(s as DoorStage) ? (s as DoorStage) : 'first';
+    return (['none', 'first', 'buggy', 'testing', 'fixed', 'promo-missing', 'promo', 'listed', 'dna', 'dnaFull', 'proof', 'practice', 'regularsRed', 'regulars'] as const).includes(s as DoorStage) ? (s as DoorStage) : 'first';
   }
   const PROMO = (s: DoorStage) => s === 'promo' || s === 'promo-missing';
   /**
@@ -124,7 +132,9 @@ export const door: MountApp = (el, initial) => {
     return [...own, ...promo];
   }
   /** The first version counts a second tap again; the fixed one and every later stage refuse it. */
-  const refusesSecondTap = () => stage === 'fixed' || PROMO(stage) || LATE_STAGES.includes(stage);
+  const refusesSecondTap = () => stage === 'fixed' || PROMO(stage) || LATE_STAGES.includes(stage) || isRegulars();
+  /** Lesson 6: regulars carry a star, red at first, gold once the rule about red is written down. */
+  const isRegulars = () => stage === 'regularsRed' || stage === 'regulars';
   /** Do-not-admit, from lesson 7 on: red, no tap-in. */
   const isDna = (g: Guest) => DNA_STAGES.includes(stage) && g.id === RICO;
   const full = () => FULL_STAGES.includes(stage);
@@ -236,7 +246,9 @@ export const door: MountApp = (el, initial) => {
     const label = mine.length
       ? `${g.name}, ${LISTS[g.list].label}, in since ${hhmm(mine[0]!.at)}${mine.length > 1 ? `, checked in ${mine.length} times` : ''}`
       : `Check in ${g.name}, ${LISTS[g.list].label}${g.plus ? `, with up to ${g.plus} plus-one${g.plus > 1 ? 's' : ''}` : ''}`;
-    const meta = g.list === 'staff' ? `Staff · ${esc(g.role ?? '')}` : esc(LISTS[g.list].label);
+    const reg = isRegulars() ? REGULARS[g.id] : undefined;
+    const meta = (g.list === 'staff' ? `Staff · ${esc(g.role ?? '')}` : esc(LISTS[g.list].label))
+      + (reg ? `<span class="dr-reg" data-tone="${stage === 'regulars' ? 'gold' : 'red'}">★ regular · last in ${stage === 'regulars' ? reg : twelve(reg)}</span>` : '');
     return `<li><button type="button" class="dr-row dr-l-${g.list}" data-id="${g.id}" data-in="${mine.length ? 'yes' : 'no'}" aria-label="${esc(label)}">
       <span class="dr-av" aria-hidden="true">${initials(g.name)}</span>
       <span class="dr-who" aria-hidden="true">
@@ -553,9 +565,11 @@ export const door: MountApp = (el, initial) => {
     }
     if (from === 'practice' && s !== 'practice' && saved) { arrivals.splice(0, arrivals.length, ...saved); saved = null; }
     stage = s;
-    if (s === 'fixed' || PROMO(s) || LATE_STAGES.includes(s)) dedupe();
+    if (s === 'fixed' || PROMO(s) || LATE_STAGES.includes(s) || s === 'regularsRed' || s === 'regulars') dedupe();
     // Lessons 3 and 4: the agent's check searched for Lea Brandt, one of Kai's guests.
     if (PROMO(s) && (!from || !PROMO(from))) query = 'lea';
+    // Lesson 6: open on a regular, so the star is in view; the reader can clear the search.
+    if ((s === 'regularsRed' || s === 'regulars') && !query && from !== 'regularsRed' && from !== 'regulars') query = 'ana';
     if (sheetFor) closeSheet(false);
     if (deckTimer) clearTimeout(deckTimer);
     deck = { kind: 'hint' };

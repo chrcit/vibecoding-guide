@@ -37,7 +37,12 @@ export type DoorStage =
   /** Lesson 3: the first promoter version, which left the promoters' guests off the door. */
   | 'promo-missing'
   /** Lessons 3–4: Kai's and Noor's lists are the guests they added through their own links. */
-  | 'promo';
+  | 'promo'
+  // Lesson 6 (additive): regulars get a star.
+  /** The first try, with no instructions file: a red star, the time in 12-hour form. */
+  | 'regularsRed'
+  /** After AGENTS.md: a gold star, the time in 24-hour form. */
+  | 'regulars';
 
 export interface PreviewApp { set(stage: string): void; destroy(): void }
 export type MountApp = (el: HTMLElement, stage: string) => PreviewApp;

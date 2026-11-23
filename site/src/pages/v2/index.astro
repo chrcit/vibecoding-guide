@@ -25,11 +25,18 @@ import { fact, anchor } from '../../lib/facts';
 import { sections, url } from '../../lib/nav';
 import { LEVELS, levelInfo } from '../../lib/levels';
 import { t3code } from '../../data/t3code';
+import { models } from '../../data/models';
+import { harnesses } from '../../data/harnesses';
 
 const [ctxTitle, ctxUsed] = t3code.screen.contextWindow.value;
 // Lessons 14 and 17: Usage limits in the thread details, and the "Run on" picker under the composer.
 const [limitsTitle, limitRow] = t3code.screen.usageLimits.value;
 const runOn = t3code.screen.runOn.value;
+// Lesson 5: the context row as T3 Code draws it, against the model on show (Opus 5.5, 1M tokens).
+const [ctxRow, , ctxTip, ctxOf] = t3code.screen.contextRow.value;
+const ctxMax = models['claude-opus-5-5'].context!.value;
+/** Where the provider compacts on its own, as a tick on the bar (Claude Code's default, harnesses.ts). */
+const ctxTick = (harnesses.claudeCode.autoCompactAt.value / ctxMax) * 100;
 const filterLabel = t3code.screen.filter.value;
 const [searchProjects, allProjects, noProjects] = t3code.screen.filterMenu.value;
 const [searchPlaceholder, searchLabel, noThreads] = t3code.screen.search.value;
@@ -97,6 +104,10 @@ const icon = {
   skill: svg(`<path ${ln} d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.13-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.13a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.13 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.13a.5.5 0 0 1-.96 0Z"/>`),
   failed: svg(`<path ${ln} d="M18 6 6 18M6 6l12 12"/>`, 12),
   shield: svg(`<path ${ln} d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>`, 12),
+  // Lessons 5 and 6: the compaction row, the "New session" divider (lucide Eraser) and a thread chip.
+  compact: svg(`<path ${ln} d="m15 15 6 6m-6-6v4.8m0-4.8h4.8M9 19.8V15m0 0H4.2M9 15l-6 6M15 4.2V9m0 0h4.8M15 9l6-6M9 4.2V9m0 0H4.2M9 9 3 3"/>`),
+  eraser: svg(`<path ${ln} d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21M22 21H7M5 11l9 9"/>`, 12),
+  thread: svg(`<path ${ln} d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>`, 12),
   passed: svg(`<path ${ln} d="M20 6 9 17l-5-5"/>`, 12),
   // Lessons 3 and 4: the goal line's target, and the queued message's controls.
   target: svg(`<circle ${ln} cx="12" cy="12" r="10"/><circle ${ln} cx="12" cy="12" r="6"/><circle ${ln} cx="12" cy="12" r="2"/>`, 14),
@@ -110,6 +121,7 @@ const rowHtml = (r: { at: number; label: Lv; detail?: Lv; tone?: 'bad' | 'ok' })
   return `<li class="v2-wrow v2-logrow" data-run-at="${r.at}" data-kind="${k}"${r.tone ? ` data-tone="${r.tone}"` : ''}><span class="v2-wicon">${icon.kind[k]}</span><span class="v2-wbody"><span class="v2-wline"><span class="v2-wlabel">${lv(r.label)}</span>${mark}</span>${r.detail ? `<span class="v2-wdetail">${lv(r.detail)}</span>` : ''}</span></li>`;
 };
 // The site's own mark (components/site/Header.astro), small.
+icon.kind.skill = icon.skill;
 const mark = `<svg class="v2-mark" viewBox="0 0 32 32" width="18" height="18" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="8" class="v2-mark-bg"/><path d="M9 21.5 16 9l7 12.5" fill="none" class="v2-mark-line" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="21.5" r="2.5" class="v2-mark-dot"/></svg>`;
 ---
 <Base title="Guide v2 · Agentic Coding Guide" description="The guide as a drawing of T3 Code: every lesson is a thread, every part a turn, with the picture and the app in a browser panel beside it." section="v2" bare>
@@ -183,13 +195,17 @@ const mark = `<svg class="v2-mark" viewBox="0 0 32 32" width="18" height="18" ar
           <a class="v2-head-btn v2-to-list" href="#" data-to-list aria-label="All lessons" set:html={icon.back} />
           <p class="v2-crumb" aria-label="Thread breadcrumb"><span class="v2-fav v2-fav-s" aria-hidden="true" data-crumb-fav>1</span><span class="v2-crumb-project" data-crumb-project>Hand it over</span><span class="v2-sep" aria-hidden="true">/</span><b data-crumb-thread>Say what you want</b></p>
           <span class="v2-ex" title="A drawing of T3 Code, not the app">example</span>
-          <div class="v2-details" data-ui="context" hidden>
+          <div class="v2-details" data-ui="context" data-max={ctxMax} hidden>
             <button type="button" class="v2-head-btn v2-details-btn" data-details-btn aria-expanded="false" aria-controls="v2-details-pop" aria-label="Thread details"><Fragment set:html={icon.details} /><span class="v2-details-val" data-ctx-short></span></button>
             <div class="v2-pop v2-details-pop" id="v2-details-pop" data-details-pop hidden>
               <div data-ctx-sec>
                 <p class="v2-pop-title">{ctxTitle} <span class="v2-ex">example</span></p>
-                <div class="v2-meter" aria-hidden="true"><span data-ctx-bar></span></div>
-                <p class="v2-pop-val" data-ctx-text data-tpl={ctxUsed}></p>
+                <div class="v2-ctx-row">
+                  <span class="v2-ctx-label">{ctxRow}</span>
+                  <div class="v2-meter" aria-hidden="true"><span data-ctx-bar></span><i class="v2-ctx-tick" style={`left:${ctxTick.toFixed(1)}%`}></i></div>
+                  <span class="v2-ctx-tokens" data-ctx-tokens></span>
+                </div>
+                <p class="v2-pop-val"><span data-ctx-text data-tpl={ctxTip}></span><span class="v2-ctx-of" data-ctx-of data-tpl={ctxOf}></span></p>
               </div>
               <div class="v2-limits" data-limits data-tpl={limitRow} hidden>
                 <p class="v2-pop-title">{limitsTitle} <span class="v2-ex">example</span></p>
@@ -222,9 +238,18 @@ const mark = `<svg class="v2-mark" viewBox="0 0 32 32" width="18" height="18" ar
                     <div class="v2-run-reply" data-run-reply hidden>{part.running.answer.map((a) => <p set:html={lv(a)} />)}</div>
                   </div>
                 )}
+                {part.command && (
+                  <div class="v2-cmd" data-cmd>
+                    <div class="v2-user"><div class="v2-bubble v2-bubble-cmd"><p><code>{part.command.text}</code></p></div></div>
+                    <div class="v2-wrow v2-cmd-row" data-cmd-row>
+                      <span class="v2-wicon" set:html={icon.compact} />
+                      <span class="v2-wbody"><span class="v2-wline"><span class="v2-wlabel" data-cmd-label>{part.command.running}</span></span></span>
+                    </div>
+                  </div>
+                )}
                 <div class="v2-user" data-user>
                   <div class="v2-bubble">
-                    <p>{part.request}</p>
+                    <p>{part.request}{part.chips?.map((c) => <Fragment> <span class="v2-chip-thread" title="Thread, attached with @"><Fragment set:html={icon.thread} />{c}</span></Fragment>)}</p>
                     {part.attach && <p class="v2-attach"><Fragment set:html={icon.paperclip} /><span>{part.attach}</span></p>}
                   </div>
                   {part.queued && (
@@ -318,6 +343,14 @@ const mark = `<svg class="v2-mark" viewBox="0 0 32 32" width="18" height="18" ar
                     <span class="v2-goal-text"><span class="v2-goal-title" data-goal-title></span> <span class="v2-goal-obj">{part.goal.objective}</span></span>
                     <span class="v2-goal-clear">{goalClear}</span>
                   </p>
+                )}
+                {part.ghost && (
+                  <div class="v2-ghost" data-ghost hidden>
+                    <span class="v2-ghost-line" aria-hidden="true"></span>
+                    <span class="v2-ghost-label"><Fragment set:html={icon.eraser} />{part.ghost.label}</span>
+                    <span class="v2-ghost-line" aria-hidden="true"></span>
+                    <span class="v2-ghost-note">{part.ghost.note}</span>
+                  </div>
                 )}
                 <div class="v2-try" data-try>
                   <p class="v2-try-label">Try it yourself</p>

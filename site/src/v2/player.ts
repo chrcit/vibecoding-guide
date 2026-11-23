@@ -12,7 +12,7 @@
  * composer slot, and the chat follows the newest row unless the reader has scrolled away.
  */
 import { Scene, type Script } from '../journey/scene';
-import { route, reverse, type SceneState } from '../journey/picture';
+import { route, reverse, type SceneState, type XY } from '../journey/picture';
 import { TOC, STATUS, MODEL, whereIs, type Move, type Point, type Ui, type Part } from './content';
 import { LESSONS, uiAt } from './lessons';
 import type { Preview } from './preview';
@@ -99,6 +99,7 @@ export function boot(root: HTMLElement) {
   root.setAttribute('data-ready', '');
 
   const lesson = () => LESSONS[here.lesson];
+  const l0 = () => !!lesson();
   const partOf = (): Part => lesson()!.parts[here.part]!;
   const pointOf = (): Point => partOf().points[here.point]!;
   const lastPointOf = (part: number) => lesson()!.parts[part]!.points.length - 1;
@@ -138,6 +139,20 @@ export function boot(root: HTMLElement) {
       if (m.through) await h.send(route.gateToYou(), m.kind, { ms: 420 });
       return;
     }
+    // Lesson 6: the instructions file and the skills shelf on the project plate.
+    if (m.to === 'rules' || m.to === 'load') {
+      const p = sc.state.project;
+      if (!p) return;
+      if (m.to === 'rules') {
+        await h.send(route.agentToRules(p), 'model', { ms: 520 });
+        h.set((s) => { s.project!.rules = 'lit'; });
+        return;
+      }
+      if (m.from === 'rules') h.set((s) => { s.project!.rules = 'lit'; });
+      const path: XY[] = m.from === 'rules' ? reverse(route.agentToRules(p)) : [[p.at[0] + 8, p.at[1] + 19], [p.at[0] - 46, 0], [20, 0]];
+      await h.send(path, 'rules', { ms: 560 });
+      return;
+    }
     const tools = sc.state.tools, project = sc.state.project;
     if (!tools) return;
     h.set((s) => { s.tools!.on = m.tool; s.agents[0]!.busy = true; });
@@ -158,10 +173,14 @@ export function boot(root: HTMLElement) {
       sc.set(p.state);
     });
   }
-  /** Where a point's pucks start: the point before, or for a part's first point its own state with an empty window. */
+  /**
+   * Where a point's pucks start: the point before; for a part's first point, where the part before
+   * ended when the thread goes on (not `fresh`), else its own state with an empty window.
+   */
   function before(): SceneState {
     const pts = partOf().points;
     if (here.point > 0) return pts[here.point - 1]!.state;
+    if (here.part > 0 && !partOf().fresh) return lesson()!.parts[here.part - 1]!.points.at(-1)!.state;
     const s = structuredClone(pts[0]!.state);
     for (const a of s.agents) a.blocks = [];
     return s;
@@ -254,6 +273,20 @@ export function boot(root: HTMLElement) {
       for (const x of subs) n[x.dataset.state === 'running' ? 'working' : x.dataset.state === 'bad' ? 'failed' : 'done']++;
       grp.textContent = (['working', 'done', 'failed'] as const).filter((k) => n[k]).map((k) => grp.dataset[`tpl${k[0]!.toUpperCase()}${k.slice(1)}`]!.replace('{count}', String(n[k]))).join(' · ');
     }
+    // A slash command sent before the request (lesson 5's /compact): its row runs, then says what it
+    // did, and the request follows at its point. The ghost marker after the reply shows from its point.
+    if (part.command) {
+      const c = part.command;
+      const did = point >= c.doneAt;
+      const label = t.querySelector<HTMLElement>('[data-cmd-label]')!;
+      const text = did ? c.done : c.running;
+      if (label.firstChild?.textContent !== text) label.textContent = text;
+      t.querySelector<HTMLElement>('[data-cmd-row]')!.toggleAttribute('data-live', current && !did);
+      shine(label, current && !did);
+      t.querySelector<HTMLElement>('[data-user]')!.hidden = point < c.requestAt;
+    }
+    const ghost = t.querySelector<HTMLElement>('[data-ghost]');
+    if (ghost && part.ghost) ghost.hidden = point < part.ghost.at;
     const working = t.querySelector<HTMLElement>('[data-working]')!;
     // Lesson 4: a queued request has no turn of its own until it is sent.
     const waiting = !!part.queued && point < part.queued.at;
@@ -284,6 +317,11 @@ export function boot(root: HTMLElement) {
   }
 
   // ---------- what the app shows ----------
+
+  /** Tokens as T3 Code's context row writes them: 710k, 1m (formatContextWindowTokens). */
+  const ctxTokens = (v: number) => (v < 1_000 ? String(Math.round(v)) : v < 10_000 ? `${(v / 1_000).toFixed(1).replace(/\.0$/, '')}k` : v < 999_500 ? `${Math.round(v / 1_000)}k` : `${(v / 1_000_000).toFixed(1).replace(/\.0$/, '')}m`);
+  /** Thread details opened by a point (`look: 'context'`), so the next point can close them again. */
+  let autoDetails = false;
 
   function flash(el: HTMLElement, animate: boolean) {
     if (!animate || reduced.matches) return;
@@ -333,6 +371,13 @@ export function boot(root: HTMLElement) {
       text.textContent = text.dataset.tpl!.replace('{used}', String(ui.context));
       $('[data-ctx-bar]').style.transform = `scaleX(${Math.max(0.01, ui.context / 100)})`;
       $('[data-ctx-short]').textContent = `${ui.context}%`;
+      // T3 Code's row (t3code.screen.contextRow): the tokens against the window, the warning colour
+      // from 80% and the error colour from 90%. The tokens follow from the example percentage.
+      const max = Number(details.dataset.max), used = Math.round((ui.context / 100) * max);
+      $('[data-ctx-tokens]').textContent = `${ctxTokens(used)} / ${ctxTokens(max)}`;
+      const of = $('[data-ctx-of]');
+      of.textContent = of.dataset.tpl!.replace('{used}', used.toLocaleString('en-US')).replace('{max}', max.toLocaleString('en-US'));
+      details.dataset.tone = ui.context >= 90 ? 'error' : ui.context >= 80 ? 'warning' : '';
       // Taught or changed here: the button rings once. It never opens by itself over the thread.
       if (ui.context !== lastUi.context) flash($('[data-details-btn]'), animate);
     } else setDetails(false);
@@ -537,6 +582,8 @@ export function boot(root: HTMLElement) {
     showAddress();
   }
   let address = '';
+  // An app can move to another of its pages when the reader follows a link in it: it says where.
+  $('[data-preview]').addEventListener('v2:url', (e) => { address = (e as CustomEvent<string>).detail; showAddress(); });
   function showAddress() {
     const addr = $('[data-addr]');
     if (tab === 'preview') addr.innerHTML = `<span class="v2-mono">${esc(address || ' ')}</span>`;
@@ -591,6 +638,9 @@ export function boot(root: HTMLElement) {
     showHead();
     showUi(via !== 'still');
     showAsk(animate);
+    // A point about the context window opens the thread details on it; the next point closes them.
+    if (l0() && pointOf().look === 'context') { setDetails(true); autoDetails = true; }
+    else if (autoDetails) { setDetails(false); autoDetails = false; }
     showSidebar();
     showControls(animate);
     showBrowser();

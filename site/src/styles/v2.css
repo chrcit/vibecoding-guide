@@ -912,3 +912,48 @@ span.v2-row-child { cursor: default; }
 .v2-chip-ico svg { flex: none; }
 .v2-chip-ico span { max-width: 12rem; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 47.99rem) { .v2-chip-ico span { max-width: 7rem; } }
+/* ---------- lessons 5 and 6 (additive) ---------- */
+
+/* Thread details: the context row as T3 Code draws it (ThreadDetailsUsage.tsx): a label, a bar with a
+   tick where the provider compacts on its own, and the tokens. Warning colour from 80%, error from 90%. */
+.v2-details-pop { width: 17.5rem; }
+.v2-ctx-row { display: grid; grid-template-columns: auto minmax(3rem, 1fr) auto; align-items: center; column-gap: 0.75rem; font-size: 0.75rem; }
+.v2-ctx-label { color: var(--t3-muted-fg); }
+.v2-ctx-tokens { font-family: var(--t3-mono); color: var(--t3-muted-fg); font-variant-numeric: tabular-nums; }
+.v2-ctx-row .v2-meter { position: relative; }
+.v2-ctx-tick { position: absolute; top: 0; bottom: 0; width: 1.5px; margin-left: -0.75px; background: color-mix(in srgb, var(--t3-fg) 45%, transparent); }
+.v2-details-pop .v2-pop-val { display: flex; flex-direction: column; gap: 0.125rem; margin-top: 0.625rem; padding-top: 0.5rem; border-top: 1px solid var(--t3-border); }
+.v2-details-pop .v2-pop-val [data-ctx-text] { color: var(--t3-fg); }
+.v2-details[data-tone='warning'] .v2-meter span { background: var(--t3-warning-fg); }
+.v2-details[data-tone='error'] .v2-meter span { background: var(--t3-error); }
+.v2-details[data-tone='warning'] .v2-details-val { color: var(--t3-warning-fg); }
+.v2-details[data-tone='error'] .v2-details-val { color: var(--t3-error-fg); }
+
+/* A slash command sent before the request (lesson 5's /compact) and T3 Code's row for what it did. */
+.v2-cmd { display: flex; flex-direction: column; padding-bottom: 0.75rem; }
+.v2-cmd .v2-user { padding-bottom: 0.5rem; }
+.v2-bubble-cmd code { font-family: var(--t3-mono); font-size: 0.875rem; }
+.v2-cmd-row { align-self: stretch; }
+.v2-turn[data-enter] .v2-cmd { animation: v2-rise 220ms var(--ease-out) both; }
+
+/* A thread attached with @ (lesson 6): a chip in the message, as T3 Code puts it at the cursor. */
+.v2-chip-thread {
+  display: inline-flex; align-items: center; gap: 0.25rem; max-width: 100%; margin: 0.125rem 0; padding: 0 0.375rem;
+  border: 1px solid var(--t3-border); border-radius: 0.375rem; background: var(--t3-card);
+  font-size: 0.8125rem; line-height: 1.5; color: var(--t3-fg); vertical-align: baseline; white-space: nowrap;
+}
+.v2-chip-thread svg { flex: none; color: var(--t3-muted-fg); }
+
+/* A marker the thread would show, drawn faint: what /clear would leave (lesson 5). */
+.v2-ghost {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 0.625rem;
+  margin: 0.25rem 0 1rem; opacity: 0.75; color: var(--t3-muted-fg); font-size: 0.75rem;
+}
+.v2-ghost-line { height: 0; border-top: 1px dashed var(--t3-input); }
+.v2-ghost-label { display: inline-flex; align-items: center; gap: 0.375rem; font-weight: 500; }
+.v2-ghost-note { grid-column: 1 / -1; justify-self: center; margin-top: 0.25rem; font-style: italic; }
+.v2-turn[data-current] .v2-ghost:not([hidden]) { animation: v2-fade 220ms var(--ease-out) both; }
+.v2-turn[data-still] .v2-ghost { animation: none; }
+
+/* Merge of lessons 5-6 with 14-17: the limit rows keep their own spacing inside the details popover. */
+.v2-details-pop .v2-limits .v2-pop-val { margin: 0; padding: 0; border: 0; display: block; }

@@ -295,6 +295,6 @@ export const archiveEntries: ArchiveEntry[] = [
     disposition: 'discard',
     targetLabel: 'Folded into /library/ (with side-drawer & graph)',
     targetHref: 'library/#wiki',
-    note: 'All 63 wiki articles remain live (backing every `data-side` concept link and `/wiki/graph/`), now browsed fluidly inside the unified Concept & Lesson Library.',
+    note: 'All 71 wiki articles remain live (backing every `data-side` concept link and `/wiki/graph/`), now browsed fluidly inside the unified Concept & Lesson Library.',
   },
 ];

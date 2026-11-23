@@ -257,6 +257,31 @@ export const t3code = {
     doc('portable-handoffs'),
     { unit: 'tokens' },
   ),
+  // Guide v2, lessons 5 and 6 (read at commit 7b47a21 on 2026-11-23).
+  contextSetting: fact(
+    'Settings → Appearance → Thread details',
+    'On web and desktop, turn on Context window in Settings → Appearance → Thread details to see context usage in the thread details card. It appears once the provider reports usage.',
+    doc('composer'),
+    { verified: '2026-11-23', note: 'Read at commit 7b47a21.' },
+  ),
+  compact: fact(
+    '/compact',
+    'Send /compact in an existing conversation to reduce context usage, when the provider supports it. Like other slash commands, it waits for the current turn to finish.',
+    doc('composer'),
+    { verified: '2026-11-23', note: 'Read at commit 7b47a21.' },
+  ),
+  clear: fact(
+    '/clear',
+    'Send /clear on its own to start a fresh session in the same thread: the next message goes to a new provider session that does not see the earlier messages, and the thread marks where it began with New session. Earlier messages and diffs stay in the thread.',
+    doc('composer'),
+    { verified: '2026-11-23', note: 'Read at commit 7b47a21.' },
+  ),
+  threadAsContext: fact(
+    '@ thread',
+    'Type @ and part of a thread\'s title to attach another thread to a message as a chip. The prompt carries only a reference: the agent reads that thread\'s history when it needs it, and the other thread is not changed.',
+    doc('composer'),
+    { verified: '2026-11-23', note: 'Read at commit 7b47a21.' },
+  ),
   handoffLeavesOut: fact(
     ['reasoning', 'tool-call state', 'attachments'],
     "A T3 Code handoff keeps the selected messages in full, in order and with their roles, but leaves out the previous provider's reasoning, tool-call state and attachments. Omitted history can be fetched with T3 Code's thread-reading tool.",
@@ -424,6 +449,24 @@ export const t3code = {
       'T3 Code shows how full the context window is in the thread details, as "Context window" and "{used}% used". There is no context ring in the composer.',
       `${REPO}/blob/main/apps/web/src/components/chat/ThreadDetailsUsage.tsx`,
       { verified: '2026-11-22' },
+    ),
+    contextRow: fact(
+      ['Context', '{used} / {max}', 'Context: {used}% used', '{used} of {max} tokens'],
+      'In the thread details the context window is one row, "Context", with a bar and the tokens used against the window, such as "710k / 1m"; its tooltip reads "Context: {used}% used" and "{used} of {max} tokens". The bar takes the warning colour from 80% used and the error colour from 90%, and a tick on it marks where the provider compacts automatically.',
+      `${REPO}/blob/main/apps/web/src/components/chat/ThreadDetailsUsage.tsx`,
+      { verified: '2026-11-23', note: 'ThreadDetailsContext and formatContextWindowTokens (apps/web/src/lib/contextWindow.ts), read at commit 7b47a21.' },
+    ),
+    compaction: fact(
+      ['Compacting context', 'Context compacted {before} → {after} tokens'],
+      'While a thread\'s context is compacted the timeline shows "Compacting context"; when it is done, "Context compacted {before} → {after} tokens", for example "Context compacted 920K → 88K tokens".',
+      `${REPO}/blob/main/packages/client-runtime/src/work-log/presentation.ts`,
+      { verified: '2026-11-23', note: 'contextCompactionLabel, read at commit 7b47a21. Token counts use formatTokens (K, M).' },
+    ),
+    newSession: fact(
+      'New session',
+      'Where /clear started a new provider session, the thread shows a divider labelled "New session".',
+      `${REPO}/blob/main/apps/web/src/components/chat/V2LifecycleRow.tsx`,
+      { verified: '2026-11-23', note: 'FreshSessionRow, read at commit 7b47a21.' },
     ),
     usageLimits: fact(
       ['Usage limits', '{label}: {left}% left'],

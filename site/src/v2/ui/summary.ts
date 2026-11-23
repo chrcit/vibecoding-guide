@@ -14,10 +14,12 @@ const STARTS: [Kind, string[]][] = [
   ['change', [lead(CHANGED)]],
   // Chapter 3: "Delegated {count} tasks" (t3code.screen.delegatedRow).
   ['delegate', [lead(t3code.screen.delegatedRow.value)]],
+  // Lesson 6: "Skill: {name}" rows get the skill icon.
+  ['skill', [lead(t3code.screen.skillRow.value)]],
 ];
 const plain = (t: Row['label']) => (typeof t === 'string' ? t : t.plain);
 
-export type Kind = 'search' | 'read' | 'change' | 'run' | 'delegate';
+export type Kind = 'search' | 'read' | 'change' | 'run' | 'delegate' | 'skill';
 
 export function kindOf(r: Row): Kind {
   const first = plain(r.label).split(' ')[0]!;

@@ -84,7 +84,12 @@ export type Move =
   // Chapter 3 (more agents): a puck along any route on the floor (a lead to a helper, a job to main),
   // and several moves at once, for agents that work side by side.
   | { to: 'path'; path: XY[]; kind: Kind; ms?: number }
-  | { to: 'all'; moves: Move[] };
+  | { to: 'all'; moves: Move[] }
+  // Lesson 6 (additive): the instructions file and the skills shelf on the project plate.
+  /** The agent writes to the project's instructions file (AGENTS.md). */
+  | { to: 'rules' }
+  /** A file goes from the project into the window: the instructions file, or a skill off the shelf. */
+  | { to: 'load'; from: 'rules' | 'skill' };
 
 /** The parts of the app a lesson teaches. Each appears at the point that teaches it and stays. */
 export interface Ui {
@@ -142,8 +147,9 @@ export interface Point {
   /**
    * Where this point sends the reader's eye in the chat, when it is not the newest row: 'log' marks
    * the failed rows of the turn's work log (a point after the reply that says "read the log").
+   * 'context' (lesson 5) opens the thread details on the context window for this point.
    */
-  look?: 'log';
+  look?: 'log' | 'context';
   /**
    * Lesson 7: a question the agent is asking at this point, drawn as T3 Code's question panel
    * inside the composer (t3code.questionPanel). Left out when nothing is being asked.
@@ -197,6 +203,18 @@ export interface Part {
   request: string;
   /** Something attached to the request (a pasted list). */
   attach?: string;
+  /** Other threads attached to the request with @, drawn as chips (t3code.threadAsContext). Lesson 6. */
+  chips?: string[];
+  /**
+   * A slash command sent before the request, as its own message (lesson 5: /compact). T3 Code's row
+   * for it reads `running` until point `doneAt`, then `done`; the request follows at `requestAt`.
+   */
+  command?: { text: string; running: string; done: string; doneAt: number; requestAt: number };
+  /**
+   * A marker drawn after the reply from point `at`, faint: what a command you did not send would
+   * leave in the thread (lesson 5: /clear's "New session"). `note` says it is only a sketch.
+   */
+  ghost?: { at: number; label: string; note: string };
   /** The part starts a new thread: earlier turns leave the chat. */
   fresh?: boolean;
   /** Lesson 4: with `fresh`, the chat switches to a story thread that already exists, so it isn't labelled a new thread. */
