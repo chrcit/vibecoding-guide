@@ -1,0 +1,283 @@
+/* Reader levels: deeper blocks, ForLevel, the picker and the first-visit offer.
+   Only the tokens from site/AGENTS.md are used here.
+
+   Every rule that hides something sits under `html[data-level]`, which only the
+   boot script sets, and under `@media screen`. Without JavaScript, and in print,
+   everything shows. */
+
+/* ---------- Deeper blocks ---------- */
+
+.deeper {
+  margin: 1.5rem 0;
+  padding-left: 1rem;
+  border-left: 2px solid var(--rule);
+  min-width: 0;
+}
+.deeper .deeper { margin: 1.25rem 0; }
+.deeper-body { min-width: 0; }
+.deeper-body > :first-child { margin-top: 0.4rem; }
+.deeper-body > :last-child { margin-bottom: 0; }
+
+.level-glyph { flex: none; width: 14px; height: 14px; }
+.level-glyph rect { fill: currentColor; }
+.level-glyph rect.off { opacity: 0.25; }
+
+/* The quiet marker of an open layer, and the button of a collapsed one. They
+   share a look so opening a block does not move anything. */
+.deeper-mark,
+.deeper-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.deeper-name { min-width: 0; }
+.deeper-mark .deeper-title,
+.deeper-toggle .deeper-title { color: var(--ink-2); }
+
+.deeper-toggle {
+  display: none;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.35rem 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.deeper-toggle:hover .deeper-title { color: var(--accent); }
+.deeper-toggle .deeper-chevron {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-left: auto;
+  transition: transform 180ms ease;
+}
+.deeper-toggle[aria-expanded='true'] .deeper-chevron { transform: rotate(180deg); }
+
+/* The extract: the block's own first words, clamped to two lines and faded. */
+.deeper-extract {
+  display: none;
+  margin: 0.15rem 0 0;
+  color: var(--ink-2);
+  cursor: pointer;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  /* A mask, not a colour: only its alpha counts. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent);
+  mask-image: linear-gradient(to bottom, #000 45%, transparent);
+  user-select: none;
+}
+
+@media screen {
+  /* Collapsed: below the reader's level and not opened. Before the script runs
+     the body is hidden with display: none; after, it carries hidden="until-found". */
+  :is(html[data-level='plain'] .deeper, html[data-level='technical'] .deeper[data-deeper='engineer']):not(.is-open) > .deeper-mark { display: none; }
+  :is(html[data-level='plain'] .deeper, html[data-level='technical'] .deeper[data-deeper='engineer']):not(.is-open) > .deeper-toggle { display: flex; }
+  :is(html[data-level='plain'] .deeper, html[data-level='technical'] .deeper[data-deeper='engineer']):not(.is-open) > .deeper-extract { display: -webkit-box; }
+  :is(html[data-level='plain'] .deeper, html[data-level='technical'] .deeper[data-deeper='engineer']):not(.is-open) > .deeper-body:not([hidden]) { display: none; }
+
+  /* Opened by the reader: the button stays as the marker and can close it again. */
+  html[data-level] .deeper.is-open > .deeper-mark { display: none; }
+  html[data-level] .deeper.is-open > .deeper-toggle { display: flex; }
+
+  /* ForLevel: content for some levels only. */
+  html[data-level='plain'] [data-for-level]:not([data-for-level~='plain']),
+  html[data-level='technical'] [data-for-level]:not([data-for-level~='technical']),
+  html[data-level='engineer'] [data-for-level]:not([data-for-level~='engineer']) { display: none; }
+}
+
+@media screen and (prefers-reduced-motion: no-preference) {
+  html[data-level] .deeper.is-open > .deeper-body { animation: deeper-in 200ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+}
+@keyframes deeper-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media print {
+  .deeper-toggle, .deeper-extract, .level-picker, .level-offer { display: none !important; }
+  .deeper-mark { display: flex !important; }
+  .deeper-body, .deeper-body[hidden] { display: block !important; content-visibility: visible !important; }
+}
+
+/* ---------- Picker ---------- */
+
+.level-picker { position: relative; flex: none; display: none; }
+html[data-level] .level-picker { display: block; }
+.level-sr {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+.level-current { display: none; align-items: center; gap: 0.45rem; }
+html[data-level='plain'] .level-current[data-when='plain'],
+html[data-level='technical'] .level-current[data-when='technical'],
+html[data-level='engineer'] .level-current[data-when='engineer'] { display: inline-flex; }
+.level-picker-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.5rem;
+  padding: 0 0.7rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.level-picker-button:hover { border-color: var(--muted); }
+.level-picker-button .level-glyph { color: var(--accent); }
+.level-picker-button .deeper-chevron { width: 12px; height: 12px; color: var(--muted); transition: transform 160ms ease; }
+.level-picker-button[aria-expanded='true'] .deeper-chevron { transform: rotate(180deg); }
+@media (max-width: 52rem) {
+  /* On phones and narrow windows the button is the glyph alone; its name still says the level.
+     From 44rem the header also shows the nav, so the label waits until there is room for both. */
+  .level-picker-button { justify-content: center; width: 2.5rem; padding: 0; }
+  .level-picker-label, .level-picker-button .deeper-chevron { display: none; }
+}
+
+.level-panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: min(22rem, calc(100vw - 2 * var(--gutter)));
+  padding: 0.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  font-family: var(--serif);
+  font-size: 1rem;
+  line-height: 1.4;
+  transform-origin: top right;
+}
+.level-panel[hidden] { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .level-panel:not([hidden]) { animation: level-pop 160ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+}
+@keyframes level-pop {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.level-panel fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.level-panel legend { padding: 0.35rem 0.6rem 0.5rem; color: var(--muted); font-family: var(--mono); font-size: 0.8125rem; }
+
+.level-option {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.1rem 1fr;
+  gap: 0.15rem 0.65rem;
+  align-items: start;
+  padding: 0.6rem 0.6rem;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--ink);
+}
+.level-option:hover { background: color-mix(in oklab, var(--rule) 40%, transparent); }
+.level-option input {
+  grid-row: 1 / span 2;
+  margin: 0.3rem 0 0;
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent);
+}
+.level-option strong { font-weight: 600; }
+.level-option span { grid-column: 2; color: var(--muted); font-size: 0.9375rem; }
+.level-option:has(input:checked) { background: var(--accent-soft); }
+.level-option:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 0; }
+.level-option input:focus-visible { outline: none; }
+
+/* ---------- First-visit offer ---------- */
+
+.level-offer {
+  position: fixed;
+  z-index: 30;
+  top: 4.25rem;
+  right: var(--gutter);
+  width: min(21rem, calc(100vw - 2 * var(--gutter)));
+  padding: 0.9rem 1rem 1rem;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  font-size: 1rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.level-offer[hidden] { display: none; }
+/* On a phone the offer is one row just under the header, over the lesson rail, so it never covers
+   the text being read; scrolling, a choice or the close button puts it away. */
+@media (max-width: 34rem) {
+  .level-offer {
+    top: calc(var(--header-h) + 0.25rem) !important; left: 0.5rem; right: 0.5rem !important; width: auto;
+    padding: 0.4rem 0.4rem 0.4rem 0.5rem; border-radius: var(--radius); box-shadow: var(--shadow-pop);
+  }
+  .level-offer .level-offer-choices { flex-wrap: nowrap; gap: 0.3rem; margin-right: 2.4rem; }
+  .level-offer .level-offer-choices button { flex: 1 1 0; min-width: 0; min-height: 2.5rem; padding: 0 0.35rem; white-space: nowrap; font-size: var(--text-xs); }
+  .level-offer-close { top: 50%; transform: translateY(-50%); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .level-offer:not([hidden]) { animation: level-pop 220ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+}
+.level-offer p { margin: 0 2.25rem 0.75rem 0; }
+.level-offer-choices { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.level-offer-choices button {
+  min-height: 2.5rem;
+  padding: 0 0.85rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.level-offer-choices button:hover { border-color: var(--muted); }
+.level-offer-choices button[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.level-offer-close {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.level-offer-close:hover { color: var(--ink); }
+
+/* The offer is the three choices and nothing else; keep them clear of the close button. */
+.level-offer-choices { margin-right: 2.5rem; }
+
+/* The level picker: what a level changes, and the flash after a switch (LevelPicker.astro). */
+.level-shows { display: block; margin-top: 0.15rem; font-size: var(--text-xs); color: var(--muted); }
+/* On a phone the panel keeps what a level changes and drops the longer self-description, so it
+   covers less of the page; the description is still in the first-visit offer's names. */
+@media (max-width: 34rem) {
+  .level-option > span:not(.level-shows) { display: none; }
+  .level-option .level-shows { font-size: var(--text-s); color: var(--ink-2); }
+}
+.level-said {
+  position: fixed; z-index: 60; top: calc(var(--header-h) + 0.5rem); right: max(var(--gutter), calc((100vw - var(--full)) / 2));
+  max-width: min(24rem, calc(100vw - 2 * var(--gutter))); margin: 0; padding: 0.55rem 0.8rem;
+  border-radius: var(--radius-s); background: var(--ink); color: var(--paper); box-shadow: var(--shadow-pop);
+  font-family: var(--sans); font-size: var(--text-s); line-height: 1.4;
+}
+.level-said[hidden] { display: none; }
+@keyframes level-new { from { background-color: color-mix(in oklab, var(--ink) 14%, transparent); box-shadow: 0 0 0 0.35rem color-mix(in oklab, var(--ink) 14%, transparent); } }
+[data-level-new] { border-radius: var(--radius-s); animation: level-new 1.4s var(--ease-out); }
+@media (prefers-reduced-motion: reduce) { [data-level-new] { animation-duration: 1ms; } }

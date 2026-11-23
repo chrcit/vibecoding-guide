@@ -1,0 +1,45 @@
+---
+import Essay from '../../layouts/Essay.astro';
+import Fact from '../../components/data/Fact.astro';
+import { url } from '../../lib/nav';
+import { anchor } from '../../lib/facts';
+import { links } from '../../data/links';
+
+export const meta = {
+  title: 'Spend intelligence where it matters',
+  description: 'More thinking and the top model are not automatically better. Thinking is text you pay for. Put the expensive model where the decisions are and let a cheaper one do the volume.',
+  order: 14,
+};
+
+const src = (id: string) => `sources/#${anchor(id)}`;
+const leansOn = [
+  { href: 'models/', title: 'Models: the effort dial (Fig. 11) and score against cost (Fig. 10)' },
+  { href: 'explain/plans-and-api/', title: 'Plans and the API: a meter and a tank (Fig. 8) and what your plan runs (Fig. 9)' },
+  { href: 'explain/orchestration/', title: 'Orchestration: six ways to run a team of agents (Fig. 12)' },
+  { href: src('benchmarks.aa.opusByEffort.max.score'), title: 'Opus 5.5 scores and output tokens by effort level' },
+  { href: src('lineup.thinkingBilledAsOutput'), title: 'Thinking is billed as output' },
+  { href: src('lineup.anthropicAdvice'), title: 'Anthropic’s own advice on which model to start with' },
+  { href: src('plans.claude.pro.fable'), title: 'How Fable is billed on Pro' },
+];
+---
+<Essay meta={meta} leansOn={leansOn}>
+  <p>More thinking is not automatically better, and neither is the top model. Thinking is text the model writes and you pay for, and the last few points of quality cost about double. So I put the most capable model where the decisions are made and let a cheaper one do the volume.</p>
+
+  <h2>Thinking is just text</h2>
+
+  <p>Before a model answers you or writes any code, it writes an internal dialogue first. That lets it give itself feedback and get a better grip on an unclear problem before it commits to an answer. The effort setting decides how much of that it writes. On Claude Opus 5.5 the levels are <Fact id="models.claude-opus-5-5.effort.levels" />. Each step up means more tokens, which are pieces of words, and those tokens cost money: thinking is <Fact id="lineup.thinkingBilledAsOutput" />, even when you never see it. Output is the expensive side, at <Fact id="lineup.claudeOutputRatio" /> the price of input on every current Claude model. In Anthropic's own worked example, output comes to <Fact id="lineup.workedExampleOutputShare" /> of the cost. So the effort level maps almost directly onto the bill.</p>
+
+  <p>More thinking often helps. Often it helps only a little, and sometimes the model overthinks. Artificial Analysis ran its index on Opus 5.5 at each level. At xhigh it scored <Fact id="benchmarks.aa.opusByEffort.xhigh.score" /> and wrote <Fact id="benchmarks.aa.opusByEffort.xhigh.totalTokens" /> of output over the whole run. At max it scored <Fact id="benchmarks.aa.opusByEffort.max.score" /> and wrote <Fact id="benchmarks.aa.opusByEffort.max.totalTokens" />. That is under two points for more than twice the output. The <a href={url('models/')}>models page</a> lets you turn that dial yourself. <!-- FIG 11 --> I work at medium most of the time, where Opus 5.5 scored <Fact id="benchmarks.aa.opusByEffort.medium.score" />. That gap is real, and I raise the effort when the task deserves it. Medium is also where Claude Code starts: <Fact id="harnesses.claudeCode.defaultModel" show="claim" /></p>
+
+  <h2>The same logic for models</h2>
+
+  <p>For a while I used the top model for everything. Then I looked at the prices. Claude Fable 5.2 costs <Fact id="models.claude-fable-5-2.price.output" /> per million output tokens, and Opus 5.5 costs <Fact id="models.claude-opus-5-5.price.output" />. Anthropic's own advice is: “<Fact id="lineup.anthropicAdvice" />” The chart of score against cost on the <a href={url('models/')}>models page</a> puts every model on one picture. <!-- FIG 10 --></p>
+
+  <p>So now I split the work. The expensive model runs the main thread, where the decisions get made. Now and then I start a second copy of it for a second opinion on a hard call. The half-price model does the actual building, as workers under that main thread. The <a href={url('explain/orchestration/')}>orchestration explainer</a> shows that shape and others. <!-- FIG 12 --> I save money and keep the judgement where it counts. When I catch myself giving a hard problem to the cheaper model, I move it.</p>
+
+  <h2>On the cheapest plan this matters more</h2>
+
+  <p>This guide assumes you are on a <Fact id="plans.claude.pro.price" /> plan. There, <Fact id="plans.claude.pro.fable" show="claim" /> Everything else draws from one tank that refills every few hours, and an expensive model at high effort drains it fastest. The <a href={url('explain/plans-and-api/')}>plans explainer</a> shows the tank and what each plan runs. <!-- FIG 8 --> <!-- FIG 9 --> On a small plan, picking the effort level and the model per task is how you get a week's worth of work out of it.</p>
+
+  <p>The caveat is that my split is a habit, and I haven't measured how much it saves me. The token and score figures here come from <a href={links.artificialAnalysis.url}>Artificial Analysis</a> and Anthropic. The rest is how I work.</p>
+</Essay>

@@ -1,0 +1,44 @@
+---
+/*
+  The guide's contents: the three parts and their lessons, by number and short name, the page on
+  show marked. A full-height sheet opened from the lesson panel's header (PanelHead.astro); the
+  behaviour (modal, Escape, focus) is in journey/sheet.ts, the look in styles/journey-panel.css.
+  Props:
+    chapter   the page's chapter key: a lesson id or an overview's chapter
+*/
+import { parts, rungs } from '../../journey/rungs';
+import { url } from '../../lib/nav';
+interface Props { chapter: string }
+const { chapter } = Astro.props;
+---
+<dialog class="jp-sheet" id="jp-sheet" aria-labelledby="jp-sheet-title" data-jp-sheet>
+  <div class="jp-sheet-in">
+    <header class="jp-sheet-head">
+      <h2 id="jp-sheet-title">The guide <span>{rungs.length} lessons</span></h2>
+      <button class="jp-sheet-x" type="button" data-jp-close aria-label="Close the contents">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="m4 4 8 8M12 4l-8 8" /></svg>
+      </button>
+    </header>
+    <nav class="jp-sheet-body" aria-label="All lessons">
+      {parts.map((p) => (
+        <section class="jp-part">
+          <a class="jp-part-head" href={url(p.href)} aria-current={p.chapter === chapter ? 'page' : undefined}>
+            <span class="jp-part-n">Part {p.n} · {p.range}</span>
+            <span class="jp-part-title">{p.title}</span>
+          </a>
+          <ol class="jp-lessons">
+            {rungs.filter((r) => r.part === p.n).map((r) => (
+              <li>
+                <a href={url(`journey/${r.id}/`)} aria-current={r.id === chapter ? 'page' : undefined} title={r.title}>
+                  <span class="jp-l-n">{r.n}</span>
+                  <span class="jp-l-name">{r.short}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+    </nav>
+    <footer class="jp-sheet-foot"><a href={url('library/')}>The library: every lesson and term</a></footer>
+  </div>
+</dialog>

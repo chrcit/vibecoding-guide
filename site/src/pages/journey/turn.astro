@@ -1,0 +1,83 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import Step from '../../components/journey/Step.astro';
+import More from '../../components/journey/More.astro';
+import Next from '../../components/journey/Next.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import Term from '../../components/journey/Term.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
+import { PLAN } from '../../journey/chapters/turn';
+import { url } from '../../lib/nav';
+
+const ids = ['harnesses.claudeCode.permissionModes', 't3code.queueSteer', 't3code.browser'];
+const planPrompt = `Before you change anything, write a numbered plan: what you will build, which files you will touch, and every place where the request could mean two things.
+Then stop and wait for my answer. Do not start until I say go.
+If a new fork comes up while you build, ask me in one line and carry on with the parts that do not depend on it.`;
+const reviewPrompt = `Build me a review page for this project, for development only, never shipped.
+- List every screen the last change touched, with a screenshot of each.
+- Under each screenshot, a notes box.
+- Save each note to notes/review.md, with the screen it belongs to and the date.
+- At the start of every turn, read notes/review.md, fix what is open, and mark each note done.`;
+const levels = ['plain', 'technical', 'engineer'] as const;
+---
+<Journey chapter="turn" first="once" title="Your turn" description="Where you step in: a plan before the build, a question during it, a note pinned on the result, and a review page the agent builds for you.">
+  <Step id="once" title="If you only speak at the start">
+    <p>A made-up job: “Let the club pause a member.” Should a paused member be hidden from the list, or greyed out? You meant greyed out, but you only spoke once, so the agent guesses and builds twelve turns on the guess.</p>
+  </Step>
+  <Step id="plan" title="Read the plan before the build">
+    <p>Ask for a numbered plan first. The agent stops at the <Term id="check" /> and waits for you, as in <Term id="plan-mode" />; step 3 is its guess.</p>
+    <div class="pick">
+      <button type="button" data-do="plan" data-val="go" aria-pressed="false">Go ahead: build it as planned</button>
+      <button type="button" data-do="plan" data-val="change" aria-pressed="false">Change step 3: grey them out</button>
+    </div>
+    {levels.map((l) => (
+      <ForLevel is={l}><ol>{PLAN[l].map((x) => <li>{x}</li>)}</ol></ForLevel>
+    ))}
+    <More title="A prompt for this">
+      <CopyPrompt title="Plan first, then wait" compact>{planPrompt}</CopyPrompt>
+      <p>Claude Code also has a plan mode among its permission modes: <Fact id="harnesses.claudeCode.permissionModes" />.</p>
+    </More>
+  </Step>
+  <Step id="ask" title="Let it ask during the build">
+    <p>At the fork the agent puts a question on the <Term id="tray" /> from <LessonRef id="proof" />, and carries on with the parts that do not depend on it. That one part waits for your answer.</p>
+    <div class="row">
+      <button class="btn" type="button" data-do="answer">Answer it: greyed out</button>
+    </div>
+    <More title="In T3 Code">
+      <p><Fact id="t3code.queueSteer" show="claim" /></p>
+    </More>
+  </Step>
+  <Step id="pin" title="Point at the result">
+    <p>The screen has two badges, “paid” and “paused”. Typed, your note leaves the agent to guess which; pinned on the screenshot, it brings the spot along.</p>
+    <div class="pick">
+      <button type="button" data-do="pin" data-val="type" aria-pressed="false">Type “the badge looks off”</button>
+      <button type="button" data-do="pin" data-val="pin" aria-pressed="false">Pin a note on the badge</button>
+    </div>
+    <More title="In T3 Code">
+      <p><Fact id="t3code.browser" show="claim" /></p>
+    </More>
+  </Step>
+  <Step id="build" title="Have it build your review page">
+    <ForLevel is="plain">
+      <p>When you look at the same kind of result again and again, have the agent build you a review page. Your notes go into a file, and the agent reads that file at the start of its next turn.</p>
+    </ForLevel>
+    <ForLevel is="technical">
+      <p>Have the agent build a dev-only review page: a screenshot of each changed screen with a notes box under it. Notes are saved to <code>notes/review.md</code>, which the agent reads at the start of every turn.</p>
+    </ForLevel>
+    <ForLevel is="engineer">
+      <p>A dev-only review page turns your attention into a file the agent reads every turn. In a team the same doors exist: plan review before work, questions in the thread, comments on a preview, all of it in the pull request.</p>
+    </ForLevel>
+    <More title="A prompt for this">
+      <CopyPrompt title="A review page" compact>{reviewPrompt}</CopyPrompt>
+      <p>This guide was built with one: in development, you highlight text on any page to leave a note, and the agent reads the notes.</p>
+    </More>
+    <Next from="turn" more={[{ href: 'wiki/giving-feedback/', text: 'Giving feedback' }]} />
+  </Step>
+  <Fragment slot="foot">
+    <p>The job, the fork and the turn counts are made up.</p>
+    <Verified ids={ids} />
+  </Fragment>
+</Journey>

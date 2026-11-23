@@ -1,0 +1,61 @@
+---
+// Miniature for the Voice board: in the same time, speaking gets out about three times the words
+// typing does. The multiplier is the sourced study figure.
+import MiniFrame from './MiniFrame.astro';
+import { TYPED_WORDS, VOICE_MS } from './model';
+import { fact, formatValue } from '../../../lib/facts';
+const f = fact('claims.research.speechFaster');
+const k = f.value as number;
+const spoken = Math.round(TYPED_WORDS * k);
+const word = (i: number, row: number) => ({ x: 70 + (i % 12) * 18.5, y: row + Math.floor(i / 12) * 14 });
+---
+<MiniFrame id="voice" href="explain/voice/" name="Voice" alt={`Two rows of words written in the same few seconds: the spoken row is about ${formatValue(f)} as long as the typed one.`}>
+  <svg viewBox="0 0 300 140" aria-hidden="true" data-cfg={JSON.stringify({ ms: VOICE_MS, typed: TYPED_WORDS, spoken })}>
+    <text x="10" y="40">speak</text>
+    {Array.from({ length: spoken }, (_, i) => <rect class="m-lit-soft m-move" x={word(i, 28).x} y={word(i, 28).y} width="14" height="9" rx="2" data-v-speak={i} />)}
+    <text x="10" y="114">type</text>
+    {Array.from({ length: TYPED_WORDS }, (_, i) => <rect class="m-ink m-move" x={word(i, 102).x} y={word(i, 102).y} width="14" height="9" rx="2" data-v-type={i} />)}
+    <text class="m-big" x="290" y="120" text-anchor="end">{formatValue(f)}</text>
+  </svg>
+  <Fragment slot="control">
+    <button type="button" class="mini-play" data-v-play>
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M5 3.2v9.6L12.6 8z" fill="currentColor" /></svg>
+      Talk and type
+    </button>
+  </Fragment>
+</MiniFrame>
+<style is:global>
+  .mini-play {
+    display: inline-flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; padding: 0 0.875rem; width: 100%; justify-content: center;
+    border: 1px solid var(--rule-strong); border-radius: var(--radius-s); background: var(--card); color: var(--ink);
+    font: inherit; font-size: var(--text-s); font-weight: 600; cursor: pointer; transition: transform 120ms var(--ease-out);
+  }
+  .mini-play:hover { background: var(--paper-2); }
+  .mini-play:active { transform: scale(0.98); }
+</style>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-mini="voice"]')) {
+    const { ms, typed, spoken } = JSON.parse(root.querySelector('svg')!.dataset.cfg!);
+    const sp = [...root.querySelectorAll<SVGRectElement>('[data-v-speak]')];
+    const ty = [...root.querySelectorAll<SVGRectElement>('[data-v-type]')];
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    let raf = 0;
+    const set = (t: number) => {
+      sp.forEach((r, i) => (r.style.opacity = i < Math.round(t * spoken) ? '1' : '0'));
+      ty.forEach((r, i) => (r.style.opacity = i < Math.round(t * typed) ? '1' : '0'));
+    };
+    root.querySelector('[data-v-play]')!.addEventListener('click', () => {
+      cancelAnimationFrame(raf);
+      if (reduced.matches) return set(1);
+      const t0 = performance.now();
+      set(0);
+      const tick = (now: number) => {
+        const t = Math.min(1, (now - t0) / ms);
+        set(t);
+        if (t < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    });
+  }
+</script>

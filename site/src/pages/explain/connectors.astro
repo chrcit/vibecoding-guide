@@ -1,0 +1,336 @@
+---
+// /explain/connectors/: connectors and MCP (plan item C7, Fig. 17).
+import { Code } from 'astro:components';
+import Article from '../../layouts/Article.astro';
+import Deeper from '../../components/level/Deeper.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import Embed from '../../components/site/Embed.astro';
+import Note from '../../components/site/Note.astro';
+import Term from '../../components/site/Term.astro';
+import WireIn from '../../components/fig/wire-in/WireIn.astro';
+import { connectors } from '../../data/connectors';
+import { links } from '../../data/links';
+import { url } from '../../lib/nav';
+
+const deferred = connectors.claudeCode.toolSearch.value === 'deferred';
+
+const headings = [
+  { depth: 2, slug: 'what-a-connector-does', text: 'What a connector does' },
+  { depth: 2, slug: 'mcp-the-common-plug', text: 'MCP, the common plug' },
+  { depth: 2, slug: 'what-it-changes', text: 'What it changes in practice' },
+  { depth: 2, slug: 'four-words', text: 'Connector, tool, skill and subagent' },
+  { depth: 2, slug: 'adding-one', text: 'Adding one' },
+  { depth: 2, slug: 'worth-knowing', text: 'A few worth knowing' },
+  { depth: 2, slug: 'room', text: 'Every connector takes room' },
+  { depth: 2, slug: 'access', text: 'A connector is access' },
+  { depth: 2, slug: 'related', text: 'Related pages' },
+];
+
+const ccConfig = `# A remote server, signed in through the browser
+claude mcp add --transport http linear https://mcp.linear.app/mcp
+# then, inside Claude Code
+/mcp
+
+# A local server that Claude Code starts as a process
+claude mcp add playwright -- npx @playwright/mcp@latest
+
+# Shared with everyone who clones the repository (writes .mcp.json)
+claude mcp add --scope project --transport http github https://api.githubcopilot.com/mcp/
+
+claude mcp list`;
+
+const mcpJson = `{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    },
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?read_only=true"
+    }
+  }
+}`;
+
+const codexConfig = `# ~/.codex/config.toml, or .codex/config.toml in a trusted project
+[mcp_servers.playwright]
+command = "npx"
+args = ["@playwright/mcp@latest"]
+
+[mcp_servers.linear]
+url = "https://mcp.linear.app/mcp"
+# only the tools you want the agent to see
+enabled_tools = ["get_issue", "list_issues"]`;
+
+const codexCli = `codex mcp add playwright -- npx @playwright/mcp@latest
+codex mcp add linear --url https://mcp.linear.app/mcp
+codex mcp login linear`;
+
+const server = `// bakery-hours.ts: a read-only MCP server with one tool.
+import { McpServer } from '@modelcontextprotocol/server';
+import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
+import * as z from 'zod/v4';
+import { openingHours } from './hours';
+
+const server = new McpServer({ name: 'bakery-hours', version: '1.0.0' });
+
+server.registerTool(
+  'hours_for_date',
+  {
+    // The description is what the model reads when it decides to call the tool.
+    // Keep it short and put the words it would search for first.
+    description: 'Opening hours the bakery website shows for one date (YYYY-MM-DD), including public holidays.',
+    inputSchema: z.object({ date: z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/) }),
+  },
+  async ({ date }) => ({
+    content: [{ type: 'text', text: JSON.stringify(openingHours(new Date(date))) }],
+  }),
+);
+
+await server.connect(new StdioServerTransport());`;
+
+const factIds = [
+  'connectors.mcp.definition',
+  'connectors.mcp.transports',
+  'connectors.protocol.analogy',
+  'connectors.protocol.primitives',
+  'connectors.protocol.specVersion',
+  'connectors.protocol.tsSdk',
+  'connectors.protocol.registry',
+  'connectors.claudeCode.toolSearch',
+  'connectors.claudeCode.cliCheaper',
+  'connectors.claudeCode.scopes',
+  'connectors.claudeCodeMcp.add',
+  'connectors.claudeCodeMcp.sseDeprecated',
+  'connectors.claudeCodeMcp.projectApproval',
+  'connectors.claudeCodeMcp.outputLimit',
+  'connectors.claudeCodeMcp.toolSearchModes',
+  'connectors.claudeCodeMcp.descriptionLimit',
+  'connectors.claudeCodeMcp.resourcesAndPrompts',
+  'connectors.claudeCodeMcp.trust',
+  'connectors.claudeCodeMcp.directory',
+  'connectors.claudeCodeMcp.serve',
+  'connectors.codexMcp.add',
+  'connectors.codexMcp.toolFilters',
+  'connectors.codexMcp.timeouts',
+  'connectors.codexMcp.plugins',
+  'connectors.t3code.server',
+  'connectors.t3codeMore.harnessConfig',
+  'connectors.t3codeMore.access',
+  'connectors.servers.playwright',
+  'connectors.servers.chromeDevtools',
+  'connectors.servers.github',
+  'connectors.servers.linear',
+  'connectors.servers.supabase',
+  'connectors.servers.figma',
+  'harnesses.claudeCode.mcpConfig',
+  'harnesses.codex.mcpConfig',
+  't3code.mcp',
+];
+---
+<Article
+  title="Connectors and MCP"
+  description="What a connector gives an agent, how MCP works, how to add one in Claude Code, Codex and T3 Code, and what it costs in context and in risk."
+  section="explain"
+  updated="2026-11-18"
+  headings={headings}
+  lede="An agent starts out able to work on the files in your project. A connector lets it reach something else: a browser, your issue tracker, a database, your mail. That reach is useful, and it is also access."
+>
+  <h2 id="what-a-connector-does">What a connector does</h2>
+  <p>
+    Out of the box, a coding agent can read and write the files in your project and run commands on your computer. That is a lot. It can build the club list, run its tests and fix what fails. What it cannot do is look at anything outside that folder. It cannot see the page in a browser the way a member would, read the bug report the bakery filed, or check who in the club's real database has paid.
+  </p>
+  <p>
+    A connector is a door to one of those outside things. You plug it in, and the agent gets a handful of new actions: open this page and click that button, read this ticket, run this query. Most connectors also need you to sign in once, so the agent can act as you on that service.
+  </p>
+
+  <h2 id="mcp-the-common-plug">MCP, the common plug</h2>
+  <p>
+    Most connectors today use the Model Context Protocol, MCP for short. In its own words it is <Fact id="connectors.mcp.definition" />. One standard means a company writes its connector once and every agent that speaks MCP can use it: Claude Code, Codex, ChatGPT, editors and the rest. The protocol's own documentation calls it <Fact id="connectors.protocol.analogy" />, and the picture holds: the plug is the same shape whatever is on the other end.
+  </p>
+  <p>
+    <a href={links.theo.url}>Theo</a>, who makes <a href={links.t3code.url}>T3 Code</a>, uses a kitchen for it. The model is the chef and the harness is the kitchen; built-in tools are the knives and pans already there, and an MCP server is more like a cookbook left on the counter, which the chef can read and use or ignore. He explains it at about 20 minutes into his video on harnesses.
+  </p>
+  <Embed id="ebILGCoN4UU" title="My last video about AI harnesses (Theo)" start={1220} />
+
+  <Deeper level="technical" title="Local and remote servers">
+    <p>
+      An MCP server is a small program, and it runs in one of two ways. <Fact id="connectors.mcp.transports" show="claim" /> A local (stdio) server is started by your agent on your machine, talks to it over standard input and output, and stops when the session ends; Playwright's browser server works this way. A remote server sits at a web address run by the service itself, such as Linear's or GitHub's, and the agent connects to it over HTTPS.
+    </p>
+    <p>
+      Remote servers usually sign you in with OAuth: you add the server, the agent opens a browser page, you approve it, and a token is stored and refreshed for you. Local servers more often take an API key from an environment variable. <Fact id="connectors.claudeCodeMcp.sseDeprecated" show="claim" /> Old instructions that mention SSE servers still work in many places, but new ones use HTTP.
+    </p>
+    <Deeper level="engineer" title="Tools, resources and prompts">
+      <p>
+        <Fact id="connectors.protocol.primitives" show="claim" /> On the wire it is JSON-RPC: the client calls <code>tools/list</code> to discover tools (each a name, a description and a JSON Schema for its input), <code>tools/call</code> to run one, <code>resources/list</code> and <code>resources/read</code> for data addressed by URI, and <code>prompts/list</code> and <code>prompts/get</code> for templates. The current specification is dated <Fact id="connectors.protocol.specVersion" />.
+      </p>
+      <p>
+        Most agents use the three very differently. Tools are what the model sees and chooses between on every turn, so they carry nearly all the weight and nearly all the cost. Resources and prompts wait for you. <Fact id="connectors.claudeCodeMcp.resourcesAndPrompts" show="claim" /> A server can also ask you a question in the middle of a task (elicitation), which Claude Code shows as a dialog.
+      </p>
+      <p>
+        The agent never runs the server's code itself; it sends a request and gets text or structured data back. That is the practical difference from a built-in tool, which ships inside the harness. The same server works in every client, and its result arrives in the conversation exactly like anything else the model reads, which matters for the security section below.
+      </p>
+    </Deeper>
+  </Deeper>
+
+  <h2 id="what-it-changes">What it changes in practice</h2>
+  <p>
+    The biggest gain is that the agent can check its own work against the real thing. With a browser connector it can open the club list, sign in as a test member, mark someone as paid and look at whether the list updates. Before, it could only tell you the code looked right.
+  </p>
+  <p>
+    With the issue tracker connected, you can say "fix the holiday hours bug in ticket 41" and the agent reads the report itself, steps and screenshot included, instead of you pasting it in. With the database connected, it can check the live data before it trusts its own reading of the code: are there members whose payment date is in the future? For the contact tidy, a mail connector lets it find the latest export in your inbox.
+  </p>
+
+  <WireIn deferred={deferred} />
+
+  <h2 id="four-words">Connector, tool, skill and subagent</h2>
+  <p>
+    Four words get mixed up, because each one adds something to an agent. They add different things.
+  </p>
+  <ul>
+    <li>A <em>tool</em> is one action the agent can take: read a file, run a command, click a button on a page. The harness comes with a set of them.</li>
+    <li>A <em>connector</em> is access to an outside system. It brings a bundle of tools for that system, and usually a sign-in.</li>
+    <li>A <em>skill</em> is know-how: written instructions the agent loads when a task needs them, such as how your team writes release notes. It adds no new access. See <a href={url('explain/skills/')}>Skills</a>.</li>
+    <li>A <em>subagent</em> is a helper: a second agent the first one starts for a piece of the work, with its own fresh memory. See <a href={url('explain/orchestration/')}>Orchestration</a>.</li>
+  </ul>
+  <p>
+    A connector and a skill often travel together. A browser connector gives the agent the ability to click; a skill tells it how you want a page checked before it calls the work done.
+  </p>
+
+  <h2 id="adding-one">Adding one</h2>
+  <p>
+    You add a connector in the harness, the program that runs the model: Claude Code, Codex or another. Each has one command for it and keeps a list per project or for your whole account. You can also ask the agent to do it for you, giving it the address from the service's own documentation.
+  </p>
+  <ul>
+    <li>In Claude Code, run <code>claude mcp add</code> with a name and the server's address, then type <code>/mcp</code> inside a session to sign in. Servers can be set up for <Fact id="connectors.claudeCode.scopes" /> scope.</li>
+    <li>In Codex, run <code>codex mcp add</code>, then <code>codex mcp login</code> for servers that need a sign-in. Type <code>/mcp</code> to see what is connected.</li>
+    <li>T3 Code runs Claude Code, Codex and others with their own setup. <Fact id="connectors.t3codeMore.harnessConfig" show="claim" /> So add connectors in the harness, and T3 Code's threads pick them up. T3 Code is itself a connector too: <Fact id="connectors.t3code.server" show="claim" /></li>
+  </ul>
+
+  <CopyPrompt title="Have the agent add a connector">{`I want you to be able to check the club list in a real browser after you change it.
+
+Add the Playwright MCP server to this project only, following its README: https://github.com/microsoft/playwright-mcp
+
+Do not add it for all my projects. When it is connected, open the local site, sign in as the test member and take a screenshot of the members list to show me it works. Tell me what you added and where the config lives.`}</CopyPrompt>
+
+  <Deeper level="technical" title="The config files and commands">
+    <p>
+      <Fact id="harnesses.claudeCode.mcpConfig" show="claim" /> The <code>--</code> separates Claude Code's own options from the command that starts a local server.
+    </p>
+    <Code code={ccConfig} lang="sh" themes={{ light: 'github-light', dark: 'github-dark' }} />
+    <p>A project's <code>.mcp.json</code>, checked into the repository so everyone gets the same servers:</p>
+    <Code code={mcpJson} lang="json" themes={{ light: 'github-light', dark: 'github-dark' }} />
+    <p>
+      <Fact id="harnesses.codex.mcpConfig" show="claim" /> <Fact id="connectors.codexMcp.add" show="claim" />
+    </p>
+    <Code code={codexCli} lang="sh" themes={{ light: 'github-light', dark: 'github-dark' }} />
+    <Code code={codexConfig} lang="toml" themes={{ light: 'github-light', dark: 'github-dark' }} />
+    <p>
+      To use T3 Code from an agent it did not start, point that agent at <Fact id="t3code.mcp" /> with the commands above. <Fact id="connectors.t3codeMore.access" show="claim" />
+    </p>
+    <Deeper level="engineer" title="Scoping per project">
+      <p>
+        In Claude Code, local scope (the default) stores a server in <code>~/.claude.json</code> against this one project, user scope stores it for every project, and project scope writes <code>.mcp.json</code> into the repository. When the same name appears twice, local wins over project, which wins over user, then servers from plugins and from claude.ai connectors. <Fact id="connectors.claudeCodeMcp.projectApproval" show="claim" /> That second sentence matters in CI: a <code>.mcp.json</code> in a repository you run <code>claude -p</code> against is trusted without a prompt.
+      </p>
+      <p>
+        Codex can narrow a server to the tools you name. <Fact id="connectors.codexMcp.toolFilters" show="claim" /> <Fact id="connectors.codexMcp.timeouts" show="claim" /> In Claude Code, permission rules do the same job from the other side: allow or deny <code>mcp__server__tool</code> names in settings.
+      </p>
+      <p>
+        The working rule is to keep user scope for the few servers you want everywhere (documentation lookup, say) and put the rest in the project that needs them. A browser server belongs to the club list repository; the production database belongs nowhere until a task needs it. On the ChatGPT side the packaging is moving: <Fact id="connectors.codexMcp.plugins" show="claim" />
+      </p>
+    </Deeper>
+  </Deeper>
+
+  <h2 id="worth-knowing">A few worth knowing</h2>
+  <p>
+    A small set, each from the maker's own page, in no order. Each is an MCP server, so it works with any agent that speaks MCP.
+  </p>
+  <ul>
+    <li>Browser. <Fact id="connectors.servers.playwright" show="claim" /> <a href={connectors.servers.playwright.source}>Playwright MCP docs</a></li>
+    <li>Browser, with developer tools. <Fact id="connectors.servers.chromeDevtools" show="claim" /> <a href={connectors.servers.chromeDevtools.source}>Chrome DevTools MCP docs</a></li>
+    <li>Code and issues. <Fact id="connectors.servers.github" show="claim" /> <a href={connectors.servers.github.source}>GitHub MCP server docs</a></li>
+    <li>Issue tracker. <Fact id="connectors.servers.linear" show="claim" /> <a href={connectors.servers.linear.source}>Linear docs</a></li>
+    <li>Database. <Fact id="connectors.servers.supabase" show="claim" /> <a href={connectors.servers.supabase.source}>Supabase docs</a></li>
+    <li>Design files. <Fact id="connectors.servers.figma" show="claim" /> <a href={connectors.servers.figma.source}>Figma docs</a></li>
+  </ul>
+  <p>
+    To find others, start from the service you already use and look for "MCP" in its documentation. <Fact id="connectors.protocol.registry" show="claim" /> <Fact id="connectors.claudeCodeMcp.directory" show="claim" />
+  </p>
+
+  <h2 id="room">Every connector takes room</h2>
+  <p>
+    An agent can only work with what fits in its <Term def="Everything the model can see at once: your messages, the files it has read, the results of its commands and the descriptions of every tool it has. Measured in tokens, and finite.">context window</Term>. To choose a tool, the model has to know the tool exists, so every connected server puts a description of its tools into that window. One server with a dozen tools is little. Ten servers you connected months ago and forgot are not, and the room they take is room your code and your conversation do not get.
+  </p>
+  <p>
+    The harnesses have got better at this. <Fact id="connectors.claudeCode.toolSearch" show="claim" /> Even so, the habit worth keeping is to connect what this project needs and remove what it does not. <Fact id="connectors.claudeCode.cliCheaper" show="claim" /> If a command-line tool already does the job and the agent knows how to use it, you may not need a connector at all.
+  </p>
+
+  <Deeper level="engineer" title="Tool definitions, deferred loading and output limits">
+    <p>
+      A tool definition is a name, a description and an input schema, and without deferral every one of them is sent with every request. Deferred loading (tool search) replaces that with a list of names plus each server's instructions; the model searches the list and the full definitions it picks are loaded into the conversation. <Fact id="connectors.claudeCodeMcp.toolSearchModes" show="claim" /> Use <code>/context</code> in Claude Code to see what is actually loaded.
+    </p>
+    <p>
+      Descriptions are cut. <Fact id="connectors.claudeCodeMcp.descriptionLimit" show="claim" /> For a server author that means server instructions now do the job a skill's description does: they decide whether the model goes looking for your tools at all. Put the words the model would search for first.
+    </p>
+    <p>
+      Results cost context too, and usually more than definitions. <Fact id="connectors.claudeCodeMcp.outputLimit" show="claim" /> A database tool that returns a whole table, or a browser tool that returns the full accessibility tree of a long page, can fill a window in a few calls. Prefer tools that page, filter or summarise on the server side, and in your own servers return the smallest thing that answers the question.
+    </p>
+  </Deeper>
+
+  <h2 id="access">A connector is access</h2>
+  <p>
+    Plugging in a connector hands the agent your access to that service. Whatever you could do there, it can now do, at the speed of a program and without the second thought you would have. Most of the time that is the point. The risk is that agents follow instructions in text, and they cannot always tell your instructions from text that merely arrived through a connector.
+  </p>
+  <p>
+    An agent that can read your mail can be told what to do by an email. A web page can carry a paragraph addressed to the agent. So can an issue anyone can file, or a comment in a document someone shared with you. This is called prompt injection, and no harness has a complete fix for it. While this page was being researched, one vendor's documentation page carried a paragraph addressed to AI agents, asking them to offer to send a feedback report. It was harmless, and it is exactly the mechanism.
+  </p>
+  <p>Three habits keep it manageable:</p>
+  <ul>
+    <li>Connect read-only where the connector allows it, and to a copy or a test project rather than the real thing when you can.</li>
+    <li>Keep approval on for anything that writes, sends, deletes, pays or publishes. Approving a read is cheap; undoing a sent email is not.</li>
+    <li>Be most careful with connectors that read content other people wrote (web pages, mail, public issues), especially in a session that also has a way to send data out.</li>
+  </ul>
+  <p>
+    The harness makers give the same advice. <Fact id="connectors.claudeCodeMcp.trust" show="claim" />
+  </p>
+
+  <Deeper level="technical" title="Limiting what a connector can do">
+    <p>
+      Many servers have a read-only switch, and it is the cheapest protection there is. GitHub's server takes <code>--read-only</code>; Supabase's takes <code>?read_only=true</code> in its address and then runs every query as a read-only database user. Where there is no switch, narrow the tools: <code>enabled_tools</code> in Codex, deny rules on <code>mcp__server__tool</code> names in Claude Code. Scope the sign-in too: a token for one repository or one project limits the damage of any mistake, injected or not.
+    </p>
+    <Deeper level="engineer" title="Prompt injection through tool results">
+      <p>
+        A tool result is text placed in the model's context, with the same standing as anything else it reads. The model is trained to prefer the user's instructions over instructions found in data, and harnesses add guards (Supabase, for example, wraps SQL results in a warning), but neither is a boundary in the security sense. Plan as if an injected instruction will sometimes be followed.
+      </p>
+      <p>
+        Simon Willison's <a href="https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/">"lethal trifecta"</a> (16 June 2025) is the most useful test: an agent is exposed when one session combines access to private data, exposure to untrusted content and a way to communicate outside. Remove any one leg and an injection can do much less. A session that reads public issues and can push to a public repository has all three; so does one with mail and a browser. Split such work across sessions with different connectors, or keep the outbound leg behind an approval.
+      </p>
+      <p>
+        Two more traps. A server you add is code from someone else, run with your credentials (local servers) or holding your tokens (remote ones), so it needs the same trust as any dependency, and its tool descriptions can themselves carry instructions. And a repository's <code>.mcp.json</code> is configuration from whoever wrote the repository: read it before you approve it, and remember that non-interactive runs do not ask.
+      </p>
+    </Deeper>
+  </Deeper>
+
+  <Deeper level="engineer" title="Writing a small server">
+    <p>
+      A server worth writing is usually small: a few read-only tools over something only you have. Here is one for the bakery, so an agent working on the website can ask what the hours function returns for a date without reading the code. It uses <Fact id="connectors.protocol.tsSdk" show="claim" />
+    </p>
+    <Code code={server} lang="ts" themes={{ light: 'github-light', dark: 'github-dark' }} />
+    <p>
+      Add it with <code>claude mcp add bakery-hours -- npx tsx bakery-hours.ts</code> (or the Codex equivalent) and it appears in <code>/mcp</code>. Write the description for the model: what the tool returns, the input format, and when to use it, in that order. Return structured data and keep it short. If a tool changes anything, give it a name that says so and let the harness ask before each call. <Fact id="connectors.claudeCodeMcp.serve" show="claim" />
+    </p>
+  </Deeper>
+
+  <h2 id="related">Related pages</h2>
+  <ul>
+    <li><a href={url('explain/skills/')}>Skills</a>. Know-how the agent loads when a task needs it.</li>
+    <li><a href={url('explain/context/')}>Context</a>. What fills the window, and why it matters.</li>
+    <li><a href={url('explain/orchestration/')}>Orchestration</a>. Subagents and helpers.</li>
+    <li><a href={url('explain/verification/')}>Verification</a>. Letting the agent check its own work.</li>
+    <li><a href={url('t3-code/')}>T3 Code</a>. The workspace the guide is written around.</li>
+  </ul>
+
+  <Verified ids={factIds} />
+</Article>

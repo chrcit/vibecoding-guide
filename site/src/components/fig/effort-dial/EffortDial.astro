@@ -1,0 +1,83 @@
+---
+/*
+ * Fig. 11, "The effort dial". Chart mode.
+ *
+ * Idea: turning effort up buys a smaller and smaller gain in score for a steeply growing number of
+ * output tokens, and output tokens are what you pay for or what drains a plan.
+ * Elements: the row of effort levels, each model's score line, the token bars for one model, the
+ * selected level as a shaded column with its points and bar lit.
+ * States: one per effort level; starts on `start`.
+ * Data: Artificial Analysis per-effort scores and token totals (src/data/benchmarks.ts), as props.
+ * Only verified values are passed; a level with no value is left as a gap. Per-task cost and a
+ * plan's share of a window are not shown: the first could not be re-verified and the second is not
+ * published.
+ * Interaction: one segmented control, the dial, with a button per level.
+ * Alt: built from the props.
+ */
+import Figure from '../Figure.astro';
+import { draw } from './draw';
+import { describe, type EffortInputs } from './model';
+
+interface Props extends EffortInputs {
+  n?: number | string;
+  source?: { label: string; href?: string };
+  /** Inside a board tile: no frame, no caption, a .pick for the dial. */
+  bare?: boolean;
+}
+const { n = 11, source, bare = false, ...inputs } = Astro.props;
+const first = Math.max(0, inputs.levels.indexOf(inputs.start));
+const names = inputs.models.map((m) => m.name);
+const alt = `Two charts over the effort levels ${inputs.levels.join(', ')}. Above, Intelligence Index scores for ${names.join(' and ')} rise from left to right and flatten towards the top levels. Below, bars of the output tokens ${inputs.tokens.name} wrote over the whole test run grow much faster, with the tallest bar at ${inputs.levels.at(-1)}. The ${inputs.start} column is highlighted.`;
+---
+<div class="fig-effort-dial" data-fig-effort-dial data-inputs={JSON.stringify(inputs)} data-start={first}>
+  <Figure n={n} title="The effort dial" alt={alt} source={bare ? undefined : source} bare={bare}>
+    <ul class="ed-key">
+      {inputs.models.map((m, i) => <li><span class="ed-swatch" data-tone={i % 2 ? 'blue' : 'ink'} aria-hidden="true"></span>{m.name}</li>)}
+    </ul>
+    <div data-chart set:html={draw(inputs, 640, first)} />
+    <div slot="control" class={bare ? 'pick' : 'seg'} role="group" aria-label="Effort level">
+      {inputs.levels.map((l, i) => <button type="button" aria-pressed={String(i === first)} data-level={i}>{l}</button>)}
+    </div>
+    <Fragment slot="readout">{describe(first, inputs)}</Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .fig-effort-dial .ed-key { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin: 0 0 0.5rem; padding: 0; list-style: none; font-family: var(--mono); font-size: 0.875rem; color: var(--ink-2); }
+  .fig-effort-dial .ed-key li { display: inline-flex; align-items: center; gap: 0.45rem; }
+  .fig-effort-dial .ed-swatch { display: inline-block; width: 1.25rem; height: 2px; background: var(--fig-edge); }
+  .fig-effort-dial .ed-swatch[data-tone='blue'] { background: var(--blue); }
+  .fig-effort-dial .ed-band { fill: color-mix(in oklab, var(--accent) 9%, transparent); }
+  .fig-effort-dial .ed-dot { fill: var(--card); stroke: var(--fig-edge); stroke-width: 1.75px; }
+  .fig-effort-dial .ed-dot[data-tone='blue'] { stroke: var(--blue); }
+  .fig-effort-dial .ed-dot[data-on] { fill: var(--accent); stroke: var(--accent); }
+  .fig-effort-dial .ed-bar { fill: var(--fig-faint); }
+  .fig-effort-dial .ed-bar[data-on] { fill: var(--accent); }
+  .fig-effort-dial .ed-on { fill: var(--ink); font-weight: 600; }
+  .fig-effort-dial .ed-title { fill: var(--ink-2); }
+  .fig-effort-dial .seg button { min-width: 40px; }
+</style>
+
+<script>
+  import { draw } from './draw';
+  import { describe, type EffortInputs } from './model';
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fig-effort-dial]')) {
+    const x: EffortInputs = JSON.parse(root.dataset.inputs!);
+    const box = root.querySelector<HTMLElement>('[data-chart]')!;
+    const readout = root.querySelector<HTMLElement>('[data-fig-readout]')!;
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-level]')];
+    let at = Number(root.dataset.start ?? 0);
+    root.querySelector<HTMLElement>('[data-fig-control]')!.hidden = false;
+    const render = () => (box.innerHTML = draw(x, Math.round(box.clientWidth), at));
+    for (const b of buttons) {
+      b.addEventListener('click', () => {
+        at = Number(b.dataset.level);
+        for (const o of buttons) o.setAttribute('aria-pressed', String(o === b));
+        render();
+        readout.textContent = describe(at, x);
+      });
+    }
+    new ResizeObserver(render).observe(box);
+  }
+</script>

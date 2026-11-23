@@ -1,0 +1,104 @@
+---
+/*
+ * Fig. 42, "The same fix, a different bill".
+ *
+ * Idea: one task, the holiday hours fix, costs very different amounts depending on how it is run.
+ * Elements: two bars, before and after, split into cache reads, fresh input and output, with totals.
+ * States: effort (medium against max), thread length (fresh against six hours in), the cache (on
+ *   against off).
+ * Data: API prices from src/data/models.ts through the lab's catalogue; the model follows the lab.
+ *   Token volumes are the lab's assumptions (plan-week/model.ts).
+ * Interaction: a .pick of the three comparisons.
+ * Alt: the readout says the two totals and the ratio.
+ */
+import Figure from '../Figure.astro';
+import { catalogue } from '../plan-week/from-data';
+import { compare, KINDS, type Lever } from './model';
+
+interface Props { n?: number; modelId: string }
+const { n = 42, modelId } = Astro.props;
+const cat = catalogue();
+const levers: { id: Lever; label: string }[] = [
+  { id: 'effort', label: 'Effort' },
+  { id: 'thread', label: 'Long thread' },
+  { id: 'cache', label: 'Cache' },
+];
+const first = compare(cat, modelId, 'effort');
+---
+<div class="st" data-same-task data-cat={JSON.stringify(cat)} data-model={modelId}>
+  <div class="pick" role="group" aria-label="What changes">
+    {levers.map((l, i) => <button type="button" data-lever={l.id} aria-pressed={i === 0 ? 'true' : 'false'}>{l.label}</button>)}
+  </div>
+  <Figure n={n} bare title="The same fix, a different bill" alt="Two bars for the same task, before and after one change, split into cache reads, fresh input and output.">
+    <div class="st-rows" data-st-rows>
+      {first.rows.map((r) => (
+        <div class="st-row">
+          <span class="st-name">{r.label}</span>
+          <span class="st-bar">{KINDS.map((k) => <i data-kind={k} style={`width:${(r.share[k] * 100).toFixed(1)}%`} />)}</span>
+          <span class="st-total">{r.total}</span>
+        </div>
+      ))}
+    </div>
+    <ul class="st-key" aria-hidden="true"><li><i data-kind="cacheRead"></i>Cache reads</li><li><i data-kind="fresh"></i>Fresh input</li><li><i data-kind="output"></i>Output</li></ul>
+    <Fragment slot="readout">{first.say}</Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .st { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
+  .st .pick { justify-self: start; }
+  .st-rows { display: grid; gap: 0.625rem; }
+  .st-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'name total' 'bar bar'; gap: 0.25rem 0.75rem; align-items: baseline; }
+  .st-name { grid-area: name; font-size: var(--text-xs); color: var(--muted); }
+  .st-total { grid-area: total; font-family: var(--mono); font-size: var(--text-s); font-weight: 600; color: var(--ink); }
+  .st-bar { grid-area: bar; display: flex; height: 1.25rem; border-radius: 3px; overflow: hidden; background: var(--fig-inlay, var(--paper)); }
+  .st-bar i, .st-key i { display: block; height: 100%; transition: width 450ms var(--fig-ease, ease); }
+  [data-kind='cacheRead'] { background: var(--blue-soft); }
+  [data-kind='cacheRead'][data-unknown] { background: repeating-linear-gradient(45deg, var(--blue-soft) 0 3px, transparent 3px 6px); }
+  [data-kind='fresh'] { background: var(--blue); }
+  [data-kind='output'] { background: var(--accent); }
+  .st-key { display: flex; flex-wrap: wrap; gap: 0.25rem 0.875rem; margin: 0.5rem 0 0; padding: 0; list-style: none; font-size: var(--text-xs); color: var(--muted); }
+  .st-key li { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .st-key i { width: 0.875rem; height: 0.875rem; border-radius: 2px; }
+  .st .fig-readout { font-family: var(--sans); font-size: var(--text-s); color: var(--ink); }
+  @media (prefers-reduced-motion: reduce) { .st-bar i { transition: none; } }
+</style>
+
+<script>
+  import { compare, KINDS, type Lever } from './model';
+  import type { Catalogue, LabState } from '../plan-week/model';
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-same-task]')) {
+    const cat: Catalogue = JSON.parse(root.dataset.cat!);
+    let model = root.dataset.model!;
+    let lever: Lever = 'effort';
+    const rows = root.querySelector<HTMLElement>('[data-st-rows]')!;
+    const readout = root.querySelector<HTMLElement>('[data-fig-readout]')!;
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-lever]')];
+    const render = () => {
+      const c = compare(cat, model, lever);
+      const els = [...rows.querySelectorAll<HTMLElement>('.st-row')];
+      c.rows.forEach((r, i) => {
+        const el = els[i]!;
+        el.querySelector('.st-name')!.textContent = r.label;
+        el.querySelector('.st-total')!.textContent = r.total;
+        for (const k of KINDS) {
+          const seg = el.querySelector<HTMLElement>(`[data-kind="${k}"]`)!;
+          seg.style.width = `${(r.share[k] * 100).toFixed(1)}%`;
+          seg.toggleAttribute('data-unknown', k === 'cacheRead' && c.unknownCache);
+        }
+      });
+      readout.textContent = c.say;
+    };
+    buttons.forEach((b) => b.addEventListener('click', () => {
+      lever = b.dataset.lever as Lever;
+      buttons.forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+      render();
+    }));
+    document.addEventListener('acg:plan-week', (e) => {
+      const s = (e as CustomEvent<{ state: LabState }>).detail.state;
+      if (s.modelId !== model) { model = s.modelId; render(); }
+    });
+    render();
+  }
+</script>

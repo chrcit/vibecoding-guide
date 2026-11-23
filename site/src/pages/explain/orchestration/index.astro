@@ -1,0 +1,282 @@
+---
+// The orchestration board: one job run six ways in the lab (Fig. 30), with smaller tiles around
+// it. The long read is at ./read.astro. See site/AGENTS.md, "Boards".
+import Board from '../../../layouts/Board.astro';
+import Tile from '../../../components/board/Tile.astro';
+import Explain from '../../../components/board/Explain.astro';
+import Verified from '../../../components/data/Verified.astro';
+import CopyPrompt from '../../../components/site/CopyPrompt.astro';
+import SideFact from '../../../components/orchestration/SideFact.astro';
+import TeamLab from '../../../components/fig/team-lab/TeamLab.astro';
+import PersonQueue from '../../../components/fig/person-queue/PersonQueue.astro';
+import SpawnContext from '../../../components/fig/spawn-context/SpawnContext.astro';
+import BlindSpots from '../../../components/fig/blind-spots/BlindSpots.astro';
+import WorktreeSplit from '../../../components/fig/worktree-split/WorktreeSplit.astro';
+import { DEFAULT, PATTERNS, PRESETS, UNIT_TOKENS, OUTPUT_SHARE } from '../../../components/fig/team-lab/model';
+import { PROMPTS } from '../../../components/orchestration/prompts';
+import { BRIEF, COMMANDS, FOLDERS } from './_setup';
+import { fact, formatValue } from '../../../lib/facts';
+import { models } from '../../../data/models';
+import { url } from '../../../lib/nav';
+
+const READ = 'explain/orchestration/read/';
+// TODO wiki: orchestration, parallel-work, subagent, review, worktree, handoff. Until the wiki is
+// merged these open sections of the long read.
+const roles = {
+  you: `${READ}#several-threads`,
+  planner: `${READ}#way-plan`,
+  lead: `${READ}#subagents`,
+  builders: `${READ}#worktrees`,
+  reviewer: `${READ}#across-providers`,
+};
+const ways = Object.fromEntries(PATTERNS.map((p) => [p.id, `${READ}#way-${p.id}`]));
+
+// Model classes are price tiers: each holds one Claude and one GPT model at the same list price.
+const CLASS_MODELS = {
+  large: ['claude-fable-5-2', 'gpt-6-2-astra'],
+  middle: ['claude-sonnet-5-5', 'gpt-6-2-sol'],
+  small: ['claude-haiku-5-5', 'gpt-6-luna'],
+} as const;
+const classPrice = Object.fromEntries(Object.entries(CLASS_MODELS).map(([k, [id]]) => {
+  const m = models[id];
+  return [k, { input: m.price!.input.value, output: m.price!.output.value }];
+}));
+const priceIds = Object.values(CLASS_MODELS).flatMap((ids) => ids.flatMap((id) => [`models.${id}.price.input`, `models.${id}.price.output`]));
+
+const handoffCap = fact('t3code.handoffCap').value as number;
+const handoffDrops = fact('t3code.handoffLeavesOut').value as string[];
+
+const factIds = [
+  'harnesses.claudeCode.subagents',
+  'harnesses.claudeCode.subagentFiles',
+  'harnesses.claudeCode.nestingDepth',
+  'harnesses.claudeCode.subagentModel',
+  'harnesses.claudeCode.subagentWorktree',
+  'harnesses.claudeCode.subagentFreshContext',
+  'harnesses.claudeCode.subagentUsage',
+  'harnesses.codex.subagentFiles',
+  'harnesses.codex.maxThreads',
+  'harnesses.codex.subagentModel',
+  'harnesses.codex.sandbox',
+  'harnesses.codex.subagentResults',
+  't3code.delegate',
+  't3code.manyModels',
+  't3code.worktrees',
+  't3code.handoff',
+  't3code.handoffCap',
+  't3code.handoffLeavesOut',
+  ...priceIds,
+];
+---
+<Board
+  title="Orchestration"
+  description="One job run six ways by a team of agents and one person: who works, who waits for you, who is blocked, and what it costs."
+  section="explain"
+>
+  <Tile title="One job, six ways to run the team" span={12} side={READ} id="lab">
+    <div slot="tools" class="pick lab-presets" role="group" aria-label="Presets">
+      {PRESETS.map((p) => <button type="button" data-lab-preset={p.id} aria-pressed="false">{p.name}</button>)}
+    </div>
+    <TeamLab roles={roles} ways={ways} />
+  </Tile>
+
+  <Tile title="A brief for one agent" span={6} side={`${READ}#subagents`} id="brief">
+    <CopyPrompt title="A brief for one agent" id="prompt-brief" compact>{BRIEF}</CopyPrompt>
+  </Tile>
+
+  <Tile title="A folder per agent, merged one at a time" span={6} side={`${READ}#worktrees`} id="worktrees">
+    <pre class="wt-folders" aria-label="Folder layout"><code>{FOLDERS}</code></pre>
+    <CopyPrompt title="Worktree and merge commands" id="worktree-commands" compact>{COMMANDS}</CopyPrompt>
+  </Tile>
+
+  <Tile title="Start each way with a prompt" span={5} id="prompts">
+    <div class="pick pr-pick" role="group" aria-label="Way to run the team">
+      {PATTERNS.map((p) => <button type="button" data-pr={p.id} aria-pressed={p.id === DEFAULT.pattern ? 'true' : 'false'}>{p.name}</button>)}
+    </div>
+    {PATTERNS.map((p) => (
+      <div class="pr-one" data-pr-show={p.id} hidden={p.id !== DEFAULT.pattern}>
+        <CopyPrompt title={PROMPTS[p.id].title} id={`prompt-${p.id}`}>{PROMPTS[p.id].text}</CopyPrompt>
+      </div>
+    ))}
+  </Tile>
+
+  <Tile title="Where each tool does this" span={7} side="t3-code/">
+    <div class="hx" role="table" aria-label="Orchestration in Claude Code, Codex and T3 Code">
+      <div class="hx-row hx-cols" role="row">
+        <span role="columnheader"></span>
+        <span role="columnheader">Helpers</span>
+        <span role="columnheader">Their own model</span>
+        <span role="columnheader">Their own copy</span>
+      </div>
+      <div class="hx-row" role="row">
+        <span role="rowheader">Claude Code</span>
+        <span role="cell"><SideFact id="harnesses.claudeCode.subagentFiles">subagents</SideFact>, <SideFact id="harnesses.claudeCode.nestingDepth" /> layers deep</span>
+        <span role="cell"><SideFact id="harnesses.claudeCode.subagentModel"><code>model:</code></SideFact></span>
+        <span role="cell"><SideFact id="harnesses.claudeCode.subagentWorktree"><code>isolation: worktree</code></SideFact></span>
+      </div>
+      <div class="hx-row" role="row">
+        <span role="rowheader">Codex</span>
+        <span role="cell"><SideFact id="harnesses.codex.subagentFiles">subagents</SideFact>, <SideFact id="harnesses.codex.maxThreads">a cap on how many</SideFact></span>
+        <span role="cell"><SideFact id="harnesses.codex.subagentModel"><code>default_subagent_model</code></SideFact></span>
+        <span role="cell"><SideFact id="harnesses.codex.sandbox">worktrees</SideFact></span>
+      </div>
+      <div class="hx-row" role="row">
+        <span role="rowheader">T3 Code</span>
+        <span role="cell"><SideFact id="t3code.delegate"><code>delegate_task</code></SideFact>, to any provider</span>
+        <span role="cell"><SideFact id="t3code.manyModels">several models, one prompt</SideFact></span>
+        <span role="cell"><SideFact id="t3code.worktrees">a worktree per thread</SideFact></span>
+      </div>
+    </div>
+  </Tile>
+
+  <Tile title="You are the queue" span={4} side={`${READ}#several-threads`}>
+    <PersonQueue />
+    <Explain slot="foot" to={`${READ}#model`}>Modelled, not measured</Explain>
+  </Tile>
+
+  <Tile title="A subagent knows only what you pass it" span={4} side={`${READ}#subagents`}>
+    <SpawnContext />
+  </Tile>
+
+  <Tile title="A second model catches what the first cannot see" span={4} side={`${READ}#across-providers`}>
+    <BlindSpots />
+    <Explain slot="foot" to={`${READ}#model`}>Modelled, not measured</Explain>
+  </Tile>
+
+  <Tile title="What each role costs" span={4} level="engineer" side={`${READ}#cost`}>
+    <div class="cr" data-cr data-price={JSON.stringify(classPrice)} data-unit={UNIT_TOKENS} data-out={OUTPUT_SHARE}>
+      <ul class="cr-bars" data-cr-bars></ul>
+      <ul class="cr-classes">
+        {Object.entries(CLASS_MODELS).map(([k, ids]) => (
+          <li>
+            <b>{k[0]!.toUpperCase() + k.slice(1)}</b>
+            {ids.map((id, i) => <>{i ? ', ' : ' '}<a class="explain" href={url(`models/${id}/`)} data-side>{models[id].name}</a></>)}
+            <span class="cr-price"><SideFact id={`models.${ids[0]}.price.input`} /> / <SideFact id={`models.${ids[0]}.price.output`} /></span>
+          </li>
+        ))}
+      </ul>
+    </div>
+    <Explain slot="foot" to={`${READ}#model`}>List price, no caching, modelled tokens</Explain>
+  </Tile>
+
+  <Tile title="A handoff carries the newest turns" span={4} level="engineer" side={`${READ}#across-providers`}>
+    <div class="ho" data-ho data-cap={handoffCap}>
+      <label class="control">
+        <span>Conversation so far <output data-ho-out>80K tokens</output></span>
+        <input type="range" min="2" max="200" step="2" value="80" data-ho-in aria-valuetext="80,000 tokens" />
+      </label>
+      <div class="ho-bar" aria-hidden="true"><span class="ho-drop" data-ho-drop></span><span class="ho-keep" data-ho-keep></span></div>
+      <p class="finding ho-finding" data-ho-finding aria-live="polite"></p>
+      <ul class="ho-never">
+        {handoffDrops.map((d) => <li><SideFact id="t3code.handoffLeavesOut">{d}</SideFact></li>)}
+      </ul>
+    </div>
+  </Tile>
+
+  <Tile title="A worktree each still meets the others at the merge" span={4} level="technical" side={`${READ}#worktrees`}>
+    <WorktreeSplit />
+  </Tile>
+
+  <Verified slot="foot" ids={factIds} />
+</Board>
+
+<style>
+  .lab-presets { flex-wrap: wrap; }
+  .lab-presets button { min-height: 2.5rem; }
+  @media (max-width: 900px) {
+    :global(#lab .tile-head) { flex-wrap: wrap; padding-bottom: 0.5rem; }
+    :global(#lab .tile-tools) { order: 3; flex: 1 1 100%; min-width: 0; }
+    .lab-presets { display: flex; width: 100%; }
+    .lab-presets button { flex: 1 1 40%; }
+  }
+
+  .hx { display: grid; font-size: var(--text-s); }
+  .hx-row { display: grid; grid-template-columns: 7rem repeat(3, minmax(0, 1fr)); gap: 0.75rem; padding: 0.55rem 0; border-top: 1px solid var(--rule); align-items: baseline; }
+  .hx-cols { border-top: 0; padding-top: 0; font-size: var(--text-xs); color: var(--muted); }
+  .hx-row [role='rowheader'] { font-weight: 650; color: var(--ink); }
+  .hx code { font-size: 0.875em; overflow-wrap: anywhere; }
+  @container (max-width: 34rem) {
+    .hx-cols { display: none; }
+    .hx-row { grid-template-columns: minmax(0, 1fr); gap: 0.2rem; }
+  }
+
+  .wt-folders { margin: 0 0 0.75rem; font-size: var(--text-xs); }
+  :global(#worktrees .copy-prompt), :global(#brief .copy-prompt) { margin: 0; }
+  /* Commands keep one per line and scroll sideways inside their box. */
+  :global(#worktrees .copy-prompt .text) { white-space: pre; overflow-x: auto; overflow-wrap: normal; }
+  .pr-pick { margin-bottom: 0.75rem; }
+  .pr-pick button { padding: 0 0.6rem; }
+  .pr-one :global(.copy-prompt) { margin: 0; }
+
+  .cr-bars { list-style: none; margin: 0 0 0.75rem; padding: 0; display: grid; gap: 0.5rem; }
+  .cr-bars :global(li) { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr) 4.5rem; gap: 0.5rem; align-items: center; font-size: var(--text-xs); }
+  .cr-bars :global(.cr-track) { height: 0.9rem; background: var(--paper-2); border-radius: 3px; overflow: hidden; }
+  .cr-bars :global(.cr-fill) { display: block; height: 100%; background: var(--accent); transform-origin: left; transition: transform var(--dur) var(--ease-out); }
+  .cr-bars :global(.cr-usd) { font-family: var(--mono); text-align: right; color: var(--ink); }
+  .cr-classes { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; font-size: var(--text-xs); color: var(--ink-2); }
+  .cr-price { font-family: var(--mono); margin-left: 0.4rem; }
+
+  .ho { display: grid; gap: 0.75rem; }
+  .ho-bar { display: flex; height: 1.5rem; border-radius: var(--radius-s); overflow: hidden; border: 1px solid var(--rule-strong); }
+  .ho-drop { background: repeating-linear-gradient(135deg, var(--paper-2) 0 6px, var(--card) 6px 12px); }
+  .ho-keep { background: var(--green); }
+  .ho-finding { font-size: var(--text-s); }
+  .ho-never { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .ho-never li { font-size: var(--text-xs); padding: 0.2rem 0.5rem; border: 1px dashed var(--rule-strong); border-radius: var(--radius-pill); text-decoration: line-through; text-decoration-color: var(--accent); }
+</style>
+
+<script>
+  import type { Run, Settings } from '../../../components/fig/team-lab/model';
+
+  // Prompts follow the lab's way, and have their own pick.
+  const prButtons = [...document.querySelectorAll<HTMLButtonElement>('[data-pr]')];
+  const showPrompt = (id: string) => {
+    for (const b of prButtons) b.setAttribute('aria-pressed', String(b.dataset.pr === id));
+    for (const el of document.querySelectorAll<HTMLElement>('[data-pr-show]')) el.hidden = el.dataset.prShow !== id;
+  };
+  for (const b of prButtons) b.addEventListener('click', () => showPrompt(b.dataset.pr!));
+
+  // Cost by role, from the lab's run and the list prices.
+  const cr = document.querySelector<HTMLElement>('[data-cr]');
+  const ROLE_NAME: Record<string, string> = { planner: 'Planner', lead: 'Lead', builder: 'Builders', reviewer: 'Reviewer' };
+  let lastWay = '';
+  document.addEventListener('acg-lab', (e) => {
+    const { settings, run } = (e as CustomEvent<{ settings: Settings; run: Run }>).detail;
+    if (settings.pattern !== lastWay) { lastWay = settings.pattern; showPrompt(settings.pattern); }
+    if (!cr) return;
+    const price: Record<string, { input: number; output: number }> = JSON.parse(cr.dataset.price!);
+    const unit = Number(cr.dataset.unit), out = Number(cr.dataset.out);
+    const cls: Record<string, string> = { planner: settings.planner, lead: settings.planner, builder: settings.builder, reviewer: settings.reviewer };
+    const rows = Object.entries(run.byRole).filter(([, u]) => u > 0).map(([role, u]) => {
+      const p = price[cls[role]!]!;
+      const usd = (u * unit * ((1 - out) * p.input + out * p.output)) / 1e6;
+      return { role, usd, tokens: u * unit };
+    });
+    const max = Math.max(...rows.map((r) => r.usd), 0.01);
+    const fmt = (v: number) => (v >= 100 ? `$${Math.round(v)}` : `$${v.toFixed(2)}`);
+    cr.querySelector('[data-cr-bars]')!.innerHTML = rows.map((r) =>
+      `<li><span>${ROLE_NAME[r.role]} · ${(r.tokens / 1e6).toFixed(1)}M</span><span class="cr-track"><span class="cr-fill" style="transform:scaleX(${(r.usd / max).toFixed(3)})"></span></span><span class="cr-usd">${fmt(r.usd)}</span></li>`).join('');
+  });
+
+  // The handoff budget against the conversation's length.
+  const ho = document.querySelector<HTMLElement>('[data-ho]');
+  if (ho) {
+    const cap = Number(ho.dataset.cap);
+    const input = ho.querySelector<HTMLInputElement>('[data-ho-in]')!;
+    const k = (n: number) => `${Math.round(n / 1000).toLocaleString('en-GB')}K tokens`;
+    const paint = () => {
+      const total = Number(input.value) * 1000;
+      const keep = Math.min(total, cap);
+      ho.querySelector<HTMLElement>('[data-ho-out]')!.textContent = k(total);
+      input.setAttribute('aria-valuetext', `${total.toLocaleString('en-GB')} tokens`);
+      ho.querySelector<HTMLElement>('[data-ho-keep]')!.style.flex = String(keep);
+      ho.querySelector<HTMLElement>('[data-ho-drop]')!.style.flex = String(total - keep);
+      const share = Math.round((keep / total) * 100);
+      ho.querySelector<HTMLElement>('[data-ho-finding]')!.textContent = total <= cap
+        ? 'The whole conversation fits the budget and travels.'
+        : `${share}% travels. Put the goal and the checks in your last message, or the new model never sees them.`;
+    };
+    input.addEventListener('input', paint);
+    paint();
+  }
+</script>

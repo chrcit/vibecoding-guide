@@ -1,0 +1,959 @@
+/*
+  Guide v2 (pages/v2/index.astro, v2/player.ts): a drawing of T3 Code, in T3 Code's own default
+  light and dark themes. A sidebar that is the table of contents, a chat column with the lesson
+  thread and the lesson controls where the composer would be, and a browser panel with the
+  Explainer and Preview tabs. On a phone the list and the thread are two screens and the browser
+  is a sheet.
+
+  The palette, radius and fonts are T3 Code's defaults (apps/web/src/index.css in pingdotgg/t3code:
+  zinc for light, neutral and black for dark, the system font stack), scoped to .v2 so the rest of
+  the site keeps its own. The site's tokens are mapped onto them inside .v2, so the picture
+  (journey.css, fig.css) draws in the same palette. The door app in Preview keeps its own.
+*/
+
+/* ---------- tokens ---------- */
+
+.v2 {
+  /* T3 Code, light (the default :root and the sidebar's [data-app-sidebar] block). */
+  --t3-bg: oklch(99.2% 0 0);
+  --t3-fg: oklch(21% 0.006 285.885);
+  --t3-card: #fff;
+  --t3-popover: #fff;
+  --t3-muted: oklch(98.5% 0 0);
+  --t3-muted-fg: oklch(55.2% 0.016 285.938);
+  --t3-accent: oklch(96.7% 0.001 286.375);
+  --t3-border: oklch(92% 0.004 286.32);
+  --t3-input: oklch(87.1% 0.006 286.286);
+  --t3-primary: oklch(0.488 0.217 264);
+  --t3-primary-fg: #fff;
+  --t3-message: color-mix(in srgb, oklch(92% 0.004 286.32) 55%, oklch(96.7% 0.001 286.375));
+  --t3-code: color-mix(in srgb, #fff 90%, oklch(99.2% 0 0));
+  --t3-sidebar: oklch(98.5% 0 0);
+  --t3-sidebar-fg: oklch(21% 0.006 285.885);
+  --t3-sidebar-muted: oklch(55.2% 0.016 285.938);
+  --t3-row-hover: oklch(99.2% 0 0);
+  --t3-row-active: #fff;
+  --t3-row-ring: color-mix(in srgb, oklch(92% 0.004 286.32) 70%, transparent);
+  --t3-info-fg: oklch(48.8% 0.243 264.376);
+  --t3-success-fg: oklch(50.8% 0.118 165.612);
+  --t3-warning-fg: oklch(55.5% 0.163 48.998);
+  --t3-error: oklch(63.7% 0.237 25.331);
+  --t3-error-fg: oklch(50.5% 0.213 27.518);
+  --t3-outline: rgb(0 0 0 / 8%);
+  --t3-shadow-composer: 0 1px 2px rgb(0 0 0 / 5%);
+  --t3-shadow-menu: 0 16px 40px -18px rgb(0 0 0 / 55%);
+  --t3-radius: 0.5rem;
+  --t3-sans: -apple-system, BlinkMacSystemFont, 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
+  --t3-mono: ui-monospace, 'SF Mono', 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  /* The site's tokens, mapped onto T3 Code's, solid, so the picture's color-mix() tones work. */
+  --paper: var(--t3-bg);
+  --paper-2: oklch(96.7% 0.001 286.375);
+  --card: #fff;
+  --ink: var(--t3-fg);
+  --ink-2: oklch(37% 0.013 285.805);
+  --muted: var(--t3-muted-fg);
+  --rule: var(--t3-border);
+  --rule-strong: var(--t3-input);
+  --accent: oklch(57.7% 0.245 27.325);
+  --accent-soft: oklch(93.6% 0.032 17.717);
+  --green: var(--t3-success-fg);
+  --blue: var(--t3-info-fg);
+  --focus: var(--t3-primary);
+  --shadow: 0 1px 2px rgb(0 0 0 / 5%);
+  --shadow-pop: var(--t3-shadow-menu);
+  --sans: var(--t3-sans);
+  --mono: var(--t3-mono);
+  /* The picture's two tones (journey.css sets them on .j-root, which v2 does not use). */
+  --j-shade: var(--ink);
+  --j-work: #c58f0c;
+
+  --v2-side: 16rem;
+  --v2-col: 46rem;
+}
+
+/* T3 Code, dark: neutral-950 for the canvas, black for the sidebar. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .v2 {
+    --t3-bg: oklch(14.5% 0 0);
+    --t3-fg: oklch(97% 0 0);
+    --t3-card: color-mix(in srgb, oklch(14.5% 0 0) 97%, #fff);
+    --t3-popover: color-mix(in srgb, oklch(14.5% 0 0) 97%, #fff);
+    --t3-muted: rgb(255 255 255 / 3%);
+    --t3-muted-fg: oklch(70.8% 0 0);
+    --t3-accent: rgb(255 255 255 / 4%);
+    --t3-border: rgb(255 255 255 / 8%);
+    --t3-input: rgb(255 255 255 / 11%);
+    --t3-primary: oklch(0.571 0.21 264);
+    --t3-message: rgb(255 255 255 / 4%);
+    --t3-code: color-mix(in srgb, oklch(14.5% 0 0) 92%, #fff);
+    --t3-sidebar: #000;
+    --t3-sidebar-fg: #f1f3f7;
+    --t3-sidebar-muted: #a3a3a3;
+    --t3-row-hover: color-mix(in srgb, #f1f3f7 8%, transparent);
+    --t3-row-active: color-mix(in srgb, #f1f3f7 11%, transparent);
+    --t3-row-ring: transparent;
+    --t3-info-fg: oklch(70.7% 0.165 254.624);
+    --t3-success-fg: oklch(76.5% 0.177 163.223);
+    --t3-warning-fg: oklch(82.8% 0.189 84.429);
+    --t3-error: color-mix(in srgb, oklch(63.7% 0.237 25.331) 90%, #fff);
+    --t3-error-fg: oklch(70.4% 0.191 22.216);
+    --t3-outline: color-mix(in srgb, #fff 5%, transparent);
+    --t3-shadow-composer: 0 14px 32px -18px rgb(0 0 0 / 75%);
+    --t3-shadow-menu: 0 18px 44px -18px rgb(0 0 0 / 80%);
+    --paper: oklch(14.5% 0 0);
+    --paper-2: #000;
+    --card: color-mix(in srgb, oklch(14.5% 0 0) 97%, #fff);
+    --ink: oklch(97% 0 0);
+    --ink-2: oklch(87% 0 0);
+    --rule: #222;
+    --rule-strong: #2e2e2e;
+    --accent: oklch(70.4% 0.191 22.216);
+    --accent-soft: oklch(25.8% 0.092 26.042);
+    --shadow: 0 1px 2px rgb(0 0 0 / 40%);
+    --j-shade: var(--paper-2);
+    --j-work: #e7bd45;
+  }
+}
+:root[data-theme='dark'] .v2 {
+  --t3-bg: oklch(14.5% 0 0);
+  --t3-fg: oklch(97% 0 0);
+  --t3-card: color-mix(in srgb, oklch(14.5% 0 0) 97%, #fff);
+  --t3-popover: color-mix(in srgb, oklch(14.5% 0 0) 97%, #fff);
+  --t3-muted: rgb(255 255 255 / 3%);
+  --t3-muted-fg: oklch(70.8% 0 0);
+  --t3-accent: rgb(255 255 255 / 4%);
+  --t3-border: rgb(255 255 255 / 8%);
+  --t3-input: rgb(255 255 255 / 11%);
+  --t3-primary: oklch(0.571 0.21 264);
+  --t3-message: rgb(255 255 255 / 4%);
+  --t3-code: color-mix(in srgb, oklch(14.5% 0 0) 92%, #fff);
+  --t3-sidebar: #000;
+  --t3-sidebar-fg: #f1f3f7;
+  --t3-sidebar-muted: #a3a3a3;
+  --t3-row-hover: color-mix(in srgb, #f1f3f7 8%, transparent);
+  --t3-row-active: color-mix(in srgb, #f1f3f7 11%, transparent);
+  --t3-row-ring: transparent;
+  --t3-info-fg: oklch(70.7% 0.165 254.624);
+  --t3-success-fg: oklch(76.5% 0.177 163.223);
+  --t3-warning-fg: oklch(82.8% 0.189 84.429);
+  --t3-error: color-mix(in srgb, oklch(63.7% 0.237 25.331) 90%, #fff);
+  --t3-error-fg: oklch(70.4% 0.191 22.216);
+  --t3-outline: color-mix(in srgb, #fff 5%, transparent);
+  --t3-shadow-composer: 0 14px 32px -18px rgb(0 0 0 / 75%);
+  --t3-shadow-menu: 0 18px 44px -18px rgb(0 0 0 / 80%);
+  --paper: oklch(14.5% 0 0);
+  --paper-2: #000;
+  --card: color-mix(in srgb, oklch(14.5% 0 0) 97%, #fff);
+  --ink: oklch(97% 0 0);
+  --ink-2: oklch(87% 0 0);
+  --rule: #222;
+  --rule-strong: #2e2e2e;
+  --accent: oklch(70.4% 0.191 22.216);
+  --accent-soft: oklch(25.8% 0.092 26.042);
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%);
+  --j-shade: var(--paper-2);
+  --j-work: #e7bd45;
+}
+
+/* The page behind the app: the same canvas, so nothing else shows at the edges. */
+body:has(> main > .v2) { background: oklch(99.2% 0 0); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) body:has(> main > .v2) { background: oklch(14.5% 0 0); } }
+:root[data-theme='dark'] body:has(> main > .v2) { background: oklch(14.5% 0 0); }
+main:has(> .v2) { padding: 0; }
+
+/* ---------- the frame ---------- */
+
+.v2 {
+  display: grid; grid-template-columns: var(--v2-side) minmax(0, 1fr);
+  height: 100vh; height: 100dvh; min-height: 30rem;
+  font-family: var(--t3-sans); font-size: 0.875rem; line-height: 1.5; color: var(--t3-fg);
+  background: var(--t3-bg);
+  -webkit-font-smoothing: antialiased;
+}
+@media (max-width: 72rem) { .v2 { --v2-side: 15rem; } }
+
+/* Element resets for the drawing of the app only: never inside the Preview, whose app brings its own
+   styles. :where() keeps them at the lowest weight, so a component's own class always wins. */
+:where(.v2) button:where(:not(.v2-preview-host *)) { font: inherit; color: inherit; cursor: pointer; }
+:where(.v2) button:where(:not(.v2-preview-host *)):disabled { cursor: default; }
+:where(.v2) :where(:not(.v2-preview-host, .v2-preview-host *)):focus-visible { outline: 2px solid color-mix(in srgb, var(--t3-primary) 70%, transparent); outline-offset: -2px; }
+.v2 [hidden] { display: none !important; }
+.v2-mono { font-family: var(--t3-mono); font-size: 0.92em; }
+/* The door app keeps the site's type. */
+.v2 .v2-preview-host {
+  --sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --mono: 'JetBrains Mono', 'JetBrains Mono Fallback', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+/* "example": a drawing of the app, like T3 Code's environment pill. */
+.v2-ex {
+  display: inline-flex; align-items: center; flex: none; height: 1.25rem; padding: 0 0.45rem;
+  border: 1px solid var(--t3-border); border-radius: 999px;
+  font-size: 0.6875rem; font-weight: 500; line-height: 1; color: var(--t3-muted-fg); white-space: nowrap;
+}
+/* A project's icon: the chapter number in a small square. */
+.v2-fav {
+  display: inline-grid; place-items: center; flex: none; width: 1rem; height: 1rem; border-radius: 4px;
+  background: var(--t3-fg); color: var(--t3-bg); font-size: 0.625rem; font-weight: 650; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.v2-fav-all { background: none; color: var(--t3-muted-fg); }
+.v2-fav-s { width: 0.875rem; height: 0.875rem; font-size: 0.5625rem; border-radius: 3px; }
+
+/* Something the lesson just taught: a ring that comes and goes (opacity only). */
+.v2 [data-ui], .v2-details-btn { position: relative; }
+.v2 [data-ui]::after, .v2-details-btn::after {
+  content: ''; position: absolute; inset: -3px; border-radius: inherit; pointer-events: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--t3-primary) 70%, transparent); opacity: 0;
+}
+.v2 [data-new]::after { animation: v2-ring 900ms var(--ease-out); }
+@keyframes v2-ring { 15%, 55% { opacity: 1; } }
+@keyframes v2-rise { from { opacity: 0; transform: translateY(4px); } }
+@keyframes v2-fade { from { opacity: 0; } }
+@keyframes v2-pop { from { opacity: 0; transform: scale(0.96); } }
+
+/* A popover: T3 Code's menu surface. */
+.v2-pop {
+  position: absolute; z-index: 30; padding: 0.25rem;
+  border: 1px solid color-mix(in srgb, var(--t3-fg) 10%, transparent); border-radius: var(--t3-radius);
+  background: var(--t3-popover); box-shadow: var(--t3-shadow-menu); color: var(--t3-fg);
+  animation: v2-pop 150ms var(--ease-out);
+}
+.v2-pop ul, .v2-pop ol { list-style: none; margin: 0; padding: 0; }
+.v2-pop-label { margin: 0; padding: 0.375rem 0.5rem; font-size: 0.75rem; font-weight: 500; color: var(--t3-muted-fg); }
+.v2-pop-empty { margin: 0; padding: 0.75rem 0.5rem; font-size: 0.8125rem; color: var(--t3-muted-fg); text-align: center; }
+
+/* ---------- the sidebar ---------- */
+
+.v2-side {
+  display: flex; flex-direction: column; min-height: 0; min-width: 0;
+  background: var(--t3-sidebar); color: var(--t3-sidebar-fg); border-right: 1px solid var(--t3-border);
+}
+.v2-side-top { display: flex; align-items: center; flex: none; height: 52px; padding: 0 0.5rem; }
+
+/* The brand row is the guide's menu: the site's name in T3 Code's brand style. */
+.v2-brand {
+  display: inline-flex; align-items: center; gap: 0.5rem; min-width: 0; max-width: 100%; height: 2rem; padding: 0 0.5rem 0 0.4rem;
+  border: 0; border-radius: var(--t3-radius); background: none;
+  font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; white-space: nowrap;
+  transition: transform 140ms var(--ease-out);
+}
+.v2-brand:active { transform: scale(0.97); }
+.v2-brand[aria-expanded='true'] { background: var(--t3-row-active); box-shadow: inset 0 0 0 1px var(--t3-row-ring); }
+.v2-brand-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.v2-brand-name span, .v2-brand > svg:last-child { color: var(--t3-sidebar-muted); }
+.v2-mark { flex: none; }
+.v2-mark-bg { fill: var(--t3-fg); }
+.v2-mark-line { stroke: var(--t3-bg); }
+.v2-mark-dot { fill: var(--accent); }
+
+/* Search, and the project filter beside it (SidebarThreadHeader). */
+.v2-side-tools { position: relative; display: flex; align-items: center; gap: 0.25rem; flex: none; padding: 0 0.5rem 0.5rem; }
+.v2-search {
+  display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0; height: 2rem; padding: 0 0.5rem;
+  border-radius: var(--t3-radius); color: var(--t3-sidebar-muted); font-weight: 500;
+}
+.v2-search svg { flex: none; }
+.v2-search:focus-within { background: var(--t3-row-hover); color: var(--t3-sidebar-fg); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--t3-primary) 70%, transparent); }
+.v2-search input {
+  flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; background: none; outline: none;
+  font: inherit; color: var(--t3-sidebar-fg); -webkit-appearance: none; appearance: none;
+}
+.v2-search input::placeholder { color: var(--t3-sidebar-muted); opacity: 1; }
+.v2-search input::-webkit-search-cancel-button { display: none; }
+.v2 .v2-search input:focus-visible { outline: none; }
+.v2-search-clear { display: grid; place-items: center; flex: none; width: 1.25rem; height: 1.25rem; padding: 0; border: 0; border-radius: 4px; background: none; color: var(--t3-sidebar-muted); }
+
+.v2-side-icon {
+  position: relative; display: inline-grid; place-items: center; flex: none; width: 1.75rem; height: 1.75rem; padding: 0;
+  border: 0; border-radius: var(--t3-radius); background: none;
+  color: color-mix(in srgb, var(--t3-sidebar-muted) 85%, var(--t3-sidebar));
+  transition: transform 140ms var(--ease-out);
+}
+.v2-side-icon:active { transform: scale(0.97); }
+.v2-side-icon[aria-expanded='true'] { background: var(--t3-row-active); color: var(--t3-sidebar-fg); }
+/* Anchored to the search row and aligned to its start, as T3 Code anchors it to the search field. */
+.v2-filter { position: static; }
+.v2-filter-icon { display: inline-flex; }
+.v2-filter-icon .v2-fav + .v2-fav { margin-left: -0.3rem; box-shadow: 0 0 0 2px var(--t3-sidebar); }
+.v2-filter-pop { top: calc(100% - 4px); left: 0.5rem; width: min(18rem, calc(100% - 1rem)); transform-origin: top right; }
+.v2-pop-search {
+  display: flex; align-items: center; gap: 0.5rem; height: 2rem; padding: 0 0.5rem; margin-bottom: 0.25rem;
+  border-bottom: 1px solid var(--t3-border); color: var(--t3-muted-fg);
+}
+.v2-pop-search input { flex: 1; min-width: 0; border: 0; background: none; outline: none; font: inherit; color: var(--t3-fg); }
+.v2-pop-search input::placeholder { color: var(--t3-muted-fg); }
+.v2 .v2-pop-search input:focus-visible { outline: none; }
+.v2-pop [role='option'] {
+  display: flex; align-items: center; gap: 0.5rem; width: 100%; min-height: 2rem; padding: 0.25rem 0.5rem;
+  border: 0; border-radius: 4px; background: none; text-align: left; color: var(--t3-fg);
+}
+.v2-pop [role='option'] > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v2-pop [role='option']:focus-visible { background: var(--t3-accent); }
+.v2-pop [role='option'][aria-selected='true']::after {
+  content: ''; flex: none; margin-left: auto; width: 0.875rem; height: 0.5rem; margin-right: 0.125rem;
+  border: solid var(--t3-fg); border-width: 0 0 2px 2px; transform: translateY(-2px) rotate(-45deg) scale(0.8);
+}
+
+/* The list: one folder per chapter (SidebarProjectFolderHeader), a row per lesson. */
+.v2-toc { flex: 1; min-height: 0; overflow-y: auto; padding: 0 0.5rem 1rem; overscroll-behavior: contain; scrollbar-width: thin; }
+.v2-tree, .v2-rows-list, .v2-threads { list-style: none; margin: 0; padding: 0; }
+.v2-tree { display: flex; flex-direction: column; }
+.v2-folder { margin-top: 0.5rem; }
+.v2-folder:first-child { margin-top: 0; }
+.v2-folder[data-scoped-out], .v2-folder[data-unmatched] { display: none; }
+.v2-rows-list { display: flex; flex-direction: column; gap: 1px; }
+.v2-folder-head {
+  display: flex; align-items: center; gap: 0.625rem; width: 100%; height: 2rem; padding: 0 0.625rem;
+  border: 0; border-radius: var(--t3-radius); background: none; text-align: left;
+}
+.v2-folder-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; color: color-mix(in srgb, var(--t3-sidebar-fg) 90%, transparent); }
+.v2-folder-count { flex: none; font-size: 0.75rem; font-variant-numeric: tabular-nums; color: var(--t3-sidebar-muted); }
+.v2-folder-chev { display: inline-flex; flex: none; color: var(--t3-sidebar-muted); transition: transform 150ms var(--ease-out); }
+.v2-folder-head[aria-expanded='false'] .v2-folder-chev { transform: rotate(-90deg); }
+
+/* A thread row in a folder: one line, the title lined up with the folder's name, the status in the time slot. */
+.v2-row {
+  position: relative; display: flex; align-items: center; gap: 0.625rem; width: 100%; height: 2.25rem; padding: 0 0.625rem 0 2.25rem;
+  border: 0; border-radius: calc(var(--t3-radius) - 2px); background: transparent; text-align: left;
+  color: var(--t3-sidebar-fg); text-decoration: none; font-size: 0.875rem;
+}
+.v2-row-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; color: var(--t3-sidebar-fg); }
+/* Lessons that are not built yet recede, as T3 Code's quiet rows do. */
+.v2-row:not([data-plays]):not(.v2-row-child) .v2-row-title { font-weight: 400; color: color-mix(in srgb, var(--t3-sidebar-fg) 62%, transparent); }
+.v2-row[aria-current] { background: var(--t3-row-active); box-shadow: inset 0 0 0 1px var(--t3-row-ring); }
+.v2-row[aria-current] .v2-row-title { color: var(--t3-sidebar-fg); }
+.v2-status { display: inline-flex; align-items: center; gap: 0.25rem; flex: none; font-size: 0.75rem; font-weight: 500; white-space: nowrap; }
+.v2-status:empty { display: none; }
+.v2-status svg { flex: none; }
+.v2-status[data-s='working'] { color: var(--t3-info-fg); }
+.v2-status[data-s='done'] { color: var(--t3-success-fg); }
+.v2-status[data-s='approval'] { color: var(--t3-warning-fg); }
+/* A lesson's story threads, once it has more than one: rows under it. */
+.v2-threads { display: flex; flex-direction: column; gap: 1px; margin: 1px 0 0; }
+.v2-row-child { padding-left: 3.25rem; }
+.v2-row-child::before { content: ''; position: absolute; left: 2.6rem; top: 0.5rem; bottom: 0.5rem; width: 1px; background: var(--t3-border); }
+.v2-row-child .v2-row-title { font-weight: 400; color: color-mix(in srgb, var(--t3-sidebar-fg) 80%, transparent); }
+.v2-row-child[aria-current] { background: none; box-shadow: none; }
+.v2-row-child[aria-current] .v2-row-title { font-weight: 500; color: var(--t3-sidebar-fg); }
+.v2-threads li[data-enter] { animation: v2-rise 200ms var(--ease-out); }
+.v2-toc-empty { margin: 0; padding: 1.5rem 0.5rem; text-align: center; font-size: 0.75rem; color: var(--t3-sidebar-muted); }
+
+@media (hover: hover) and (pointer: fine) {
+  .v2-brand:hover, .v2-search:hover, .v2-side-icon:hover, .v2-folder-head:hover, .v2-row:not([aria-current]):hover { background: var(--t3-row-hover); }
+  .v2-search:hover, .v2-side-icon:hover { color: var(--t3-sidebar-fg); }
+  .v2-row:hover .v2-row-title { color: var(--t3-sidebar-fg); }
+  .v2-row-child:hover { background: var(--t3-row-hover); }
+  .v2-search-clear:hover { color: var(--t3-sidebar-fg); }
+  .v2-pop [role='option']:hover { background: var(--t3-accent); }
+}
+
+/* ---------- the guide menu ---------- */
+
+.v2-menu {
+  position: fixed; z-index: 200; left: 0; top: 0; width: 16rem; max-width: calc(100vw - 1rem); overflow-y: auto; padding: 0.25rem;
+  border: 1px solid color-mix(in srgb, var(--t3-fg) 10%, transparent); border-radius: var(--t3-radius);
+  background: var(--t3-popover); box-shadow: var(--t3-shadow-menu); color: var(--t3-fg);
+  opacity: 0; transform: scale(0.96);
+  transition: opacity 150ms var(--ease-out), transform 150ms var(--ease-out);
+}
+.v2-menu[data-open] { opacity: 1; transform: none; }
+.v2-menu[data-closing] { transition-duration: 100ms; }
+.v2-menu-label { margin: 0; padding: 0.375rem 0.5rem 0.25rem; font-size: 0.75rem; font-weight: 500; color: var(--t3-muted-fg); }
+.v2-menu-sep { height: 1px; margin: 0.25rem 0.5rem; background: var(--t3-border); }
+.v2-menu-item {
+  display: flex; align-items: center; gap: 0.5rem; width: 100%; min-height: 1.875rem; padding: 0.25rem 0.5rem;
+  border: 0; border-radius: 4px; background: none; text-align: left; text-decoration: none;
+  font-size: 0.875rem; color: var(--t3-fg); cursor: pointer; outline: none;
+}
+.v2-menu-item:focus { background: var(--t3-accent); }
+.v2 .v2-menu-item:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--t3-input); }
+.v2-menu-item[aria-current='page'] { font-weight: 500; }
+.v2-menu-tick { display: inline-flex; flex: none; margin-left: auto; color: var(--t3-fg); }
+.v2-menu-item[role='menuitemcheckbox'] .v2-menu-tick, .v2-menu-item[role='menuitemradio'] .v2-menu-tick { opacity: 0; }
+.v2-menu-item[aria-checked='true'] .v2-menu-tick { opacity: 1; }
+.v2-menu-item[href^='http'] .v2-menu-tick { color: var(--t3-muted-fg); }
+.v2-menu-text { display: grid; gap: 0.0625rem; min-width: 0; }
+.v2-menu-desc { font-size: 0.75rem; line-height: 1.35; color: var(--t3-muted-fg); }
+.v2-menu-level { align-items: flex-start; padding-block: 0.375rem; }
+.v2-menu-level .v2-menu-tick { margin-top: 0.125rem; }
+@media (hover: hover) and (pointer: fine) { .v2-menu-item:hover { background: var(--t3-accent); } }
+
+/* ---------- the main area: chat | splitter | browser ---------- */
+
+.v2-main {
+  display: grid; min-width: 0; min-height: 0;
+  grid-template-columns: minmax(28rem, 1fr) 0.5rem minmax(18rem, min(var(--v2-bw, 50%), calc(100% - 28.5rem)));
+}
+.v2[data-resizing] { cursor: col-resize; user-select: none; }
+.v2[data-resizing] .v2-browser { pointer-events: none; }
+
+/* ---------- the chat ---------- */
+
+.v2-chat { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--t3-bg); }
+.v2-head {
+  display: flex; align-items: center; gap: 0.5rem; flex: none; height: 52px; padding: 0 0.75rem 0 1rem;
+  border-bottom: 1px solid var(--t3-border);
+}
+.v2-head-btn {
+  display: inline-grid; place-items: center; flex: none; min-width: 2rem; height: 2rem; padding: 0 0.375rem;
+  border: 0; border-radius: var(--t3-radius); background: none; color: var(--t3-muted-fg); text-decoration: none;
+  transition: transform 140ms var(--ease-out);
+}
+.v2-head-btn:active { transform: scale(0.97); }
+.v2-head-btn[aria-expanded='true'] { background: var(--t3-accent); color: var(--t3-fg); }
+.v2-to-list, .v2-head-menu { display: none; }
+.v2-crumb { flex: 1; min-width: 0; display: flex; align-items: center; gap: 0.375rem; margin: 0; white-space: nowrap; overflow: hidden; color: var(--t3-muted-fg); }
+.v2-crumb-project { overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 2rem; }
+.v2-crumb b { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 500; color: var(--t3-fg); }
+.v2-sep { color: color-mix(in srgb, var(--t3-muted-fg) 60%, transparent); }
+.v2-details { position: relative; }
+.v2-details-btn { display: inline-flex; gap: 0.35rem; }
+.v2-details-val { font-family: var(--t3-mono); font-size: 0.75rem; }
+.v2-details-pop { top: calc(100% + 4px); right: 0; width: 15rem; padding: 0.5rem; transform-origin: top right; }
+.v2-pop-title { margin: 0 0 0.5rem; font-weight: 500; display: flex; justify-content: space-between; align-items: center; }
+.v2-meter { height: 6px; border-radius: 3px; background: var(--t3-accent); overflow: hidden; }
+.v2-meter span { display: block; height: 100%; background: var(--t3-fg); transform-origin: 0 50%; transform: scaleX(0.01); transition: transform 220ms var(--ease-out); }
+.v2-pop-val { margin: 0.4rem 0 0; font-family: var(--t3-mono); font-size: 0.75rem; color: var(--t3-muted-fg); }
+@media (hover: hover) and (pointer: fine) { .v2-head-btn:hover { background: var(--t3-accent); color: var(--t3-fg); } }
+
+.v2-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.v2-thread { max-width: var(--v2-col); margin: 0 auto; padding: 1.5rem 1rem 1.25rem; }
+
+/* A turn: the part's heading, the request, the work log as it grows, the reply, the try box. */
+.v2-turn { display: flex; flex-direction: column; }
+.v2-turn:not([hidden]) ~ .v2-turn:not([hidden]) { margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px solid var(--t3-border); }
+.v2-turn[data-enter] { animation: v2-rise 220ms var(--ease-out); }
+
+/* The guide's framing, above the thread's own rows: part, title, the scene in a line or two. */
+.v2-turn-head { margin: 0 0 1rem; }
+.v2-part-n { margin: 0 0 0.25rem; font-size: 0.75rem; font-weight: 500; color: var(--t3-muted-fg); font-variant-numeric: tabular-nums; }
+.v2-part-title { margin: 0; font-family: var(--t3-sans); font-size: 1.0625rem; font-weight: 600; line-height: 1.35; letter-spacing: -0.012em; color: var(--t3-fg); text-wrap: balance; }
+.v2-lede { margin: 0.375rem 0 0; max-width: 40rem; font-size: 0.875rem; line-height: 1.6; color: var(--t3-muted-fg); text-wrap: pretty; }
+
+/* The request: T3 Code's user message. */
+.v2-user { display: flex; justify-content: flex-end; padding-bottom: 1rem; }
+.v2-bubble {
+  min-width: 0; max-width: 80%; padding: 0.75rem; border-radius: 1rem;
+  background: var(--t3-message); color: var(--t3-fg); line-height: 1.625; overflow-wrap: anywhere;
+}
+.v2-bubble p { margin: 0; }
+.v2-attach {
+  display: flex; align-items: center; gap: 0.375rem; width: fit-content; margin-top: 0.5rem !important; padding: 0.25rem 0.5rem;
+  border: 1px solid var(--t3-border); border-radius: var(--t3-radius); background: var(--t3-card);
+  font-size: 0.8125rem; color: var(--t3-muted-fg);
+}
+.v2-attach svg { flex: none; }
+
+/* The work log: plain rows with an icon, as T3 Code draws them. */
+.v2-work { display: flex; flex-direction: column; padding-bottom: 0.5rem; }
+.v2-wrows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.v2-turn[data-folded] .v2-wrows { display: none; }
+.v2-wrow {
+  display: flex; align-items: flex-start; gap: 0.375rem; min-width: 0; padding: 0.125rem;
+  border-radius: calc(var(--t3-radius) - 2px); font-size: 0.875rem; line-height: 1.625; color: var(--t3-muted-fg);
+}
+.v2-wicon { display: grid; place-items: center; flex: none; width: 1.5rem; height: 1.4375rem; color: color-mix(in srgb, var(--t3-muted-fg) 85%, transparent); }
+.v2-wbody { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.v2-wline { display: flex; align-items: center; gap: 0.375rem; min-width: 0; }
+.v2-wlabel { position: relative; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.v2-wmark { display: inline-flex; flex: none; }
+.v2-wdetail { padding-bottom: 0.25rem; font-size: 0.8125rem; line-height: 1.5; color: color-mix(in srgb, var(--t3-muted-fg) 80%, var(--t3-bg)); overflow-wrap: anywhere; }
+:root:not([data-level='plain']) .v2-wdetail { font-family: var(--t3-mono); font-size: 0.75rem; }
+.v2-logrow[data-tone='bad'] .v2-wicon, .v2-logrow[data-tone='bad'] .v2-wmark { color: var(--t3-error); }
+.v2-logrow[data-tone='ok'] .v2-wmark { color: var(--t3-success-fg); }
+/* The live row: the step the agent is on. Its icon lights and a highlight runs over its words. */
+.v2-wrow[data-live] .v2-wicon { color: var(--t3-fg); }
+.v2-wrow[data-live] .v2-wlabel { color: color-mix(in srgb, var(--t3-fg) 72%, var(--t3-muted-fg)); }
+.v2-logrow[data-live]:not([data-tone='bad']) { animation: v2-rise 200ms var(--ease-out); }
+.v2-turn[data-still] .v2-logrow[data-live] { animation: none; }
+/* A point that sends the reader back to the log: the failed row stands out. */
+.v2-logrow[data-look] { background: color-mix(in srgb, var(--t3-error) 9%, transparent); box-shadow: inset 2px 0 0 var(--t3-error); }
+.v2-logrow[data-look] .v2-wlabel { color: var(--t3-fg); }
+
+/* "Working for …" while the agent works; "Worked for …" folds the log once it has answered. */
+.v2-working, .v2-fold {
+  display: flex; align-items: center; gap: 0.25rem; min-height: 1.5rem; margin: 0 0 0.375rem; padding: 0.25rem 0.25rem 0.5rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--t3-border) 60%, transparent);
+  font-size: 0.875rem; line-height: 1.625; color: var(--t3-muted-fg); font-variant-numeric: tabular-nums;
+}
+.v2-fold { width: 100%; border-width: 0 0 1px; background: none; text-align: left; }
+.v2-fold:active { transform: scale(0.99); }
+.v2-fold-chev { display: inline-flex; transition: transform 150ms var(--ease-out); }
+.v2-fold[aria-expanded='false'] .v2-fold-chev { transform: rotate(-90deg); }
+@media (hover: hover) and (pointer: fine) { .v2-fold:hover { color: var(--t3-fg); } }
+
+/* T3 Code's activity highlight: a copy of the words in full colour, seen through a moving window.
+   Transform only; it stops under reduced motion. */
+.v2-shine {
+  position: absolute; top: 0; bottom: 0; left: -4.5rem; width: calc(100% + 9rem); pointer-events: none; user-select: none;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, rgb(0 0 0 / 12%) 0.675rem, rgb(0 0 0 / 55%) 1.575rem, #000 2.25rem, rgb(0 0 0 / 55%) 2.925rem, rgb(0 0 0 / 12%) 3.825rem, transparent 4.5rem, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, rgb(0 0 0 / 12%) 0.675rem, rgb(0 0 0 / 55%) 1.575rem, #000 2.25rem, rgb(0 0 0 / 55%) 2.925rem, rgb(0 0 0 / 12%) 3.825rem, transparent 4.5rem, transparent 100%);
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  animation: v2-shine 2.2s steps(30) infinite;
+}
+.v2-shine-counter { display: block; width: 100%; animation: v2-shine-counter 2.2s steps(30) infinite; }
+.v2-shine-text { display: block; width: calc(100% - 9rem); margin-left: 4.5rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--t3-fg); }
+@keyframes v2-shine { to { transform: translateX(100%); } }
+@keyframes v2-shine-counter { to { transform: translateX(-100%); } }
+
+/* The reply: the agent's message, no bubble. Absent until the agent answers, then it lands. */
+.v2-reply { display: flex; flex-direction: column; gap: 0.65rem; padding: 0.25rem 0.25rem 1rem; line-height: 1.625; color: color-mix(in srgb, var(--t3-fg) 90%, transparent); }
+.v2-reply p { margin: 0; }
+.v2-deeper { padding-left: 0.75rem; border-left: 2px solid var(--t3-border); font-size: 0.8125rem; color: var(--t3-muted-fg); }
+:root[data-level='plain'] .v2-deeper, :root[data-level='technical'] .v2-deeper[data-min='engineer'] { display: none; }
+.v2[data-ready] .v2-turn:not([data-landed]) :is(.v2-reply, .v2-try) { display: none; }
+.v2-turn[data-current][data-landed]:not([data-still]) .v2-reply > * { animation: v2-rise 220ms var(--ease-out) both; }
+.v2-turn[data-current][data-landed]:not([data-still]) .v2-reply > :nth-child(2) { animation-delay: 60ms; }
+.v2-turn[data-current][data-landed]:not([data-still]) .v2-reply > :nth-child(3) { animation-delay: 120ms; }
+.v2-turn[data-current][data-landed]:not([data-still]) .v2-try { animation: v2-fade 220ms var(--ease-out) 180ms both; }
+.v2-turn[data-enter] :is(.v2-user, .v2-work) { animation: v2-rise 220ms var(--ease-out) both; }
+.v2-turn[data-enter] .v2-work { animation-delay: 80ms; }
+
+/* Words by reader level (v2/html.ts). */
+.v2 [data-lv]:not(.v2-preview-host *) { display: none; }
+:root[data-level='plain'] .v2 [data-lv~='plain'], :root[data-level='technical'] .v2 [data-lv~='technical'], :root[data-level='engineer'] .v2 [data-lv~='engineer'] { display: inline; }
+
+/* The prompt to try and the one move in T3 Code, for the turn on show only. */
+.v2-try {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; margin-bottom: 0.25rem; padding: 0.75rem;
+  border: 1px solid var(--t3-border); border-radius: 0.75rem; background: var(--t3-card);
+}
+.v2-turn:not([data-current]) .v2-try { display: none; }
+.v2-try-label { margin: 0; font-size: 0.75rem; font-weight: 500; color: var(--t3-muted-fg); }
+.v2-try-prompt { display: flex; align-items: flex-start; gap: 0.5rem; }
+.v2-try-prompt code {
+  flex: 1; min-width: 0; padding: 0.5rem 0.625rem; border-radius: var(--t3-radius); background: var(--t3-code);
+  box-shadow: inset 0 0 0 1px var(--t3-border);
+  font-family: var(--t3-mono); font-size: 0.78125rem; line-height: 1.6; color: var(--t3-fg); white-space: pre-wrap;
+}
+.v2-copy {
+  display: inline-flex; align-items: center; gap: 0.375rem; flex: none; height: 2rem; padding: 0 0.625rem;
+  border: 1px solid var(--t3-input); border-radius: var(--t3-radius); background: var(--t3-card);
+  font-size: 0.8125rem; font-weight: 500; color: var(--t3-fg);
+  transition: transform 140ms var(--ease-out);
+}
+.v2-copy:active { transform: scale(0.97); }
+.v2-try-t3 { margin: 0; color: var(--t3-muted-fg); }
+.v2-try-t3 b { margin-right: 0.25rem; font-weight: 500; color: var(--t3-fg); }
+.v2-src { font-size: 0.75rem; color: var(--t3-muted-fg); }
+.v2-src summary { display: inline-flex; align-items: center; min-height: 1.75rem; cursor: pointer; }
+.v2-src ul { margin: 0 0 0.25rem; padding-left: 1.1rem; }
+.v2-src li { margin-bottom: 0.3rem; }
+.v2-src a { color: var(--t3-fg); }
+@media (hover: hover) and (pointer: fine) { .v2-copy:hover { background: var(--t3-accent); } }
+
+.v2-soon p { margin: 0; }
+.v2-soon-link { color: var(--t3-primary); font-weight: 500; }
+
+/* ---------- the dock: the composer slot holds the lesson controls ---------- */
+
+.v2-dock { position: relative; flex: none; width: 100%; max-width: calc(var(--v2-col) + 2rem); margin: 0 auto; padding: 0 1rem 0.75rem; }
+/* The chat stopped following because the reader scrolled up: one tap brings it back. */
+.v2-jump {
+  position: absolute; left: 50%; bottom: calc(100% + 0.5rem); z-index: 5; display: inline-flex; align-items: center; gap: 0.375rem;
+  height: 2rem; padding: 0 0.75rem 0 0.625rem; translate: -50% 0;
+  border: 1px solid var(--t3-border); border-radius: 999px; background: var(--t3-popover); box-shadow: var(--t3-shadow-menu);
+  font-size: 0.8125rem; font-weight: 500; color: var(--t3-fg); white-space: nowrap;
+  animation: v2-pop 150ms var(--ease-out); transition: transform 140ms var(--ease-out);
+}
+.v2-jump:active { transform: scale(0.97); }
+
+.v2-composer {
+  position: relative; padding: 0.625rem 0.5rem 0.5rem 0.875rem;
+  border-radius: 1rem; background: var(--t3-card);
+  box-shadow: 0 0 0 1px var(--t3-outline), var(--t3-shadow-composer);
+}
+.v2-comp-head { display: flex; align-items: center; gap: 0.5rem; min-width: 0; padding-right: 0.25rem; }
+.v2-parts-btn {
+  display: inline-flex; align-items: center; gap: 0.25rem; min-width: 0; height: 1.625rem; margin-left: -0.375rem; padding: 0 0.375rem;
+  border: 0; border-radius: var(--t3-radius); background: none; font-size: 0.8125rem; font-weight: 600; color: var(--t3-fg);
+  transition: transform 140ms var(--ease-out);
+}
+.v2-parts-btn:active { transform: scale(0.97); }
+.v2-parts-btn[aria-expanded='true'] { background: var(--t3-accent); }
+.v2-parts-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v2-parts-btn svg { flex: none; color: var(--t3-muted-fg); }
+.v2-comp-where { flex: none; margin-left: auto; font-size: 0.75rem; color: var(--t3-muted-fg); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* The point's words: what to look at now. Two lines tall at least, so the box doesn't jump. */
+.v2-comp-say { min-height: 3.1em; margin: 0.25rem 0.25rem 0.5rem 0; font-size: 0.9375rem; line-height: 1.55; color: var(--t3-fg); text-wrap: pretty; }
+.v2-comp-say[data-in] { animation: v2-rise 180ms var(--ease-out); }
+.v2-comp-bar { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.v2-chips { display: flex; flex-wrap: wrap; gap: 0.125rem; min-width: 0; margin-left: -0.375rem; }
+.v2-chip {
+  display: inline-flex; align-items: center; height: 1.75rem; padding: 0 0.5rem; border-radius: var(--t3-radius);
+  font-size: 0.8125rem; font-weight: 500; white-space: nowrap; color: color-mix(in srgb, var(--t3-fg) 80%, transparent);
+}
+.v2-transport { display: flex; align-items: center; gap: 0.25rem; flex: none; margin-left: auto; }
+.v2-ctl {
+  display: inline-grid; place-items: center; width: 2rem; height: 2rem; padding: 0;
+  border: 0; border-radius: var(--t3-radius); background: none; color: color-mix(in srgb, var(--t3-fg) 80%, transparent);
+  transition: transform 140ms var(--ease-out), opacity 140ms var(--ease-out);
+}
+.v2-ctl:active:not(:disabled) { transform: scale(0.97); }
+.v2-ctl:disabled { opacity: 0.35; }
+/* Play sits where Send would: T3 Code's round primary button. */
+.v2-send {
+  display: inline-grid; place-items: center; flex: none; width: 2rem; height: 2rem; padding: 0;
+  border: 0; border-radius: 50%; background: var(--t3-primary); color: var(--t3-primary-fg);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--t3-primary) 24%, transparent), inset 0 1px rgb(255 255 255 / 16%);
+  transition: transform 140ms var(--ease-out);
+}
+.v2-send:active:not(:disabled) { transform: scale(0.97); }
+.v2-send:disabled { background: color-mix(in srgb, var(--t3-fg) 12%, transparent); color: var(--t3-muted-fg); box-shadow: none; }
+.v2-play .i-pause, .v2-play[aria-pressed='true'] .i-play { display: none; }
+.v2-play[aria-pressed='true'] .i-pause { display: block; }
+.v2-play .i-play { margin-left: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .v2-parts-btn:hover, .v2-ctl:hover:not(:disabled) { background: var(--t3-accent); }
+  .v2-ctl:hover:not(:disabled) { color: var(--t3-fg); }
+  .v2-send:hover:not(:disabled) { background: color-mix(in srgb, var(--t3-primary) 90%, var(--t3-bg)); }
+}
+
+/* The part list: opens upward from the title. */
+.v2-parts { left: 0.5rem; bottom: calc(100% + 0.375rem); width: min(22rem, calc(100% - 1rem)); transform-origin: 1.5rem bottom; }
+.v2-parts[data-still] { animation: none; }
+.v2-part {
+  display: grid; grid-template-columns: 1rem minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; width: 100%; min-height: 2rem;
+  padding: 0.25rem 0.5rem; border: 0; border-radius: 4px; background: none; text-align: left; color: var(--t3-fg);
+}
+.v2 .v2-part:focus-visible { outline: none; background: var(--t3-accent); box-shadow: inset 0 0 0 1px var(--t3-input); }
+.v2-part[aria-current] { font-weight: 500; }
+.v2-part em { font-style: normal; font-size: 0.75rem; color: var(--t3-muted-fg); font-weight: 400; }
+.v2-part-mark { display: inline-grid; place-items: center; color: var(--t3-muted-fg); }
+.v2-part-mark[data-s='done'] { color: var(--t3-success-fg); }
+.v2-part-mark[data-s='now']::before { content: ''; width: 0.4rem; height: 0.4rem; border-radius: 50%; background: var(--t3-info-fg); }
+.v2-part-mark[data-s='todo']::before { content: ''; width: 0.4rem; height: 0.4rem; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--t3-input); }
+.v2-part-next { margin-top: 0.25rem; padding-top: 0.25rem; border-top: 1px solid var(--t3-border); }
+@media (hover: hover) and (pointer: fine) { .v2-part:hover { background: var(--t3-accent); } }
+
+/* ---------- the splitter ---------- */
+
+.v2-split { position: relative; cursor: col-resize; touch-action: none; }
+.v2-split::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; margin-left: -1px; background: var(--t3-border); opacity: 0;
+  transition: opacity 150ms var(--ease-out);
+}
+.v2-split:focus-visible { outline: none; }
+.v2-split:focus-visible::after, .v2[data-resizing] .v2-split::after { opacity: 1; background: var(--t3-primary); }
+@media (hover: hover) and (pointer: fine) { .v2-split:hover::after { opacity: 1; } }
+
+/* ---------- the browser panel ---------- */
+
+.v2-browser {
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto auto; min-width: 0; min-height: 0;
+  margin: 0.75rem 0.75rem 0.75rem 0; border: 1px solid var(--t3-border); border-radius: 0.75rem; background: var(--t3-card); overflow: hidden;
+}
+.v2-scrim, .v2-grab, .v2-close, .v2-mini { display: none; }
+.v2-top { display: flex; align-items: flex-end; gap: 0.25rem; padding: 0.375rem 0.375rem 0; background: var(--t3-sidebar); }
+.v2-tabs { display: flex; gap: 0.125rem; min-width: 0; flex: 1; }
+.v2-tab {
+  position: relative; display: flex; align-items: center; gap: 0.375rem; flex: none; height: 2.125rem; padding: 0 0.75rem;
+  border: 1px solid transparent; border-bottom: 0; border-radius: var(--t3-radius) var(--t3-radius) 0 0; background: none;
+  font-size: 0.8125rem; font-weight: 500; color: var(--t3-muted-fg);
+  transition: transform 140ms var(--ease-out);
+}
+.v2-tab svg { flex: none; }
+.v2-tab:active { transform: scale(0.97); }
+.v2-tab[aria-selected='true'] { background: var(--t3-card); border-color: var(--t3-border); color: var(--t3-fg); }
+.v2-tab[aria-selected='true']::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: var(--t3-card); }
+@media (hover: hover) and (pointer: fine) { .v2-tab[aria-selected='false']:hover { color: var(--t3-fg); } }
+.v2-badge { flex: none; width: 0.4375rem; height: 0.4375rem; border-radius: 50%; background: var(--t3-info-fg); animation: v2-fade 200ms var(--ease-out); }
+
+.v2-url { display: flex; align-items: center; gap: 0.5rem; height: 2.5rem; padding: 0 0.5rem; border-top: 1px solid var(--t3-border); border-bottom: 1px solid var(--t3-border); }
+.v2-nav { display: flex; gap: 0.25rem; color: color-mix(in srgb, var(--t3-muted-fg) 55%, transparent); }
+.v2-nav svg { width: 15px; height: 15px; }
+.v2-addr {
+  display: flex; flex: 1; align-items: center; gap: 0.375rem; min-width: 0; height: 1.75rem; padding: 0 0.625rem; border-radius: var(--t3-radius);
+  background: var(--t3-accent); color: var(--t3-fg); font-size: 0.8125rem; white-space: nowrap; overflow: hidden;
+}
+.v2-addr-sub { color: var(--t3-muted-fg); overflow: hidden; text-overflow: ellipsis; }
+
+.v2-pane { min-height: 0; }
+.v2-pane-ex { background: var(--t3-bg); }
+.v2-view { position: relative; height: 100%; overflow: hidden; }
+/* The stage keeps the panel's size; the fit (v2/ui/fit.ts) scales it from its top-left corner. */
+.v2 .v2-stage.j-stage { position: absolute; inset: 0; width: auto; height: auto; transform-origin: 0 0; border: 0; border-radius: 0; background: none; container-type: normal; }
+.v2-stage[data-glide] { transition: transform 280ms var(--ease-out); }
+/* What this point changed: its annotation inverts, so the eye has a target. */
+.v2-stage .j-label[data-changed] { background: var(--ink); color: var(--paper); text-decoration-color: color-mix(in oklab, var(--paper) 60%, transparent); transition: left 720ms var(--fig-ease), top 720ms var(--fig-ease), opacity 280ms, transform 280ms var(--fig-ease); }
+
+.v2-pane-preview { display: flex; flex-direction: column; background: var(--t3-bg); }
+.v2-page { position: relative; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+/* The app fills the panel, whatever its own layout. */
+.v2-preview-host { display: flex; flex-direction: column; height: 100%; }
+.v2-preview-host > * { flex: 1 1 auto; min-height: 0; }
+.v2-page:not([data-state='empty']) .v2-page-empty { display: none; }
+.v2-page-empty { margin: 0; padding: 3rem 1rem; text-align: center; color: var(--t3-muted-fg); }
+
+/* The point's words under the picture: only in the phone's sheet, where the composer is out of sight. */
+.v2-say { display: none; }
+
+.v2-bar { display: flex; align-items: center; gap: 0.625rem; padding: 0.375rem 0.625rem; border-top: 1px solid var(--t3-border); background: var(--t3-card); }
+.v2-bar .v2-send { width: 1.75rem; height: 1.75rem; }
+.v2-bar .v2-send svg { width: 14px; height: 14px; }
+.v2-dots { display: flex; flex: 1; gap: 0.25rem; min-width: 0; margin: 0; padding: 0; list-style: none; }
+.v2-dots li { flex: 1; min-width: 0; }
+.v2-dot { display: grid; align-items: center; width: 100%; height: 2rem; padding: 0; border: 0; background: none; }
+.v2-dot span { display: block; height: 4px; border-radius: 2px; background: var(--t3-accent); box-shadow: inset 0 0 0 1px var(--t3-border); transform-origin: center; transition: transform 150ms var(--ease-out); }
+.v2-dot[data-state='past'] span { background: color-mix(in srgb, var(--t3-fg) 35%, transparent); box-shadow: none; }
+.v2-dot[data-state='now'] span { background: var(--t3-fg); box-shadow: none; }
+.v2-dot:active span { transform: scaleY(1.6); }
+@media (hover: hover) and (pointer: fine) { .v2-dot:hover span { transform: scaleY(1.6); } }
+.v2-bar-n { min-width: 2.6rem; font-family: var(--t3-mono); font-size: 0.75rem; text-align: right; color: var(--t3-muted-fg); }
+
+/* ---------- narrower desktops ---------- */
+
+@media (max-width: 72rem) {
+  .v2-main { grid-template-columns: minmax(26rem, 1fr) 0.5rem minmax(17rem, min(var(--v2-bw, 46%), calc(100% - 26.5rem))); }
+  .v2-thread { padding-inline: 0.75rem; }
+  .v2-dock { padding-inline: 0.75rem; }
+  .v2-browser { margin-right: 0.5rem; }
+}
+
+/* ---------- phone: list and thread are two screens; the browser is a sheet ---------- */
+
+@media (max-width: 47.99rem) {
+  .v2 { grid-template-columns: minmax(0, 1fr); }
+  .v2[data-ready][data-view='list'] .v2-main, .v2[data-ready][data-view='thread'] .v2-side { display: none; }
+  .v2:not([data-ready]) { height: auto; }
+  .v2-side { border-right: 0; }
+  .v2-main { grid-template-columns: minmax(0, 1fr); }
+  .v2-split { display: none; }
+
+  /* 44px to touch. */
+  .v2-side-top { padding-inline: 0.375rem; }
+  .v2-brand { height: 2.75rem; padding-inline: 0.625rem; }
+  .v2-side-tools { padding-inline: 0.375rem; }
+  .v2-search { height: 2.75rem; font-size: 1rem; }
+  .v2-side-icon { width: 2.75rem; height: 2.75rem; }
+  .v2-toc { padding-inline: 0.375rem; }
+  .v2-folder-head { height: 2.75rem; }
+  .v2-row { height: 2.75rem; font-size: 0.9375rem; }
+  .v2-pop [role='option'] { min-height: 2.75rem; }
+  .v2-pop-search { height: 2.75rem; font-size: 1rem; }
+  .v2-menu-item { min-height: 2.75rem; }
+  .v2-menu { width: min(18rem, calc(100vw - 1rem)); }
+
+  .v2-head { padding-inline: 0.25rem 0.25rem; gap: 0.25rem; }
+  .v2-head-btn { min-width: 2.75rem; height: 2.75rem; }
+  .v2-to-list, .v2-head-menu { display: inline-grid; }
+  .v2-head .v2-ex { display: none; }
+  .v2-thread { padding: 1.25rem 0.875rem 1rem; }
+  .v2-bubble { max-width: 88%; }
+  .v2-dock { padding: 0 0.5rem calc(0.5rem + env(safe-area-inset-bottom)); }
+
+  /* The mini player: the picture small; a tap opens the browser. */
+  .v2-mini {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.625rem; width: 100%; min-height: 2.75rem;
+    margin-bottom: 0.375rem; padding: 0.25rem 0.375rem 0.25rem 0.25rem; border: 1px solid var(--t3-border); border-radius: 0.75rem;
+    background: var(--t3-card); text-align: left; transition: transform 140ms var(--ease-out);
+  }
+  .v2-mini:active { transform: scale(0.98); }
+  .v2:not(:has([data-turn][data-current])) .v2-mini { display: none; }
+  .v2-thumb { position: relative; width: 3.5rem; height: 2.5rem; border-radius: 0.375rem; overflow: hidden; background: var(--t3-bg); box-shadow: inset 0 0 0 1px var(--t3-border); }
+  .v2 .v2-thumb-stage.j-stage { position: absolute; left: 0; top: 0; width: 304px; height: 224px; transform: scale(0.184); transform-origin: 0 0; border: 0; background: none; }
+  .v2-thumb-stage .j-labels, .v2-thumb-stage .j-tip { display: none; }
+  .v2-mini-text { display: grid; gap: 0; min-width: 0; }
+  .v2-mini-top { display: flex; align-items: center; gap: 0.5rem; min-width: 0; font-weight: 500; color: var(--t3-fg); }
+  .v2-mini-sub { font-size: 0.75rem; color: var(--t3-muted-fg); font-variant-numeric: tabular-nums; }
+  .v2-mini-badge { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; font-weight: 500; color: var(--t3-info-fg); white-space: nowrap; animation: v2-fade 200ms var(--ease-out); }
+  .v2-mini-badge::before { content: ''; width: 0.4375rem; height: 0.4375rem; border-radius: 50%; background: var(--t3-info-fg); }
+  .v2-mini-open { display: inline-grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: var(--t3-accent); color: var(--t3-fg); }
+
+  .v2-composer { padding: 0.5rem 0.375rem 0.375rem 0.75rem; }
+  .v2-comp-say { font-size: 0.9375rem; min-height: 0; }
+  .v2-ctl, .v2-send { width: 2.75rem; height: 2.75rem; }
+  .v2-parts-btn { height: 2.75rem; margin-block: -0.5rem; }
+  .v2-chips { flex-wrap: nowrap; overflow: hidden; margin-left: -0.25rem; }
+  .v2-chip { height: 1.5rem; font-size: 0.75rem; padding: 0 0.25rem; }
+  .v2-parts { width: calc(100% - 0.5rem); left: 0.25rem; }
+  .v2-part { min-height: 2.75rem; }
+
+  /* The prompt and the T3 Code line, one line each. */
+  .v2-try-prompt { align-items: center; }
+  .v2-try-prompt code { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .v2-try-t3 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .v2-copy { height: 2.75rem; }
+
+  /* The browser as a full-height sheet. Closed, it waits below the screen, laid out, so the
+     picture keeps its size; it slides up and back with transform only. */
+  .v2-browser {
+    position: fixed; z-index: 100; left: 0; right: 0; bottom: 0; top: max(0.5rem, env(safe-area-inset-top));
+    margin: 0; border-radius: 1rem 1rem 0 0; border-bottom: 0; box-shadow: var(--t3-shadow-menu);
+    padding-bottom: env(safe-area-inset-bottom);
+    transform: translateY(100%); visibility: hidden;
+    transition: transform 250ms var(--ease-out), visibility 0s linear 250ms;
+  }
+  .v2-browser[data-open] { transform: none; visibility: visible; transition: transform 250ms var(--ease-out); }
+  .v2-browser[data-drag] { transition: none; }
+  .v2-scrim {
+    display: block; position: fixed; inset: 0; z-index: 99; background: rgb(0 0 0 / 0.32); opacity: 0; pointer-events: none;
+    transition: opacity 250ms var(--ease-out);
+  }
+  .v2-scrim[data-open] { opacity: 1; pointer-events: auto; }
+  .v2-top { position: relative; align-items: center; padding-top: 1.1rem; touch-action: none; }
+  .v2-grab { display: block; position: absolute; top: 0.4rem; left: 50%; width: 2.25rem; height: 4px; margin-left: -1.125rem; border-radius: 2px; background: var(--t3-input); }
+  .v2-tab { height: 2.75rem; padding: 0 0.75rem; }
+  .v2-tab[aria-selected='true'] { align-self: flex-end; }
+  .v2-close { display: inline-grid; }
+  .v2-say {
+    display: block; min-height: 4.4rem; margin: 0; padding: 0.75rem 1rem 0.85rem; border-top: 1px solid var(--t3-border);
+    font-size: 0.9375rem; line-height: 1.5; color: var(--t3-fg); background: var(--t3-card); text-wrap: pretty;
+  }
+  .v2-bar .v2-send { width: 2.75rem; height: 2.75rem; }
+  .v2-dot { height: 2.75rem; }
+}
+
+/*
+ * Chapter 3 (lessons 9 to 13): T3 Code's subagent rows in the work log. Two or more sit under a
+ * "{n} subagents" row with a "{count} working · {count} done" line; each row has an avatar with a
+ * status dot, its title, a line of progress or result, and its status on the right. Also the
+ * usage-limits block in thread details, and a sidebar thread row indented under another.
+ */
+.v2-subs { flex-direction: column; align-items: stretch; gap: 0.125rem; }
+.v2-sub-head { display: flex; align-items: center; gap: 0.375rem; min-width: 0; width: 100%; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; border-radius: calc(var(--t3-radius) - 2px); }
+.v2-sub-head .v2-fold-chev { display: inline-flex; margin-left: auto; transition: transform 150ms var(--ease-out); }
+.v2-sub-head[aria-expanded='false'] .v2-fold-chev { transform: rotate(-90deg); }
+.v2-sub-head[aria-expanded='false'] + .v2-subrows { display: none; }
+@media (hover: hover) and (pointer: fine) { .v2-sub-head:hover .v2-wlabel { color: var(--t3-fg); } }
+@media (pointer: coarse) { .v2-sub-head { min-height: 44px; } }
+.v2-sub-line { flex: none; font-size: 0.75rem; color: color-mix(in srgb, var(--t3-muted-fg) 85%, transparent); font-variant-numeric: tabular-nums; }
+.v2-subrows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.125rem; }
+.v2-sub-head + .v2-subrows { margin-left: 0.75rem; padding-left: 0.875rem; border-left: 1px solid var(--t3-border); }
+.v2-subrow {
+  position: relative; display: flex; align-items: flex-start; gap: 0.5rem; min-width: 0; padding: 0.3rem 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--t3-border) 70%, transparent); border-radius: var(--t3-radius); background: var(--t3-card);
+}
+.v2-sub-av {
+  position: relative; display: grid; place-items: center; flex: none; width: 1.375rem; height: 1.375rem; margin-top: 0.05rem;
+  border-radius: 50%; background: var(--t3-accent); color: var(--t3-fg);
+}
+.v2-sub-av svg { width: 0.8rem; height: 0.8rem; }
+.v2-sub-av::after {
+  content: ''; position: absolute; right: -1px; bottom: -1px; width: 0.45rem; height: 0.45rem; border-radius: 50%;
+  background: var(--t3-info-fg); box-shadow: 0 0 0 2px var(--t3-card);
+}
+.v2-subrow[data-state='done'] .v2-sub-av::after { background: var(--t3-success-fg); }
+.v2-subrow[data-state='bad'] .v2-sub-av::after { background: var(--t3-error); }
+.v2-sub-body { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.v2-sub-title { font-size: 0.8125rem; font-weight: 500; line-height: 1.45; color: var(--t3-fg); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.v2-sub-detail { font-size: 0.75rem; line-height: 1.45; color: var(--t3-muted-fg); overflow-wrap: anywhere; }
+.v2-sub-state { flex: none; font-size: 0.75rem; line-height: 1.6; color: var(--t3-info-fg); }
+.v2-subrow[data-state='done'] .v2-sub-state { color: var(--t3-muted-fg); }
+.v2-subrow[data-state='bad'] .v2-sub-state { color: var(--t3-error-fg); }
+.v2-subrow[data-state='running'] .v2-sub-av::after { animation: v2-sub-pulse 1.6s ease-in-out infinite; }
+@keyframes v2-sub-pulse { 50% { opacity: 0.35; } }
+.v2-subrow[data-state='running'] [data-when='done'], .v2-subrow:not([data-state='running']) [data-when='running'] { display: none; }
+.v2-usage { margin-top: 0.75rem; padding-top: 0.6rem; border-top: 1px solid var(--t3-border); }
+.v2-row-child[data-sub] { padding-left: 4.25rem; }
+.v2-row-child[data-sub]::before { left: 3.6rem; }
+span.v2-row-child { cursor: default; }
+
+@media (prefers-reduced-motion: reduce) {
+  .v2 *, .v2 *::before, .v2 *::after { animation: none !important; transition-duration: 0s !important; }
+  .v2-shine { display: none; }
+  .v2-wrow[data-live] .v2-wlabel { color: var(--t3-fg); }
+}
+
+/* ---------- lessons 14–17: two more sidebar statuses, usage limits, the "Run on" chip ---------- */
+.v2-status[data-s='limited'] { color: var(--t3-warning-fg); }
+.v2-status[data-s='request'] { color: var(--t3-info-fg); }
+.v2-limits ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.v2-limits li { display: grid; gap: 0.25rem; }
+.v2-limits .v2-pop-val { margin: 0; }
+.v2-limits li[data-low='yes'] .v2-meter span { background: var(--t3-warning-fg); }
+[data-ctx-sec]:not([hidden]) + .v2-limits { margin-top: 0.75rem; padding-top: 0.625rem; border-top: 1px solid var(--t3-border); }
+.v2-chip-env { gap: 0.3rem; }
+.v2-chip-env svg { flex: none; opacity: 0.8; }
+/* ---------- Lessons 3 and 4: a goal, several story threads, a queued message, the checkout ---------- */
+/* T3 Code draws Goal with Working's icon and colour. */
+.v2-status[data-s='goal'] { color: var(--t3-info-fg); }
+.v2-row-child:disabled { cursor: default; }
+
+/* A turn of the same thread still running when the part starts (Part.running). */
+.v2-run { display: flex; flex-direction: column; }
+.v2-run[data-folded] .v2-wrows { display: none; }
+.v2-turn[data-folded] .v2-run:not([data-folded]) .v2-wrows { display: flex; }
+.v2-run-reply { display: flex; flex-direction: column; gap: 0.65rem; padding: 0.25rem 0.25rem 1rem; line-height: 1.625; color: color-mix(in srgb, var(--t3-fg) 90%, transparent); }
+.v2-run-reply p { margin: 0; }
+.v2-turn[data-current]:not([data-still]) .v2-run-reply:not([hidden]) { animation: v2-rise 220ms var(--ease-out); }
+
+/* A queued message: dashed and unfilled until it is sent, with its controls under it. */
+.v2-user { flex-wrap: wrap; }
+.v2-user[data-queued] .v2-bubble {
+  background: none; color: var(--t3-muted-fg); box-shadow: inset 0 0 0 1px transparent;
+  border: 1px dashed color-mix(in srgb, var(--t3-muted-fg) 40%, transparent); padding: calc(0.5rem - 1px) calc(0.75rem - 1px);
+}
+.v2-queued-actions {
+  display: flex; align-items: center; justify-content: flex-end; gap: 0.125rem; flex-basis: 100%;
+  margin: 0.25rem 0 0; padding-right: 0.25rem; font-size: 0.75rem; color: var(--t3-muted-fg);
+}
+.v2-q-send, .v2-q-icon { display: inline-flex; align-items: center; gap: 0.25rem; height: 1.5rem; padding: 0 0.375rem; border-radius: calc(var(--t3-radius) - 2px); }
+.v2-q-icon { padding: 0 0.3rem; }
+.v2-user[data-queued] { padding-bottom: 0.75rem; }
+
+/* The goal line at the end of the thread. */
+.v2-goal {
+  display: flex; align-items: baseline; gap: 0.375rem; min-width: 0; margin: 0; padding: 0 0.25rem 0.75rem;
+  font-size: 0.75rem; line-height: 1.5; color: var(--t3-muted-fg);
+}
+.v2-goal-icon { display: inline-flex; flex: none; align-self: center; }
+.v2-goal-icon svg { width: 0.875rem; height: 0.875rem; }
+.v2-goal-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v2-goal-title { color: var(--t3-fg); font-weight: 500; }
+.v2-goal-obj { color: color-mix(in srgb, var(--t3-muted-fg) 75%, transparent); }
+.v2-goal-clear { flex: none; margin-left: 0.375rem; }
+.v2-goal[data-state='complete'] .v2-goal-icon { color: var(--t3-success-fg); }
+
+/* The workspace and branch controls under the composer. */
+.v2-chip-ico { gap: 0.3rem; font-weight: 400; color: color-mix(in srgb, var(--t3-muted-fg) 90%, transparent); }
+.v2-chip-ico svg { flex: none; }
+.v2-chip-ico span { max-width: 12rem; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 47.99rem) { .v2-chip-ico span { max-width: 7rem; } }
+/* ---------- lessons 5 and 6 (additive) ---------- */
+
+/* Thread details: the context row as T3 Code draws it (ThreadDetailsUsage.tsx): a label, a bar with a
+   tick where the provider compacts on its own, and the tokens. Warning colour from 80%, error from 90%. */
+.v2-details-pop { width: 17.5rem; }
+.v2-ctx-row { display: grid; grid-template-columns: auto minmax(3rem, 1fr) auto; align-items: center; column-gap: 0.75rem; font-size: 0.75rem; }
+.v2-ctx-label { color: var(--t3-muted-fg); }
+.v2-ctx-tokens { font-family: var(--t3-mono); color: var(--t3-muted-fg); font-variant-numeric: tabular-nums; }
+.v2-ctx-row .v2-meter { position: relative; }
+.v2-ctx-tick { position: absolute; top: 0; bottom: 0; width: 1.5px; margin-left: -0.75px; background: color-mix(in srgb, var(--t3-fg) 45%, transparent); }
+.v2-details-pop .v2-pop-val { display: flex; flex-direction: column; gap: 0.125rem; margin-top: 0.625rem; padding-top: 0.5rem; border-top: 1px solid var(--t3-border); }
+.v2-details-pop .v2-pop-val [data-ctx-text] { color: var(--t3-fg); }
+.v2-details[data-tone='warning'] .v2-meter span { background: var(--t3-warning-fg); }
+.v2-details[data-tone='error'] .v2-meter span { background: var(--t3-error); }
+.v2-details[data-tone='warning'] .v2-details-val { color: var(--t3-warning-fg); }
+.v2-details[data-tone='error'] .v2-details-val { color: var(--t3-error-fg); }
+
+/* A slash command sent before the request (lesson 5's /compact) and T3 Code's row for what it did. */
+.v2-cmd { display: flex; flex-direction: column; padding-bottom: 0.75rem; }
+.v2-cmd .v2-user { padding-bottom: 0.5rem; }
+.v2-bubble-cmd code { font-family: var(--t3-mono); font-size: 0.875rem; }
+.v2-cmd-row { align-self: stretch; }
+.v2-turn[data-enter] .v2-cmd { animation: v2-rise 220ms var(--ease-out) both; }
+
+/* A thread attached with @ (lesson 6): a chip in the message, as T3 Code puts it at the cursor. */
+.v2-chip-thread {
+  display: inline-flex; align-items: center; gap: 0.25rem; max-width: 100%; margin: 0.125rem 0; padding: 0 0.375rem;
+  border: 1px solid var(--t3-border); border-radius: 0.375rem; background: var(--t3-card);
+  font-size: 0.8125rem; line-height: 1.5; color: var(--t3-fg); vertical-align: baseline; white-space: nowrap;
+}
+.v2-chip-thread svg { flex: none; color: var(--t3-muted-fg); }
+
+/* A marker the thread would show, drawn faint: what /clear would leave (lesson 5). */
+.v2-ghost {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 0.625rem;
+  margin: 0.25rem 0 1rem; opacity: 0.75; color: var(--t3-muted-fg); font-size: 0.75rem;
+}
+.v2-ghost-line { height: 0; border-top: 1px dashed var(--t3-input); }
+.v2-ghost-label { display: inline-flex; align-items: center; gap: 0.375rem; font-weight: 500; }
+.v2-ghost-note { grid-column: 1 / -1; justify-self: center; margin-top: 0.25rem; font-style: italic; }
+.v2-turn[data-current] .v2-ghost:not([hidden]) { animation: v2-fade 220ms var(--ease-out) both; }
+.v2-turn[data-still] .v2-ghost { animation: none; }
+
+/* Merge of lessons 5-6 with 14-17: the limit rows keep their own spacing inside the details popover. */
+.v2-details-pop .v2-limits .v2-pop-val { margin: 0; padding: 0; border: 0; display: block; }

@@ -1,0 +1,33 @@
+---
+/*
+  Layout for the dashboard pages: the start page, the explainers, the models.
+  A title, then a grid of <Tile>s. See styles/board.css and site/AGENTS.md
+  ("Boards").
+  Props:
+    title, description   the <h1> and the meta description
+    section?             SectionId, marks the nav item
+    docTitle?            the <title>, if it should differ from title
+  Slots:
+    default   the tiles
+    tools     controls that act on the whole board, to the right of the title
+    foot      the "last verified" line and the like, under the grid
+*/
+import Base from './Base.astro';
+import '../styles/board.css';
+import type { SectionId } from '../lib/nav';
+
+interface Props { title: string; description: string; section?: SectionId; docTitle?: string }
+const { title, description, section, docTitle } = Astro.props;
+---
+<Base title={docTitle ?? `${title} · Agentic Coding Guide`} description={description} section={section} type="article">
+  <div class="board">
+    <header class="board-head">
+      <h1>{title}</h1>
+      {Astro.slots.has('tools') && <div class="board-tools"><slot name="tools" /></div>}
+    </header>
+    <div class="board-grid">
+      <slot />
+    </div>
+    {Astro.slots.has('foot') && <footer class="board-foot"><slot name="foot" /></footer>}
+  </div>
+</Base>

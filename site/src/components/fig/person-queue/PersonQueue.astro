@@ -1,0 +1,56 @@
+---
+/*
+ * Fig. 31, "You are the queue". Goes inside a board tile.
+ * Idea: adding agents shortens a job only until the person is busy all the time; past that the
+ * finish stops moving and the extra agents wait.
+ * Elements: time to finish against agents (1 to 16), the person's share of the run against
+ * agents, a dot at the knee, a line at the lab's current agent count.
+ * Data: the lab's model, re-run for each agent count with the lab's other settings. No facts.
+ * Interaction: none of its own; it follows the lab (the `acg-lab` event).
+ * Alt text: the first state.
+ */
+import Figure from '../Figure.astro';
+import { DEFAULT } from '../team-lab/model';
+import { drawQueue } from './draw';
+import { describe, sweep } from './model';
+
+const rows = sweep(DEFAULT);
+---
+<div class="pq" data-pq>
+  <Figure bare n={31} title="You are the queue" alt="Two small charts against the number of agents, one to sixteen. Time to finish falls steeply for the first few agents and then flattens. Your share of the run climbs towards all of it at the same point.">
+    <div class="pq-chart" data-pq-chart set:html={drawQueue(rows, DEFAULT.agents, 420)} />
+    <Fragment slot="readout">{describe(rows)}</Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .pq-chart { min-height: 250px; }
+  .pq-svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .pq-title { font-family: var(--sans); font-size: 13px; font-weight: 600; fill: var(--ink); }
+  .pq-now { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 3 3; }
+  .pq .fig[data-bare] .fig-readout { min-height: 0; font-family: var(--sans); font-size: var(--text-s); color: var(--ink); }
+</style>
+
+<script>
+  import type { Run, Settings } from '../team-lab/model';
+  import { drawQueue } from './draw';
+  import { describe, sweep } from './model';
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-pq]')) {
+    const chart = root.querySelector<HTMLElement>('[data-pq-chart]')!;
+    const readout = root.querySelector<HTMLElement>('[data-fig-readout]')!;
+    let last = '';
+    let rows: ReturnType<typeof sweep> = [];
+    let current = 4;
+    const paint = () => { chart.innerHTML = drawQueue(rows, current, chart.clientWidth || 420); };
+    document.addEventListener('acg-lab', (e) => {
+      const { settings } = (e as CustomEvent<{ settings: Settings; run: Run }>).detail;
+      const { agents, ...rest } = settings;
+      const key = JSON.stringify(rest);
+      current = settings.pattern === 'solo' ? 1 : agents;
+      if (key !== last) { last = key; rows = sweep(settings); readout.textContent = describe(rows); }
+      paint();
+    });
+    new ResizeObserver(() => rows.length && paint()).observe(chart);
+  }
+</script>

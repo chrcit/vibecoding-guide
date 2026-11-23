@@ -1,0 +1,114 @@
+---
+/*
+ * Fig. 12, "Six ways to run a team".
+ *
+ * Idea: the same pieces (you, some agents, the work each holds) can be arranged six ways, and the
+ * arrangement decides what it costs and how it goes wrong.
+ * Elements: you (the lit piece at the front), up to seven agent stations each holding a task card,
+ * grooves in the plate that show who hands work to whom, and a burn gauge.
+ * States: solo, parallel threads, a lead with helpers, a pipeline, a council, nested teams.
+ * Data: none. Cost is said relative to solo, in words; the gauge has no numbers on it.
+ * Interaction: one segmented control with the six shapes. The agents slide into place, the grooves
+ * change and the gauge needle swings. Under reduced motion every change jumps.
+ * Alt text: the first frame, solo.
+ */
+import Figure from '../Figure.astro';
+import { drawTeamShapes } from './draw';
+import { SHAPES, describe } from './model';
+
+interface Props { n?: number | string }
+const { n = 12 } = Astro.props;
+const { svg, labels, motion } = drawTeamShapes(`fig${n}`);
+const firstRoles = motion.shapes[0]!.roles;
+---
+<div class="fig-teams" data-fig-teams data-motion={JSON.stringify(motion)}>
+  <Figure
+    n={n}
+    title="Six ways to run a team"
+    hint="Pick a shape to rearrange the same pieces."
+    alt="A plate seen from above at an angle. At the front sits you, an orange piece on a small desk, with a burn gauge beside it whose needle rests near the low end. One groove runs back from you to a single agent station holding one task card. Six more stations are not in use."
+    labels={labels}
+  >
+    <Fragment set:html={svg} />
+    {[0, 1, 2].map((i) => (
+      <span
+        class="fig-label fig-role"
+        data-role={i}
+        aria-hidden="true"
+        style={firstRoles[i] ? `left:${firstRoles[i]!.left};top:${firstRoles[i]!.top}` : 'opacity:0'}
+      >{firstRoles[i]?.name ?? ''}</span>
+    ))}
+    <div slot="control" class="seg" role="group" aria-label="Team shape">
+      {SHAPES.map((s, i) => (
+        <button type="button" aria-pressed={i === 0 ? 'true' : 'false'} data-shape={i}>{s.name}</button>
+      ))}
+    </div>
+    <Fragment slot="readout">{describe(0)}</Fragment>
+    <Fragment slot="caption">
+      Every agent in every shape draws on the same allowance as you do, so a team spends it several times faster than one conversation. The shapes further along the list also lose more on the way back: each helper returns a summary, and you only see what the summary kept.
+    </Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .fig-teams .k-flat[data-groove] { stroke: none; }
+  .fig-teams .seg { border-radius: 14px; }
+  .fig-teams .seg button { border-radius: 11px; }
+  .fig-teams .fig-role { transition: opacity 200ms ease; }
+  /* Narrow: the role names would collide, so they go; the readout names the roles in full. */
+  @container (max-width: 34rem) {
+    .fig-teams .fig-role { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fig-teams .fig-role { transition: none; }
+  }
+</style>
+
+<script>
+  import { describe } from './model';
+
+  type Flat = [number, number];
+  type Role = { name: string; left: string; top: string };
+  type Motion = { shapes: { agents: { at: Flat; on: boolean }[]; needle: number; roles: Role[] }[] };
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const tr = ([x, y]: Flat) => `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fig-teams]')) {
+    const m: Motion = JSON.parse(root.dataset.motion!);
+    const q = <T extends Element>(s: string) => root.querySelector<T>(s)!;
+    const agents = [...root.querySelectorAll<SVGGElement>('[data-agent]')];
+    const grooves = [...root.querySelectorAll<SVGGElement>('[data-links]')];
+    const roles = [...root.querySelectorAll<HTMLElement>('[data-role]')];
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-shape]')];
+    const needle = q<SVGGElement>('[data-needle]');
+    const readout = q<HTMLElement>('[data-fig-readout]');
+
+    q<HTMLElement>('[data-fig-control]').hidden = false;
+
+    function show(i: number) {
+      const s = m.shapes[i]!;
+      root.style.setProperty('--fig-ms', reduced.matches ? '0ms' : '');
+      for (const g of agents) {
+        const a = s.agents[Number(g.dataset.agent)]!;
+        g.style.transform = tr(a.at);
+        g.style.opacity = a.on ? '1' : '0';
+      }
+      for (const g of grooves) g.style.opacity = Number(g.dataset.links) === i ? '1' : '0';
+      needle.style.transform = `rotate(${s.needle}deg)`;
+      roles.forEach((el, r) => {
+        const role = s.roles[r];
+        if (role) {
+          el.textContent = role.name;
+          el.style.left = role.left;
+          el.style.top = role.top;
+          el.style.opacity = '1';
+        } else el.style.opacity = '0';
+      });
+      for (const b of buttons) b.setAttribute('aria-pressed', String(Number(b.dataset.shape) === i));
+      readout.textContent = describe(i);
+    }
+
+    for (const b of buttons) b.addEventListener('click', () => show(Number(b.dataset.shape)));
+    show(0);
+  }
+</script>

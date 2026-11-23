@@ -1,0 +1,99 @@
+---
+/*
+ * Fig. 43, "Every subagent runs its own meter".
+ *
+ * Idea: a subagent is a second conversation with the model. It reads its own files into its own
+ *   context, and on a plan it draws on the same limits as the thread that started it.
+ * Elements: one bar of tokens for the task, a segment per agent; a ruler in multiples of the task run
+ *   by one thread; Anthropic's published multiple for agent teams as a mark on that ruler.
+ * States: 0 to 12 subagents.
+ * Data: agentTeamTokens from src/data/harnesses.ts; prices through the lab's catalogue. Token volumes
+ *   are the lab's assumptions.
+ * Interaction: one slider.
+ * Alt: the readout says the multiple and the API price.
+ */
+import Figure from '../Figure.astro';
+import { catalogue } from '../plan-week/from-data';
+import { meter } from './model';
+
+interface Props { n?: number; modelId: string; team: number }
+const { n = 43, modelId, team } = Astro.props;
+const cat = catalogue();
+const START = 3;
+const first = meter(cat, modelId, START);
+const say = (times: number, cost: string, k: number, model: string) =>
+  `${k === 0 ? 'One thread alone' : `One thread and ${k} subagent${k === 1 ? '' : 's'}`}: ${times.toFixed(1)} times the tokens of the task done by one thread, ${cost} on ${model} through the API.`;
+---
+<div class="sm" data-subagent-meter data-cat={JSON.stringify(cat)} data-model={modelId} data-team={team}>
+  <div class="controls">
+    <label class="control">
+      <span>Subagents <output data-sm-out>{START}</output></span>
+      <input type="range" min="0" max="12" step="1" value={START} data-sm-n />
+    </label>
+  </div>
+  <Figure n={n} bare title="Every subagent runs its own meter" alt="One bar of tokens for a task, split into the main thread and each subagent, against a ruler in multiples of a single thread.">
+    <div class="sm-chart" data-sm-chart>
+      <div class="sm-bar" data-sm-bar>{first.segments.map((s, i) => <i data-main={i === 0 ? '' : undefined} style={`flex-grow:${s}`} />)}</div>
+      <div class="sm-rule" data-sm-rule></div>
+    </div>
+    <Fragment slot="readout">{say(first.times, first.cost, START, first.model)}</Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .sm { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
+  .sm-chart { position: relative; padding-bottom: 3.25rem; }
+  .sm-bar { display: flex; gap: 2px; height: 2.25rem; transition: width 450ms var(--fig-ease, ease); }
+  .sm-bar i { display: block; height: 100%; min-width: 2px; background: var(--accent); border-radius: 2px; }
+  .sm-bar i:nth-child(even) { background: color-mix(in oklab, var(--accent) 65%, var(--card)); }
+  .sm-bar i[data-main] { background: color-mix(in oklab, var(--ink) 62%, var(--card)); }
+  .sm-rule { position: absolute; inset: 2.5rem 0 0 0; }
+  .sm-rule span { position: absolute; top: 0; transform: translateX(-50%); font-family: var(--mono); font-size: var(--text-xs); color: var(--muted); white-space: nowrap; }
+  .sm-rule span::before { content: ''; display: block; width: 1px; height: 0.4rem; margin: 0 auto 0.1rem; background: var(--fig-line, var(--rule)); }
+  .sm-rule .sm-team { top: 1.5rem; color: var(--ink); }
+  .sm-rule .sm-team::before { height: 0; }
+  .sm-rule .sm-team-mark { top: -2.75rem; height: 2.6rem; width: 0; border-left: 2px dashed var(--ink); transform: none; }
+  .sm-rule .sm-team-mark::before { display: none; }
+  .sm .fig-readout { font-family: var(--sans); font-size: var(--text-s); color: var(--ink); }
+  @media (prefers-reduced-motion: reduce) { .sm-bar { transition: none; } }
+</style>
+
+<script>
+  import { meter } from './model';
+  import type { Catalogue, LabState } from '../plan-week/model';
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-subagent-meter]')) {
+    const cat: Catalogue = JSON.parse(root.dataset.cat!);
+    const team = Number(root.dataset.team);
+    let model = root.dataset.model!;
+    const input = root.querySelector<HTMLInputElement>('[data-sm-n]')!;
+    const out = root.querySelector<HTMLOutputElement>('[data-sm-out]')!;
+    const bar = root.querySelector<HTMLElement>('[data-sm-bar]')!;
+    const rule = root.querySelector<HTMLElement>('[data-sm-rule]')!;
+    const readout = root.querySelector<HTMLElement>('[data-fig-readout]')!;
+    let timer = 0;
+    const render = () => {
+      const k = Number(input.value);
+      const r = meter(cat, model, k);
+      const top = Math.ceil(Math.max(r.times, team) * 1.1);
+      out.textContent = String(k);
+      bar.style.width = `${(r.times / top) * 100}%`;
+      bar.innerHTML = r.segments.map((s, i) => `<i ${i === 0 ? 'data-main' : ''} style="flex-grow:${s}"></i>`).join('');
+      const step = top > 12 ? 4 : top > 6 ? 2 : 1;
+      const ticks: string[] = [];
+      for (let t = step; t < top; t += step) ticks.push(`<span style="left:${(t / top) * 100}%">${t}×</span>`);
+      const at = (team / top) * 100;
+      ticks.push(`<span class="sm-team-mark" style="left:${at}%"></span><span class="sm-team" style="left:${Math.min(80, Math.max(20, at))}%">Agent team, ${team}×</span>`);
+      rule.innerHTML = ticks.join('');
+      const text = `${k === 0 ? 'One thread alone' : `One thread and ${k} subagent${k === 1 ? '' : 's'}`}: ${r.times.toFixed(1)} times the tokens of the task done by one thread, ${r.cost} on ${r.model} through the API.`;
+      clearTimeout(timer);
+      timer = window.setTimeout(() => (readout.textContent = text), 350);
+    };
+    input.addEventListener('input', render);
+    document.addEventListener('acg:plan-week', (e) => {
+      const s = (e as CustomEvent<{ state: LabState }>).detail.state;
+      if (s.modelId !== model) { model = s.modelId; render(); }
+    });
+    render();
+  }
+</script>

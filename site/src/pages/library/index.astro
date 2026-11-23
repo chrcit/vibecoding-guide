@@ -1,0 +1,288 @@
+---
+/*
+  The library: move between lessons, their steps and the terms they use.
+  Left, the 21 lessons, each with its picture (plays on hover or focus), its steps (each opens the
+  lesson at that step) and its terms. Right, the glossary (src/journey/terms.ts): each term with its
+  sentence and the lessons that use it. Point at a term and the lessons that use it light up; point
+  at a lesson and its terms light up. Below: every wiki page by topic, and the starter skills.
+*/
+import Base from '../../layouts/Base.astro';
+import ClusterMark from '../../components/wiki/ClusterMark.astro';
+import Thumb from '../../components/journey/Thumb.astro';
+import ThumbsBoot from '../../components/journey/ThumbsBoot.astro';
+import { rungs, parts, rung } from '../../journey/rungs';
+import { TERMS, type TermId } from '../../journey/terms';
+import { termUse } from '../../lib/term-use';
+import { CLUSTERS, getWiki } from '../../lib/wiki';
+import { groups, url } from '../../lib/nav';
+import '../../styles/board.css';
+import '../../components/fig/fig.css';
+import '../../styles/journey.css';
+
+const wiki = await getWiki();
+const conceptGroups = CLUSTERS
+  .map((c) => ({ cluster: c, items: wiki.articles.filter((a) => a.cluster === c.id) }))
+  .filter((g) => g.items.length > 0);
+const skills = groups.find((g) => g.name.startsWith('Prompts'))?.items ?? [];
+const { byTerm, byLesson } = termUse();
+const termIds = (Object.keys(TERMS) as TermId[]).sort((a, b) => TERMS[a].word.localeCompare(TERMS[b].word));
+const order = (ids: string[]) => [...ids].sort((a, b) => rung(a).n - rung(b).n);
+---
+<Base
+  title="Library"
+  description="Every lesson of the guide with its picture, its steps and the terms it uses, and every term with the lessons that use it."
+  section="library"
+>
+  <div class="lib">
+    <header class="lib-head">
+      <h1>Library</h1>
+      <label class="lib-search">
+        <span class="visually-hidden">Filter lessons, steps and terms</span>
+        <input id="lib-q" type="search" placeholder="worktree, tests, cost…" autocomplete="off" />
+      </label>
+      <nav class="lib-jump" aria-label="On this page">
+        <a href="#lessons">Lessons</a>
+        <a href="#terms">Terms</a>
+        <a href="#wiki">All wiki pages</a>
+        <a href="#skills">Starter skills</a>
+      </nav>
+    </header>
+
+    <div class="lib-body">
+      <section class="lib-lessons" id="lessons" aria-label="Lessons">
+        {parts.map((part) => (
+          <div class="lib-part" data-lib-group>
+            <h2>Part {part.n}: {part.title} <a class="lib-ov" href={url(part.href)}>overview</a></h2>
+            <ol class="lib-list">
+              {rungs.filter((r) => r.part === part.n).map((r) => {
+                const terms = byLesson[r.id] ?? [];
+                const q = [r.title, r.short, r.line, ...r.steps.map((s) => s.label), ...terms.map((t) => TERMS[t].word)].join(' ').toLowerCase();
+                return (
+                  <li class="lib-lesson" id={`lesson-${r.id}`} data-lib-item data-q={q} data-lesson={r.id} data-terms={terms.join(' ')}>
+                    <Thumb id={r.id} />
+                    <div class="lib-lesson-main">
+                      <h3><a href={url(`journey/${r.id}/`)}>{r.title}</a></h3>
+                      <p class="lib-line">{r.line}</p>
+                      <div class="lib-side">
+                        {r.steps.length > 0 && (
+                          <ol class="lib-steps" aria-label={`Steps of ${r.short}`}>
+                            {r.steps.map((s) => <li><a href={url(`journey/${r.id}/#${s.id}`)}>{s.label}</a></li>)}
+                          </ol>
+                        )}
+                        {terms.length > 0 && (
+                          <ul class="lib-terms" aria-label={`Terms in ${r.short}`}>
+                            {terms.map((t) => (
+                              <li><a href={`#term-${t}`} data-term-chip={t} data-defines={byTerm[t].defines.includes(r.id) ? '' : undefined}>{TERMS[t].word}</a></li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        ))}
+      </section>
+
+      <aside class="lib-glossary" id="terms" aria-label="Terms">
+        <h2>Terms</h2>
+        <ul class="lib-term-list">
+          {termIds.map((t) => {
+            const def = TERMS[t];
+            const lessons = order([...byTerm[t].defines, ...byTerm[t].uses]);
+            return (
+              <li class="lib-term" id={`term-${t}`} data-lib-item data-q={`${def.word} ${def.def}`.toLowerCase()} data-term-card={t} data-lessons={lessons.join(' ')} tabindex="-1">
+                <h3><a href={url(`wiki/${def.wiki}/`)} data-side data-term-chip={t}>{def.word}</a></h3>
+                <p>{def.def}</p>
+                {lessons.length > 0 && (
+                  <ul class="lib-in" aria-label={`Lessons that use ${def.word}`}>
+                    {lessons.map((id) => {
+                      const r = rung(id);
+                      return <li><a href={url(`journey/${id}/`)} title={`${r.short}, lesson ${r.n}`} data-defines={byTerm[t].defines.includes(id) ? '' : undefined}><span class="lib-in-n">{r.n}</span> {r.short}</a></li>;
+                    })}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </aside>
+    </div>
+
+    <section class="lib-section" id="wiki" data-lib-group>
+      <h2>All wiki pages</h2>
+      <div class="lib-clusters">
+        {conceptGroups.map(({ cluster, items }) => (
+          <div class="lib-cluster" data-lib-group>
+            <h3><ClusterMark cluster={cluster.id} size={14} /> {cluster.label}</h3>
+            <ul>
+              {items.map((a) => (
+                <li data-lib-item data-q={[a.title, ...a.aliases, a.summary, cluster.label].join(' ').toLowerCase()}>
+                  <a href={url(`wiki/${a.slug}/`)} data-side>{a.title}</a>
+                  <span class="lib-csum">{a.summary}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section class="lib-section" id="skills" data-lib-group>
+      <h2>Starter skills</h2>
+      <ul class="lib-skills">
+        {skills.map((sk) => (
+          <li data-lib-item data-q={`${sk.title} ${sk.blurb} skill prompt`.toLowerCase()}>
+            <a href={url(`guide/${sk.id}/`)} data-side>{sk.title}</a>
+            <span class="lib-csum">{sk.blurb}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+    <p class="lib-empty" id="lib-empty" role="status" hidden>Nothing matches.</p>
+  </div>
+  <ThumbsBoot />
+</Base>
+
+<script>
+  // Filter.
+  const input = document.getElementById('lib-q') as HTMLInputElement | null;
+  const items = [...document.querySelectorAll<HTMLElement>('[data-lib-item]')];
+  const groups = [...document.querySelectorAll<HTMLElement>('[data-lib-group]')];
+  const empty = document.getElementById('lib-empty');
+  function apply() {
+    const words = (input?.value ?? '').toLowerCase().trim().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    for (const el of items) { const hit = words.every((w) => el.dataset.q!.includes(w)); el.hidden = !hit; if (hit) shown++; }
+    for (const g of groups) g.hidden = !g.querySelector('[data-lib-item]:not([hidden])');
+    if (empty) empty.hidden = shown > 0;
+  }
+  if (input) {
+    const q = new URLSearchParams(location.search).get('q');
+    if (q) input.value = q;
+    input.addEventListener('input', apply);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Escape') { input.value = ''; apply(); } });
+  }
+  apply();
+
+  // Point at a term: the lessons that use it light up. Point at a lesson: its terms light up.
+  const reduce = () => (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth') as ScrollBehavior;
+  const lessons = [...document.querySelectorAll<HTMLElement>('[data-lesson]')];
+  const cards = [...document.querySelectorAll<HTMLElement>('[data-term-card]')];
+  const panel = document.querySelector<HTMLElement>('.lib-glossary');
+  const body = document.querySelector<HTMLElement>('.lib-body');
+  const clear = () => document.querySelectorAll('[data-lit]').forEach((e) => e.removeAttribute('data-lit'));
+  const litTerm = (t: string) => {
+    clear();
+    for (const l of lessons) if (l.dataset.terms!.split(' ').includes(t)) l.setAttribute('data-lit', '');
+    document.querySelectorAll(`[data-term-chip="${t}"]`).forEach((c) => c.setAttribute('data-lit', ''));
+    document.querySelector(`[data-term-card="${t}"]`)?.setAttribute('data-lit', '');
+  };
+  const litLesson = (l: HTMLElement) => {
+    clear();
+    const terms = l.dataset.terms!.split(' ').filter(Boolean);
+    let first: HTMLElement | null = null;
+    for (const c of cards) if (terms.includes(c.dataset.termCard!)) { c.setAttribute('data-lit', ''); first ??= c; }
+    // When the panel scrolls on its own, bring the first of them into its view.
+    if (first && panel && panel.scrollHeight > panel.clientHeight + 4 && getComputedStyle(panel).position === 'sticky') {
+      const top = first.offsetTop - 48;
+      if (top < panel.scrollTop || top > panel.scrollTop + panel.clientHeight - 80) panel.scrollTo({ top, behavior: reduce() });
+    }
+  };
+  const over = (e: Event) => {
+    const t = (e.target as HTMLElement).closest<HTMLElement>('[data-term-chip], [data-term-card]');
+    if (t) { litTerm(t.dataset.termChip ?? t.dataset.termCard!); return; }
+    const l = (e.target as HTMLElement).closest<HTMLElement>('[data-lesson]');
+    if (l) litLesson(l);
+  };
+  body?.addEventListener('pointerover', (e) => { if ((e as PointerEvent).pointerType === 'mouse') over(e); });
+  body?.addEventListener('focusin', over);
+  body?.addEventListener('pointerleave', clear);
+
+  // A term chip in a lesson goes to the term and lights the lessons that use it.
+  for (const chip of document.querySelectorAll<HTMLAnchorElement>('.lib-terms [data-term-chip]')) {
+    chip.addEventListener('click', (e) => {
+      const t = chip.dataset.termChip!;
+      const card = document.querySelector<HTMLElement>(`[data-term-card="${t}"]`);
+      if (!card) return;
+      e.preventDefault();
+      litTerm(t);
+      card.scrollIntoView({ block: 'nearest', behavior: reduce() });
+      card.focus({ preventScroll: true });
+      history.replaceState(null, '', `#term-${t}`);
+    });
+  }
+</script>
+
+<style>
+  .lib { max-width: var(--board); margin-inline: auto; padding: var(--space-6) var(--gutter) var(--space-8); font-family: var(--sans); }
+  .lib-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); margin-bottom: var(--space-5); }
+  .lib-head h1 { margin: 0; font-family: var(--serif); font-size: var(--text-3xl); font-weight: 520; line-height: 1.04; letter-spacing: -0.025em; color: var(--ink); }
+  .lib-search { flex: 1 1 16rem; max-width: 26rem; }
+  .lib-search input {
+    width: 100%; min-height: 2.75rem; padding: 0.5rem 0.9rem; border: 1px solid var(--rule-strong); border-radius: var(--radius-pill);
+    background: var(--card); color: var(--ink); font: inherit; font-size: var(--text-m);
+  }
+  .lib-jump { display: flex; flex-wrap: wrap; gap: 0 1rem; font-size: var(--text-s); }
+  .lib-jump a { display: inline-flex; align-items: center; min-height: 2.75rem; color: var(--ink-2); }
+
+  .lib-body { display: grid; gap: var(--space-6); }
+  @media (min-width: 64rem) {
+    .lib-body { grid-template-columns: minmax(0, 1fr) minmax(17rem, 22rem); align-items: start; }
+    .lib-glossary { position: sticky; top: calc(var(--header-h) + 0.75rem); max-height: calc(100svh - var(--header-h) - 1.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  }
+
+  .lib-part h2, .lib-glossary h2, .lib-section h2 { margin: 0 0 var(--space-3); font-family: var(--serif); font-size: var(--text-xl); font-weight: 520; color: var(--ink); }
+  .lib-part + .lib-part { margin-top: var(--space-6); }
+  .lib-ov { margin-left: 0.5rem; font-family: var(--sans); font-size: var(--text-s); font-weight: 600; color: var(--ink-2); }
+  .lib-list { display: grid; gap: 0.625rem; margin: 0; padding: 0; list-style: none; }
+  .lib-lesson {
+    display: grid; gap: 0.75rem; padding: 0.625rem; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--card);
+    scroll-margin-top: calc(var(--header-h) + 1rem);
+    transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+  }
+  .lib-lesson[data-lit] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+  @media (min-width: 40rem) { .lib-lesson { grid-template-columns: minmax(10rem, 13rem) minmax(0, 1fr); } }
+  .lib-lesson > :global(.j-thumb) { border: 0; padding: 0; background: none; box-shadow: none; align-self: start; }
+  .lib-lesson-main { display: grid; gap: 0.4rem; align-content: start; min-width: 0; }
+  .lib-lesson h3 { margin: 0; font-family: var(--sans); font-size: var(--text-m); font-weight: 650; line-height: 1.3; }
+  .lib-lesson h3 a { color: var(--ink); text-decoration: none; }
+  .lib-lesson h3 a:hover { text-decoration: underline; }
+  .lib-line { margin: 0; font-size: var(--text-s); color: var(--ink-2); max-width: none; }
+  .lib-side { display: grid; gap: 0.5rem 1.25rem; }
+  @media (min-width: 48rem) { .lib-side { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  .lib-steps { margin: 0; padding: 0 0 0 1.1rem; font-size: var(--text-s); color: var(--muted); }
+  .lib-steps a { display: inline-block; padding-block: 0.25rem; color: var(--ink); text-decoration-color: var(--rule-strong); text-underline-offset: 0.2em; }
+  .lib-steps a:hover { text-decoration-color: var(--ink); }
+  .lib-terms, .lib-in { display: flex; flex-wrap: wrap; align-content: start; gap: 0.3rem; margin: 0; padding: 0; list-style: none; }
+  .lib-terms a, .lib-in a {
+    display: inline-flex; align-items: center; gap: 0.25rem; min-height: 2rem; padding: 0.1rem 0.6rem;
+    border: 1px solid var(--rule); border-radius: var(--radius-pill); background: var(--paper);
+    font-size: var(--text-xs); color: var(--ink-2); text-decoration: none;
+  }
+  /* The lesson that defines a term (marks it with <Term> or a term label) has a stronger chip. */
+  .lib-terms a[data-defines], .lib-in a[data-defines] { border-color: var(--rule-strong); color: var(--ink); font-weight: 600; }
+  .lib-terms a:hover, .lib-terms a[data-lit], .lib-in a:hover { border-color: var(--ink); color: var(--ink); }
+  .lib-in-n { font-family: var(--mono); color: var(--muted); }
+
+  .lib-glossary { padding: 0.25rem 0.25rem 0.25rem 0; }
+  .lib-term-list { display: grid; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+  .lib-term { padding: 0.625rem 0.75rem; border: 1px solid var(--rule); border-radius: var(--radius-s); background: var(--card); scroll-margin: 4rem; }
+  .lib-term[data-lit] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+  .lib-term:focus { outline: none; }
+  .lib-term h3 { margin: 0 0 0.2rem; font-family: var(--sans); font-size: var(--text-m); font-weight: 650; }
+  .lib-term h3 a { color: var(--ink); text-decoration: underline dotted var(--muted); text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; }
+  .lib-term p { margin: 0 0 0.45rem; font-size: var(--text-s); line-height: 1.45; color: var(--ink-2); max-width: none; }
+
+  .lib-section { margin-top: var(--space-7); padding-top: var(--space-5); border-top: 1px solid var(--rule); }
+  .lib-clusters { display: grid; gap: var(--space-5); grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); }
+  .lib-cluster h3 { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.6rem; font-family: var(--sans); font-size: var(--text-m); font-weight: 650; }
+  .lib-cluster ul, .lib-skills { display: grid; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+  .lib-skills { grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 0.75rem var(--space-5); }
+  .lib-cluster li a, .lib-skills li a { font-size: var(--text-s); font-weight: 600; color: var(--ink); text-decoration-color: var(--rule-strong); text-underline-offset: 0.2em; }
+  .lib-csum { display: block; margin-top: 0.1rem; font-size: var(--text-xs); line-height: 1.4; color: var(--muted); }
+  .lib-empty { margin-top: var(--space-5); color: var(--muted); }
+  [hidden] { display: none !important; }
+</style>

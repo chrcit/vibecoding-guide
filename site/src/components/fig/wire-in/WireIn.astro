@@ -1,0 +1,101 @@
+---
+/*
+ * Fig. 17, "What you can wire in".
+ * Idea: a connector gives the agent a door to something outside your project, and every door is
+ * both new reach and new risk, and takes a little room in its context window.
+ * Elements: the agent (a block with its context window, a glass vessel, on top), four sockets,
+ * four cables to a browser, an issue tracker, a database and a mail envelope.
+ * States: any set of connectors plugged in; the last one touched is the one described.
+ * Data: whether the harness defers tool definitions (connectors.claudeCode.toolSearch), as a prop.
+ * Interaction: one segmented control of four toggle buttons, one per connector.
+ * Alt: see `alt` below.
+ */
+import Figure from '../Figure.astro';
+import { drawWireIn } from './draw';
+import { CONNECTORS, START, describe, type ConnectorId, type WireInInputs } from './model';
+
+interface Props extends WireInInputs {
+  n?: number | string;
+  /** Review pages only: connectors to plug in, in order, once the script runs. */
+  initial?: ConnectorId[];
+}
+const { n = 17, initial = [], ...inputs } = Astro.props;
+const { svg, labels, motion } = drawWireIn(`fig${n}`);
+---
+<div class="fig-wire-in" data-fig-wire-in data-inputs={JSON.stringify(inputs)} data-motion={JSON.stringify(motion)} data-initial={initial.join(' ')}>
+  <Figure
+    n={n}
+    title="What you can wire in"
+    hint="Press a connector to plug it in, and again to pull it out."
+    alt="A square bench. In the middle stands the agent: a block with a glass vessel on top, its context window, about a quarter full. Four sockets surround it. From each socket a cable runs out to one thing: a browser screen at the back, a database on the right, a stack of issue cards on the left and a mail envelope at the front. All four plugs lie unplugged on their cables."
+    labels={labels}
+  >
+    <Fragment set:html={svg} />
+    <div slot="control" class="seg" role="group" aria-label="Connectors">
+      {CONNECTORS.map((c) => <button type="button" aria-pressed="false" data-connector={c.id}>{c.name}</button>)}
+    </div>
+    <Fragment slot="readout">{describe(START, inputs)}</Fragment>
+    <Fragment slot="caption">
+      Out of the box an agent works inside your project. Each connector adds a door to something else, and the same door works both ways: what the agent can read can also talk to it. The rising level is a picture of the room the connectors' tools take in the window, not a measurement.
+    </Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .fig-wire-in .k-line[data-cable] { stroke-dasharray: 3 4; transition: stroke 300ms ease; }
+  .fig-wire-in .k-line[data-cable][data-tone='edge'],
+  .fig-wire-in .k-line[data-cable][data-tone='lit'] { stroke-dasharray: none; }
+  .fig-wire-in .seg { border-radius: 22px; }
+  .fig-wire-in .seg button { min-width: 40px; }
+  .fig-wire-in .k-line[data-cable][data-tone='faint'] { stroke: var(--fig-line); }
+  @media (prefers-reduced-motion: reduce) {
+    .fig-wire-in .k-line[data-cable] { transition: none; }
+  }
+</style>
+
+<script>
+  import { START, toggle, describe, levelOf, type ConnectorId, type WireInInputs, type WireInState } from './model';
+
+  type Flat = [number, number];
+  type Motion = { plug: Record<ConnectorId, Flat>; unit: Flat; waterH: number };
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const tr = ([x, y]: Flat, by = 1) => `translate(${(x * by).toFixed(1)}px, ${(y * by).toFixed(1)}px)`;
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fig-wire-in]')) {
+    const x: WireInInputs = JSON.parse(root.dataset.inputs!);
+    const m: Motion = JSON.parse(root.dataset.motion!);
+    const q = <T extends Element>(s: string) => root.querySelector<T>(s)!;
+    const readout = q<HTMLElement>('[data-fig-readout]');
+    const water = q<SVGGElement>('[data-water]');
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-connector]')];
+    const labels = [...root.querySelectorAll<HTMLElement>('[data-label]')];
+    let state: WireInState = START;
+
+    q<HTMLElement>('[data-fig-control]').hidden = false;
+
+    function show() {
+      root.style.setProperty('--fig-ms', reduced.matches ? '0ms' : '');
+      for (const b of buttons) {
+        const id = b.dataset.connector as ConnectorId;
+        const on = state.on.includes(id);
+        const current = on && state.last === id;
+        b.setAttribute('aria-pressed', String(on));
+        q<SVGGElement>(`[data-plug="${id}"]`).style.transform = on ? tr(m.plug[id]) : 'translate(0px, 0px)';
+        q<SVGPathElement>(`[data-cable="${id}"]`).dataset.tone = current ? 'lit' : on ? 'edge' : 'faint';
+        for (const s of root.querySelectorAll<SVGGElement>(`[data-object="${id}"] .k-solid`)) s.dataset.tone = current ? 'lit' : 'part';
+      }
+      water.style.transform = tr(m.unit, (1 - levelOf(state)) * m.waterH);
+      for (const l of labels) l.toggleAttribute('data-active', l.dataset.label === state.last && state.on.includes(state.last as ConnectorId));
+      readout.textContent = describe(state, x);
+    }
+
+    for (const id of (root.dataset.initial ?? '').split(' ').filter(Boolean)) state = toggle(state, id as ConnectorId);
+    for (const b of buttons) {
+      b.addEventListener('click', () => {
+        state = toggle(state, b.dataset.connector as ConnectorId);
+        show();
+      });
+    }
+    show();
+  }
+</script>

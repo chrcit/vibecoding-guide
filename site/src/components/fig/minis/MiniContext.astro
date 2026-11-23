@@ -1,0 +1,53 @@
+---
+// Miniature for the Context board: the window fills turn by turn and is compacted when full.
+import MiniFrame from './MiniFrame.astro';
+import { CTX_STARTUP, CTX_TURN, CTX_SUMMARY, CTX_MAX_TURNS, contextAfter } from './model';
+const X = 10, BW = 280, Y = 46, BH = 50;
+const slots = Math.ceil(1 / CTX_TURN);
+const first = 12;
+const s = contextAfter(first);
+---
+<MiniFrame id="context" href="explain/context/" name="Context" alt="A long bar, the context window, partly filled: the start-up material on the left, then one block per turn of conversation.">
+  <svg viewBox="0 0 300 140" aria-hidden="true" data-cfg={JSON.stringify({ X, BW })}>
+    <text x={X} y="30">window</text>
+    <text class="m-big" x={X + BW} y="32" text-anchor="end" data-ctx-pct>{Math.round(s.used * 100)}%</text>
+    <rect class="m-frame" x={X} y={Y} width={BW} height={BH} rx="6" />
+    <rect class="m-ink" x={X + 2} y={Y + 2} width={BW * CTX_STARTUP - 2} height={BH - 4} rx="4" />
+    <rect class="m-lit-soft m-move" x={X + BW * CTX_STARTUP + 1} y={Y + 3} width={BW * CTX_SUMMARY - 2} height={BH - 6} rx="3" data-ctx-summary style="opacity:0" />
+    {Array.from({ length: slots }, (_, n) => (
+      <rect class="m-faint m-move" x={X + BW * (CTX_STARTUP + n * CTX_TURN) + 1} y={Y + 6} width={BW * CTX_TURN - 2} height={BH - 12} rx="2" data-ctx-turn={n} style={n < s.since ? '' : 'opacity:0'} />
+    ))}
+    <text x={X} y="124">start-up</text>
+    <text x={X + BW} y="124" text-anchor="end" data-ctx-note>{s.compactions ? `compacted ${s.compactions}×` : ''}</text>
+  </svg>
+  <label slot="control" class="mini-range">Turns<input type="range" min="0" max={CTX_MAX_TURNS} value={first} data-ctx-turns /><output class="mini-out" data-ctx-out>{first}</output></label>
+</MiniFrame>
+
+<script>
+  import { CTX_STARTUP, CTX_TURN, CTX_SUMMARY, contextAfter } from './model';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-mini="context"]')) {
+    const svg = root.querySelector('svg')!;
+    const { X, BW } = JSON.parse(svg.dataset.cfg!);
+    const input = root.querySelector<HTMLInputElement>('[data-ctx-turns]')!;
+    const out = root.querySelector<HTMLOutputElement>('[data-ctx-out]')!;
+    const pct = root.querySelector<SVGTextElement>('[data-ctx-pct]')!;
+    const note = root.querySelector<SVGTextElement>('[data-ctx-note]')!;
+    const summary = root.querySelector<SVGRectElement>('[data-ctx-summary]')!;
+    const turns = [...root.querySelectorAll<SVGRectElement>('[data-ctx-turn]')];
+    const draw = () => {
+      const n = Number(input.value);
+      const s = contextAfter(n);
+      const start = CTX_STARTUP + (s.compactions ? CTX_SUMMARY : 0);
+      summary.style.opacity = s.compactions ? '1' : '0';
+      turns.forEach((r, i) => {
+        r.setAttribute('x', String(X + BW * (start + i * CTX_TURN) + 1));
+        r.style.opacity = i < s.since ? '1' : '0';
+      });
+      out.textContent = String(n);
+      pct.textContent = `${Math.round(s.used * 100)}%`;
+      note.textContent = s.compactions ? `compacted ${s.compactions}×` : '';
+    };
+    input.addEventListener('input', draw);
+    draw();
+  }
+</script>

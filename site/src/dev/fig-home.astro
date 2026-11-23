@@ -1,0 +1,40 @@
+---
+// Review page for the home board's figures. Routed at /dev/fig-home/ in `pnpm dev`.
+// Figs. 65 to 67 and the miniatures, at a column width, outside their tiles.
+import Base from '../layouts/Base.astro';
+import '../styles/board.css';
+import LayerStack from '../components/fig/layer-stack/LayerStack.astro';
+import Resend from '../components/fig/layer-stack/Resend.astro';
+import LoopRun from '../components/fig/loop-run/LoopRun.astro';
+import SteerOrQueue from '../components/fig/steer-or-queue/SteerOrQueue.astro';
+import Horizon from '../components/fig/horizon/Horizon.astro';
+import MiniContext from '../components/fig/minis/MiniContext.astro';
+import MiniPlans from '../components/fig/minis/MiniPlans.astro';
+import MiniQueue from '../components/fig/minis/MiniQueue.astro';
+import MiniJudges from '../components/fig/minis/MiniJudges.astro';
+import MiniSkills from '../components/fig/minis/MiniSkills.astro';
+import MiniConnectors from '../components/fig/minis/MiniConnectors.astro';
+import MiniVoice from '../components/fig/minis/MiniVoice.astro';
+import MiniModels from '../components/fig/minis/MiniModels.astro';
+import { horizonInputs, horizonSource } from '../components/home/horizon-data';
+const hrefs = { interface: 'read/#interface', context: 'read/#context', harness: 'read/#harness', model: 'read/#model', governance: 'read/#governance', emergence: 'read/#emergence' };
+---
+<Base title="Home figures" description="Development-only review page for the home board's figures." noindex>
+  <div class="fig-review">
+    <h1>Home figures</h1>
+    <LayerStack hrefs={hrefs} />
+    <LoopRun />
+    <Resend />
+    <SteerOrQueue />
+    <Horizon {...horizonInputs} source={horizonSource} />
+    <div class="minis">
+      <MiniContext /><MiniPlans /><MiniQueue /><MiniJudges /><MiniSkills /><MiniConnectors /><MiniVoice /><MiniModels />
+    </div>
+  </div>
+</Base>
+
+<style>
+  .fig-review { max-width: 60rem; margin: 2rem auto 4rem; padding: 0 var(--gutter); display: grid; gap: 3rem; font-family: var(--sans); }
+  h1 { margin: 0; }
+  .minis { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1.5rem; }
+</style>

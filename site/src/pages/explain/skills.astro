@@ -1,0 +1,322 @@
+---
+// The skills explainer (plan item C6), with Fig. 16. Every number, path and product claim comes from
+// src/data/ (skills.ts, harnesses.ts, connectors.ts) through <Fact>.
+import Article from '../../layouts/Article.astro';
+import Deeper from '../../components/level/Deeper.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import Embed from '../../components/site/Embed.astro';
+import Note from '../../components/site/Note.astro';
+import Term from '../../components/site/Term.astro';
+import SkillLoads from '../../components/fig/skill-loads/SkillLoads.astro';
+import { skills } from '../../data/skills.ts';
+import { links } from '../../data/links.ts';
+import { url } from '../../lib/nav';
+
+const headings = [
+  { depth: 2, slug: 'what-a-skill-is', text: 'A skill is a folder of know-how' },
+  { depth: 2, slug: 'how-a-skill-loads', text: 'The agent reads the label first' },
+  { depth: 2, slug: 'where-instructions-live', text: 'Skills next to the other places instructions live' },
+  { depth: 2, slug: 'install-and-invoke', text: 'Installing a skill and calling it by name' },
+  { depth: 2, slug: 'recommended', text: 'Skills worth installing' },
+  { depth: 2, slug: 'this-site', text: 'The skills this site was built with' },
+  { depth: 2, slug: 'your-first-skill', text: 'Writing your first skill' },
+  { depth: 2, slug: 'read-it-first', text: 'Read a skill before you install it' },
+  { depth: 2, slug: 'related', text: 'Related pages' },
+];
+
+type Key = keyof typeof skills;
+const recommended: { key: Key; when: string }[] = [
+  { key: 'humanizer', when: 'After an agent has written something people will read: a README, release notes, the email to the club about this season’s fees.' },
+  { key: 'grill-me', when: 'Before a build, when you know roughly what you want and the agent should pin down the rest by asking you. You call it yourself.' },
+  { key: 'grilling', when: 'It comes with grill-me. Other skills in the collection call it, and the agent can reach for it on its own when a plan still has open questions.' },
+  { key: 'be-ambitious', when: 'When the first version that came back is fine, and you suspect it could be a good deal more.' },
+  { key: 'anatomy', when: 'When an idea would be clearer as a drawing of a small working machine.' },
+  { key: 'diagram-design', when: 'For flowcharts, architecture sketches and timelines that should look like your own material.' },
+  { key: 'emil-skills', when: 'When you add motion to an interface or want the motion you have reviewed. Several of them argue for taking animation out.' },
+  { key: 'impeccable', when: 'When an interface looks generic and you want the agent to critique it and improve it.' },
+];
+
+const factIds = [
+  'skillFacts.format', 'skillFacts.installer', 'skillFacts.specName', 'skillFacts.specDescription', 'skillFacts.specOptional',
+  'skillFacts.specMetadataTokens', 'skillFacts.specBodyTokens', 'skillFacts.claudeCodeListing', 'skillFacts.claudeCodeDescCap',
+  'skillFacts.claudeCodeInvocation', 'skillFacts.claudeCodeLive', 'skillFacts.claudeCodeCompaction', 'skillFacts.claudeCodeHooks',
+  'skillFacts.claudeCodeFork', 'skillFacts.claudeCodeAllowedTools', 'skillFacts.claudeCodePrecedence', 'skillFacts.claudeCodeShellPolicy',
+  'skillFacts.codexInvoke', 'skillFacts.codexListing', 'skillFacts.codexInstaller', 'skillFacts.codexImplicit', 'skillFacts.codexDuplicates',
+  'skillFacts.t3codeInvoke', 'skillFacts.installerScope', 'skillFacts.beAmbitiousOrigin', 'skillFacts.beAmbitiousDannyMac180',
+  'harnesses.claudeCode.skills', 'harnesses.codex.skills', 'harnesses.claudeCode.contextFile', 'harnesses.codex.contextFile',
+  'harnesses.claudeCode.subagents', 'connectors.mcp.definition', 'connectors.claudeCode.toolSearch',
+  ...recommended.flatMap(({ key }) => [`skills.${key}.licence`, `skills.${key}.what`]),
+];
+
+const firstSkill = `---
+name: tidy-contacts
+description: Use when cleaning an exported contact list or spreadsheet, or when the user mentions duplicate contacts or mixed date formats.
+---
+Write every date as YYYY-MM-DD.
+Merge rows that share an email address; keep the most recent one.
+Trim stray spaces from every cell.
+Never drop a row without listing it in your summary.
+Run scripts/check.py on the result and paste its output.`;
+---
+<Article
+  title="Skills"
+  description="A skill is written know-how an agent loads when a task calls for it. How skills load, how to install and call one in Claude Code, Codex and T3 Code, which to install, and how to write your own."
+  section="explain"
+  lede="A skill is a short written method your agent keeps on a shelf and reads only when the job in front of it needs one. Until then it costs one line, so the description you give it decides whether it is ever used."
+  updated="2026-11-18"
+  headings={headings}
+  prev={{ href: 'explain/orchestration/', title: 'Orchestration' }}
+  next={{ href: 'explain/connectors/', title: 'Connectors and MCP' }}
+>
+  <h2 id="what-a-skill-is">A skill is a folder of know-how</h2>
+  <p>
+    Every time you start a session, the agent knows nothing about how you like things done. If you clean the club's contact exports every month, you end up typing the same corrections every month: dates as year, month, day; duplicates merged on email address; never drop a row without saying so.
+  </p>
+  <p>
+    A skill is where those corrections go. It is a folder with one written instruction file in it, called <code>SKILL.md</code>, that teaches an agent how to do one kind of job your way. Most skills are a checklist or a method in plain English. Some also carry examples, templates or small scripts the instructions point to. You write it once, and every session, in every project where it is installed, can use it.
+  </p>
+  <p>
+    The file starts with two lines that matter more than the rest: a name, and a one-line description of when to use it. The format is an open standard (<a href={links.agentSkills.url}>Agent Skills</a>), so the same folder works in Claude Code, Codex and most other agents.
+  </p>
+
+  <Deeper level="technical" title="What is in the folder">
+    <p>
+      <Fact id="skillFacts.format" show="claim" /> A folder looks like this:
+    </p>
+    <pre><code>{`tidy-contacts/
+├── SKILL.md        required: frontmatter, then the instructions
+├── scripts/        optional: code the agent runs
+├── references/     optional: longer docs it reads when needed
+└── assets/         optional: templates, sample files`}</code></pre>
+    <p>
+      The frontmatter is YAML between two <code>---</code> lines. Two fields are required. <code>name</code> is at most <Fact id="skillFacts.specName" /> characters of lowercase letters, numbers and hyphens, and must match the folder's name. <code>description</code> is at most <Fact id="skillFacts.specDescription" /> characters and should say what the skill does and when to use it. The standard also defines <Fact id="skillFacts.specOptional" />. Harnesses add their own fields on top: Claude Code reads <code>disable-model-invocation</code>, <code>user-invocable</code>, <code>model</code>, <code>context</code> and more, and ignores fields it does not know.
+    </p>
+    <p>
+      Everything after the frontmatter is ordinary Markdown with no required structure. Steps in order and one worked example cover most of what a skill needs.
+    </p>
+  </Deeper>
+
+  <h2 id="how-a-skill-loads">The agent reads the label first</h2>
+  <p>
+    An agent can have dozens of skills installed without reading any of them. At the start of a session it is shown a short list: each skill's name and its one-line description, nothing more. That list is all the skills cost until one is needed.
+  </p>
+  <p>
+    When you ask for something, the agent compares your request with those descriptions. If one matches, it opens that skill and reads the whole file into its <Term def="Everything the agent can see at this moment: your messages, the files it has read, command output and any instructions loaded. Anything outside it does not exist for the agent.">context</Term>, then follows it. The others stay shut. Step through it below.
+  </p>
+
+  <SkillLoads />
+
+  <p>
+    That makes the description the trigger. A skill described as "Helps with contacts" will rarely be opened, because the agent cannot tell from it whether today's request is the right moment. A description that says "Use when cleaning an exported contact list or spreadsheet" fires on the requests it should. Theo makes this point in a video about his own skills: a description is there to tell the model when to use the skill, and he writes his as triggers, "use when the user says" followed by the skill's name. The section starts at 4:05.
+  </p>
+
+  <Embed id="5Bmp9cz1JN8" title="These 3 skills changed my life, by Theo" start={245} />
+
+  <p>
+    You can also skip the matching and call a skill by name, which the next sections cover. Either way, a skill you never use costs one line, which is why it is reasonable to install the few you reach for often and not worry about them.
+  </p>
+
+  <Deeper level="technical" title="Checking that a skill fires">
+    <p>
+      Test a new skill in a fresh session, because what is left over from writing it will help the agent guess. Then try it two ways. First call it by name (<code>/tidy-contacts</code> in Claude Code, <code>$tidy-contacts</code> in Codex) to check it is installed and the instructions work. Then ask for the job in the words you would normally use, without naming the skill, and watch whether it loads. In Claude Code you can also ask "What skills are available?" to see the list the agent sees.
+    </p>
+    <p>
+      If it does not fire, the description is too vague or uses words you would never type. Put your own phrasing in it. If it fires when it should not, make the description narrower. A skill that only you should start can turn off automatic loading: <Fact id="skillFacts.claudeCodeInvocation" show="claim" /> <Fact id="skillFacts.codexImplicit" show="claim" />
+    </p>
+  </Deeper>
+
+  <Deeper level="engineer" title="Progressive disclosure, budgets and description engineering">
+    <p>
+      The standard calls the mechanism progressive disclosure and gives it three tiers. Name and description are loaded for every skill at startup, about <Fact id="skillFacts.specMetadataTokens" /> each. The body is loaded when the skill is chosen; the standard recommends keeping it under <Fact id="skillFacts.specBodyTokens" /> and moving detail into referenced files. Files in <code>scripts/</code>, <code>references/</code> and <code>assets/</code> are read or run only when the instructions send the agent to them, and a script's source never has to enter context at all if the agent only runs it and reads the output.
+    </p>
+    <p>
+      The listing itself has a budget, and it differs by harness. <Fact id="skillFacts.claudeCodeListing" show="claim" /> <Fact id="skillFacts.claudeCodeDescCap" show="claim" /> <Fact id="skillFacts.codexListing" show="claim" /> With many skills installed, a vague description matches badly and may also be the one that gets shortened.
+    </p>
+    <p>
+      Once loaded, a skill stays in the conversation as one message; Claude Code does not re-read the file on later turns. <Fact id="skillFacts.claudeCodeCompaction" show="claim" /> Put the rules that must survive at the top.
+    </p>
+    <p>
+      For descriptions, lead with the trigger ("Use when…"), name the nouns and verbs a user would type, and say what the skill is not for when it borders another skill. Keep the method in the body; the description is for routing. Long, model-written descriptions tend to read as summaries and route worse, so edit them by hand. When two skills keep colliding, merge them or give one a narrower trigger.
+    </p>
+  </Deeper>
+
+  <h2 id="where-instructions-live">Skills next to the other places instructions live</h2>
+  <p>
+    A skill is one of four places to put instructions, and each is read at a different time.
+  </p>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Where it lives</th><th>When the agent reads it</th><th>What it is for</th></tr></thead>
+      <tbody>
+        <tr><td>The project instruction file (<code>AGENTS.md</code> or <code>CLAUDE.md</code>)</td><td>Every session, from the start</td><td>What is always true about this project: how to run it, what not to touch</td></tr>
+        <tr><td>Your prompt</td><td>This once</td><td>The task in front of you</td></tr>
+        <tr><td>A skill</td><td>Name and description always, the rest when a task matches</td><td>A method you repeat, across tasks and projects</td></tr>
+        <tr><td>A connector</td><td>When the agent needs the outside system</td><td>Access to something: your calendar, issue tracker or database</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    A rough rule: if it is true of the project, put it in the instruction file. If it is a way of doing a kind of job, make it a skill. If the agent needs to reach a system it cannot see, that is a connector, which <a href={url('explain/connectors/')}>has its own page</a>.
+  </p>
+
+  <Deeper level="engineer" title="Skills, subagents and hooks">
+    <p>
+      The instruction file is loaded whole and unconditionally: <Fact id="harnesses.claudeCode.contextFile" show="claim" /> <Fact id="harnesses.codex.contextFile" show="claim" /> Everything in it costs context on every turn, which is the argument for moving occasional procedures out into skills.
+    </p>
+    <p>
+      A skill runs in the current conversation by default. It adds text to the context the main agent is already using and inherits its history. A subagent is the opposite: <Fact id="harnesses.claudeCode.subagents" show="claim" /> Claude Code joins the two: <Fact id="skillFacts.claudeCodeFork" show="claim" /> Use that when the skill's work is large and its output is small, so the main context gets the result without the working.
+    </p>
+    <p>
+      Neither is a guarantee. A skill is advice the model follows with judgement, and it can drift from it over a long session. <Fact id="skillFacts.claudeCodeHooks" show="claim" /> Formatting, a forbidden command, a test that must run before a commit: those are hooks or CI checks. The method around them stays in the skill.
+    </p>
+    <p>
+      A connector adds tools, not instructions. The Model Context Protocol is, in its own words, <Fact id="connectors.mcp.definition" />. <Fact id="connectors.claudeCode.toolSearch" show="claim" /> Skills and connectors often come together: a connector gives the agent the issue tracker, a skill says how your team writes a ticket.
+    </p>
+  </Deeper>
+
+  <h2 id="install-and-invoke">Installing a skill and calling it by name</h2>
+  <p>
+    The simplest way to install one is to ask. Paste the link into your agent and say "Install this skill for this project", or "for all my projects". It knows where its own skills folder is. The other way is the <a href={links.skillsCli.url}>skills command-line tool</a>, which copies a skill from GitHub into the right folder for most agents: <code><Fact id="skillFacts.installer" /></code>.
+  </p>
+  <p>
+    Each agent keeps its own skills folder, so a skill installed for Claude Code is not visible to Codex. If you use both, install it for both. Once installed, there are two ways to use a skill: describe the job and let the description match, or call it by name.
+  </p>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Agent</th><th>Call a skill by name</th><th>Install one</th></tr></thead>
+      <tbody>
+        <tr><td>Claude Code</td><td>Type <code>/</code> and the skill's name, such as <code>/tidy-contacts</code></td><td>Ask the agent, use <code>npx skills add</code>, or a plugin through <code>/plugin</code></td></tr>
+        <tr><td>Codex</td><td><Fact id="skillFacts.codexInvoke" />: type <code>$</code> and the name, or pick from the list</td><td>Ask the agent, use <code>npx skills add</code>, or <code><Fact id="skillFacts.codexInstaller" /></code></td></tr>
+        <tr><td>T3 Code</td><td>Type <code>$</code> in the composer, or find it in the <code>/</code> menu</td><td>Install it for the agent the thread runs, then restart the agent session</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    T3 Code runs Claude Code and Codex underneath, so it shows the skills the selected agent has: <Fact id="skillFacts.t3codeInvoke" show="claim" />
+  </p>
+
+  <Deeper level="technical" title="Where skills live in each agent">
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Agent</th><th>Folders</th></tr></thead>
+        <tbody>
+          <tr><td>Claude Code</td><td><Fact id="harnesses.claudeCode.skills" /></td></tr>
+          <tr><td>Codex</td><td><Fact id="harnesses.codex.skills" /></td></tr>
+          <tr><td>T3 Code</td><td>The folders of the agent each thread runs</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      The project folder is for skills that belong to one repository and should travel with it; commit it and everyone who clones the repository gets them. The home folder is for your own habits across every project. <Fact id="skillFacts.installerScope" show="claim" />
+    </p>
+    <p>
+      Changes are picked up without much ceremony. <Fact id="skillFacts.claudeCodeLive" show="claim" /> Codex detects new and changed skills on its own and says to restart if one does not appear. In T3 Code, use Restart agent session from the command palette.
+    </p>
+  </Deeper>
+
+  <Deeper level="engineer" title="Sharing skills across a team">
+    <p>
+      Treat a project skill like code. Commit it, review changes to it in pull requests, and note in the commit message which correction prompted the change. A skill that grows by accretion ends up long and contradictory; prune it the way you would prune a config file.
+    </p>
+    <p>
+      Name collisions resolve differently by harness. <Fact id="skillFacts.claudeCodePrecedence" show="claim" /> <Fact id="skillFacts.codexDuplicates" show="claim" /> Give team skills a prefix if people also keep personal ones.
+    </p>
+    <p>
+      For skills from outside the team, pin what you install. The skills tool's lock file records a content hash per skill, so an update shows up as a diff you can read before accepting it. Plugins in Claude Code and Codex bundle skills with other extensions and are the route for distributing a set to many people; organisation-wide deployment goes through managed settings.
+    </p>
+  </Deeper>
+
+  <h2 id="recommended">Skills worth installing</h2>
+  <p>
+    The guide recommends these, each made and published by someone else. Licences were checked against each repository; read the skill before you install it either way.
+  </p>
+  <ul class="skill-list">
+    {recommended.map(({ key, when }) => {
+      const s = skills[key];
+      return (
+        <li>
+          <p class="skill-head"><a href={s.url}>{s.name}</a> by <a href={s.authorUrl}>{s.author}</a>, licence <Fact id={`skills.${key}.licence`} /></p>
+          <p>It <Fact id={`skills.${key}.what`} />. {when}</p>
+          {s.install && <p class="skill-install"><code>{s.install}</code></p>}
+        </li>
+      );
+    })}
+  </ul>
+  <p>
+    Be Ambitious started as Felix Rieseberg's article <a href={links.felixAmbitious.url}>"How to be more ambitious: a tutorial for humans with models"</a> (<Fact id="skillFacts.beAmbitiousOrigin" />). The article publishes example prompts and a prompt template; it does not ship a skill. Two people turned it into skills, both MIT-licensed. Dan McAteer's <a href="https://github.com/DannyMac180/skills/tree/main/be-ambitious">be-ambitious</a> came first and wraps the article's "deeper, not bigger" prompt. The robonuggets version listed above credits that one as the earlier, prompt-only version, and adds the article's other two kinds of ambition, altitude and range. The ideas are Felix's in both.
+  </p>
+  <p>
+    Grill Me and Be Ambitious work well as a pair. Be Ambitious widens what you are asking for; Grill Me then questions you until the wider version is specific enough to build.
+  </p>
+
+  <h2 id="this-site">The skills this site was built with</h2>
+  <p>
+    The guide is written and drawn by agents directed by its author, and it uses skills the way this page describes.
+  </p>
+  <ul>
+    <li>The house figure skill, <code>skills/figures/SKILL.md</code> in the repository, walks an agent through building a figure in one style, one control and one readout. Every figure on the site, Fig. 16 above included, was built with it. Its drawing kit is adapted from <a href={links.anatomy.url}>Anatomy</a>, credited in the kit's licence file.</li>
+    <li>Humanizer is run over the prose before it is committed; the site's rules for agents say so.</li>
+    <li>The four files in the repository's <code>skills/</code> folder are older. They are system prompts written for web builders like v0 and Lovable, from the guide's first version: <a href={url('guide/skills/vibe-coder-base/')}>a base prompt</a> for people new to code, <a href={url('guide/skills/ui-builder/')}>a UI builder</a> for layout and polish, <a href={url('guide/skills/project-audit/')}>a project audit</a> for checks before launch, and <a href={url('guide/skills/web-fundamentals/')}>web fundamentals</a>, which explains concepts as they come up. They have no frontmatter, so they work as prompts you paste; adding a name and a description would make them skills.</li>
+  </ul>
+
+  <h2 id="your-first-skill">Writing your first skill</h2>
+  <p>
+    The best first skill is a correction you keep repeating. If you have told an agent three times that dates in the contact export should be year first, that sentence belongs in a skill. You do not need to write it yourself: ask the agent that just took the correction to draft one from the conversation.
+  </p>
+  <CopyPrompt title="Turn my corrections into a skill" id="prompt-first-skill">{`Look back over this conversation. I corrected you more than once about how I want the contact export cleaned. Turn those corrections into a skill.
+
+Save it in this project's skills folder as tidy-contacts/SKILL.md. Write the description as a trigger: start with "Use when", and use the words I would actually type when I need it. Keep the body short: the rules in the order you should apply them, and nothing you would do anyway.
+
+When it is written, show me the file. Then give me two requests that should load it and one that should not.`}</CopyPrompt>
+  <p>
+    What comes back should be about this size. Five lines of method, and a description written as a trigger:
+  </p>
+  <pre><code>{firstSkill}</code></pre>
+  <p>
+    Read it before you keep it. Agents write skills that are too long and too polite; cut anything that restates what the agent does unprompted. Then open a fresh session, ask for the job in your own words without naming the skill, and check that it loads. When the agent next does something you have to correct, add one line to the skill.
+  </p>
+
+  <h2 id="read-it-first">Read a skill before you install it</h2>
+  <p>
+    A skill is instructions from someone else that your agent will follow, with your files and your permissions. It can tell the agent to run commands, and it may come with scripts. Most are what they say they are, but a skill can ask for more than its job needs, by mistake or on purpose.
+  </p>
+  <p>
+    So read the <code>SKILL.md</code> before you install it, and look at any scripts it ships. It takes a few minutes and the files are short. Prefer skills from people whose work you can see, check the licence if you will share it with others, and read the changes when you update one.
+  </p>
+
+  <Deeper level="engineer" title="The supply chain">
+    <p>
+      Skills are a supply-chain surface with an unusually low bar: plain text, no build step, often installed by asking the agent to fetch a URL. The concrete risks are a skill that grants itself tools, a bundled script that does more than its name says, and instructions that tell the agent to send data somewhere. <Fact id="skillFacts.claudeCodeAllowedTools" show="claim" />
+    </p>
+    <p>
+      Mitigations, in rough order of value. Read the skill and its scripts, and diff every update. Pin installs to a commit or use the lock file's hashes. Keep the agent's sandbox and permission mode tight, so a skill cannot do more than you would approve by hand. Prefer instruction-only skills when a script is not needed. For an organisation: <Fact id="skillFacts.claudeCodeShellPolicy" show="claim" />
+    </p>
+  </Deeper>
+
+  <h2 id="related">Related pages</h2>
+  <ul>
+    <li><a href={url('explain/context/')}>Context</a>: what the agent can see, and why every loaded skill takes some of it.</li>
+    <li><a href={url('explain/connectors/')}>Connectors and MCP</a>: giving an agent access to your other tools.</li>
+    <li><a href={url('explain/orchestration/')}>Orchestration</a>: subagents and teams of agents.</li>
+    <li><a href={url('explain/plans-and-api/')}>Plans against the API</a>: how what the agent reads turns into usage on a plan.</li>
+    <li><a href={url('t3-code/')}>T3 Code</a>: where the composer's <code>$</code> and <code>/</code> menus come from.</li>
+  </ul>
+
+  <Verified ids={factIds} />
+</Article>
+
+<style>
+  .table-scroll { overflow-x: auto; margin: var(--space-5) 0; }
+  .table-scroll table { margin: 0; min-width: 32rem; }
+  .skill-list { list-style: none; padding: 0; }
+  .skill-list li { padding: var(--space-4) 0; border-top: 1px solid var(--rule); margin: 0; }
+  .skill-list li::marker { content: none; }
+  .skill-list li:last-child { border-bottom: 1px solid var(--rule); }
+  .skill-list p { margin: 0 0 var(--space-2); }
+  .skill-head { font-weight: 600; color: var(--ink); }
+  .skill-head :global(.fact) { font-weight: 400; }
+  .skill-install { margin: 0; overflow-x: auto; }
+  .skill-install code { white-space: nowrap; font-size: var(--text-s); }
+</style>

@@ -1,0 +1,51 @@
+/*
+ * The door page later on Friday (door/late.ts, door/proof.ts): do-not-admit in red, what to do,
+ * the agent's four cases passing, and practice mode. Red means one thing here: do not admit.
+ * Same rules as door.css: feedback-only motion, ease-out, under 300 ms, transform and opacity.
+ */
+
+/* ---------- a do-not-admit row: red, nothing to tap in ---------- */
+.dr .dr-row--dna { background: color-mix(in srgb, var(--stop) 11%, transparent); box-shadow: inset 3px 0 0 var(--stop); }
+.dr .dr-row--dna .dr-name { color: var(--ink); }
+.dr .dr-av--dna { background: color-mix(in srgb, var(--stop) 22%, transparent); color: var(--stop); }
+.dr .dr-dna { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px 0 8px; border-radius: 17px; background: var(--stop); color: #1a0505; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+.dr .dr-dna svg { width: 16px; height: 16px; stroke-width: 2.6; }
+.dr .dr-row--dna:active { background: color-mix(in srgb, var(--stop) 18%, transparent); }
+
+.dr .dr-toast[data-kind='dna'] { background: color-mix(in srgb, var(--stop) 14%, var(--surface-2)); border-color: color-mix(in srgb, var(--stop) 40%, transparent); }
+.dr .dr-toast[data-kind='dna'] .dr-toast-icon { background: var(--stop); color: #1a0505; }
+
+.dr .dr-lists-dna { display: flex; align-items: center; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 14px; line-height: 1.35; }
+.dr .dr-lists-dna svg { flex: none; width: 18px; height: 18px; color: var(--stop); stroke-width: 2.4; }
+.dr .dr-lists-dna b { color: var(--stop); font-weight: 650; }
+
+/* What to do: the sheet after a tap. */
+.dr .dr-panel--dna { border-top-color: color-mix(in srgb, var(--stop) 45%, transparent); }
+.dr .dr-dna-big { display: flex; align-items: center; gap: 10px; margin: 18px 2px 4px; color: var(--stop); font-size: 26px; font-weight: 750; letter-spacing: -0.02em; }
+.dr .dr-dna-big svg { width: 28px; height: 28px; stroke-width: 2.4; }
+.dr .dr-dna-who { margin: 0 2px 14px; color: var(--ink); font-size: 16px; }
+.dr .dr-dna-facts { display: grid; gap: 10px; margin: 0; padding: 14px; border-radius: 16px; background: var(--surface-2); border: 1px solid var(--line); }
+.dr .dr-dna-facts div { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: baseline; }
+.dr .dr-dna-facts dt { color: var(--muted); font-size: 12px; font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase; }
+.dr .dr-dna-facts dd { margin: 0; color: var(--ink); font-size: 15px; line-height: 1.4; }
+.dr .dr-dna-ok { margin-top: 12px; background: var(--surface-2); color: var(--ink); }
+
+/* The agent's run ends green when all four pass (lesson 2's ended red). */
+.dr .dr-agent[data-result='pass'] .dr-agent-step { color: #9ff0c6; }
+
+/* ---------- practice mode ---------- */
+.dr .dr-practice { flex: none; padding: 9px 14px 10px; background: color-mix(in srgb, var(--accent) 16%, var(--bg)); border-bottom: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); }
+.dr .dr-practice-top { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.dr .dr-practice-top b { flex: none; padding: 1px 7px; border-radius: 6px; background: var(--accent); color: var(--accent-ink); font-size: 12px; font-weight: 750; letter-spacing: 0.04em; text-transform: uppercase; }
+.dr .dr-practice-top span { min-width: 0; color: #ffe3ad; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dr .dr-practice-cases { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin-top: 8px; }
+.dr .dr-practice-cases li { display: flex; align-items: center; gap: 7px; min-width: 0; color: #e9d7b6; font-size: 12.5px; line-height: 1.25; }
+.dr .dr-practice-cases li > span:nth-child(2) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dr .dr-practice-mark { display: grid; place-items: center; flex: none; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--accent) 60%, transparent); color: var(--accent); font-size: 10px; font-weight: 700; }
+.dr .dr-practice-cases li[data-done] { color: var(--ink); }
+.dr .dr-practice-cases li[data-done] .dr-practice-mark { background: var(--in); border-color: var(--in); color: #05140c; }
+.dr .dr-practice-mark svg { width: 11px; height: 11px; stroke-width: 2.6; }
+
+@media (hover: hover) and (pointer: fine) {
+  .dr .dr-row--dna:hover { background: color-mix(in srgb, var(--stop) 15%, transparent); }
+}

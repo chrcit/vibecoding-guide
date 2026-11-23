@@ -1,0 +1,43 @@
+---
+/*
+  Layout for the mindset essays: the owner's own views, in the first person.
+  Every essay file exports its metadata so the index can list it:
+
+    export const meta = { title: '…', description: '…', order: 3 };
+
+  Props:
+    meta       that object
+    date?      ISO date the essay was written (defaults to 2026-11-18)
+    leansOn?   { href, title }[]: the explainers, figures and facts the essay
+               rests on, shown as a list at the end. href goes through url()
+               unless it is absolute.
+  Slots: default (the essay).
+*/
+import Article from './Article.astro';
+import { url } from '../lib/nav';
+
+interface Props {
+  meta: { title: string; description: string; order?: number };
+  date?: string;
+  leansOn?: { href: string; title: string }[];
+}
+const { meta, date = '2026-11-18', leansOn = [] } = Astro.props;
+const to = (href: string) => (/^(https?:|#)/.test(href) ? href : url(href));
+const text = new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+---
+<Article title={meta.title} description={meta.description} section="essays">
+  <p slot="lede" class="byline">An essay. This is the author’s own view, written <time datetime={date}>{text}</time>. The rest of the guide sticks to sourced facts; this section is where he says what he thinks.</p>
+  <slot />
+  {leansOn.length > 0 && (
+    <section class="leans" aria-labelledby="leans-h">
+      <h2 id="leans-h">What this leans on</h2>
+      <ul>{leansOn.map((l) => <li><a href={to(l.href)}>{l.title}</a></li>)}</ul>
+    </section>
+  )}
+  <p class="more"><a href={url('essays/')}>All essays</a></p>
+</Article>
+<style>
+  .byline { font-size: var(--text-s, 0.95rem); color: var(--muted); }
+  .leans { margin-top: var(--space-7, 3rem); padding-top: var(--space-4, 1rem); border-top: 1px solid var(--rule); }
+  .more { margin-top: var(--space-6, 2rem); }
+</style>

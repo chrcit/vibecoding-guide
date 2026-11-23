@@ -1,0 +1,394 @@
+/*
+ * The engine behind the journey's picture: it keeps the drawing in step with a scene state, moves
+ * pucks along the floor, and runs a chapter's scripts so they can be cut short when the reader
+ * scrolls on. Browser only. What is drawn is decided in picture.ts.
+ */
+import type { Level } from '../lib/levels';
+import { picture, puckMarkup, flat, anchorOf, extent, type SceneState, type XY, type Kind, type Camera, type Agent, type Block, type PlacedLabel, type P3 } from './picture';
+
+const NS = 'http://www.w3.org/2000/svg';
+const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+/** A box on the stage, in pixels from its top left corner. */
+export interface Box { l: number; t: number; w: number; h: number }
+
+/** Thrown inside a script when it has been replaced; `run` swallows it. */
+class Stopped extends Error {}
+
+export interface Script {
+  /** Pause. Shorter under reduced motion. */
+  wait(ms: number): Promise<void>;
+  /** Move a puck along a polyline on the floor. */
+  send(points: XY[], kind: Kind, opts?: { ms?: number }): Promise<void>;
+  /** Change the scene. */
+  set(change: (s: SceneState) => void): void;
+  /** Throws if this script has been replaced. */
+  check(): void;
+}
+
+export class Scene {
+  state: SceneState = { agents: [] };
+  private svg: SVGSVGElement;
+  private cam: SVGGElement;
+  private pucks: SVGGElement;
+  private labels: HTMLElement;
+  private ents = new Map<string, { g: SVGGElement; sig: string; order: number; bb?: DOMRect }>();
+  /** Where each drawn part ends up, in frame units before the camera: what labels keep off. */
+  private parts: { key: string; x: number; y: number; w: number; h: number }[] = [];
+  private labelEls = new Map<string, HTMLElement>();
+  private tip: HTMLElement;
+  private frame = { w: 800, h: 600 };
+  private camera: Camera = { s: 1, tx: 0, ty: 0 };
+  private token = 0;
+  private drawn?: SceneState;
+  /** Called after every draw with the kinds of slab in view, for the key under the drawing. */
+  onKinds?: (kinds: Kind[]) => void;
+  /** Called after every draw with the state drawn: the screen beside the picture follows it (screen.ts). */
+  onDraw?: (state: SceneState) => void;
+  /** Called when a script starts. */
+  onRun?: () => void;
+  /** Boxes on the stage that labels keep clear of: the counter chip, the step buttons (run.ts). */
+  reserve?: () => Box[];
+  private placed: PlacedLabel[] = [];
+  speed = 1;
+  /** The site's base path, put in front of a label's side-view link. */
+  base = '/';
+  /** The reader's level: labels that name a term show that level's word. run.ts keeps it current. */
+  level: Level = 'plain';
+
+  constructor(private root: HTMLElement) {
+    root.querySelector('.j-svg')?.remove();
+    this.svg = document.createElementNS(NS, 'svg');
+    this.svg.setAttribute('class', 'j-svg');
+    this.svg.setAttribute('aria-hidden', 'true');
+    this.svg.setAttribute('focusable', 'false');
+    this.cam = document.createElementNS(NS, 'g');
+    this.cam.setAttribute('class', 'j-cam');
+    this.pucks = document.createElementNS(NS, 'g');
+    this.pucks.setAttribute('class', 'j-pucks');
+    this.cam.append(this.pucks);
+    this.svg.append(this.cam);
+    this.labels = document.createElement('div');
+    this.labels.className = 'j-labels';
+    // A label made with termLabel() carries its definition: shown in the tip on hover and focus,
+    // and in a hidden span for screen readers. A tap follows the link into the side view.
+    this.tip = document.createElement('div');
+    this.tip.className = 'j-tip';
+    this.tip.setAttribute('aria-hidden', 'true');
+    this.tip.hidden = true;
+    const show = (e: Event) => {
+      const el = (e.target as HTMLElement).closest<HTMLElement>('.j-label[data-def]');
+      if (el) this.showTip(el);
+    };
+    const hide = (e: Event) => { if ((e.target as HTMLElement).closest('.j-label[data-def]')) this.tip.hidden = true; };
+    this.labels.addEventListener('pointerover', (e) => { if ((e as PointerEvent).pointerType === 'mouse') show(e); });
+    this.labels.addEventListener('pointerout', hide);
+    this.labels.addEventListener('focusin', show);
+    this.labels.addEventListener('focusout', hide);
+    root.append(this.svg, this.labels, this.tip);
+    this.svg.setAttribute('viewBox', '0 0 800 600');
+    this.measure();
+    new ResizeObserver(() => { if (this.measure()) this.draw(true); }).observe(root);
+  }
+
+  private measure() {
+    const r = this.root.getBoundingClientRect();
+    if (!r.width || !r.height) return false;
+    const h = Math.round((800 * r.height) / r.width);
+    if (h === this.frame.h) return false;
+    this.frame = { w: 800, h };
+    this.svg.setAttribute('viewBox', `0 0 800 ${h}`);
+    return true;
+  }
+
+  /** Replace the scene. `instant` skips the glide, for the first frame and for resizes. */
+  set(state: SceneState, instant = false) {
+    this.state = structuredClone(state);
+    this.draw(instant);
+  }
+  change(fn: (s: SceneState) => void) {
+    fn(this.state);
+    this.draw();
+  }
+  agent(id: string): Agent {
+    const a = this.state.agents.find((x) => x.id === id);
+    if (!a) throw new Error(`no agent ${id}`);
+    return a;
+  }
+
+  private draw(instant = false) {
+    const pic = picture(this.state, { ...this.frame, level: this.level }, this.drawn);
+    this.drawn = structuredClone(this.state);
+    if (instant || reduced.matches) this.root.setAttribute('data-instant', '');
+    const seen = new Set<string>();
+    const parts: typeof this.parts = [];
+    for (const e of pic.ents) {
+      seen.add(e.key);
+      let rec = this.ents.get(e.key);
+      const tf = `translate(${e.x.toFixed(1)}px, ${e.y.toFixed(1)}px) scale(${e.scale})`;
+      if (!rec) {
+        const g = document.createElementNS(NS, 'g');
+        g.setAttribute('class', 'j-ent');
+        g.dataset.key = e.key;
+        g.style.transform = tf;
+        g.style.opacity = '0';
+        const after = [...this.ents.values()].filter((r) => r.order > e.order).sort((a, b) => a.order - b.order)[0];
+        this.cam.insertBefore(g, after ? after.g : this.pucks);
+        rec = { g, sig: '', order: e.order };
+        this.ents.set(e.key, rec);
+        void g.getBoundingClientRect();
+      }
+      if (rec.sig !== e.sig) { rec.g.innerHTML = e.html(); rec.sig = e.sig; rec.bb = undefined; }
+      for (const [n, v] of Object.entries(e.attrs)) rec.g.setAttribute(n, v);
+      // The part's own box (its drawing, before its transform), kept until its drawing changes. A
+      // hidden stage measures nothing, so that is not kept.
+      if (!rec.bb) { try { const bb = rec.g.getBBox(); if (bb.width && bb.height) rec.bb = bb; } catch { /* not rendered */ } }
+      if (rec.bb && e.key !== 'tracks') parts.push({ key: e.key, x: e.x + rec.bb.x * e.scale, y: e.y + rec.bb.y * e.scale, w: rec.bb.width * e.scale, h: rec.bb.height * e.scale });
+      rec.g.style.transform = tf;
+      rec.g.style.opacity = '1';
+    }
+    for (const [key, rec] of this.ents) {
+      if (seen.has(key)) continue;
+      rec.g.style.opacity = '0';
+      this.ents.delete(key);
+      setTimeout(() => rec.g.remove(), instant || reduced.matches ? 0 : 500);
+    }
+    this.parts = parts;
+    this.camera = pic.cam;
+    this.cam.style.transform = `translate(${pic.cam.tx.toFixed(1)}px, ${pic.cam.ty.toFixed(1)}px) scale(${pic.cam.s.toFixed(3)})`;
+
+    const live = new Set<string>();
+    for (const l of pic.labels) {
+      live.add(l.key);
+      let el = this.labelEls.get(l.key);
+      if (!el) {
+        el = document.createElement(l.side ? 'a' : 'span');
+        el.className = 'j-label';
+        fillLabel(el, l.text, l.def);
+        if (l.side) { (el as HTMLAnchorElement).href = this.base + l.side; el.setAttribute('data-side', ''); }
+        el.style.opacity = '0';
+        this.labels.append(el);
+        this.labelEls.set(l.key, el);
+        el.style.left = `${(l.x / this.frame.w) * 100}%`;
+        el.style.top = `${(l.y / this.frame.h) * 100}%`;
+        void el.offsetWidth;
+      } else {
+        if (el.dataset.text !== l.text || (el.dataset.def ?? '') !== (l.def ?? '')) {
+          // A label that takes a new word (a change of level, a script) flashes once.
+          if (el.dataset.text !== l.text) { el.removeAttribute('data-level-new'); void el.offsetWidth; el.setAttribute('data-level-new', ''); setTimeout(() => el.removeAttribute('data-level-new'), 1600); }
+          fillLabel(el, l.text, l.def);
+        }
+        if (l.side) (el as HTMLAnchorElement).href = this.base + l.side;
+      }
+      el.dataset.place = l.place;
+      el.style.left = `${(l.x / this.frame.w) * 100}%`;
+      el.style.top = `${(l.y / this.frame.h) * 100}%`;
+      el.style.opacity = '1';
+    }
+    for (const [key, el] of this.labelEls) {
+      if (live.has(key)) continue;
+      el.style.opacity = '0';
+      this.labelEls.delete(key);
+      setTimeout(() => el.remove(), 300);
+    }
+    this.placed = pic.labels;
+    this.spread(pic.labels);
+    this.onKinds?.(pic.kinds);
+    this.onDraw?.(this.state);
+    if (instant || reduced.matches) requestAnimationFrame(() => requestAnimationFrame(() => this.root.removeAttribute('data-instant')));
+  }
+
+  /**
+   * Place the labels: apart from each other, off the drawing where there is room, and inside the
+   * frame. Works from where each label is going (not where it is mid-glide). Each label tries its
+   * own side of its anchor first, then the other sides and a few rows up or down, and takes the
+   * spot that costs least: overlapping another label (or a reserved box) costs most, covering a
+   * drawn part costs by how much it covers, and every step away from its own spot costs a little.
+   * The labels placed first (the state's order) choose first. The nudge is --dx/--dy, and a label
+   * that moved to another side gets that side as its data-place.
+   */
+  private spread(labels: { key: string; x: number; y: number; place: string }[]) {
+    const W = this.root.clientWidth, H = this.root.clientHeight;
+    if (!W || !H) return;
+    const sc = W / this.frame.w, cam = this.camera;
+    const parts: Box[] = this.parts
+      .map((p) => ({ l: (p.x * cam.s + cam.tx) * sc, t: (p.y * cam.s + cam.ty) * sc, w: p.w * cam.s * sc, h: p.h * cam.s * sc }))
+      // A floor-sized part (a plate the others stand on) is ground, not something to keep off.
+      .filter((b) => b.w > 0 && b.h > 0 && b.w * b.h < W * H * 0.16);
+    const pad = 4, gap = 3;
+    const cover = (a: Box, b: Box) => Math.max(0, Math.min(a.l + a.w, b.l + b.w) - Math.max(a.l, b.l)) * Math.max(0, Math.min(a.t + a.h, b.t + b.h) - Math.max(a.t, b.t));
+    const grow = (b: Box): Box => ({ l: b.l - gap, t: b.t - gap, w: b.w + gap * 2, h: b.h + gap * 2 });
+    const placed: Box[] = this.reserved().map(grow);
+    const at = (place: string, x: number, y: number, w: number, h: number): Box => ({
+      l: place === 'left' ? x - w - 8 : place === 'right' ? x + 8 : x - w / 2,
+      t: place === 'top' ? y - h - 6 : place === 'bottom' ? y + 8 : y - h / 2,
+      w, h,
+    });
+    const SIDES = ['top', 'right', 'left', 'bottom'];
+    for (const lab of labels) {
+      const el = this.labelEls.get(lab.key);
+      if (!el) continue;
+      const w = el.offsetWidth, h = el.offsetHeight, x = (lab.x / this.frame.w) * W, y = (lab.y / this.frame.h) * H;
+      const own = at(lab.place, x, y, w, h);
+      const area = Math.max(1, w * h);
+      let best = { cost: Infinity, place: lab.place, l: own.l, t: own.t };
+      for (const place of [lab.place, ...SIDES.filter((p) => p !== lab.place)]) {
+        const b0 = at(place, x, y, w, h);
+        const dxs = place === 'top' || place === 'bottom' ? [0, -w * 0.35, w * 0.35] : [0];
+        for (const k of [0, -1, 1, -2, 2, -3, 3]) {
+          for (const dx of dxs) {
+            const c: Box = { l: Math.max(pad, Math.min(W - pad - w, b0.l + dx)), t: Math.max(pad, Math.min(H - pad - h, b0.t + k * (h + gap))), w, h };
+            let cost = (place === lab.place ? 0 : 2.5) + Math.hypot(c.l - own.l, c.t - own.t) / Math.max(12, h) * 1.1;
+            if (cost >= best.cost) continue;
+            for (const o of placed) cost += (cover(c, o) / area) * 1000;
+            if (cost >= best.cost) continue;
+            for (const p of parts) cost += (cover(c, p) / area) * 14;
+            if (cost < best.cost) best = { cost, place, l: c.l, t: c.t };
+          }
+        }
+      }
+      el.dataset.place = best.place;
+      const base = at(best.place, (parseFloat(el.style.left) / 100) * W, (parseFloat(el.style.top) / 100) * H, w, h);
+      el.style.setProperty('--dx', `${Math.round(best.l - base.l)}px`);
+      el.style.setProperty('--dy', `${Math.round(best.t - base.t)}px`);
+      placed.push(grow({ l: best.l, t: best.t, w, h }));
+    }
+  }
+
+  /** Lay the labels out again, when a reserved box changed size (run.ts). */
+  relayout() { this.spread(this.placed); }
+
+  reserved(): Box[] { return this.reserve?.() ?? []; }
+
+  /** The boxes of the live labels after layout, in stage pixels. */
+  labelBoxes(): Box[] {
+    const W = this.root.clientWidth, H = this.root.clientHeight;
+    return [...this.labelEls.values()].map((el) => this.labelBox(el, W, H));
+  }
+
+  /** The anchor of the label whose words are this name ("Opus 5.5"), or null. */
+  labelFor(name: string): string | null {
+    const want = name.trim().toLowerCase();
+    if (!want) return null;
+    for (const [key, el] of this.labelEls) {
+      const text = (el.dataset.text ?? '').trim().toLowerCase();
+      if (text === want || (text.startsWith(want) && /[^a-z0-9]/.test(text[want.length] ?? ''))) return key.slice(0, key.lastIndexOf('|'));
+    }
+    return null;
+  }
+
+  /**
+   * Where a part ends up on the stage, in pixels. Null when the part is absent or out of frame.
+   * `anchor` is a label's anchor name ("you", "a0", "gate", "tool:run", "card:sum", "peer", …).
+   */
+  partBox(anchor: string): (Box & { ax: number; ay: number }) | null {
+    const s = this.state;
+    const W = this.root.clientWidth, H = this.root.clientHeight;
+    if (!W || !H) return null;
+    const point = /^-?[\d.]+,-?[\d.]+,-?[\d.]+$/.test(anchor) ? (anchor.split(',').map(Number) as P3) : anchorOf(s, anchor);
+    const key = anchor.startsWith('tool:') ? 'tools' : anchor.startsWith('card:') ? 'tray' : anchor.startsWith('tank:') ? anchor.slice(5)
+      : /^(rules|skills|main)$/.test(anchor) ? 'project' : anchor;
+    const pts = [...extent(s, key), ...(point ? [point] : [])];
+    if (!pts.length) return null;
+    const sc = W / this.frame.w, cam = this.camera;
+    const xy = pts.map(([x, y, z]) => { const [fx, fy] = flat(x, y, z); return [(fx * cam.s + cam.tx) * sc, (fy * cam.s + cam.ty) * sc] as const; });
+    // The anchor point itself: the top of the part (a station's cap, a pawn's head).
+    const [ax, ay] = point ? xy[xy.length - 1]! : [0, 0];
+    const l = Math.min(...xy.map((p) => p[0])), r = Math.max(...xy.map((p) => p[0]));
+    const t = Math.min(...xy.map((p) => p[1])), b = Math.max(...xy.map((p) => p[1]));
+    if (r < 0 || b < 0 || l > W || t > H) return null;
+    return point ? { l, t, w: r - l, h: b - t, ax, ay } : { l, t, w: r - l, h: b - t, ax: (l + r) / 2, ay: t };
+  }
+
+  /** Where a label ends up, from its place and its nudge (spread), not where it is mid-glide. */
+  private labelBox(el: HTMLElement, W: number, H: number): Box {
+    const x = (parseFloat(el.style.left) / 100) * W + (parseFloat(el.style.getPropertyValue('--dx')) || 0);
+    const y = (parseFloat(el.style.top) / 100) * H + (parseFloat(el.style.getPropertyValue('--dy')) || 0);
+    const w = el.offsetWidth, h = el.offsetHeight, place = el.dataset.place;
+    const l = place === 'left' ? x - w - 8 : place === 'right' ? x + 8 : x - w / 2;
+    const t = place === 'top' || !place ? y - h - 6 : place === 'bottom' ? y + 8 : y - h / 2;
+    return { l, t, w, h };
+  }
+
+  private showTip(el: HTMLElement) {
+    this.tip.textContent = el.dataset.def ?? '';
+    this.tip.hidden = false;
+    const box = this.root.getBoundingClientRect(), r = el.getBoundingClientRect(), t = this.tip.getBoundingClientRect();
+    const below = r.top - box.top < box.height * 0.55;
+    const x = Math.max(4, Math.min(box.width - t.width - 4, r.left - box.left + r.width / 2 - t.width / 2));
+    const y = below ? r.bottom - box.top + 6 : r.top - box.top - t.height - 6;
+    this.tip.style.left = `${x}px`;
+    this.tip.style.top = `${Math.max(4, y)}px`;
+  }
+
+  // ---------- scripts ----------
+
+  /** Stop whatever script is running and clear pucks off the floor. */
+  stop() {
+    this.token++;
+    this.pucks.replaceChildren();
+  }
+
+  /** Run a script. A second call replaces the first. Resolves true if it ran to the end. */
+  async run(fn: (h: Script) => Promise<void>): Promise<boolean> {
+    this.stop();
+    this.onRun?.();
+    const mine = this.token;
+    const check = () => { if (mine !== this.token) throw new Stopped(); };
+    const h: Script = {
+      check,
+      wait: async (ms) => {
+        await new Promise((r) => setTimeout(r, (reduced.matches ? Math.min(ms, 160) : ms) / this.speed));
+        check();
+      },
+      set: (change) => { check(); this.change(change); },
+      send: async (points, kind, opts = {}) => {
+        check();
+        if (reduced.matches || points.length < 2) { await h.wait(120); return; }
+        const pts = points.map(([x, y]) => flat(x, y, 3));
+        const lens = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i]![0], p[1] - pts[i]![1]));
+        const total = lens.reduce((a, b) => a + b, 0) || 1;
+        const g = document.createElementNS(NS, 'g');
+        g.setAttribute('class', 'j-puck');
+        g.innerHTML = puckMarkup(kind);
+        this.pucks.append(g);
+        let acc = 0;
+        const frames = pts.map((p, i) => {
+          if (i) acc += lens[i - 1]!;
+          return { transform: `translate(${p[0].toFixed(1)}px, ${p[1].toFixed(1)}px)`, offset: acc / total };
+        });
+        const ms = (opts.ms ?? Math.max(320, total * 5.2)) / this.speed;
+        const anim = g.animate(frames, { duration: ms, easing: 'cubic-bezier(0.45, 0, 0.3, 1)', fill: 'forwards' });
+        try { await anim.finished; } catch { /* cancelled */ }
+        g.remove();
+        check();
+      },
+    };
+    try { await fn(h); return true; } catch (e) { if (e instanceof Stopped) return false; throw e; }
+  }
+
+  /** Add a slab to an agent's window. */
+  push(id: string, t: Block['t'], h: number) {
+    this.change((s) => { const a = s.agents.find((x) => x.id === id); if (a) (a.blocks ??= []).push({ t, h }); });
+  }
+  /** How full an agent's window is, 0 to 1. */
+  fill(id: string) {
+    const a = this.agent(id);
+    return (a.blocks ?? []).reduce((n, b) => n + b.h, 0) / (a.cap ?? 60);
+  }
+}
+
+/** A label's text, and its definition in a span only screen readers read (the tip is for sight). */
+function fillLabel(el: HTMLElement, text: string, def?: string) {
+  el.dataset.text = text;
+  if (def) {
+    el.dataset.def = def;
+    const sr = document.createElement('span');
+    sr.className = 'visually-hidden';
+    sr.textContent = `: ${def}`;
+    el.replaceChildren(text, sr);
+  } else {
+    delete el.dataset.def;
+    el.textContent = text;
+  }
+}

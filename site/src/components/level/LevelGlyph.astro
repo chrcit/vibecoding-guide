@@ -1,0 +1,15 @@
+---
+// Three rising bars, filled up to the level. Decorative: the words beside it carry the meaning.
+// remark-levels.mjs draws the same shape for markdown blocks; keep them in step.
+import { rank, type Level } from '../../lib/levels';
+interface Props { level: Level }
+const n = rank(Astro.props.level) + 1;
+const bars = [
+  { x: 1, y: 8, h: 5 },
+  { x: 5.5, y: 4.5, h: 8.5 },
+  { x: 10, y: 1, h: 12 },
+];
+---
+<svg class="level-glyph" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+  {bars.map((b, i) => <rect class={i < n ? undefined : 'off'} x={b.x} y={b.y} width="3" height={b.h} rx="1" />)}
+</svg>

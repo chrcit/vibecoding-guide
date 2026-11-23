@@ -1,0 +1,81 @@
+---
+/*
+ * Fig. 7, "How long a task can be". A flat chart.
+ *
+ * Idea: the length of task frontier models can finish has doubled steadily for years; at a
+ *   stricter reliability the same models manage much shorter tasks, which is why checking matters.
+ * Elements: METR's 50% time horizons by release date with 95% intervals; the 80% horizons where
+ *   METR publishes them; the line above which METR calls its estimates unreliable.
+ * States: linear or log vertical scale.
+ * Data: props, from src/data/benchmarks.ts (METR). Nothing is written in here.
+ * Interaction: one toggle, Linear or Log.
+ * Alt: see `alt` below.
+ */
+import Figure from '../Figure.astro';
+import { draw } from './draw';
+import { describe, type HorizonInputs } from './model';
+
+interface Props extends HorizonInputs {
+  n?: number | string;
+  source: { label: string; href?: string };
+  bare?: boolean;
+}
+const { n = 7, source, bare = false, ...inputs } = Astro.props;
+const first = inputs.p50[0]!, last = inputs.p50[inputs.p50.length - 1]!;
+---
+<div class="fig-horizon" data-fig-horizon data-inputs={JSON.stringify(inputs)}>
+  <Figure
+    bare={bare}
+    n={n}
+    title="How long a task can be"
+    hint="Switch the vertical scale between linear and log."
+    alt={`A line chart on a linear scale: the length of task, in a skilled person's time, that each leading model finishes half the time, from ${first.name} to ${last.name}. The line stays near zero for years and then climbs steeply. A second, lower line shows the same for four tasks in five.`}
+    source={source}
+    wide
+  >
+    <div data-chart set:html={draw(inputs, 640, 'linear')} />
+    <div slot="control" class="seg" role="group" aria-label="Vertical scale">
+      <button type="button" aria-pressed="true" data-scale="linear">Linear</button>
+      <button type="button" aria-pressed="false" data-scale="log">Log</button>
+    </div>
+    <Fragment slot="readout">{describe('linear', inputs)}</Fragment>
+    <Fragment slot="caption">
+      Task length is how long the task takes a skilled person, not how long the agent runs. The dark line is the length a model finishes half the time; the blue line, four times in five. The faint bars are METR's 95% intervals.
+    </Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .fig-horizon .hz-limit { stroke-dasharray: 4 4; stroke: var(--fig-line); }
+  .fig-horizon .hz-ci { stroke: var(--fig-line); }
+  .fig-horizon .hz-key { fill: var(--ink-2); }
+  .fig-horizon .hz-key-80 { fill: var(--blue); }
+</style>
+
+<script>
+  import { draw } from './draw';
+  import { describe, type HorizonInputs, type Mode } from './model';
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fig-horizon]')) {
+    const x: HorizonInputs = JSON.parse(root.dataset.inputs!);
+    const box = root.querySelector<HTMLElement>('[data-chart]')!;
+    const readout = root.querySelector<HTMLElement>('[data-fig-readout]')!;
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-scale]')];
+    let mode: Mode = 'linear';
+    let width = 0;
+    root.querySelector<HTMLElement>('[data-fig-control]')!.hidden = false;
+    const render = () => (box.innerHTML = draw(x, Math.round(box.clientWidth), mode));
+    for (const b of buttons) {
+      b.addEventListener('click', () => {
+        mode = b.dataset.scale as Mode;
+        for (const o of buttons) o.setAttribute('aria-pressed', String(o === b));
+        render();
+        readout.textContent = describe(mode, x);
+      });
+    }
+    new ResizeObserver(() => {
+      const w = Math.round(box.clientWidth);
+      if (w !== width) { width = w; render(); }
+    }).observe(box);
+  }
+</script>

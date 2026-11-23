@@ -1,0 +1,31 @@
+---
+import LessonRef from '../../components/journey/LessonRef.astro';
+import Term from '../../components/journey/Term.astro';
+import Journey from '../../layouts/Journey.astro';
+import Step from '../../components/journey/Step.astro';
+import Next from '../../components/journey/Next.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
+import { url } from '../../lib/nav';
+---
+<Journey chapter="chat" first="two" title="One chat" description="A chat is a model and a window. The window holds everything the model can see, and nothing carries over to the next chat.">
+  <Step id="two" title="Two parts">
+    <p>The <Term id="model" /> from <LessonRef id="ai" />, and its <Term id="window" />, the glass column. The window holds everything the model can see.</p>
+  </Step>
+  <Step id="send" title="Say something">
+    <p>Your words go into the window. So does its answer.</p>
+    <div class="row"><button class="btn" type="button" data-do="send">Send the next message</button></div>
+  </Step>
+  <Step id="reread" title="It reads all of it, every time">
+    <p>The model keeps nothing between turns. It knows your name because your first message is still in the window.</p>
+    <ForLevel is="technical engineer"><p>Each turn the app sends the whole conversation to the model again.</p></ForLevel>
+    <div class="row"><button class="btn ghost" type="button" data-do="ask">Ask again</button></div>
+  </Step>
+  <Step id="fresh" title="A new chat is an empty window">
+    <p>Start one, then ask its name for you. Next, the model gets tools to work on your files.</p>
+    <div class="row">
+      <button class="btn" type="button" data-do="newchat">New chat</button>
+      <button class="btn ghost" type="button" data-do="ask">Ask “What is my name?”</button>
+    </div>
+    <Next from="chat" />
+  </Step>
+</Journey>

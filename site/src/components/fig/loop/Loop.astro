@@ -1,0 +1,111 @@
+---
+// Fig. 2, "The loop". A small machine: the task (the lit puck) travels a track past three stations,
+// read, act and check, and only leaves through the gate when the check passes.
+import Figure from '../Figure.astro';
+import { drawLoop } from './draw';
+import { STEPS } from './model';
+
+interface Props { n?: number | string }
+const { n = 2 } = Astro.props;
+const { svg, labels, motion } = drawLoop();
+const last = STEPS.length - 1;
+---
+<div class="fig-loop" data-fig-loop data-motion={JSON.stringify(motion)}>
+  <Figure
+    n={n}
+    title="The loop"
+    hint="Press Next to follow one bug fix round the loop."
+    alt="A round track on a plate. A model sits at the centre. Around the track are three stations: read, with a sheet of paper; act, with a press; check, with a lamp. A gate leads off the track to a tray marked done. The task, an orange puck, waits at the start."
+    labels={labels}
+  >
+    <Fragment set:html={svg} />
+    <Fragment slot="control">
+      <button type="button" class="btn ghost" data-back disabled>Back</button>
+      <button type="button" class="btn" data-next>Next step</button>
+      <span class="fig-loop-count" data-count>Step 0 of {last}</span>
+    </Fragment>
+    <Fragment slot="readout">{STEPS[0]!.says}</Fragment>
+    <Fragment slot="caption">
+      An agent is a model in a loop. The model only writes text; the harness around it turns that text into actions (read a file, edit it, run a test) and feeds each result back. The loop ends when a check passes or the agent gives up, so what it can check its work against decides when it stops.
+    </Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .fig-loop [data-lamp='fail'] .k-solid .k-fill,
+  .fig-loop [data-lamp='fail'] .k-solid .k-top { fill: var(--accent-soft); }
+  .fig-loop [data-lamp='fail'] .k-solid .k-left,
+  .fig-loop [data-lamp='fail'] .k-solid .k-right,
+  .fig-loop [data-lamp='fail'] .k-solid .k-shadow { fill: var(--accent-soft); }
+  .fig-loop [data-lamp='fail'] .k-edge,
+  .fig-loop [data-lamp='fail'] .k-crease { stroke: var(--accent); stroke-width: 2px; }
+  .fig-loop [data-lamp='pass'] .k-solid .k-fill,
+  .fig-loop [data-lamp='pass'] .k-solid .k-top { fill: color-mix(in oklab, var(--green) 45%, var(--card)); }
+  .fig-loop [data-lamp='pass'] .k-solid .k-left,
+  .fig-loop [data-lamp='pass'] .k-solid .k-right,
+  .fig-loop [data-lamp='pass'] .k-solid .k-shadow { fill: var(--green); }
+  .fig-loop [data-lamp='pass'] .k-edge { stroke: var(--green); }
+  .fig-loop-count { color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+</style>
+
+<script>
+  import { STEPS } from './model';
+
+  type Flat = [number, number];
+  type Motion = { rest: Flat[]; paths: Flat[][]; lift: Flat; press: Flat };
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const tr = ([x, y]: Flat) => `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fig-loop]')) {
+    const m: Motion = JSON.parse(root.dataset.motion!);
+    const q = <T extends Element>(s: string) => root.querySelector<T>(s)!;
+    const puck = q<SVGGElement>('[data-puck]');
+    const press = q<SVGGElement>('[data-press]');
+    const gate = q<SVGGElement>('[data-gate]');
+    const lamp = q<SVGGElement>('[data-lamp]');
+    const back = q<HTMLButtonElement>('[data-back]');
+    const next = q<HTMLButtonElement>('[data-next]');
+    const count = q<HTMLElement>('[data-count]');
+    const readout = q<HTMLElement>('[data-fig-readout]');
+    const labels = [...root.querySelectorAll<HTMLElement>('[data-label]')];
+    const last = STEPS.length - 1;
+    let at = 0;
+    let moving: Animation | null = null;
+
+    q<HTMLElement>('[data-fig-control]').hidden = false;
+
+    function show(i: number, animate: boolean) {
+      const step = STEPS[i]!;
+      root.style.setProperty('--fig-ms', reduced.matches ? '0ms' : '');
+      moving?.cancel();
+      moving = null;
+      const path = m.paths[i]!;
+      if (animate && !reduced.matches && path.length > 1) {
+        moving = puck.animate(path.map((p) => ({ transform: tr(p) })), {
+          duration: Math.min(1400, 260 + path.length * 70),
+          easing: 'cubic-bezier(0.45, 0, 0.25, 1)',
+        });
+      }
+      puck.style.transform = tr(m.rest[i]!);
+      press.style.transform = step.at === 'act' ? tr(m.press) : 'translate(0px, 0px)';
+      gate.style.transform = step.at === 'done' ? tr(m.lift) : 'translate(0px, 0px)';
+      lamp.dataset.lamp = step.lamp;
+      for (const l of labels) l.toggleAttribute('data-active', l.dataset.label === step.at);
+      readout.textContent = step.says;
+      count.textContent = `Step ${i} of ${last}`;
+      back.disabled = i === 0;
+      next.textContent = i === last ? 'Start again' : 'Next step';
+    }
+
+    next.addEventListener('click', () => {
+      at = at === last ? 0 : at + 1;
+      show(at, at !== 0);
+    });
+    back.addEventListener('click', () => {
+      at = Math.max(0, at - 1);
+      show(at, false);
+      if (at === 0) next.focus();
+    });
+    show(0, false);
+  }
+</script>

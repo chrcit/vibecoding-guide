@@ -1,0 +1,139 @@
+---
+// Getting started: four steps from nothing to the guide skill running in a T3 Code thread.
+// The install prompt, the prompt link and the terminal line live in lib/start.ts. The skill itself
+// is skills/agentic-guide in this repo. The hands-on alternative, the first hour, is start/first-hour/.
+import Board from '../../layouts/Board.astro';
+import Tile from '../../components/board/Tile.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import { links } from '../../data/links';
+import { anchor } from '../../lib/facts.ts';
+import { url } from '../../lib/nav';
+import { installPrompt, installTerminal, installTerminalGlobal, promptLink, skill, skillUrl } from '../../lib/start';
+
+const installHref = promptLink(installPrompt);
+const factIds = [
+  'plans.claude.pro.price', 'plans.claude.pro.claudeCode', 'plans.chatgpt.plus.price', 'plans.chatgpt.limits.codexOnEveryPlan',
+  't3code.price', 't3code.maker', 't3code.welcome', 't3code.newProject', 't3code.defaultMode', 't3code.modeSwitch', 't3code.skillsInComposer',
+  't3code.newThreadButton', 't3code.screen.composer', 't3code.codeNotToT3',
+];
+---
+<Board
+  title="Start here"
+  description="Four steps to your first session with a coding agent: get a plan, get T3 Code, install the guide skill, and start it in a new thread."
+  section="start"
+>
+  <Tile title="1 · Get Claude or ChatGPT" span={6} id="plan">
+    <p>Either one works. Each paid plan includes a coding agent: Claude Pro (<Fact id="plans.claude.pro.price" /> a month) includes Claude Code, and ChatGPT Plus (<Fact id="plans.chatgpt.plus.price" /> a month) includes Codex.</p>
+    <p>The plan is all you pay for. Don't buy API credits, and don't download Claude Code or Codex separately: T3 Code sets up the agent in step 2.</p>
+    <p class="buttons">
+      <a class="btn ghost" href={links.claudePricing.url}>Get Claude</a>
+      <a class="btn ghost" href={links.chatgptPricing.url}>Get ChatGPT</a>
+    </p>
+    <p class="small">Free plans are not tested with this guide yet. What each plan includes, with sources: <a href={url('explain/plans-and-api/')}>Plans and the API</a>.</p>
+  </Tile>
+
+  <Tile title="2 · Get T3 Code" span={6} id="t3">
+    <p>T3 Code is where you talk to the agent: one window for your conversations with Claude Code, Codex and others. It is <Fact id="t3code.price" />.</p>
+    <p class="buttons"><a class="btn ghost" href={links.t3codeDownload.url}>Download T3 Code</a></p>
+    <p>Open it. On the Welcome page, connect the agent for your plan: Codex, <b>Set up</b>, then <b>Continue with ChatGPT</b>; Claude Code, <b>Install</b>, then <b>Sign in</b>. When the agent shows as ready, press <b>Start</b>.</p>
+    <p class="small">With Claude Code, <b>Install</b> and <b>Sign in</b> each <a class="src" href={url(`sources/#${anchor('t3code.welcome')}`)}>open a terminal window</a> with a command ready to run. That window is expected: follow what it says, and close it when it's done.</p>
+    <p class="small">T3 Code is made by <a href={links.theoSite.url}>Theo</a> and <Fact id="t3code.maker" />. This guide is independent of them; we learned a lot from Theo's work.</p>
+  </Tile>
+
+  <Tile title="3 · Install the guide skill" span={12} id="install">
+    <ol class="steps">
+      <li>In T3 Code, press <kbd>Cmd</kbd>+<kbd>K</kbd> (<kbd>Ctrl</kbd>+<kbd>K</kbd> on Windows and Linux) to open the command palette, choose <b>New project</b> and call it <code>{skill.project}</code>. Already have a <code>{skill.project}</code> project? Use that one. It's an empty folder where the guide lives for now, and T3 Code <a class="src" href={url(`sources/#${anchor('t3code.newProject')}`)}>makes it a Git repository</a>, so the agent can take snapshots of your files.</li>
+      <li>
+        <p class="buttons"><a class="btn" href={installHref}>Install the skill</a></p>
+        <p>This opens T3 Code with a message ready; nothing runs until you press <b>Send</b>. If it asks where to open, choose the app on your computer. The draft opens without a project: at the top of the draft, pick <code>{skill.project}</code>, then press <b>Send</b>.</p>
+        <p>The agent reads the skill first and tells you in two sentences what it will do. Nothing is copied until you answer <b>yes</b>. Then it copies the skill into two folders inside <code>{skill.project}</code>. You can <a href={skillUrl}>read the skill yourself</a> first: it is a few pages of plain text.</p>
+        <div class="reply" aria-label="Roughly what the install conversation looks like">
+          <p class="who">Agent</p>
+          <p>This skill makes me a guide: I do a small task for you, then explain what just happened using your own request. It also tells me to ask before saving anything about you. Shall I install it?</p>
+          <p class="who">You</p>
+          <p>yes</p>
+          <p class="who">Agent</p>
+          <p>Done: <code>.claude/skills/{skill.name}</code> and <code>.agents/skills/{skill.name}</code> each hold a SKILL.md. Start a new thread in this project, type $, pick {skill.name} and press Enter.</p>
+        </div>
+        <p class="small">Roughly what you'll see; the wording varies. Before each reply, the steps the agent runs appear in the thread.</p>
+      </li>
+    </ol>
+    <details class="fallback">
+      <summary>The button does nothing? Copy the message instead</summary>
+      <p>Paste it into the thread of your <code>{skill.project}</code> project and send it.</p>
+      <CopyPrompt title="Install message" id="install-prompt" compact>{installPrompt}</CopyPrompt>
+    </details>
+    <details class="fallback">
+      <summary>From a terminal (macOS and Linux)</summary>
+      <p>Inside the project folder:</p>
+      <CopyPrompt title="Install from a terminal" id="install-terminal" compact>{installTerminal}</CopyPrompt>
+      <p>Or for every project at once:</p>
+      <CopyPrompt title="Install for every project" id="install-terminal-global" compact>{installTerminalGlobal}</CopyPrompt>
+      <p class="small">Both download the guide into a temporary folder, run its <code>install.sh</code>, and delete the temporary folder again. On Windows, use the button or the message above.</p>
+    </details>
+  </Tile>
+
+  <Tile title="4 · Start the guide" span={12} id="go">
+    <div class="go">
+      <div>
+        <p><Fact id="t3code.newThreadButton" show="claim" /> If the picker opens, choose <code>{skill.project}</code>.</p>
+        <p>Type <code>$</code> in the message box, pick <code>{skill.name}</code>, then press <kbd>Enter</kbd> to send.</p>
+        <div class="composer" aria-label="The message box with $agentic-guide typed in it">
+          <span class="typed">${skill.name}</span>
+          <span class="enter" aria-hidden="true">Enter ↵</span>
+        </div>
+        <p class="small">By default on web and desktop, the empty message box reads "<Fact id="t3code.screen.composer" />". If the skill is missing from the list, choose <b>Restart agent session</b> in the command palette or start another thread.</p>
+      </div>
+      <div>
+        <h3>What to expect</h3>
+        <ul class="expect">
+          <li>The guide asks for one small thing you'd like done this month. Say it the way you'd tell a colleague; rambling is fine.</li>
+          <li>The result comes on its next reply. Then it explains what just happened, using your own request, and hands you a sentence to try.</li>
+          <li>You change anything you don't like, including how the guide talks to you, with a sentence.</li>
+          <li>Use made-up examples at first. What you type goes to your AI provider, <a class="src" href={url(`sources/#${anchor('t3code.codeNotToT3')}`)}>not to T3 Code's servers</a>.</li>
+        </ul>
+        <p class="small">The initial default for new threads is <Fact id="t3code.defaultMode" />. The mode allows the agent to run commands and edit files without approval prompts, including outside the practice folder. To have it ask first, choose <b>Supervised</b> under <a class="src" href={url(`sources/#${anchor('t3code.modeSwitch')}`)}><b>Permissions</b> at the bottom of the model picker</a> or press <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> on Windows and Linux). Check the mode when you start another thread. It uses your configured default.</p>
+      </div>
+    </div>
+  </Tile>
+
+  <Tile title="Rather do it by hand?" span={12} id="by-hand">
+    <p><a href={url('start/first-hour/')}>The first hour</a> builds a small app with an agent, click by click, with every prompt to copy.</p>
+  </Tile>
+
+  <Verified slot="foot" ids={factIds} />
+</Board>
+
+<style>
+  .buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0; }
+  .src { color: inherit; text-decoration-style: dotted; text-underline-offset: 0.2em; }
+  .small { font-size: var(--text-s); color: var(--muted); }
+  .steps { margin: 0; padding-left: 1.3em; display: grid; gap: 0.75rem; }
+  .steps li { padding-left: 0.2em; }
+  .steps li::marker { font-family: var(--mono); font-size: var(--text-xs); color: var(--muted); }
+  .steps p { margin: 0.4rem 0 0; }
+  .steps .buttons { margin-top: 0; }
+  .fallback { margin-top: 0.75rem; }
+  .fallback summary { cursor: pointer; min-height: 2.75rem; display: flex; align-items: center; font-weight: 600; color: var(--ink); }
+  .go { display: grid; gap: 1.5rem; }
+  @media (min-width: 52rem) { .go { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  .go h3 { margin: 0 0 0.5rem; font-size: var(--text-m); color: var(--ink); }
+  .composer {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    margin: 0.75rem 0; padding: 0.875rem 1rem;
+    border: 1px solid var(--rule-strong); border-radius: var(--radius-l); background: var(--card);
+  }
+  .typed { font-family: var(--mono); color: var(--ink); overflow-wrap: anywhere; }
+  .enter { flex: none; font-family: var(--mono); font-size: var(--text-xs); color: var(--muted); border: 1px solid var(--rule); border-radius: var(--radius-s); padding: 0.1rem 0.4rem; }
+  .expect + .small { margin-top: 0.75rem; }
+  .reply {
+    display: grid; gap: 0.25rem; margin: 0.75rem 0 0; padding: 0.875rem 1rem;
+    border: 1px solid var(--rule); border-radius: var(--radius-l); background: var(--card);
+  }
+  .reply p { margin: 0; overflow-wrap: anywhere; }
+  .reply .who { font-family: var(--mono); font-size: var(--text-xs); color: var(--muted); }
+  .reply .who:not(:first-child) { margin-top: 0.5rem; }
+  .expect { margin: 0; padding-left: 1.2em; display: grid; gap: 0.4rem; }
+</style>

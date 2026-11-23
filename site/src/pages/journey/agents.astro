@@ -1,0 +1,27 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import PartSwitch from '../../components/journey/PartSwitch.astro';
+import OverviewStep from '../../components/journey/OverviewStep.astro';
+import { rungs, parts } from '../../journey/rungs';
+import { url } from '../../lib/nav';
+---
+<Journey
+  chapter="whole"
+  first="chat"
+  title="Part 2 · From one chat to twenty agents"
+  description="Part two of the guide: one chat, the tool loop, the window and context rot, the instruction file, checks, helpers, worktrees, a lead and a fleet of twenty."
+>
+  <PartSwitch active={2} />
+
+  {rungs.filter((r) => r.part === 2).map((r, i, all) => (
+    <OverviewStep rung={r}>
+      {i === all.length - 1 && (
+        <a class="j-next" href={url(parts[2]!.href)}>
+          <span>Part three · lessons {parts[2]!.range}</span>
+          <b>{parts[2]!.title}</b>
+          <span>{parts[2]!.blurb}</span>
+        </a>
+      )}
+    </OverviewStep>
+  ))}
+</Journey>

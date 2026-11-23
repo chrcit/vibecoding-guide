@@ -1,0 +1,24 @@
+---
+// One sourced value, linked to its row on the sources page.
+//   <Fact id="plans.claude.pro.price" />            → $20
+//   <Fact id="plans.claude.pro.price" show="claim" /> → the full sentence
+// Throws at build time on an unknown id or an unverified fact.
+import { anchor, fact, formatDate, formatValue } from '../../lib/facts.ts';
+import { url } from '../../lib/nav';
+
+interface Props {
+  id: string;
+  show?: 'value' | 'claim';
+}
+const { id, show = 'value' } = Astro.props;
+const f = fact(id);
+if (f.status === 'unverified') {
+  throw new Error(`<Fact id="${id}">: this fact is unverified (${f.note}). Verify it in src/data/${f.file}.ts before it goes on a page.`);
+}
+const title = `${f.status === 'observation' ? 'Observation' : 'Source'} checked ${formatDate(f.verified)}`;
+---
+<style>
+  .fact { color: inherit; text-decoration-line: underline; text-decoration-style: dotted; text-decoration-color: var(--muted); text-underline-offset: 0.2em; }
+  .fact:hover { text-decoration-color: var(--accent); }
+</style>
+<a class="fact" href={url(`sources/#${anchor(id)}`)} title={title} data-status={f.status}>{show === 'claim' ? f.claim : formatValue(f)}</a>

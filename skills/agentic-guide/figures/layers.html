@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The layers of one turn</title>
+<!--
+  The layers picture for the agentic-guide skill. Self-contained: no network, no scripts.
+  In T3 Code it takes the thread's theme through the CSS variables below; opened as a
+  file it falls back to its own light and dark colours.
+
+  A template: read it, fill it, and pass the filled HTML inline to html_preview, then
+  html_render. Never copy this file into the learner's project.
+
+  To fill it for a learner: replace the text after "this turn:" in each <p class="now"> with
+  what happened in their last turn (their sentence shortened, the model, the harness, the
+  tools used, what changed). Delete a row's "now" line if nothing happened there. Keep it
+  short. At some and up, name the harness you are actually running in.
+  At the plain level, relabel two rows and count nothing:
+    "Harness<small>the program around the model</small>" -> "The program<small>around the model</small>"
+    "Tools<small>the hands</small>"                       -> "Its actions<small>what it can do</small>"
+  Remove "tool call" from two more fixed strings:
+    Model row, <p class="what">: "Writes the answer, or a tool call." -> "Writes the answer, or asks to act."
+    figcaption: "the model writes text and tool calls, the harness runs the tools," ->
+                "the model writes text or asks to act, the program carries out its actions,"
+  In the rest of the figcaption, say "the program" and "its actions" too, and write the "now" lines
+  without numbers or "tool call" ("asked to act, got the results back", "ran a small program,
+  showed you this page"). Translate every visible string, including the row labels and
+  "this turn:", if the learner works in another language.
+-->
+<style>
+  /* color-scheme lets a browser paint its own light or dark canvas when the file is opened
+     outside T3 Code; html and body stay without a background, as T3 asks. */
+  :root {
+    color-scheme: light dark;
+    --g-fg: var(--foreground, #18181b);
+    --g-muted: var(--muted-foreground, #5b5b66);
+    --g-card: var(--card, #f6f6f7);
+    --g-border: var(--border, #d9d9de);
+    --g-you: var(--chart-1, #2563eb);
+    --g-app: var(--chart-2, #0d9488);
+    --g-harness: var(--chart-3, #c2410c);
+    --g-model: var(--chart-4, #7c3aed);
+    --g-tools: var(--chart-5, #b45309);
+    --g-world: var(--chart-6, #15803d);
+    --g-radius: var(--radius, 10px);
+    --g-sans: var(--font-sans, system-ui, -apple-system, "Segoe UI", sans-serif);
+    --g-mono: var(--font-mono, ui-monospace, "SFMono-Regular", Menlo, monospace);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --g-fg: var(--foreground, #ececef);
+      --g-muted: var(--muted-foreground, #a1a1aa);
+      --g-card: var(--card, #1f1f23);
+      --g-border: var(--border, #3a3a40);
+      --g-you: var(--chart-1, #60a5fa);
+      --g-app: var(--chart-2, #2dd4bf);
+      --g-harness: var(--chart-3, #fb923c);
+      --g-model: var(--chart-4, #a78bfa);
+      --g-tools: var(--chart-5, #fbbf24);
+      --g-world: var(--chart-6, #4ade80);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--g-fg); font-family: var(--g-sans); font-size: 15px; line-height: 1.45; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  .layers { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .layer {
+    position: relative;
+    display: grid; grid-template-columns: minmax(6.5rem, 9rem) minmax(0, 1fr); gap: 2px 14px;
+    padding: 12px 16px 12px 20px;
+    background: var(--g-card); border: 1px solid var(--g-border); border-radius: var(--g-radius);
+  }
+  .layer::before {
+    content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 4px;
+    border-radius: 0 4px 4px 0; background: var(--c);
+  }
+  .name { margin: 0; font-weight: 650; font-size: 15px; }
+  .name small { display: block; font-weight: 400; font-size: 13px; color: var(--g-muted); }
+  .what { margin: 0; }
+  .now { margin: 4px 0 0; grid-column: 2; font-family: var(--g-mono); font-size: 13px; color: var(--g-muted); overflow-wrap: anywhere; }
+  .now b { color: var(--c); font-weight: 600; }
+
+  /* The loop: model, harness and tools go round until the model answers. */
+  .loop { position: relative; display: grid; gap: 6px; padding: 8px; margin: 0; border: 1.5px dashed var(--g-border); border-radius: calc(var(--g-radius) + 6px); }
+  .loop-label { margin: 0 0 2px 8px; font-size: 13px; color: var(--g-muted); }
+  .loop-label b { color: var(--g-fg); font-weight: 600; }
+
+  .you { --c: var(--g-you); }
+  .app { --c: var(--g-app); }
+  .harness { --c: var(--g-harness); }
+  .model { --c: var(--g-model); }
+  .tools { --c: var(--g-tools); }
+  .world { --c: var(--g-world); }
+
+  @media (max-width: 30rem) {
+    .layer { grid-template-columns: minmax(0, 1fr); }
+    .now { grid-column: 1; }
+  }
+</style>
+</head>
+<body>
+<figure aria-labelledby="layers-cap" style="margin:0">
+  <figcaption id="layers-cap" class="sr">
+    Six layers of one turn. You write a sentence. T3 Code keeps the thread. The harness sends the
+    conversation to the model, the model writes text and tool calls, the harness runs the tools,
+    and the tools touch the world. Model, harness and tools repeat until the model writes an answer.
+  </figcaption>
+  <ol class="layers">
+    <li class="layer you">
+      <p class="name">You<small>a sentence</small></p>
+      <p class="what">Say what you want, the way you'd tell a colleague.</p>
+      <p class="now"><b>this turn:</b> "Make me a watering plan for my balcony plants"</p>
+    </li>
+    <li class="layer app">
+      <p class="name">T3 Code<small>the threads</small></p>
+      <p class="what">Keeps your conversations, from several providers, in one place.</p>
+      <p class="now"><b>this turn:</b> one thread in the project "practice"</p>
+    </li>
+    <li>
+      <div class="loop" role="group" aria-label="The loop">
+        <p class="loop-label"><b>The loop</b> · repeats until the model answers</p>
+        <ol class="layers">
+          <li class="layer harness">
+            <p class="name">Harness<small>the program around the model</small></p>
+            <p class="what">Sends the conversation to the model, runs what it asks for, sends back the result.</p>
+            <p class="now"><b>this turn:</b> [rounds of call and result, counted from this turn's record]</p>
+          </li>
+          <li class="layer model">
+            <p class="name">Model<small>writes text</small></p>
+            <p class="what">Writes the answer, or a tool call. Knows only what is in the conversation.</p>
+            <p class="now"><b>this turn:</b> [calls it asked for, then this answer; what it worked out itself]</p>
+          </li>
+          <li class="layer tools">
+            <p class="name">Tools<small>the hands</small></p>
+            <p class="what">Read and write files, run commands, search, show a page.</p>
+            <p class="now"><b>this turn:</b> [only the calls that ran this turn and what they output]</p>
+          </li>
+        </ol>
+      </div>
+    </li>
+    <li class="layer world">
+      <p class="name">World<small>what changed</small></p>
+      <p class="what">Files on the machine running the agent, commands, other threads, the internet.</p>
+      <p class="now"><b>this turn:</b> no file saved; your words went to the company that runs the model</p>
+    </li>
+  </ol>
+</figure>
+</body>
+</html>

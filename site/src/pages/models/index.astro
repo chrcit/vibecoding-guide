@@ -1,0 +1,225 @@
+---
+// The models board. Every model in src/data/models.ts on axes the reader chooses (Fig. 60), a
+// compare tile, the same job priced on every model (Fig. 61), the effort dial (Fig. 11), what a
+// benchmark measures, release dates (Fig. 62) and the date of the last check. The guide places
+// published numbers and does not rank; the owner's own opinions sit in an <Opinion> box.
+import Board from '../../layouts/Board.astro';
+import Tile from '../../components/board/Tile.astro';
+import Stat from '../../components/board/Stat.astro';
+import Explain from '../../components/board/Explain.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import Opinion from '../../components/site/Opinion.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import ModelLab from '../../components/fig/model-lab/ModelLab.astro';
+import JobCost from '../../components/fig/job-cost/JobCost.astro';
+import EffortDial from '../../components/fig/effort-dial/EffortDial.astro';
+import ReleaseLine from '../../components/fig/release-line/ReleaseLine.astro';
+import { PRESETS, EFFORT_BASE, tokens } from '../../components/fig/job-cost/model';
+import { labModels, labFactIds, priceRows, effortRatio, releases, sourcePath, dayOf } from '../../components/models/lab-data';
+import { effortInputs, effortData, shown } from '../../components/models/view';
+import { opinions } from '../../data/observations.ts';
+import { CHECKED } from '../../data/types.ts';
+import { allFacts, fact, formatDate } from '../../lib/facts.ts';
+import { url } from '../../lib/nav';
+
+const card = (id: string) => url(`models/${id}/`);
+const src = (id: string) => url(sourcePath(id));
+const rows = labModels(card);
+const prices = priceRows(rows);
+const ratio = effortRatio(EFFORT_BASE);
+const rel = releases(card, src);
+
+// Cache read as a share of the input price, worked out per model from the two list prices.
+const cacheShares = rows.flatMap((r) => ('v' in r.cells.cacheRead && 'v' in r.cells.input && r.klass !== 'older'
+  ? [{ name: r.name, card: r.card, pct: Math.round((r.cells.cacheRead.v / r.cells.input.v) * 1000) / 10, id: r.cells.cacheRead.id }]
+  : [])).sort((a, b) => b.pct - a.pct);
+const noCache = rows.filter((r) => r.klass !== 'older' && !('v' in r.cells.cacheRead));
+
+// How many index scores were measured at each effort level.
+const scored = rows.filter((r) => 'v' in r.cells.score);
+const atMax = scored.filter((r) => r.scoreEffort === 'max').length;
+
+const effortFacts = [
+  { name: 'Applies to', id: 'lineup.effortAllTokens' },
+  { name: 'Thinking is', id: 'lineup.thinkingBilledAsOutput' },
+  { name: 'Changing it', id: 'lineup.effortCache' },
+  { name: 'Works as', id: 'lineup.effortSignal' },
+];
+
+const boardIds = [
+  ...labFactIds(rows), ...effortData().ids, ...rel.ids,
+  ...effortFacts.map((f) => f.id),
+  'benchmarks.aa.method', 'benchmarks.aa.caveat', 'benchmarks.metr.definition', 'benchmarks.metr.unreliableAbove', 'benchmarks.metr.lastUpdate',
+  'benchmarks.aa.opusByEffort.max.costPerTask', 'lineup.claudeCodeEffortLevels', 'lineup.codexEffortLevels', 'lineup.claudeCodeEffortDefault',
+  'harnesses.claudeCode.effort', 'harnesses.codex.effort',
+].filter(shown);
+const verifiedIds = [...new Set(boardIds)];
+const dates = verifiedIds.map((id) => fact(id).verified).sort();
+const unconfirmedCount = allFacts().filter((e) => (e.file === 'models' || e.file === 'benchmarks') && e.status === 'unverified').length;
+const checked = formatDate(CHECKED, true);
+---
+<Board
+  title="Models"
+  description="Every model in the guide's data on axes you choose, the same job priced on each one, what effort changes and what a benchmark measures. Published numbers with their sources; the comparing is yours."
+  section="models"
+>
+  <a slot="tools" class="mb-checked" href={url('sources/#file-models')} data-side>
+    <span>Checked</span> <time datetime={CHECKED}>{checked}</time>
+  </a>
+
+  <ModelLab rows={rows} side={{ lab: 'sources/#file-benchmarks', compare: 'sources/#file-models' }} />
+
+  <Tile title="The same job, priced on every model" span={8} id="cost">
+    <JobCost rows={prices} effort={ratio} />
+    <Fragment slot="foot">Job sizes are illustrations. <a href="#cost-model">How the bars are worked out</a></Fragment>
+  </Tile>
+
+  {/* TODO wiki: effort */}
+  <Tile title="Each step up in effort writes more tokens" span={4} id="effort" side={sourcePath('lineup.effortAllTokens')}>
+    <EffortDial {...effortInputs()} bare />
+    <dl class="mb-facts">
+      {effortFacts.map((f) => <div><dt>{f.name}</dt><dd><Fact id={f.id} /></dd></div>)}
+    </dl>
+  </Tile>
+
+  {/* TODO wiki: benchmarks */}
+  <Tile title="A score is one test, at one setting" span={4} id="score-against-cost" side="sources/#file-benchmarks">
+    <div class="mb-bench">
+      <h3><Explain to={sourcePath('benchmarks.aa.method')}>Artificial Analysis Intelligence Index</Explain></h3>
+      <dl class="stats">
+        <Stat name="Evaluations"><Fact id="benchmarks.aa.method" /></Stat>
+        <Stat name="Scores here at max effort">{atMax} of {scored.length}</Stat>
+      </dl>
+      <p class="mb-quote">“<Fact id="benchmarks.aa.caveat" />”</p>
+      <h3><Explain to={sourcePath('benchmarks.metr.definition')}>METR time horizon</Explain></h3>
+      <dl class="stats">
+        <Stat name="Measures"><Fact id="benchmarks.metr.definition" /></Stat>
+        <Stat name="Unreliable above"><Fact id="benchmarks.metr.unreliableAbove" /></Stat>
+        <Stat name="Last update"><Fact id="benchmarks.metr.lastUpdate" /></Stat>
+      </dl>
+    </div>
+  </Tile>
+
+  <Tile title="The list turns over in months" span={5} id="releases">
+    <ReleaseLine releases={rel.list} checked={dayOf(CHECKED)} unconfirmed={rel.unconfirmed} />
+  </Tile>
+
+  <Tile title="This page goes out of date first" span={3} id="checked" side="sources/">
+    <dl class="stats mb-dates">
+      <Stat name="Last checked" tone="accent"><time datetime={CHECKED}>{formatDate(CHECKED)}</time></Stat>
+      <Stat name="Oldest number here"><time datetime={dates[0]}>{formatDate(dates[0]!)}</time></Stat>
+      <Stat name="Could not confirm"><a href={url('sources/#unverified')} data-side>{unconfirmedCount}</a></Stat>
+    </dl>
+  </Tile>
+
+  <Tile title="How the bars are worked out" span={4} id="cost-model">
+    <dl class="mb-model">
+      <div><dt>Price</dt><dd>Fresh input × price in, cached input × cache read, output × effort × price out. List prices, <Explain to="sources/#file-models">from the data</Explain>.</dd></div>
+      <div><dt>Job sizes</dt><dd>{PRESETS.map((p, i) => <>{i > 0 && '; '}{`${p.name.toLowerCase()} ${tokens(p.input)} in, ${tokens(p.output)} out, ${p.cache}% cached`}</>)}. Our illustrations.</dd></div>
+      <div><dt>Effort</dt><dd>Output scaled by what {ratio.model} wrote at each level against {EFFORT_BASE} on the <Explain to={sourcePath('benchmarks.aa.opusByEffort.max.totalTokens')}>index run</Explain>, applied to every model.</dd></div>
+      <div><dt>Left out</dt><dd>Cache writes, batch, fast mode, long-prompt prices.</dd></div>
+    </dl>
+  </Tile>
+
+  <Tile title="The author's view" span={4} id="opinion">
+    <Opinion date={opinions.design.verified}>
+      <p>{opinions.design.value} {opinions.decisions.value}</p>
+    </Opinion>
+  </Tile>
+
+  <Tile title="Try two models on the same job" span={4} id="compare-yourself">
+    <CopyPrompt title="The same task for two models">{`The bakery website shows the normal opening hours on public holidays. It should show the holiday hours.
+
+Read AGENTS.md first. Find where the opening hours are worked out, write a failing test for 25 December, then fix it so the test passes. Run the whole test suite.
+
+When you are done, tell me which files you changed, paste the test output, and list anything you were unsure about. Do not push.`}</CopyPrompt>
+  </Tile>
+
+  <Tile title="Effort is set differently in each harness" span={4} level="technical" side="t3-code/">
+    <table class="mb-harness">
+      <thead><tr><td></td><th scope="col">Claude Code</th><th scope="col">Codex</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Set with</th><td><code><Fact id="harnesses.claudeCode.effort" /></code></td><td><code><Fact id="harnesses.codex.effort" /></code></td></tr>
+        <tr><th scope="row">Levels</th><td><Fact id="lineup.claudeCodeEffortLevels" /></td><td><Fact id="lineup.codexEffortLevels" /></td></tr>
+        <tr><th scope="row">Starts at</th><td><Fact id="lineup.claudeCodeEffortDefault" /></td><td><span class="gap">not published</span></td></tr>
+      </tbody>
+    </table>
+  </Tile>
+
+  <Tile title="A cache read costs a fraction of input" span={4} level="engineer" side={sourcePath('lineup.cacheReadShare')}>
+    <ol class="mb-share">
+      {cacheShares.map((c) => (
+        <li>
+          <a href={c.card} data-side>{c.name}</a>
+          <span class="mb-track"><span style={`transform:scaleX(${c.pct / 100})`}></span></span>
+          <a class="mb-pct" href={src(c.id)} data-side>{c.pct}%</a>
+        </li>
+      ))}
+    </ol>
+    {noCache.length > 0 && <p class="mb-none">No cache price in our data: {noCache.map((r) => r.name).join(', ')}.</p>}
+  </Tile>
+
+  <Tile title="Cost per task, as measured" span={4} level="engineer" side={sourcePath('benchmarks.aa.opusByEffort.max.costPerTask')}>
+    <dl class="stats">
+      <Stat name="Opus 5.5 at max, per index task" tone="accent"><Fact id="benchmarks.aa.opusByEffort.max.costPerTask" /></Stat>
+      <Stat name="Output, whole run, low"><Fact id="benchmarks.aa.opusByEffort.low.totalTokens" /></Stat>
+      <Stat name="Output, whole run, max"><Fact id="benchmarks.aa.opusByEffort.max.totalTokens" /></Stat>
+    </dl>
+  </Tile>
+
+  <Fragment slot="foot">
+    <Verified ids={verifiedIds} />
+    <p>Scores from <a href="https://artificialanalysis.ai">Artificial Analysis</a> and <a href="https://metr.org">METR</a>, credited as they ask.</p>
+  </Fragment>
+</Board>
+
+<style>
+  .mb-checked {
+    display: inline-flex; align-items: baseline; gap: 0.5rem;
+    min-height: 2.5rem; padding: 0.375rem 0.875rem;
+    border: 1px solid color-mix(in oklab, var(--accent) 45%, var(--rule)); border-radius: var(--radius-pill);
+    background: var(--accent-soft); color: var(--ink); text-decoration: none;
+    font-size: var(--text-s);
+  }
+  .mb-checked span { color: var(--muted); }
+  .mb-checked time { font-family: var(--mono); font-weight: 650; font-size: var(--text-m); }
+  .mb-checked:hover { border-color: var(--accent); }
+
+  .mb-facts { display: grid; gap: 0; margin: 0.75rem 0 0; font-size: var(--text-xs); }
+  .mb-facts div { display: grid; grid-template-columns: 6.5rem 1fr; gap: 0.5rem; padding: 0.3rem 0; border-top: 1px solid var(--rule); }
+  .mb-facts dt { color: var(--muted); }
+  .mb-facts dd { margin: 0; color: var(--ink); }
+
+  .mb-bench { display: grid; gap: 0.5rem; }
+  .mb-bench h3 { margin: 0.25rem 0 0; font-family: var(--sans); font-size: var(--text-s); font-weight: 650; color: var(--ink); }
+  .mb-bench .stat-value { font-size: 1.0625rem; }
+  .mb-quote { margin: 0; font-style: italic; color: var(--ink-2); }
+
+  .mb-dates { grid-template-columns: 1fr; }
+  .mb-dates .stat-value a { color: inherit; }
+
+  .mb-model { display: grid; gap: 0; margin: 0; font-size: var(--text-xs); }
+  .mb-model div { display: grid; grid-template-columns: 5.5rem 1fr; gap: 0.5rem; padding: 0.35rem 0; border-top: 1px solid var(--rule); }
+  .mb-model div:first-child { border-top: 0; padding-top: 0; }
+  .mb-model dt { color: var(--muted); }
+  .mb-model dd { margin: 0; color: var(--ink-2); }
+
+  .tile :global(.opinion) { margin: 0; }
+  .tile :global(.opinion .body) { font-size: var(--text-m); }
+  .tile :global(.copy-prompt) { margin: 0; }
+
+  .mb-harness { width: 100%; border-collapse: collapse; font-size: var(--text-xs); }
+  .mb-harness th, .mb-harness td { padding: 0.375rem; border-bottom: 1px solid var(--rule); text-align: left; vertical-align: top; }
+  .mb-harness tbody th { color: var(--muted); font-weight: 500; white-space: nowrap; }
+  .gap { color: var(--muted); font-style: italic; }
+
+  .mb-share { --fig-edge: color-mix(in oklab, var(--ink) 72%, var(--card));
+    display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+  .mb-share li { display: grid; grid-template-columns: minmax(7rem, 9rem) 1fr 3.5rem; align-items: center; gap: 0.5rem; min-height: 2.25rem; }
+  .mb-share a { color: var(--ink-2); text-decoration: none; font-size: var(--text-xs); }
+  .mb-share .mb-pct { font-family: var(--mono); font-weight: 600; color: var(--ink); text-align: right; }
+  .mb-track { position: relative; height: 0.875rem; border-radius: 3px; background: color-mix(in oklab, var(--ink) 4%, transparent); overflow: hidden; }
+  .mb-track span { position: absolute; inset: 0; transform-origin: left; background: var(--fig-edge); border-radius: 3px; }
+  .mb-none { margin: 0.5rem 0 0; font-size: var(--text-xs); color: var(--muted); }
+</style>

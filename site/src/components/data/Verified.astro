@@ -1,0 +1,24 @@
+---
+// "Last verified on" for a page or section. Give it the fact ids the page
+// uses, or a data file name; it shows the oldest date among them, so the line
+// never claims more freshness than the stalest fact has.
+//   <Verified ids={['plans.claude.pro.price', 'plans.claude.max.price']} />
+//   <Verified file="plans" />
+import { anchor, factsIn, fact, formatDate } from '../../lib/facts.ts';
+import { url } from '../../lib/nav';
+
+interface Props {
+  ids?: string[];
+  file?: string;
+}
+const { ids, file } = Astro.props;
+if (!ids?.length && !file) throw new Error('<Verified> needs ids or a file.');
+const entries = ids?.length ? ids.map((id) => fact(id)) : factsIn(file!).filter((e) => e.status !== 'unverified');
+if (!entries.length) throw new Error(`<Verified file="${file}">: no facts in that file.`);
+const oldest = entries.map((e) => e.verified).sort()[0];
+const href = file ? url(`sources/#file-${file}`) : url(`sources/#${anchor(entries[0].id)}`);
+---
+<p class="verified">Last verified on <time datetime={oldest}>{formatDate(oldest, true)}</time>. <a href={href}>Sources</a></p>
+<style>
+  .verified { font-size: 0.85rem; color: var(--muted); margin: 1rem 0; }
+</style>

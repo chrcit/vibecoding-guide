@@ -1,0 +1,551 @@
+/*
+  The journey: one picture that stays in view while short steps scroll past it
+  (layouts/Journey.astro, src/journey/). Global on purpose: the picture is built
+  by a script. Tones come from fig.css and the site tokens.
+
+  One meaning per colour, inside the picture, its readout and its legend:
+    accent (--accent)  something went wrong: a failed check, a wrong file, a bad commit. Nothing else.
+    working (--j-work) busy right now: a model thinking, a tool in use, a file being edited, a lamp
+                       on a job that runs. Amber, so it never reads as a problem.
+    blue               waits for you, or a tool's result.
+    green              passed, or instructions.
+  A dotted underline marks a label that opens something (its wiki page in the side view, or a
+  definition). A plain label has no underline.
+*/
+
+.j-root {
+  max-width: var(--board); margin-inline: auto;
+  padding: 0 var(--gutter) var(--space-7);
+  font-family: var(--sans); font-size: 1rem; line-height: 1.45; color: var(--ink-2);
+  font-variant-numeric: lining-nums tabular-nums;
+  /* The colour a slab's sides fall away to. */
+  --j-shade: var(--ink);
+  /* Working: amber, a hue of its own (see the top of this file). */
+  --j-work: #c58f0c;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) .j-root { --j-shade: var(--paper-2); --j-work: #e7bd45; } }
+:root[data-theme='dark'] .j-root { --j-shade: var(--paper-2); --j-work: #e7bd45; }
+/* fig.css lights a part in the accent; in the journey a lit part is a working part. */
+.j-svg {
+  --fig-lit: var(--j-work);
+  --fig-lit-top: color-mix(in oklab, var(--j-work) 58%, var(--card));
+  --fig-lit-left: color-mix(in oklab, var(--j-work) 74%, var(--card));
+  --fig-lit-right: color-mix(in oklab, var(--j-work) 82%, var(--j-shade));
+  --fig-lit-shadow: color-mix(in oklab, var(--j-work) 66%, var(--j-shade));
+}
+
+/* ---------- layout ---------- */
+/* Without a script the picture stands over the steps and they read as a page. Once run.ts is
+   ready (data-ready) the reader moves through the steps: on a wide page they scroll past the
+   picture in a column of their own; on a narrow one the page is one screen, the picture over a
+   panel that holds only the step on show. */
+
+.j-view {
+  position: sticky; top: var(--header-h); z-index: 4;
+  display: grid; gap: 0.375rem; grid-template-columns: minmax(0, 1fr);
+  margin-inline: calc(var(--gutter) * -1); padding: 0.375rem var(--gutter) 0.5rem;
+  background: var(--paper); border-bottom: 1px solid var(--rule);
+}
+.j-view > * { grid-column: 1; }
+.j-steps { min-width: 0; padding-bottom: 30svh; }
+.j-step { min-height: 52svh; display: flex; flex-direction: column; justify-content: flex-start; padding-block: var(--space-5); opacity: 0.4; transition: opacity var(--dur) var(--ease-out); }
+.j-step[data-active], .j-step:focus-within { opacity: 1; }
+.j-root:not([data-ready]) .j-step { opacity: 1; }
+
+/* A step fragment changes the picture in place. Stop a native smooth scroll from carrying the
+   viewport past it while the stepper is starting. */
+html.js:has(.j-root[data-panel]) { scroll-behavior: auto; }
+
+/* The frame: the picture, and the step buttons (on it on a wide page, under it on a narrow one). */
+.j-frame {
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr); min-height: 0;
+  border: 1px solid var(--rule); border-radius: var(--radius); background: var(--card); overflow: hidden;
+}
+.j-frame > .j-stage { border: 0; border-radius: 0; background: none; }
+.j-stage { position: relative; overflow: hidden; width: 100%; height: min(34svh, 70vw); }
+
+/* ======== journey-mobile: the narrow layout (planning/journey-mobile/SPEC.md) ======== */
+/* Narrow: one screen under the header. The rail, the picture with Back and Next under it, and the
+   step on show in a panel that scrolls on its own. The lesson's title comes with the first step,
+   the sources with the last. */
+@container journey (width < 60rem) {
+  .j-root[data-ready] {
+    display: flex; flex-direction: column;
+    height: calc(100svh - var(--header-h)); padding-bottom: 0;
+  }
+  html[data-embed] .j-root[data-ready] { height: 100svh; }
+  .j-root[data-ready] .j-view { position: relative; top: auto; flex: none; padding-bottom: 0; border-bottom: 0; }
+  .j-root[data-ready] .j-stage { height: clamp(10rem, 40svh, 76vw); touch-action: pan-y; }
+  .j-root[data-ready] .j-steps {
+    flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+    margin-inline: calc(var(--gutter) * -1); padding: 0 var(--gutter) var(--space-6);
+    scrollbar-width: thin;
+  }
+  .j-root[data-ready] .j-step:not([data-active]) { display: none; }
+  .j-root[data-ready] .j-step { min-height: 0; margin: 0; padding-block: var(--space-4) 0; max-width: 40rem; opacity: 1; transition: none; }
+  /* A link to a step (#many) must not scroll the page: the browser's scroll to it lands at the top. */
+  .j-root[data-ready] .j-step { scroll-margin-top: 100svh; }
+  .j-root[data-ready]:not([data-at-first]) .j-steps > :not(.j-step, .j-foot) { display: none; }
+  .j-root[data-ready]:not([data-at-last]) .j-foot { display: none; }
+  .j-root[data-ready] .j-head { padding-top: var(--space-4); }
+  .j-root[data-ready] .j-head h1 { font-size: var(--text-2xl); }
+  .j-root[data-ready] .j-step h2 { font-size: var(--text-xl); }
+}
+/* ======== end journey-mobile: the narrow layout ======== */
+
+/* Two columns when the page has room for them. The page, not the screen: an open side view takes
+   room away, and then the picture goes back on top of the steps. */
+main:has(> .j-root) { container: journey / inline-size; }
+@container journey (min-width: 60rem) {
+  .j-root { display: grid; grid-template-columns: minmax(17rem, 25rem) minmax(0, 1fr); gap: var(--space-6); align-items: start; padding-top: var(--space-3); }
+  .j-view {
+    grid-column: 2; grid-row: 1; top: calc(var(--header-h) + 0.75rem);
+    height: calc(100svh - var(--header-h) - 1.5rem);
+    grid-template-rows: auto minmax(0, 1fr); gap: 0.5rem;
+    margin: 0; padding: 0; background: none; border: 0;
+  }
+  .j-frame { height: 100%; grid-template-rows: minmax(0, 1fr); }
+  .j-frame > .j-stage { height: auto; min-height: 0; }
+  .j-steps { grid-column: 1; grid-row: 1; padding-bottom: 40svh; }
+  .j-step { min-height: 66svh; justify-content: center; }
+}
+
+.j-head { padding-top: var(--space-5); }
+.j-head h1 { margin: 0; font-family: var(--serif); font-size: var(--text-3xl); font-weight: 520; line-height: 1.04; letter-spacing: -0.025em; color: var(--ink); text-wrap: balance; }
+.j-count { margin: 0 0 0.5rem; font-family: var(--mono); font-size: var(--text-s); color: var(--muted); }
+.j-step h2 { margin: 0 0 0.5rem; font-family: var(--serif); font-size: var(--text-2xl); font-weight: 520; line-height: 1.1; letter-spacing: -0.02em; color: var(--ink); text-wrap: balance; }
+.j-step {
+  margin: 0 0 clamp(3rem, 7vh, 5rem);
+  scroll-margin-top: calc(var(--header-h) + 1.5rem); max-width: 34ch; font-size: var(--text-m); }
+/* A link to one step (journey/meter/#many) lands with the step in reading position, clear of the header and the sticky picture. */
+.j-step [id] { scroll-margin-top: 48svh; }
+.j-step .controls, .j-step .pick { margin-top: 0.25rem; }
+.j-step .btn { min-height: 2.75rem; }
+.j-step .row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.j-open { display: inline-flex; align-items: center; gap: 0.375rem; min-height: 2.75rem; font-weight: 600; color: var(--accent); text-decoration: none; }
+.j-open:hover { text-decoration: underline; }
+.j-next {
+  display: grid; gap: 0.125rem; margin: var(--space-6) 0 0; padding: 1rem 1.125rem;
+  border: 1px solid var(--rule-strong); border-radius: var(--radius); background: var(--card);
+  color: var(--ink); text-decoration: none; max-width: 25rem;
+}
+.j-next:hover { border-color: var(--accent); }
+.j-next b { font-family: var(--serif); font-size: var(--text-xl); font-weight: 520; }
+.j-next span { font-size: var(--text-s); color: var(--muted); }
+.j-more { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin: 0.75rem 0 0; padding: 0; list-style: none; font-size: var(--text-s); }
+.j-foot { margin-top: var(--space-6); font-size: var(--text-xs); color: var(--muted); }
+
+/* ---------- the 21 lessons, as a rail (Journey.astro) ---------- */
+/* Every lesson by its number, grouped by part; the one on show also by its name. On a narrow page
+   it scrolls sideways with the current lesson in the middle and the ends fading out. */
+
+.j-rail { min-width: 0; font-size: var(--text-xs); container: rail / inline-size; }
+/* Where the rail is short of room, the other parts fold to their names: Part 1 | Part 2 5 … 13 | Part 3. */
+@container rail (max-width: 56rem) { .j-rail-group:not([data-mine]) > ol { display: none; } }
+.j-rail-all {
+  display: flex; align-items: center; gap: 0.25rem; margin: 0; padding: 0 1rem; list-style: none;
+  overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain;
+  mask-image: linear-gradient(90deg, transparent, #000 0.75rem, #000 calc(100% - 0.75rem), transparent);
+}
+.j-rail-all::-webkit-scrollbar { display: none; }
+.j-rail-group { flex: none; display: flex; align-items: center; gap: 0.1rem; }
+.j-rail-group + .j-rail-group { padding-left: 0.35rem; border-left: 1px solid var(--rule); }
+.j-rail-group > ol { display: flex; gap: 0.1rem; margin: 0; padding: 0; list-style: none; }
+.j-rail-group li { flex: none; }
+.j-rail a {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem;
+  min-width: 1.75rem; min-height: 2.5rem; padding: 0 0.3rem; border-radius: var(--radius-s);
+  color: var(--muted); text-decoration: none; white-space: nowrap;
+}
+.j-rail a:hover { color: var(--ink); background: var(--paper-2); }
+.j-rail a[aria-current='page'], .j-rail a[data-here] { color: var(--ink); background: var(--card); box-shadow: inset 0 0 0 1px var(--rule-strong); font-weight: 600; }
+.j-rail a.j-rail-part { padding-inline: 0.4rem; font-weight: 600; color: var(--ink-2); }
+.j-rail-group:not([data-mine]) a:not(.j-rail-part) { color: color-mix(in oklab, var(--muted) 75%, var(--paper)); }
+.j-rail-n { font-family: var(--mono); }
+.j-rail-name { display: none; }
+.j-rail a[aria-current='page'] .j-rail-name, .j-rail a[data-here] .j-rail-name { display: inline; }
+
+/* ======== journey-mobile: step buttons, overlay, step extras (planning/journey-mobile/SPEC.md) ======== */
+/* ---------- the step buttons (run.ts) ---------- */
+/* Narrow: a row under the picture, Back, "2 of 4 · title", Next. Wide: a small bar in the
+   picture's bottom right corner, Back, "2 of 4", Next. On the last step of a narrow page Next
+   becomes the link to what comes after. */
+
+.j-nav {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.5rem;
+  padding: 0.375rem; border-top: 1px solid var(--rule); background: var(--card);
+}
+.j-nav[hidden] { display: none; }
+.j-nav-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+  min-width: 2.75rem; min-height: 2.75rem; padding: 0 0.9rem;
+  border: 1px solid var(--rule-strong); border-radius: var(--radius-pill); background: var(--card);
+  font-family: var(--sans); font-size: var(--text-s); font-weight: 600; line-height: 1; color: var(--ink);
+  text-decoration: none; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+}
+.j-nav-btn[hidden] { display: none; }
+.j-nav-btn:disabled { opacity: 0.38; cursor: default; }
+.j-nav-btn[data-nav='next'], .j-nav a.j-nav-on, .j-nav a.j-nav-on:hover { border-color: var(--ink); background: var(--ink); color: var(--paper); text-decoration: none; }
+@media (hover: hover) {
+  .j-nav-btn:not(:disabled):hover { border-color: var(--ink); }
+  .j-nav-btn[data-nav='next']:not(:disabled):hover, .j-nav-on:hover { background: color-mix(in oklab, var(--ink) 86%, var(--paper)); color: var(--paper); }
+}
+.j-nav-where {
+  margin: 0; min-width: 0; max-width: none; text-align: center;
+  font-size: var(--text-xs); line-height: 1.3; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.j-nav-where [data-nav-count] { font-family: var(--mono); color: var(--ink); }
+.j-nav-title:not(:empty)::before { content: ' · '; }
+@container journey (min-width: 60rem) {
+  .j-nav {
+    position: absolute; right: 0.625rem; bottom: 0.625rem; z-index: 3;
+    display: flex; gap: 0.25rem; padding: 0.25rem;
+    border: 1px solid var(--rule); border-radius: var(--radius-pill);
+    background: color-mix(in oklab, var(--card) 92%, transparent); box-shadow: var(--shadow);
+  }
+  .j-nav-where { padding-inline: 0.375rem; }
+  .j-nav-title { display: none; }
+  .j-nav-btn { padding: 0 0.75rem; }
+}
+
+/* ---------- on the picture: a speech bubble and a counter (overlay.ts) ---------- */
+/* At most two small things over the picture. The bubble points at the part that speaks and shows
+   two lines at most; the chip holds the readout's main number. */
+
+.j-bubble {
+  position: absolute; left: 0; top: 0; z-index: 3;
+  width: max-content; max-width: min(15rem, calc(100% - 12px));
+  padding: 0.35rem 0.6rem; border: 1px solid var(--rule-strong); border-radius: var(--radius-s);
+  background: var(--card); color: var(--ink); box-shadow: var(--shadow-pop);
+  font-family: var(--sans); font-size: var(--text-xs); font-weight: 500; line-height: 1.35;
+  pointer-events: none;
+  transition: transform 360ms var(--fig-ease);
+}
+.j-bubble[hidden] { display: none; }
+.j-bubble[data-instant] { transition: none; }
+.j-bubble p {
+  margin: 0; max-width: none; overflow: hidden; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+}
+/* The pointer, on the side that faces the part, aimed at its middle (--along). */
+.j-bubble::before {
+  content: ''; position: absolute; width: 0.55rem; height: 0.55rem;
+  background: var(--card); border: 1px solid var(--rule-strong); border-top: 0; border-left: 0;
+}
+.j-bubble[data-side='above']::before { left: var(--along, 50%); bottom: calc(-0.275rem - 1px); transform: translateX(-50%) rotate(45deg); }
+.j-bubble[data-side='below']::before { left: var(--along, 50%); top: calc(-0.275rem - 1px); transform: translateX(-50%) rotate(225deg); }
+.j-bubble[data-side='right']::before { top: var(--along, 50%); left: calc(-0.275rem - 1px); transform: translateY(-50%) rotate(135deg); }
+.j-bubble[data-side='left']::before { top: var(--along, 50%); right: calc(-0.275rem - 1px); transform: translateY(-50%) rotate(-45deg); }
+@keyframes j-bubble-in { from { opacity: 0.15; } }
+.j-bubble[data-new] p { animation: j-bubble-in 240ms var(--ease-out); }
+
+.j-counter {
+  position: absolute; left: 0.5rem; top: 0.5rem; z-index: 2; margin: 0;
+  width: max-content; max-width: calc(100% - 1rem); padding: 0.2rem 0.6rem;
+  border: 1px solid var(--rule); border-radius: var(--radius-pill);
+  background: color-mix(in oklab, var(--card) 92%, transparent);
+  font-family: var(--sans); font-size: var(--text-xs); line-height: 1.35; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
+}
+.j-counter[hidden] { display: none; }
+.j-counter b { font-family: var(--mono); font-weight: 600; color: var(--ink); }
+@container journey (min-width: 60rem) {
+  .j-bubble { max-width: min(18rem, calc(100% - 12px)); font-size: var(--text-s); padding: 0.4rem 0.7rem; }
+  .j-counter { left: 0.75rem; top: 0.75rem; font-size: var(--text-s); }
+}
+
+/* ---------- in the step on show: what the run says beyond the picture (run.ts placeExtras) ---------- */
+/* The narration line, the readout as a small table, the note and the colour key, under the step's
+   text and controls and above its <More>. */
+
+.j-step-extra { display: grid; gap: 0.625rem; margin-top: 0.75rem; }
+.j-step-extra[hidden] { display: none; }
+/* The narration line keeps two lines of room, so the step does not jump as lines come and go. */
+.j-say {
+  margin: 0; min-height: 2.9em; max-width: none; padding-left: 0.75rem;
+  border-left: 2px solid var(--rule-strong);
+  font-size: var(--text-s); line-height: 1.45; color: var(--ink);
+}
+.j-say:empty { border-left-color: transparent; }
+.j-say b { margin-right: 0.15rem; font-family: var(--mono); font-size: var(--text-xs); font-weight: 600; color: var(--muted); }
+.j-stats { display: grid; grid-template-columns: fit-content(50%) minmax(0, 1fr); gap: 0.15rem 0.875rem; margin: 0; }
+.j-stats:empty { display: none; }
+.j-stats div { display: contents; }
+.j-stats dt { font-size: var(--text-xs); line-height: 1.6; color: var(--muted); overflow-wrap: anywhere; }
+.j-stats dd { margin: 0; font-family: var(--mono); font-size: var(--text-s); font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+/* The assumption behind a number ("example", "cache on"), beside it. */
+.j-tag { display: inline-block; margin-left: 0.15rem; padding: 0 0.35rem; border: 1px solid var(--rule-strong); border-radius: var(--radius-pill); font-family: var(--sans); font-size: var(--text-xs); font-weight: 500; line-height: 1.35; color: var(--muted); vertical-align: 0.05em; }
+/* A control restarted the run: the counters went back to 0. */
+@keyframes j-reset { from { background: color-mix(in oklab, var(--ink) 12%, transparent); } }
+.j-stats[data-reset], .j-counter[data-reset] { border-radius: var(--radius-s); animation: j-reset 700ms var(--ease-out); }
+.j-counter[data-reset] { border-radius: var(--radius-pill); }
+.j-model { margin: 0; padding-top: 0.5rem; border-top: 1px solid var(--rule); max-width: none; font-size: var(--text-s); line-height: 1.5; color: var(--ink-2); }
+.j-model b { color: var(--ink); font-weight: 600; margin-right: 0.25rem; }
+.j-key { display: flex; flex-wrap: wrap; gap: 0.125rem 0.875rem; margin: 0; padding: 0; list-style: none; font-size: var(--text-xs); color: var(--muted); }
+.j-key li { display: inline-flex; align-items: center; gap: 0.35rem; }
+.j-key li::before { content: ''; width: 0.75rem; height: 0.75rem; border-radius: 3px; background: var(--t); border: 1px solid color-mix(in oklab, var(--t) 45%, var(--ink)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .j-bubble { transition: none; }
+  .j-bubble[data-new] p, .j-stats[data-reset], .j-counter[data-reset] { animation: none; }
+}
+/* ======== end journey-mobile: step buttons, overlay, step extras ======== */
+
+/* ---------- the picture ---------- */
+
+.j-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.j-svg path { vector-effect: non-scaling-stroke; }
+.j-ent, .j-cam { transition: transform 720ms var(--fig-ease), opacity 420ms var(--fig-ease); }
+.j-stage[data-instant] .j-ent, .j-stage[data-instant] .j-cam, .j-stage[data-instant] .j-label { transition: none; }
+.j-track { fill: none; stroke: var(--fig-faint); stroke-width: 4px; stroke-linecap: round; stroke-linejoin: round; opacity: 0.7; }
+.j-svg .k-halo { filter: none; transform: none; opacity: 0.35; }
+
+/* What a slab or a puck is made of. --t is its top; the sides fall away from it. */
+[data-b='you'] { --t: color-mix(in oklab, var(--ink) 80%, var(--card)); }
+[data-b='model'] { --t: color-mix(in oklab, var(--ink) 13%, var(--card)); }
+[data-b='tool'] { --t: color-mix(in oklab, var(--blue) 46%, var(--card)); }
+[data-b='rules'] { --t: color-mix(in oklab, var(--green) 52%, var(--card)); }
+[data-b='sum'] { --t: color-mix(in oklab, var(--ink) 36%, var(--card)); }
+[data-b='bad'] { --t: var(--accent); }
+.j-svg .k-solid[data-b] .k-fill, .j-svg .k-solid[data-b] .k-top { fill: var(--t); }
+.j-svg .k-solid[data-b] .k-left { fill: color-mix(in oklab, var(--t) 86%, var(--j-shade)); }
+.j-svg .k-solid[data-b] .k-right, .j-svg .k-solid[data-b] .k-shadow { fill: color-mix(in oklab, var(--t) 70%, var(--j-shade)); }
+.j-svg .k-solid[data-b] .k-edge { stroke: color-mix(in oklab, var(--t) 42%, var(--j-shade)); stroke-width: 1px; }
+.j-svg .k-solid[data-b='sum'] .k-edge { stroke-dasharray: 3 2; }
+.j-svg .k-solid[data-b][data-lit] .k-edge { stroke: var(--j-work); stroke-width: 2px; }
+
+/* The model on top of a window: lit while it is working. A second kind of model is tinted. */
+.j-ent[data-model='b'] [data-part='head'] .k-top, .j-ent[data-model='b'] [data-part='head'] .k-fill { fill: color-mix(in oklab, var(--blue) 22%, var(--card)); }
+.j-ent [data-part='head'] path { transition: fill 200ms; }
+.j-ent[data-busy=''] [data-part='lens'] { fill: var(--card); stroke: var(--j-work); }
+
+/* Lamps: on a station's base and on top of a gate. */
+.j-ent [data-part='lamp'] path { transition: fill 200ms; }
+.j-ent [data-part='lamp'] .k-top, .j-ent [data-part='lamp'] .k-fill { fill: var(--fig-faint); }
+.j-ent[data-lamp='work'] [data-part='lamp'] .k-top, .j-ent[data-lamp='work'] [data-part='lamp'] .k-fill { fill: var(--j-work); }
+.j-ent[data-lamp='wait'] [data-part='lamp'] .k-top, .j-ent[data-lamp='wait'] [data-part='lamp'] .k-fill { fill: var(--blue); }
+.j-ent[data-lamp='ok'] [data-part='lamp'] .k-top, .j-ent[data-lamp='ok'] [data-part='lamp'] .k-fill { fill: var(--green); }
+.j-ent[data-lamp='bad'] [data-part='lamp'] .k-top, .j-ent[data-lamp='bad'] [data-part='lamp'] .k-fill { fill: var(--accent); }
+.j-ent[data-lamp='bad'] .k-glass-edges { stroke: var(--accent); }
+
+.j-ent [data-part='leaf'] .k-top, .j-ent [data-part='leaf'] .k-fill { fill: var(--fig-top); }
+.j-ent[data-tree='bad'] [data-part='leaf'] .k-top, .j-ent[data-tree='bad'] [data-part='leaf'] .k-fill { fill: var(--accent); }
+.j-svg [data-file='read'] .k-top, .j-svg [data-file='read'] .k-fill { fill: color-mix(in oklab, var(--blue) 40%, var(--card)); }
+.j-svg [data-file='bad'] .k-top, .j-svg [data-file='bad'] .k-fill { fill: var(--accent); }
+.j-svg [data-file='ok'] .k-top, .j-svg [data-file='ok'] .k-fill { fill: color-mix(in oklab, var(--green) 50%, var(--card)); }
+.j-svg [data-commit='ok'] .k-top, .j-svg [data-commit='ok'] .k-fill { fill: var(--green); }
+.j-svg [data-commit='bad'] .k-top, .j-svg [data-commit='bad'] .k-fill { fill: var(--accent); }
+.j-svg [data-commit] .k-left, .j-svg [data-commit] .k-right, .j-svg [data-commit] .k-shadow { fill: var(--fig-right); }
+.j-svg [data-off] { opacity: 0.22; }
+.j-svg [data-part='body'] .k-top, .j-svg [data-part='body'] .k-fill { fill: color-mix(in oklab, var(--ink) 80%, var(--card)); }
+.j-svg [data-part='body'] .k-left { fill: color-mix(in oklab, var(--ink) 68%, var(--card)); }
+.j-svg [data-part='body'] .k-right, .j-svg [data-part='body'] .k-shadow { fill: color-mix(in oklab, var(--ink) 92%, var(--card)); }
+
+/* Part two: the meter, the tray, other people, machines. */
+.j-svg [data-part='allowance'] .k-top, .j-svg [data-part='allowance'] .k-fill, .j-svg [data-part='coin'] .k-top, .j-svg [data-part='coin'] .k-fill { fill: color-mix(in oklab, var(--ink) 46%, var(--card)); }
+.j-svg [data-part='allowance'] .k-left, .j-svg [data-part='coin'] .k-left { fill: color-mix(in oklab, var(--ink) 56%, var(--card)); }
+.j-svg [data-part='allowance'] .k-right, .j-svg [data-part='allowance'] .k-shadow, .j-svg [data-part='coin'] .k-right, .j-svg [data-part='coin'] .k-shadow { fill: color-mix(in oklab, var(--ink) 66%, var(--card)); }
+.j-svg [data-part='allowance'] .k-edge, .j-svg [data-part='coin'] .k-edge { stroke: color-mix(in oklab, var(--ink) 80%, var(--card)); stroke-width: 1px; }
+.j-svg [data-card='ok'] .k-edge { stroke: var(--green); stroke-width: 2px; }
+.j-svg [data-card='bad'] .k-edge { stroke: var(--accent); stroke-width: 2px; }
+.j-svg [data-card='work'] { opacity: 0.55; }
+/* A card that waits for you has a blue edge, like a lamp that waits. */
+.j-svg .k-solid[data-b][data-lit][data-card='wait'] .k-edge { stroke: var(--blue); stroke-width: 2px; }
+.j-svg [data-who='peer'] .k-top, .j-svg [data-who='peer'] .k-fill { fill: color-mix(in oklab, var(--ink) 48%, var(--card)); }
+.j-svg [data-who='peer'] .k-left { fill: color-mix(in oklab, var(--ink) 40%, var(--card)); }
+.j-svg [data-who='peer'] .k-right, .j-svg [data-who='peer'] .k-shadow { fill: color-mix(in oklab, var(--ink) 58%, var(--card)); }
+.j-svg [data-who='client'] .k-top, .j-svg [data-who='client'] .k-fill { fill: color-mix(in oklab, var(--blue) 50%, var(--card)); }
+.j-svg [data-who='client'] .k-left { fill: color-mix(in oklab, var(--blue) 42%, var(--card)); }
+.j-svg [data-who='client'] .k-right, .j-svg [data-who='client'] .k-shadow { fill: color-mix(in oklab, var(--blue) 62%, var(--card)); }
+.j-svg [data-who='user'] .k-top, .j-svg [data-who='user'] .k-fill { fill: color-mix(in oklab, var(--ink) 24%, var(--card)); }
+.j-svg [data-who='user'] .k-left { fill: color-mix(in oklab, var(--ink) 18%, var(--card)); }
+.j-svg [data-who='user'] .k-right, .j-svg [data-who='user'] .k-shadow { fill: color-mix(in oklab, var(--ink) 32%, var(--card)); }
+.j-svg [data-zone] .k-top, .j-svg [data-zone] .k-fill { fill: color-mix(in oklab, var(--ink) 5%, var(--card)); }
+.j-svg [data-zone] .k-left { fill: color-mix(in oklab, var(--ink) 11%, var(--card)); }
+.j-svg [data-zone] .k-right, .j-svg [data-zone] .k-shadow { fill: color-mix(in oklab, var(--ink) 17%, var(--card)); }
+.j-svg [data-zone] .k-edge { stroke: var(--fig-faint); stroke-width: 1px; }
+.j-svg [data-zone='cloud'] .k-edge { stroke-dasharray: 5 4; stroke: var(--fig-edge); }
+.j-ent[data-asleep=''] { opacity: 0.32 !important; }
+
+.j-puck .k-solid .k-edge { stroke-width: 1.5px; }
+
+@keyframes j-drop { from { transform: translateY(-9px); opacity: 0; } }
+@keyframes j-scan { 0%, 100% { filter: none; } 40% { filter: brightness(1.35) saturate(1.3); } }
+.j-svg [data-fresh] { animation: j-drop 380ms var(--fig-ease) both; }
+.j-ent[data-scan=''] .k-solid[data-b] { animation: j-scan 620ms ease-in-out both; animation-delay: calc(var(--i, 0) * 45ms); }
+.j-stage[data-instant] [data-fresh] { animation: none; }
+
+/* Labels sit over the picture and follow the camera. */
+.j-labels { position: absolute; inset: 0; pointer-events: none; }
+.j-label {
+  /* --dx and --dy keep labels apart and inside the frame (scene.ts spread). */
+  position: absolute; transform: translate(var(--dx, 0px), var(--dy, 0px)) translate(-50%, calc(-100% - 6px));
+  padding: 0.1rem 0.4rem; border-radius: 5px;
+  background: color-mix(in oklab, var(--card) 86%, transparent);
+  font-family: var(--sans); font-size: var(--text-xs); font-weight: 600; line-height: 1.25; color: var(--ink);
+  white-space: nowrap; text-decoration: none; pointer-events: auto;
+  transition: left 720ms var(--fig-ease), top 720ms var(--fig-ease), opacity 280ms, transform 280ms var(--fig-ease);
+}
+.j-label[data-place='left'] { transform: translate(var(--dx, 0px), var(--dy, 0px)) translate(calc(-100% - 8px), -50%); }
+.j-label[data-place='right'] { transform: translate(var(--dx, 0px), var(--dy, 0px)) translate(8px, -50%); }
+.j-label[data-place='bottom'] { transform: translate(var(--dx, 0px), var(--dy, 0px)) translate(-50%, 8px); }
+/* Only a label that opens something is underlined; the colour is not the accent, which means a problem. */
+a.j-label { text-decoration: underline dotted var(--muted); text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; cursor: pointer; }
+a.j-label::after { content: ''; position: absolute; inset: -0.6rem -0.4rem; }
+a.j-label:hover, a.j-label:focus-visible { text-decoration-style: solid; text-decoration-color: var(--ink); }
+span.j-label { text-decoration: none; }
+/* The definition of a term label, on hover and focus (scene.ts showTip). */
+.j-tip {
+  position: absolute; z-index: 3; max-width: min(19rem, calc(100% - 8px)); padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-s); background: var(--ink); color: var(--paper); box-shadow: var(--shadow-pop);
+  font-family: var(--sans); font-size: var(--text-xs); font-weight: 400; line-height: 1.4; pointer-events: none;
+}
+.j-tip[hidden] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .j-ent, .j-cam, .j-label, .j-step, .j-stage { transition: none; }
+  .j-svg [data-fresh], .j-ent[data-scan=''] .k-solid[data-b] { animation: none; }
+}
+
+
+/* One thing more inside a step. */
+.j-more-info { margin: 0.25rem 0 0.875rem; max-width: 25rem; border-top: 1px solid var(--rule); }
+.j-more-info > summary { display: flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; cursor: pointer; font-weight: 600; color: var(--ink); list-style: none; }
+.j-more-info > summary::-webkit-details-marker { display: none; }
+.j-more-info > summary::before { content: '+'; display: inline-grid; place-items: center; width: 1.25rem; height: 1.25rem; border: 1px solid var(--rule-strong); border-radius: 50%; font-family: var(--mono); font-size: var(--text-s); line-height: 1; color: var(--accent); }
+.j-more-info[open] > summary::before { content: '−'; }
+.j-more-info > summary:hover { color: var(--accent); }
+.j-more-body { padding-bottom: 0.75rem; font-size: var(--text-s); }
+.j-more-body p { max-width: none; font-size: inherit; margin-bottom: 0.625rem; }
+.j-more-body dl { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 0.875rem; margin: 0 0 0.625rem; }
+.j-more-body dt { color: var(--muted); }
+.j-more-body dd { margin: 0; font-family: var(--mono); color: var(--ink); }
+
+/* Switches: each one is on or off by itself, so each shows a box that is ticked or empty. */
+.pick[data-multi] button::before {
+  content: ''; flex: none; width: 0.95rem; height: 0.95rem; border-radius: 3px;
+  border: 1.5px solid var(--rule-strong); background: var(--card);
+}
+.pick[data-multi] button[aria-pressed='true']::before {
+  border-color: var(--ink);
+  background: var(--ink) linear-gradient(var(--ink), var(--ink));
+  box-shadow: inset 0 0 0 2px var(--card);
+}
+.pick[data-multi] button[aria-pressed='false'] { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in oklab, var(--muted) 60%, transparent); }
+
+/* Rich guide overviews: part switcher, per-level takeaway, sub-step jump chips & concept pills. */
+.j-parts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin: 0 0 1.25rem; }
+.j-part-card {
+  display: flex; flex-direction: column; gap: 0.15rem; padding: 0.625rem 0.75rem;
+  border: 1px solid var(--rule); border-radius: var(--radius-s); background: var(--card);
+  text-decoration: none; color: var(--ink); transition: border-color var(--dur-fast) ease, background-color var(--dur-fast) ease;
+}
+.j-part-card:hover { border-color: var(--accent); color: var(--ink); }
+.j-part-card[aria-current='page'] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.j-part-meta { font-size: var(--text-xs); color: var(--muted); font-weight: 560; }
+.j-part-card strong { font-size: var(--text-s); font-weight: 600; line-height: 1.3; }
+.j-part-lib { border-style: dashed; }
+.j-part-lib strong { color: var(--ink); }
+
+.j-adds {
+  margin: 0.5rem 0 0.75rem; padding: 0.55rem 0.75rem;
+  border-left: 2px solid var(--rule-strong); background: var(--card);
+  border-radius: 0 var(--radius-s) var(--radius-s) 0;
+}
+.j-adds p { margin: 0; font-size: var(--text-s); line-height: 1.5; color: var(--ink-2); }
+.j-adds b { color: var(--ink); font-weight: 600; }
+
+.j-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0 0 0.75rem; }
+.j-chip {
+  display: inline-flex; align-items: center; min-height: 1.9rem; padding: 0.15rem 0.6rem;
+  border: 1px solid var(--rule); border-radius: var(--radius-pill); background: var(--card);
+  font-size: var(--text-xs); font-weight: 520; color: var(--ink-2); text-decoration: none;
+  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.j-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+.j-ov-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.875rem; margin-top: 0.25rem; }
+.j-concepts { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.j-concepts a {
+  font-size: var(--text-xs); color: var(--muted); text-decoration: underline dotted var(--rule-strong);
+  text-underline-offset: 0.2em;
+}
+.j-concepts a:hover { color: var(--accent); text-decoration-color: var(--accent); text-decoration-style: solid; }
+
+.j-more-body .j-defs { grid-template-columns: 1fr; gap: 0; }
+.j-more-body .j-defs dt { margin-top: 0.375rem; font-weight: 600; color: var(--ink); }
+.j-more-body .j-defs dd { font-family: var(--sans); color: var(--ink-2); }
+.j-code { margin: 0 0 0.625rem; padding: 0.625rem 0.75rem; border: 1px solid var(--rule); border-radius: var(--radius-s); background: var(--paper-2); font-family: var(--mono); font-size: var(--text-xs); line-height: 1.55; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+.j-more-body .copy-prompt { margin: 0; }
+.j-step p a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 0.2em; }
+.j-step p a:hover { color: var(--accent); }
+.j-lead { margin: 0.75rem 0 0; max-width: 34ch; font-size: var(--text-m); color: var(--ink-2); }
+.j-lead a { color: var(--accent); font-weight: 600; text-underline-offset: 0.2em; }
+.j-more-body a.fact { text-decoration-color: color-mix(in oklab, var(--muted) 40%, transparent); }
+
+/* A model that is working: its head turns amber (--j-work), as does the legend's "working" swatch. */
+[data-b='busy'] { --t: color-mix(in oklab, var(--j-work) 62%, var(--card)); }
+.j-ent[data-busy=''] [data-part='head'] .k-top, .j-ent[data-busy=''] [data-part='head'] .k-fill { fill: color-mix(in oklab, var(--j-work) 62%, var(--card)); }
+.j-ent[data-busy=''] [data-part='head'] .k-left { fill: color-mix(in oklab, var(--j-work) 74%, var(--card)); }
+.j-ent[data-busy=''] [data-part='head'] .k-right, .j-ent[data-busy=''] [data-part='head'] .k-shadow { fill: color-mix(in oklab, var(--j-work) 80%, var(--j-shade)); }
+.j-ent[data-busy=''] [data-part='head'] .k-edge, .j-ent[data-busy=''] [data-part='head'] .k-crease { stroke: color-mix(in oklab, var(--j-work) 70%, var(--j-shade)); }
+
+/* ---------- lesson thumbnails (journey/thumbs.ts, Thumb.astro) ---------- */
+
+.j-thumb {
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-flow: row; align-content: start; gap: 0.2rem;
+  min-width: 0; height: 100%; padding: 0.3rem 0.3rem 0.4rem; font-family: var(--sans); line-height: 1.3;
+  border: 1px solid var(--rule); border-radius: var(--radius-s); background: var(--card);
+  color: var(--ink); text-decoration: none;
+  transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+}
+.j-thumb:hover, .j-thumb[data-playing], .j-thumb[data-here], .j-thumb[aria-current='page'] { border-color: var(--rule-strong); box-shadow: var(--shadow); }
+.j-thumb:hover { color: var(--ink); }
+.j-thumb[data-here], .j-thumb[aria-current='page'] { box-shadow: inset 0 0 0 1px var(--ink); border-color: var(--ink); }
+/* .tile only for the picture's tones (fig.css); none of its frame. */
+.j-thumb-stage, .j-thumb-stage.tile { grid-column: 1 / -1; position: relative; display: block; aspect-ratio: 4 / 3; overflow: hidden; border: 0; border-radius: 4px; background: var(--paper); }
+/* A thumb is a picture and a name: no labels, no tip. Before it is drawn, a quiet block. */
+.j-thumb-stage .j-labels, .j-thumb-stage .j-tip { display: none; }
+.j-thumb:not([data-drawn]) .j-thumb-stage { background: var(--paper-2); }
+.j-thumb-name { font-size: var(--text-xs); font-weight: 600; line-height: 1.25; padding-inline: 0.15rem; }
+.j-thumb-n { font-family: var(--mono); font-weight: 500; color: var(--muted); margin-right: 0.15rem; }
+.j-thumb-title { font-size: var(--text-xs); line-height: 1.3; color: var(--muted); padding-inline: 0.15rem; }
+
+/* ---------- the top of a part overview (PartSwitch.astro) ---------- */
+
+.j-part-intro { display: grid; gap: 0.75rem; margin: 0 0 1.5rem; }
+.j-recap { margin: 0; padding-left: 0.75rem; border-left: 2px solid var(--rule-strong); font-size: var(--text-m); color: var(--ink); max-width: 34ch; }
+.j-builds { margin: 0; font-size: var(--text-m); color: var(--ink-2); max-width: 34ch; }
+.j-strip { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
+.j-strip[data-count='8'], .j-strip[data-count='9'] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@container journey (max-width: 59.99rem) {
+  .j-strip { grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); }
+  .j-strip[data-count='4'] { --cols: 4; }
+}
+.j-start {
+  justify-self: start; display: inline-flex; align-items: center; gap: 0.4rem; min-height: 2.75rem; padding: 0 1rem;
+  border-radius: var(--radius-pill); background: var(--ink); color: var(--paper); font-weight: 600; text-decoration: none;
+}
+.j-start:hover { background: color-mix(in oklab, var(--ink) 86%, var(--paper)); }
+
+
+/* Lesson 7: what does not fit the window, drawn on top of the cap (Agent.spill in picture.ts). */
+.j-svg .k-solid[data-over] { opacity: 0.8; }
+.j-svg .k-solid[data-over] .k-edge { stroke: var(--accent); stroke-width: 1.6px; stroke-dasharray: 3 2; }
+/* Part one: devices and servers (picture.ts `gear`). The body is a mid grey that reads on both
+   papers; a screen is dark glass in both themes (--screen) and turns amber while it works, the
+   colour of working everywhere in the picture. A database's discs are body grey: blue already
+   means a tool's result. */
+.j-svg [data-gear] .k-solid:not([data-part]) .k-top, .j-svg [data-gear] .k-solid:not([data-part]) .k-fill,
+.j-svg [data-gear] [data-part='disc'] .k-top, .j-svg [data-gear] [data-part='disc'] .k-fill { fill: color-mix(in oklab, var(--ink) 20%, var(--card)); }
+.j-svg [data-gear] .k-solid:not([data-part]) .k-left, .j-svg [data-gear] [data-part='disc'] .k-left { fill: color-mix(in oklab, var(--ink) 32%, var(--card)); }
+.j-svg [data-gear] .k-solid:not([data-part]) .k-right, .j-svg [data-gear] .k-solid:not([data-part]) .k-shadow,
+.j-svg [data-gear] [data-part='disc'] .k-right, .j-svg [data-gear] [data-part='disc'] .k-shadow { fill: color-mix(in oklab, var(--ink) 44%, var(--card)); }
+.j-svg [data-gear] .k-solid .k-edge, .j-svg [data-gear] [data-part='disc'] .k-edge { stroke: color-mix(in oklab, var(--ink) 62%, var(--card)); stroke-width: 1px; }
+.j-svg [data-part='screen'] .k-top, .j-svg [data-part='screen'] .k-fill, .j-svg [data-part='screen'] .k-left,
+.j-svg [data-part='screen'] .k-right, .j-svg [data-part='screen'] .k-shadow { fill: var(--screen); }
+.j-svg [data-part='screen'] .k-edge { stroke: color-mix(in oklab, var(--ink) 55%, var(--card)); stroke-width: 1.2px; }
+.j-ent[data-lamp='work'] [data-part='screen'] .k-left, .j-ent[data-lamp='work'] [data-part='screen'] .k-right,
+.j-ent[data-lamp='work'] [data-part='screen'] .k-top, .j-ent[data-lamp='work'] [data-part='screen'] .k-fill { fill: color-mix(in oklab, var(--j-work) 78%, var(--screen)); }
+.j-ent[data-lamp='ok'] [data-part='screen'] .k-left, .j-ent[data-lamp='ok'] [data-part='screen'] .k-right { fill: color-mix(in oklab, var(--green) 55%, var(--screen)); }

@@ -1,0 +1,62 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import Step from '../../components/journey/Step.astro';
+import Next from '../../components/journey/Next.astro';
+import More from '../../components/journey/More.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import * as p from '../../lib/start';
+import Term from '../../components/journey/Term.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
+import { url } from '../../lib/nav';
+
+const ids = ['t3code.price', 't3code.install', 'plans.claude.pro.claudeCode', 'plans.chatgpt.limits.codexOnEveryPlan', 'harnesses.claudeCode.web'];
+---
+<Journey chapter="first" first="device" title="Your first real loop" description="The first loop on the device in front of you: one app, one plan, one small real job, and four beats: you ask, it builds, you look, you say what to change.">
+  <Step id="device" title="Start on what is in front of you">
+    <p>On a laptop or a desktop PC you need one coding app and the plan from <LessonRef id="providers" />. On a phone, the quickest start is a builder in the browser.</p>
+    <div class="pick" role="group" aria-label="Your device">
+      <button type="button" data-do="device" data-val="laptop" data-default aria-pressed="true">Laptop</button>
+      <button type="button" data-do="device" data-val="desktop" aria-pressed="false">Desktop PC</button>
+      <button type="button" data-do="device" data-val="phone" aria-pressed="false">Phone</button>
+    </div>
+    <More title="The set-up">
+      <ul>
+        <li><a href={url('t3-code/')}>T3 Code</a> is <Fact id="t3code.price" />: <Fact id="t3code.install" />.</li>
+        <li>It drives Claude Code or Codex. <Fact id="plans.claude.pro.claudeCode" show="claim" /> <Fact id="plans.chatgpt.limits.codexOnEveryPlan" show="claim" /></li>
+        <li><a href={url('start/first-hour/')}>The first hour</a> has every click.</li>
+      </ul>
+    </More>
+    <More title="The side road: builders in the browser">
+      <p>v0, Lovable, Bolt and Replit build a first version from one message, with nothing to install. The files live on their site. When the project matters, connect it to GitHub and carry on with a coding agent on your own computer.</p>
+    </More>
+  </Step>
+
+  <Step id="job" title="One small, real job">
+    <p>Pick something you would use next week, small enough to try in a minute: the club's member list, in a new, empty folder that becomes <Term id="project" />. Ask it to ask you first.</p>
+    <ForLevel is="plain"><CopyPrompt compact title="The first prompt">{p.describe.app}</CopyPrompt></ForLevel>
+    <ForLevel is="technical"><CopyPrompt compact title="The first prompt, with tests">{p.describeChecked}</CopyPrompt></ForLevel>
+    <ForLevel is="engineer"><CopyPrompt compact title="The first prompt, stack first">{p.describeEngineer}</CopyPrompt></ForLevel>
+  </Step>
+
+  <Step id="loop" title="Four beats">
+    <p>You ask, it builds, you look, you say what to change. The counter in the corner shows which beat you are on.</p>
+    <ForLevel is="technical"><p>“It builds” ends with the tests and the type check, so you look at something that already passed them.</p></ForLevel>
+    <div class="row"><button class="btn ghost" type="button" data-do="loop">Play it again</button></div>
+  </Step>
+
+  <Step id="change" title="Say exactly what to change">
+    <p>Clear changes you can look for, or one vague wish. Look at what comes back.</p>
+    <div class="pick" role="group" aria-label="What you ask for">
+      <button type="button" data-do="change" data-val="clear" data-default aria-pressed="true">Three clear changes</button>
+      <button type="button" data-do="change" data-val="vague" aria-pressed="false">“Make it better”</button>
+    </div>
+    <Next from="first" more={[{ href: 'journey/chat/', text: 'Straight to Chat, lesson 5' }, { href: 'start/first-hour/', text: 'The first hour, click by click' }, { href: 'wiki/web-builders/', text: 'Web builders', side: true }]} />
+  </Step>
+  <Fragment slot="foot">
+    <p>The club, the answers and the file names above are made up.</p>
+    <Verified ids={ids} />
+  </Fragment>
+</Journey>

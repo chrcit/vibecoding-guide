@@ -1,0 +1,79 @@
+---
+/*
+ * The one frame every figure sits in. See site/FIGURES.md.
+ *
+ *   <Figure n={8} title="A meter and a tank" hint="Drag the slider…" alt="…" labels={…}>
+ *     <Fragment set:html={svg} />                 drawing (default slot)
+ *     <Fragment slot="control">…</Fragment>       at most one primary control
+ *     <Fragment slot="readout">…</Fragment>       first state in words; scripts rewrite it
+ *     <Fragment slot="caption">…</Fragment>       optional, true and short
+ *   </Figure>
+ */
+import './fig.css';
+
+export interface Label {
+  /** Short name, shown over the drawing on wide screens and in the legend on narrow ones. */
+  name: string;
+  /** Position from the kit's anchor(). */
+  at: { left: string; top: string };
+  /** Optional key for scripts to mark the active label. */
+  id?: string;
+}
+
+interface Props {
+  n: number | string;
+  title: string;
+  /** Ignored: figures carry no helper line. Kept so old calls still build. */
+  hint?: string;
+  /** No frame and no heading of its own: for a figure inside a board tile, which supplies both. */
+  bare?: boolean;
+  /** The drawing has parts the reader can focus or press, so it is a group, not one image. */
+  interactive?: boolean;
+  /** Text alternative for the drawing: what it shows in its first state. */
+  alt: string;
+  /** Shown when the figure shows data. */
+  source?: { label: string; href?: string };
+  wide?: boolean;
+  /** Labels laid over a single drawing. */
+  labels?: Label[];
+  /** Legend names for a figure whose panes place their own labels (see Pane.astro). */
+  legend?: string[];
+}
+
+const { n, title, alt, source, wide = false, bare = false, interactive = false, labels = [] } = Astro.props;
+const legend = Astro.props.legend ?? labels.map((l) => l.name);
+const id = `fig-${n}`;
+const hasControl = Astro.slots.has('control');
+const hasCaption = Astro.slots.has('caption') || !!source;
+---
+<figure class="fig" id={id} data-figure={String(n)} data-wide={wide ? '' : undefined} data-bare={bare ? '' : undefined} aria-labelledby={`${id}-title`}>
+  <p class="fig-head">
+    <span class="fig-n"><a href={`#${id}`}>Fig. {n}</a></span>
+    <span class="fig-title" id={`${id}-title`}>{title}</span>
+  </p>
+  <div class="fig-drawing" role={interactive ? 'group' : 'img'} aria-label={alt} data-fig-drawing>
+    <slot />
+    {labels.map((l, i) => (
+      <span class="fig-label" style={`left:${l.at.left};top:${l.at.top}`} data-label={l.id ?? String(i + 1)} aria-hidden="true">
+        <span class="fig-key">{i + 1}</span><span class="fig-name">{l.name}</span>
+      </span>
+    ))}
+  </div>
+  {legend.length > 0 && (
+    <ol class="fig-legend" aria-hidden="true">
+      {legend.map((name, i) => <li><span class="fig-key">{i + 1}</span>{name}</li>)}
+    </ol>
+  )}
+  <div class="fig-foot">
+    {hasControl && <div class="fig-control" data-fig-control hidden><slot name="control" /></div>}
+    <p class="fig-readout" aria-live="polite" data-fig-readout><slot name="readout" /></p>
+  </div>
+  {hasCaption && (
+    <figcaption class="fig-caption">
+      <slot name="caption" />
+      {source && (
+        <span class="fig-source">Source: {source.href ? <a href={source.href}>{source.label}</a> : source.label}</span>
+      )}
+    </figcaption>
+  )}
+</figure>

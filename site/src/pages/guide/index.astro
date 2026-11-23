@@ -1,0 +1,23 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHeader from '../../components/site/PageHeader.astro';
+import CardGrid from '../../components/site/CardGrid.astro';
+import Card from '../../components/site/Card.astro';
+import { groups } from '../../lib/nav';
+---
+<Base title="Reference · Agentic Coding Guide" description="The full reference: ways of working, T3 Code, models and costs, skills, web foundations and shipping." section="reference">
+  <div class="frame ref-index">
+    <PageHeader title="Reference">
+      <p>The essay is the tour. This is the toolbox: every guide in full, for when you are stuck or want the details. Same text as the <a href="https://github.com/chrcit/vibecoding-guide">markdown on GitHub</a>.</p>
+    </PageHeader>
+    {groups.map((g) => (
+      <CardGrid title={g.name}>
+        {g.items.map((i) => <Card href={`guide/${i.id}/`} title={i.title} />)}
+      </CardGrid>
+    ))}
+  </div>
+</Base>
+
+<style>
+  .ref-index { max-width: calc(var(--wide) + 2 * var(--gutter)); padding-top: clamp(2rem, 6vw, 4.5rem); }
+</style>

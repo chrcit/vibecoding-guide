@@ -1,0 +1,22 @@
+---
+/*
+  A cluster's mark: its shape in its colour, as a small inline SVG.
+  Props: cluster (cluster id), size? (px, default 14).
+*/
+import { clusterOf, shapePath } from '../../lib/wiki';
+interface Props { cluster: string; size?: number; class?: string }
+const { cluster, size = 14, class: cls } = Astro.props;
+const c = clusterOf(cluster);
+---
+<svg class:list={['cmark', `tone-${c.tone}`, cls]} width={size} height={size} viewBox="-10 -10 20 20" aria-hidden="true" focusable="false">
+  <path d={shapePath(c.shape, 7)} fill-rule="evenodd" />
+</svg>
+
+<style>
+  .cmark { flex: none; display: inline-block; vertical-align: -0.1em; overflow: visible; }
+  .cmark path { fill: var(--tone); }
+  .tone-ink { --tone: var(--ink); }
+  .tone-accent { --tone: var(--accent); }
+  .tone-green { --tone: var(--green); }
+  .tone-blue { --tone: var(--blue); }
+</style>

@@ -1,0 +1,109 @@
+---
+/*
+ * Fig. 16, "How a skill loads".
+ *
+ * Idea: an agent keeps only each skill's name and one-line description in context; when a request
+ * matches a description, that one skill is read in full and the rest stay shut.
+ * Elements: a rack of four closed skill cards, a glass box for the context (holding the instruction
+ * file and the skill list from the start), a stand with the request on it, the opened skill.
+ * States (model.ts): idle, the request arrives, one description matches, the skill opens into context.
+ * Data: none. The skills and the request are fictional, from the running examples (the contact tidy).
+ * Interaction: Back and Next step buttons.
+ * Alt: what the first frame shows (below).
+ */
+import Figure from '../Figure.astro';
+import { drawSkillLoads } from './draw';
+import { STEPS, CARDS } from './model';
+
+interface Props { n?: number | string }
+const { n = 16 } = Astro.props;
+const { svg, labels, motion } = drawSkillLoads(`fig${n}`);
+const last = STEPS.length - 1;
+---
+<div class="fig-skill-loads" data-fig-skill-loads data-motion={JSON.stringify(motion)}>
+  <Figure
+    n={n}
+    title="How a skill loads"
+    hint="Press Next to follow one request to the skill it needs."
+    alt={`A rack at the back holds four closed skill cards, ${CARDS.map((c) => c.name).join(', ')}; each shows only a name and a line of description. In front, a glass box stands for the agent's context. It holds two things: the project's instruction file and a thin list with one line per skill. To the right, a request waits on a stand.`}
+    labels={labels}
+  >
+    <Fragment set:html={svg} />
+    <Fragment slot="control">
+      <button type="button" class="btn ghost" data-back disabled>Back</button>
+      <button type="button" class="btn" data-next>Next step</button>
+      <span class="fig-skill-count" data-count>Step 0 of {last}</span>
+    </Fragment>
+    <Fragment slot="readout">{STEPS[0]!.says}</Fragment>
+    <Fragment slot="caption">
+      Until a request needs it, a skill costs the agent one line: its name and description. The description is what the agent matches the request against, so it decides whether the skill is ever opened.
+    </Fragment>
+  </Figure>
+</div>
+
+<style is:global>
+  .fig-skill-count { color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+  /* The four card names: the anchor is the card's top left corner. */
+  .fig-skill-loads .fig-drawing > .fig-label:nth-of-type(-n + 4) { transform: translate(-0.35rem, -135%); }
+  @container (max-width: 34rem) {
+    .fig-skill-loads .fig-drawing > .fig-label:nth-of-type(-n + 4) { transform: translate(-25%, -110%); }
+  }
+</style>
+
+<script>
+  import { STEPS } from './model';
+
+  type Flat = [number, number];
+  type Motion = { pull: Flat; into: Flat; drop: Flat; send: Flat };
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const tr = ([x, y]: Flat) => `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+  const zero = 'translate(0px, 0px)';
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-fig-skill-loads]')) {
+    const m: Motion = JSON.parse(root.dataset.motion!);
+    const q = <T extends Element>(s: string) => root.querySelector<T>(s)!;
+    const rest = q<SVGGElement>('[data-card="rest"]');
+    const lit = q<SVGGElement>('[data-card="lit"]');
+    const open = q<SVGGElement>('[data-open]');
+    const sheet = q<SVGGElement>('[data-sheet]');
+    const back = q<HTMLButtonElement>('[data-back]');
+    const next = q<HTMLButtonElement>('[data-next]');
+    const count = q<HTMLElement>('[data-count]');
+    const readout = q<HTMLElement>('[data-fig-readout]');
+    const labels = [...root.querySelectorAll<HTMLElement>('[data-label]')];
+    const last = STEPS.length - 1;
+    const active: Record<string, string> = { idle: 'context', request: 'request', match: 'tidy-contacts', open: 'tidy-contacts' };
+    let at = 0;
+
+    q<HTMLElement>('[data-fig-control]').hidden = false;
+
+    function show(i: number) {
+      const stage = STEPS[i]!.stage;
+      root.style.setProperty('--fig-ms', reduced.matches ? '0ms' : '');
+      const arrived = stage !== 'idle';
+      sheet.style.transform = arrived ? tr(m.send) : zero;
+      // The matching card: in the rack, then pulled forward and lit, then gone into the glass.
+      rest.style.opacity = stage === 'match' || stage === 'open' ? '0' : '1';
+      lit.style.opacity = stage === 'match' ? '1' : '0';
+      lit.style.transform = stage === 'match' ? tr(m.pull) : stage === 'open' ? tr(m.into) : zero;
+      open.style.opacity = stage === 'open' ? '1' : '0';
+      open.style.transform = stage === 'open' ? zero : tr(m.drop);
+      for (const l of labels) l.toggleAttribute('data-active', l.dataset.label === active[stage]);
+      readout.textContent = STEPS[i]!.says;
+      count.textContent = `Step ${i} of ${last}`;
+      back.disabled = i === 0;
+      next.textContent = i === last ? 'Start again' : 'Next step';
+    }
+
+    next.addEventListener('click', () => {
+      at = at === last ? 0 : at + 1;
+      show(at);
+    });
+    back.addEventListener('click', () => {
+      at = Math.max(0, at - 1);
+      show(at);
+      if (at === 0) next.focus();
+    });
+    show(0);
+  }
+</script>

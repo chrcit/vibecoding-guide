@@ -1,0 +1,95 @@
+---
+/*
+  A click-to-load YouTube video. Nothing is requested from YouTube or Google
+  until the reader presses play: the placeholder is drawn locally (title and
+  a play button, no remote thumbnail). Then a youtube-nocookie.com iframe
+  replaces it. A plain link to the video is always shown underneath.
+  Props: id (string, the YouTube video id), title (string, the video title),
+  start? (number, seconds to start at).
+*/
+interface Props { id: string; title: string; start?: number }
+const { id, title, start } = Astro.props;
+if (!/^[\w-]{6,20}$/.test(id)) throw new Error(`Embed: "${id}" is not a YouTube video id`);
+const s = start && start > 0 ? Math.floor(start) : 0;
+const params = new URLSearchParams({ autoplay: '1', rel: '0', modestbranding: '1' });
+if (s) params.set('start', String(s));
+const src = `https://www.youtube-nocookie.com/embed/${id}?${params}`;
+const watch = `https://www.youtube.com/watch?v=${id}${s ? `&t=${s}s` : ''}`;
+const stamp = s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : '';
+---
+<figure class="embed" data-embed data-src={src} data-title={title}>
+  <div class="frame-box">
+    <button type="button" class="poster" data-play>
+      <span class="play" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="28" height="28"><path d="M8 5.5v13l11-6.5Z" fill="currentColor" /></svg>
+      </span>
+      <span class="poster-title">{title}</span>
+      <span class="poster-note">Play video{stamp && ` from ${stamp}`}. Loads from YouTube.</span>
+    </button>
+  </div>
+  <figcaption>
+    <a href={watch}>Watch “{title}” on YouTube{stamp && ` from ${stamp}`}</a>
+  </figcaption>
+</figure>
+
+<script>
+  for (const fig of document.querySelectorAll<HTMLElement>('[data-embed]')) {
+    const btn = fig.querySelector<HTMLButtonElement>('[data-play]');
+    btn?.addEventListener('click', () => {
+      const iframe = document.createElement('iframe');
+      iframe.src = fig.dataset.src!;
+      iframe.title = fig.dataset.title ?? 'YouTube video';
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+      iframe.allowFullscreen = true;
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+      btn.replaceWith(iframe);
+      iframe.focus();
+    }, { once: true });
+  }
+</script>
+
+<style>
+  .embed { margin: var(--space-6) 0; }
+  .frame-box {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-l);
+    overflow: hidden;
+    background: var(--screen);
+  }
+  .frame-box :global(iframe) { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .poster {
+    position: absolute; inset: 0;
+    display: grid;
+    grid-template-rows: 1fr auto auto;
+    justify-items: start;
+    gap: var(--space-2);
+    width: 100%; padding: clamp(1rem, 4%, 2rem);
+    border: 0; border-radius: inherit;
+    background: var(--screen); color: var(--screen-ink);
+    text-align: left;
+  }
+  .play {
+    align-self: center; justify-self: center;
+    display: grid; place-items: center;
+    width: clamp(3.5rem, 12%, 5rem); aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--accent); color: var(--accent-ink);
+    transition: transform var(--dur) var(--ease-out);
+  }
+  .play svg { margin-left: 3px; }
+  .poster:hover .play { transform: scale(1.06); }
+  .poster:active .play { transform: scale(0.97); }
+  .poster-title {
+    font-size: clamp(1.125rem, 2.6vw, 1.625rem);
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    max-width: 36ch;
+  }
+  .poster-note { font-size: var(--text-s); color: color-mix(in oklab, var(--screen-ink) 72%, var(--screen)); }
+  .poster:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+  figcaption { margin-top: var(--space-3); font-size: var(--text-m); color: var(--muted); }
+  figcaption a { color: var(--ink-2); }
+</style>

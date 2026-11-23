@@ -1,0 +1,83 @@
+---
+import Journey from '../../layouts/Journey.astro';
+import Step from '../../components/journey/Step.astro';
+import More from '../../components/journey/More.astro';
+import Next from '../../components/journey/Next.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import ForLevel from '../../components/level/ForLevel.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import Term from '../../components/journey/Term.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
+import { url } from '../../lib/nav';
+
+const ids = ['harnesses.claudeCode.askForEvidence', 't3code.htmlRenders', 't3code.browser'];
+const prompt = `When you finish, hand back proof I can judge in a minute, before you say done:
+- a screenshot of every page you changed, at phone width (390 pixels) and desktop width
+- the test command you ran and its full output
+- for any number the change affects: its value before and after
+- a short list of what you did not check, and why
+If something could not be checked, say so instead of guessing.`;
+---
+<Journey chapter="proof" first="word" title="Proof you can read" description="An agent can hand back more than the word done: a summary, a test run, a screenshot and a link to try. Each shows a different way the work can miss what you asked.">
+  <Step id="word" title="“Done” is one word">
+    <p>The agent changes 212 lines of code in five files to let members pay online, and the <Term id="check" /> from <LessonRef id="check" /> passes: its tests run green. All that reaches you is “Done.”</p>
+  </Step>
+  <Step id="cards" title="Ask for proof with the work">
+    <p>The <Term id="tray" /> is the plate beside you, where the agent puts what it hands back. Ask for four <Term id="proof-card">proof cards</Term> on it: a summary of what changed, the test run, a screenshot, and a link to try it yourself.</p>
+    <More title="Where this comes from">
+      <p><Fact id="harnesses.claudeCode.askForEvidence" show="claim" /></p>
+    </More>
+  </Step>
+  <Step id="catch" title="The check sees errors; the cards show misses">
+    <p>Of six made-up jobs, the check stops the one with a type error, which a machine can see. Four pass it and still miss what you asked, which only a card shows you: switch a card off and its kind of miss reaches you as “done”.</p>
+    <div class="pick" data-multi role="group" aria-label="Proof cards that are switched on">
+      <button type="button" data-do="toggle" data-val="sum" data-default aria-pressed="true">Summary</button>
+      <button type="button" data-do="toggle" data-val="tests" data-default aria-pressed="true">Test run</button>
+      <button type="button" data-do="toggle" data-val="shot" data-default aria-pressed="true">Screenshot</button>
+      <button type="button" data-do="toggle" data-val="link" data-default aria-pressed="true">Link</button>
+    </div>
+    <More title="A worked check for a number">
+      <dl>
+        <dt>Reference</dt><dd>Fees paid last season, from the club’s spreadsheet: €14,880 (made up).</dd>
+        <dt>Tolerance</dt><dd>For money, an exact match. For a measured value, write down the allowed margin before the run.</dd>
+        <dt>Rerun</dt><dd>The agent runs the calculation again on a fresh copy of the data and gets the same result.</dd>
+        <dt>The card</dt><dd>“Total €14,880.00. Reference €14,880.00. Rerun €14,880.00. Match.”</dd>
+      </dl>
+    </More>
+  </Step>
+  <Step id="during" title="Proof while it runs">
+    <p>On a long job, ask the agent to keep a progress file: a card on the tray that fills as each of its steps is done. When it wanders off at its fourth step into work you never asked for, you see it without stopping it.</p>
+    <div class="pick">
+      <button type="button" data-do="progress" data-val="on" data-default aria-pressed="true">A progress file</button>
+      <button type="button" data-do="progress" data-val="off" aria-pressed="false">Nothing until the end</button>
+    </div>
+    <More title="In T3 Code">
+      <p><Fact id="t3code.htmlRenders" show="claim" /> <Fact id="t3code.browser" show="claim" /></p>
+    </More>
+  </Step>
+  <Step id="ask" title="Match the proof to the job">
+    <ForLevel is="plain">
+      <p>Say what you want back when you ask: two screenshots and a link for a page, rows before and after for a script, a test that failed and now passes for a bug fix.</p>
+    </ForLevel>
+    <ForLevel is="technical">
+      <p>Put the proof in the request: screenshots at 390 and 1440 px for a page, sample rows and counts for a script, and for a bug fix a test that fails before the change and passes after, with the <code>npm test</code> output.</p>
+    </ForLevel>
+    <ForLevel is="engineer">
+      <p>Put the proof in the request, and in a team put the same cards in the pull request description: a red-then-green regression test for a fix, fixtures for a script, a preview deploy for a page. The reviewer reads the cards before the diff.</p>
+    </ForLevel>
+    <div class="pick">
+      <button type="button" data-do="kind" data-val="page" data-default aria-pressed="true">A page</button>
+      <button type="button" data-do="kind" data-val="script" aria-pressed="false">A script</button>
+      <button type="button" data-do="kind" data-val="fix" aria-pressed="false">A bug fix</button>
+    </div>
+    <More title="A prompt for this">
+      <CopyPrompt title="Proof with the work" compact>{prompt}</CopyPrompt>
+    </More>
+    <Next from="proof" more={[{ href: 'explain/verification/', text: 'Checking the work' }]} />
+  </Step>
+  <Fragment slot="foot">
+    <p>The jobs, the 212 changed lines, the counts and the planted misses are made up.</p>
+    <Verified ids={ids} />
+  </Fragment>
+</Journey>

@@ -1,0 +1,33 @@
+---
+// Goes in <head>. Sets data-level on <html> before first paint, loads the level
+// styles, and starts the runtime for deeper blocks and window.acgLevel.
+//
+// The inline script cannot import levels.ts, so it repeats the ids and the
+// storage key. Keep them in step.
+import './levels.css';
+---
+<script is:inline>
+  (function () {
+    var levels = ['plain', 'technical', 'engineer'];
+    var level = 'plain';
+    var root = document.documentElement;
+    try {
+      var saved = localStorage.getItem('acg-level');
+      if (levels.indexOf(saved) > -1) level = saved;
+    } catch (e) {}
+    try {
+      // ?level= overrides for this page view only and is never saved.
+      var asked = new URLSearchParams(location.search).get('level');
+      if (levels.indexOf(asked) > -1) {
+        level = asked;
+        root.setAttribute('data-level-override', '');
+      }
+    } catch (e) {}
+    root.setAttribute('data-level', level);
+  })();
+</script>
+<script>
+  import { installGlobal } from '../../lib/levels';
+  import './deeper-client';
+  installGlobal();
+</script>

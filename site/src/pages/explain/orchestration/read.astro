@@ -1,0 +1,423 @@
+---
+// Explainer C2: the orchestration layer. Threads, subagents, nesting, mixing model sizes, handing
+// work across providers, worktrees, what it costs on a plan, what goes wrong, and Fig. 12.
+// The brief and the commands come first; each section after them shows its heading and a sentence
+// or two, with the rest in closed <Deeper> blocks.
+import Article from '../../../layouts/Article.astro';
+import Deeper from '../../../components/level/Deeper.astro';
+import Fact from '../../../components/data/Fact.astro';
+import Verified from '../../../components/data/Verified.astro';
+import Note from '../../../components/site/Note.astro';
+import Opinion from '../../../components/site/Opinion.astro';
+import Estimate from '../../../components/site/Estimate.astro';
+import Term from '../../../components/site/Term.astro';
+import CopyPrompt from '../../../components/site/CopyPrompt.astro';
+import Embed from '../../../components/site/Embed.astro';
+import * as M from '../../../components/fig/team-lab/model';
+import { estimates, opinions } from '../../../data/observations';
+import { links } from '../../../data/links';
+import { url } from '../../../lib/nav';
+import { BRIEF, COMMANDS, FOLDERS } from './_setup';
+
+const fanout = estimates['theo-2026-10-09-haiku-fanout'];
+const runaway = estimates['theo-2026-11-16-council-runaway'];
+
+const headings = [
+  { depth: 2, slug: 'copy', text: 'Three things to copy' },
+  { depth: 2, slug: 'one-thread', text: 'One thread, one task' },
+  { depth: 2, slug: 'several-threads', text: 'Several threads, and you in the middle' },
+  { depth: 2, slug: 'subagents', text: 'Helpers your agent starts itself' },
+  { depth: 2, slug: 'nesting', text: 'Helpers that start helpers' },
+  { depth: 2, slug: 'model-sizes', text: 'Big models and small ones together' },
+  { depth: 2, slug: 'across-providers', text: 'Handing work to another lab’s model' },
+  { depth: 2, slug: 'worktrees', text: 'Separate copies of the code' },
+  { depth: 2, slug: 'cost', text: 'What a team costs on a $20 plan' },
+  { depth: 2, slug: 'six-ways', text: 'Six ways to run a team' },
+  { depth: 2, slug: 'what-goes-wrong', text: 'What goes wrong' },
+  { depth: 2, slug: 'model', text: 'How the model works' },
+  { depth: 2, slug: 'related', text: 'Related pages' },
+];
+
+const factIds = [
+  'harnesses.claudeCode.subagents',
+  'harnesses.claudeCode.nestingDepth',
+  'harnesses.claudeCode.subagentUsage',
+  'harnesses.claudeCode.agentTeams',
+  'harnesses.claudeCode.agentTeamTokens',
+  'harnesses.claudeCode.subagentFiles',
+  'harnesses.claudeCode.subagentModel',
+  'harnesses.claudeCode.subagentFreshContext',
+  'harnesses.claudeCode.subagentBackground',
+  'harnesses.claudeCode.subagentWorktree',
+  'harnesses.claudeCode.subagentAttribution',
+  'harnesses.claudeCode.smallSubagentModel',
+  'harnesses.claudeCode.agentTeamSize',
+  'harnesses.codex.subagents',
+  'harnesses.codex.subagentFiles',
+  'harnesses.codex.subagentModel',
+  'harnesses.codex.maxThreads',
+  'harnesses.codex.subagentResults',
+  'harnesses.claudeCode.codeReview',
+  't3code.manyModels',
+  't3code.handoff',
+  't3code.handoffCap',
+  't3code.handoffLeavesOut',
+  't3code.worktrees',
+  'plans.claude.pro.price',
+  'plans.chatgpt.plus.price',
+  'plans.claude.limits.fiveHour',
+  'plans.claude.limits.sharedAcrossModels',
+  'plans.claude.limits.whatUsageMeans',
+  'plans.chatgpt.limits.estimates',
+];
+
+const subagentFile = `---
+name: test-runner
+description: Runs the test suite and reports only the failures. Use after any change to the hours code.
+model: haiku
+tools: Bash, Read
+---
+
+Run the tests with \`pnpm test\`. Report each failing test by name with the first
+ten lines of its output. Do not change any files.`;
+
+const helpersPrompt = `Add a "paid this season" column to the club list's members page.
+
+Before you change anything, use up to two read-only subagents: one to find where the members list is built, one to find how payments are stored. Each should report file paths and line numbers, not a summary of the whole codebase. Do not let a subagent start subagents of its own.
+
+Then make the change yourself, run the tests and show me the diff. If the subagents disagree about where payments live, stop and ask me.`;
+
+const codexAgent = `# ~/.codex/agents/test-runner.toml
+name = "test-runner"
+description = "Runs the test suite and reports only the failures."
+model = "…"   # optional; otherwise agents.default_subagent_model
+developer_instructions = """
+Run the tests. Report each failing test by name with the first ten lines
+of its output. Do not change any files.
+"""`;
+---
+<Article
+  title="Orchestration: the long read"
+  description="A brief and the worktree commands to copy, then threads, subagents, nested helpers, mixing model sizes and providers, and what a team of agents costs on a $20 plan."
+  section="explain"
+  headings={headings}
+  updated="2026-11-19"
+  prev={{ href: 'explain/verification/', title: 'Verification' }}
+  next={{ href: 'explain/skills/', title: 'Skills' }}
+>
+  <h2 id="copy">Three things to copy</h2>
+  <CopyPrompt title="A brief for one agent" id="prompt-brief">{BRIEF}</CopyPrompt>
+  <CopyPrompt title="Ask for helpers without losing control" id="prompt-helpers">{helpersPrompt}</CopyPrompt>
+  <pre class="folders" aria-label="Folder layout"><code>{FOLDERS}</code></pre>
+  <CopyPrompt title="Worktree and merge commands" id="worktree-commands">{COMMANDS}</CopyPrompt>
+
+  <h2 id="one-thread">One thread, one task</h2>
+  <p>
+    A <Term def="One conversation with one agent about one task. You can start as many as you like, and each one knows only what was said in it.">thread</Term>
+    is one conversation with one agent about one task. When the task is done, start a fresh thread for the next one; the <a href={url('explain/context/')}>context</a> page says why.
+  </p>
+
+  <h2 id="several-threads">Several threads, and you in the middle</h2>
+  <p>
+    The simplest team is more than one thread, with you starting each one and checking each result. Agents finish faster than you can check, so start with two and add a third when two leave you waiting.
+  </p>
+  <Deeper level="technical" title="Threads in practice">
+    <p>
+      In a terminal, a thread is a session: a second terminal tab running <code>claude</code> or <code>codex</code> in the same
+      project is a second thread. In T3 Code a thread is an item in the sidebar, and you can start one, send it off and go back to
+      another without waiting. Threads in the same folder share files on disk, which is the reason for worktrees further down.
+    </p>
+  </Deeper>
+
+
+  <h2 id="subagents">Helpers your agent starts itself</h2>
+  <p>
+    A <Term def="A helper agent that your agent starts on its own to do one job. It begins with an empty memory, does the job, and hands back a short report.">subagent</Term>
+    is a helper your agent starts by itself, with a fresh memory. It keeps the main conversation clean, and the main agent sees only its summary, which can be wrong in a confident voice (<a href={url('journey/handoff/')}>A second agent</a> shows this).
+  </p>
+  <Deeper level="technical" title="How to define a subagent and how to ask for one">
+    <p>
+      <Fact id="harnesses.claudeCode.subagentFiles" show="claim" />
+      <Fact id="harnesses.claudeCode.subagentModel" show="claim" /> A test runner for the bakery site
+      could look like this:
+    </p>
+    <pre><code>{subagentFile}</code></pre>
+    <p>
+      The description is what the main agent reads when it decides whether to use the helper, so write it as a trigger: what the
+      helper does and when to call it.
+    </p>
+    <p>
+      <Fact id="harnesses.codex.subagentFiles" show="claim" /> <Fact id="harnesses.codex.subagentModel" show="claim" />
+    </p>
+    <pre><code>{codexAgent}</code></pre>
+    <p>
+      You do not need a file to get a subagent. Ask in plain words: “use a subagent to find every place the opening hours are
+      computed, and report the file names”, or in Codex “spawn two agents, one per page”. Say what you want back and whether the
+      main agent should wait for it.
+    </p>
+    <p>
+      Helpers run in the foreground or the background. A foreground helper blocks the conversation until it reports; a background
+      helper runs while the main agent carries on. <Fact id="harnesses.claudeCode.subagentBackground" show="claim" />
+      <Fact id="harnesses.codex.subagentResults" show="claim" />
+    </p>
+    <Deeper level="engineer" title="Context isolation and what a hand-back loses">
+      <p>
+        <Fact id="harnesses.claudeCode.subagentFreshContext" show="claim" /> The isolation is the point and the hazard. The helper
+        does not know the constraints you agreed with the main agent ten turns ago unless the spawn prompt repeats them, and the
+        main agent receives a few hundred tokens distilled from tens of thousands the helper read. Everything between the two is a
+        lossy channel written by a model.
+      </p>
+      <p>
+        Treat the spawn prompt as the helper’s entire world: the goal, the files, the constraints, what done looks like and the
+        shape of the report. Ask for evidence in the report (file paths and line numbers, the failing test’s name, the command and
+        its exit code) so the main agent can check a claim instead of trusting it. Ask for what the helper did not look at, too.
+      </p>
+      <p>
+        Parallel helpers that write to the same files race. Keep writing helpers on disjoint files, or give each one its own
+        worktree (below), or make helpers read-only and let the main agent do the edits.
+      </p>
+    </Deeper>
+  </Deeper>
+
+
+  <h2 id="nesting">Helpers that start helpers</h2>
+  <p>
+    A helper can start helpers of its own, in Claude Code up to <Fact id="harnesses.claudeCode.nestingDepth" /> layers below your conversation. Each layer multiplies the agents drawing on your allowance and turns a finding into a summary of a summary.
+  </p>
+  <Deeper level="engineer" title="Depth limits, environment variables and agent teams">
+    <p>
+      <Fact id="harnesses.claudeCode.nestingDepth" show="claim" /> Setting it to 1 turns nesting off, which is a reasonable default
+      for reviewers: a reviewer that starts its own helpers turns one review into several. On the Codex side,
+      <Fact id="harnesses.codex.maxThreads" show="claim" /> The Codex docs do not state a nesting depth.
+    </p>
+    <p>
+      Claude Code also has agent teams, a separate feature where several full Claude Code instances work together and message each
+      other. <Fact id="harnesses.claudeCode.agentTeams" show="claim" /> Anthropic’s own figure for their cost is about
+      <Fact id="harnesses.claudeCode.agentTeamTokens" /> the tokens of a standard session when teammates run in plan mode.
+      <Fact id="harnesses.claudeCode.agentTeamSize" show="claim" />
+    </p>
+  </Deeper>
+
+
+  <h2 id="model-sizes">Big models and small ones together</h2>
+  <p>
+    A team can put a large model in charge of small ones doing volume work, or the reverse. A small model on work it cannot do costs more in retries, and in your time, than a capable one that gets it right once.
+  </p>
+  <Estimate name={fanout.person} href={`${fanout.url}&t=${22 * 60 + 23}s`} date={fanout.published}>
+    <p><Fact id="observations.estimates.theo-2026-10-09-haiku-fanout.fact" show="claim" /></p>
+  </Estimate>
+  <Opinion date={opinions.decisions.verified}>
+    <p>{opinions.decisions.value}</p>
+  </Opinion>
+  <Deeper level="technical" title="Which way round, and setting a helper’s model">
+    <p>
+      A top model in charge with small helpers suits jobs where most attempts are cheap to check and many attempts beat one careful one: searching files, sorting contacts into duplicates and non-duplicates, running checks. A cheaper model that calls a top model only for a hard decision or a final review suits long, mostly routine jobs.
+    </p>
+    <p>
+      In Claude Code, set <code>model:</code> in the subagent file, or name a model when you ask: “use a haiku subagent to list every
+      file that mentions opening hours”. <Fact id="harnesses.claudeCode.smallSubagentModel" show="claim" /> In Codex, set
+      <code>agents.default_subagent_model</code> in <code>config.toml</code> or <code>model</code> in the agent’s own file.
+    </p>
+  </Deeper>
+
+  <h2 id="across-providers">Handing work to another lab’s model</h2>
+  <p>
+    A model from another lab reviewing the work shares fewer blind spots with the one that wrote it. T3 Code can switch provider mid-thread and passes the new model a trimmed selection of the conversation, without its private reasoning or tool state.
+  </p>
+  <Deeper level="engineer" title="Cross-provider handoff as a budgeted selection">
+    <p>
+      <Fact id="t3code.handoff" show="claim" /> <Fact id="t3code.handoffLeavesOut" show="claim" />
+      <Fact id="t3code.handoffCap" show="claim" />
+    </p>
+    <p>
+      The consequence is that a handoff is lossy by construction, but the losses are mechanical: older turns drop out, reasoning
+      and attachments do not travel. Before a handoff for review, put the contract in the latest message: the goal, the diff or the
+      branch to read, the checks to run, and what a pass means. Then the receiving model needs nothing from the trimmed history.
+    </p>
+  </Deeper>
+
+
+  <h2 id="worktrees">Separate copies of the code</h2>
+  <p>
+    Two agents in one folder overwrite each other’s files. A
+    <Term def="A second working copy of the same Git repository, on its own branch, in its own folder. Changes in one copy do not appear in the other until you merge them.">worktree</Term>
+    gives each agent its own copy on its own branch until you merge; the commands are at the <a href="#worktree-commands">top of this page</a>.
+  </p>
+  <Deeper level="technical" title="Worktrees in each tool">
+    <p>
+      <Fact id="t3code.worktrees" show="claim" /> In Claude Code, <code>claude --worktree</code> starts a session in a new worktree,
+      and a subagent can get its own: <Fact id="harnesses.claudeCode.subagentWorktree" show="claim" />
+    </p>
+    <p>
+      A worktree isolates files, not everything else. Two worktrees still share the database on your machine, the ports a dev
+      server listens on and any external service the code talks to. Give each its own port and, for the club list, its own copy of
+      the test database.
+    </p>
+  </Deeper>
+
+
+  <h2 id="cost">What a team costs on a $20 plan</h2>
+  <p>
+    Every agent you run draws on the same plan allowance, which refills every five hours and is capped per week. A team empties it faster than one thread does; the <a href={url('explain/plans-and-api/')}>plans page</a> explains the windows.
+  </p>
+  <Deeper level="technical" title="What the $20 buys a team">
+    <p>
+      Assume a plan at <Fact id="plans.claude.pro.price" /> a month, the price of both Claude Pro and ChatGPT Plus
+      (<Fact id="plans.chatgpt.plus.price" />). <Fact id="harnesses.claudeCode.subagentUsage" show="claim" />
+    </p>
+    <p>
+      A thread with four helpers can use in an hour what a single thread uses in an afternoon, and a busy team can empty a five-hour window well before the five hours are up. Then you wait. Switching to another model does not help: <Fact id="plans.claude.limits.sharedAcrossModels" show="claim" />
+    </p>
+    <p>
+      Work in one thread until you trust how the agent works. Then run two threads on unrelated tasks. Reach for a lead with helpers, a council or nesting
+      only for a job that clearly needs one, and watch the usage meter the first time.
+    </p>
+    <Deeper level="engineer" title="Usage accounting">
+      <p>
+        <Fact id="plans.claude.limits.whatUsageMeans" show="claim" /> <Fact id="plans.chatgpt.limits.estimates" show="claim" />
+        Neither lab publishes a figure you could divide by an agent count, so the honest planning unit is your own meter after a
+        representative hour.
+      </p>
+      <p>
+        <Fact id="harnesses.claudeCode.subagentAttribution" show="claim" /> That breakdown is the quickest way to see whether helpers are
+        worth what they cost on your work. <Fact id="harnesses.codex.subagents" show="claim" />
+      </p>
+      <p>
+        A helper is not free even when it saves the main context. Each spawn pays for its own system prompt, tool definitions and the
+        files it reads, and the cache the main thread built does not carry over. A helper that reads three files to answer a question
+        the main agent could answer from memory costs more than it saves.
+      </p>
+    </Deeper>
+
+  </Deeper>
+
+  <h2 id="six-ways">Six ways to run a team</h2>
+  <p>
+    The board runs one job six ways, with the same agents and the same person, so the difference you see is the structure.
+  </p>
+  <Deeper level="technical" title="Each way, and where it fails">
+    <h3 id="way-solo">One agent</h3>
+    <p>
+      One thread, one task, and you brief and review each result. It is the baseline for time and for tokens, and the right
+      start for almost anything. It fails when the job outgrows one conversation.
+    </p>
+    <h3 id="way-review">Build, then review</h3>
+    <p>
+      A builder makes each change and a second agent reviews it before it reaches you. A reviewer from another lab, or at least a
+      different model, catches more than a fresh copy of the builder, which shares its blind spots.
+      <Fact id="harnesses.claudeCode.codeReview" show="claim" />
+    </p>
+    <h3 id="way-plan">Plan, build, review</h3>
+    <p>
+      One agent writes a plan that splits the job, several build the pieces, and one reviews them. You read the plan once instead
+      of writing a brief for every piece. Every builder follows the plan faithfully, so a wrong plan is built several times over:
+      a cheap planner can waste good builders.
+    </p>
+    <h3 id="way-parallel">Parallel worktrees</h3>
+    <p>
+      Several threads, each on its own task in its own worktree, with nobody coordinating them but you. It costs about one solo
+      run per thread. It fails when you cannot review as fast as they finish, or when the pieces touch the same code and collide
+      when you merge them.
+    </p>
+    <h3 id="way-lead">Lead and subagents</h3>
+    <p>
+      One agent hands pieces to subagents, each starting with a fresh context, and gathers their summaries. You talk only to the
+      lead, and at the end you review one large combined change. It fails when a summary leaves out the detail that mattered.
+    </p>
+    <h3 id="way-best">Two models, keep one</h3>
+    <p>
+      The same task goes to two models and you keep the better result. <Fact id="t3code.manyModels" show="claim" /> It doubles the
+      tokens and the reading. It catches the mistakes only one of the two made, and none of those both made.
+    </p>
+    <p>
+      A council, where several models answer and one judges, and nested teams, where helpers start helpers, are variations on
+      these. Nesting has its own section above; councils come up below.
+    </p>
+
+  </Deeper>
+
+  <h2 id="what-goes-wrong">What goes wrong</h2>
+  <p>
+    Helpers’ summaries can be confidently wrong, a helper tends to confirm the idea it was handed, and review loops can run without end. Put a stop condition in every prompt that starts a team: a number of rounds, a point to give up and ask you, and what counts as done.
+  </p>
+  <Deeper level="technical" title="Three failures, and a cap on rounds">
+    <p>
+      A helper reports that it found every place the hours are computed, and it missed one. The main agent builds on the report, and so do you. Ask helpers for evidence you can check, and check the diff yourself before you believe the summary.
+    </p>
+    <p>
+      If the main agent asks “check that the bug is in the date parsing”, the helper goes looking for date-parsing problems and usually finds something. Ask open questions instead: “find out why 25 December shows the normal hours”.
+    </p>
+    <p>
+      An agent told to keep going until every reviewer is satisfied may never stop, because reviewers can always find
+      something. Each round adds code, and more code gives the next round more to find.
+    </p>
+    <Estimate name={runaway.person} href={`${runaway.url}&t=${21 * 60 + 19}s`} date={runaway.published}>
+      <p><Fact id="observations.estimates.theo-2026-11-16-council-runaway.fact" show="claim" /></p>
+      <p>His fix was a cap on rounds, permission to stop and say the work is going in circles, and an instruction to keep the scope fixed.</p>
+    </Estimate>
+    <Embed id="TWoS5Nmyoc8" title="Stop Searching For the Perfect Model" start={20 * 60 + 18} />
+    <Embed id="TWoS5Nmyoc8" title="Stop Searching For the Perfect Model" start={20 * 60 + 18} />
+    <p>
+      See <a href={links.theo.url}>{links.theo.label}</a> for more of his working notes on running councils.
+    </p>
+    <Deeper level="engineer" title="When a script should orchestrate instead of a model">
+      <p>
+        A model deciding who runs next is the right tool when the next step depends on judgement. When it does not, a script is
+        cheaper and more predictable. If the contact tidy means “split the export into fifty files, clean each, merge the results”,
+        write the loop yourself and call the agent once per file in non-interactive mode. The script holds the fan-out, the retry
+        policy, the round cap and the merge; the model only does the part that needs a model. You get a fixed number of calls, a
+        deterministic order, logs you can rerun from, and no chance of the coordinator wandering off.
+      </p>
+      <p>
+        A rule of thumb: if you can draw the flow before the run starts, put it in code. Leave orchestration to a model when the
+        shape of the work is only known once it starts.
+      </p>
+    </Deeper>
+
+  </Deeper>
+
+  <h2 id="model">How the model works</h2>
+  <p>
+    The lab on the board runs a simulation, not a measurement. Change its assumptions and the shapes of the results hold, but the exact hours do not.
+  </p>
+  <Deeper level="technical" title="The simulation and its assumptions">
+    <p>
+      A job is split into pieces of
+      {M.PIECE_MIN} minutes of work each. Every minute, each agent works on a piece, redoes one, checks one, waits for you, or waits
+      for a piece another agent has not finished. You handle one thing at a time, first come first served: a brief, a review, a
+      merge. Tangled work means more pieces depend on others and more changes collide. Randomness is replaced by fixed sequences,
+      so the same settings always give the same run; the count of uncaught mistakes is the expected number, rounded. Agents’ waiting is added up over every agent, so with many agents it can be longer than the run.
+    </p>
+    <p>The numbers that are not controls are these assumptions:</p>
+    <ul>
+      <li>Speed per piece, against a middle-class model: large {M.SPEED.large}×, small {M.SPEED.small}× the time.</li>
+      <li>Chance of a mistake in one build: large {M.MISTAKE.large}, middle {M.MISTAKE.middle}, small {M.MISTAKE.small}. A redo takes {M.REDO} of a build and makes mistakes at {M.REDO} of the rate.</li>
+      <li>Chance a plan gets one piece’s brief wrong: large {M.PLAN_MISS.large}, middle {M.PLAN_MISS.middle}, small {M.PLAN_MISS.small}.</li>
+      <li>Chance an agent reviewer catches a mistake: large {M.CATCH.large}, middle {M.CATCH.middle}, small {M.CATCH.small}; times {M.SAME_MODEL} when it is the same class as the builder; times {M.PLAN_CATCH} for a wrong brief, because it checks against the plan.</li>
+      <li>The lead reads summaries, so its catch rate is times {M.SUMMARY_CATCH}.</li>
+      <li>You catch up to {M.PERSON_MAX} of mistakes, more the longer you look: {M.PERSON_MAX} × (1 − e<sup>−minutes/{M.PERSON_PACE}</sup>). In one large combined change, times {M.BIG_DIFF}; reading a plan before it is built, times {M.PLAN_READ}.</li>
+      <li>Minutes: an agent review {M.AGENT_REVIEW_MIN}, planning {M.PLAN_MIN} per piece, the lead reading a report {M.LEAD_CHECK_MIN}, a subagent starting up {M.SPAWN_MIN}, you writing a brief {M.PROMPT_MIN}, you sorting out a conflict {M.MERGE_MIN}, comparing two results {M.COMPARE} reviews. Model class multiplies the agents’ times.</li>
+      <li>Collisions: on fully tangled work with three or more other pieces in flight, {M.OVERLAP} of changes collide; half that when a plan or a lead divides the work. Of K pieces, about K<sup>{M.CHAIN_FLOOR}</sup> can run at once on tangled work and all K on independent work.</li>
+      <li>Tokens, in units of one build: a redo {M.T_REDO}, an agent review {M.T_REVIEW}, planning {M.T_PLAN} per piece, the lead reading a report {M.T_CHECK}, and {M.T_START} for every fresh context. A thread pays that once; a subagent pays it every time it is started.</li>
+      <li>For money on the cost tile: {M.UNIT_TOKENS.toLocaleString('en-GB')} tokens per unit, {M.OUTPUT_SHARE * 100}% of them output, at list prices with no caching.</li>
+    </ul>
+    <p>
+      Change any of these and the shapes of the results hold: more agents stop helping once you are the queue, tangled work leaves
+      agents blocked, and checks by the same model miss what the builder missed. The exact hours do not hold.
+    </p>
+
+  </Deeper>
+
+  <h2 id="related">Related pages</h2>
+  <p>
+    <a href={url('explain/plans-and-api/')}>Plans against the API</a> for the windows and caps, <a href={url('explain/context/')}>Context</a> for why a clean conversation does better work, <a href={url('explain/verification/')}>Verification</a> for checking what the agents hand back, and <a href={url('t3-code/')}>T3 Code</a> for threads, worktrees and handoffs in one workspace.
+  </p>
+
+  <Verified ids={factIds} />
+</Article>
+
+<style>
+  .folders { font-size: var(--text-xs); }
+  /* Commands keep one per line and scroll sideways inside their box. */
+  :global(#worktree-commands .text) { white-space: pre; overflow-x: auto; overflow-wrap: normal; }
+</style>
