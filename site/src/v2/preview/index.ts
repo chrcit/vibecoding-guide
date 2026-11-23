@@ -3,7 +3,7 @@
  * drawing of T3 Code's browser panel. The lesson data (v2/content.ts) says which app and which
  * stage each point shows (`Point.preview`); the player (v2/player.ts) mounts it.
  *
- * Contract (shared by three builders working in parallel, keep it stable):
+ * Contract (keep it stable; each app is one file here, see below):
  *   - An app is a function (el, stage) => PreviewApp. It renders into `el`, which fills the
  *     browser panel's viewport, and keeps its own state (who has been checked in) across stage
  *     changes so the reader can try something, step on, and see the same data.
@@ -25,16 +25,24 @@ export type DoorStage =
   | 'fixed';
 
 export interface PreviewApp { set(stage: string): void; destroy(): void }
-export type AppId = 'door';
-export interface Preview { app: AppId; stage: DoorStage; /** The address shown in the browser's bar. */ url?: string }
-
 export type MountApp = (el: HTMLElement, stage: string) => PreviewApp;
-const registry: Partial<Record<AppId, () => Promise<MountApp>>> = {
-  door: () => import('./door').then((m) => m.door as MountApp),
-};
+
+/**
+ * An app is a file in this folder (not index.ts) that exports `app: MountApp` and `url`, the address
+ * shown in the browser's bar. Its id is the file name: door.ts is { app: 'door' }. Add an app by
+ * adding its file; nothing else needs registering.
+ */
+export interface Preview { app: string; stage: string; /** The address shown in the browser's bar, when not the app's own. */ url?: string }
+
+type AppModule = { app: MountApp; url: string };
+const files = import.meta.glob<AppModule>(['./*.ts', '!./index.ts']);
+const load = (id: string) => files[`./${id}.ts`]?.();
+
 export async function mountPreview(el: HTMLElement, p: Preview): Promise<PreviewApp> {
-  const load = registry[p.app];
-  if (!load) throw new Error(`v2 preview: no app ${p.app}`);
-  return (await load())(el, p.stage);
+  const m = await load(p.app);
+  if (!m) throw new Error(`v2 preview: no app ${p.app}`);
+  return m.app(el, p.stage);
 }
-export const DEFAULT_URL: Record<AppId, string> = { door: 'localhost:4321/door' };
+export async function defaultUrl(id: string): Promise<string> {
+  return (await load(id))?.url ?? '';
+}

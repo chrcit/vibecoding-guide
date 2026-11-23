@@ -30,7 +30,7 @@ export function previewPane(el: HTMLElement): PreviewPane {
   }
   async function address(p: Preview): Promise<string> {
     if (p.url) return p.url;
-    try { return (await import('../preview')).DEFAULT_URL[p.app] ?? ''; } catch { return ''; }
+    try { return await (await import('../preview')).defaultUrl(p.app); } catch { return ''; }
   }
 
   async function set(p: Preview | null): Promise<string> {

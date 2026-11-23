@@ -76,6 +76,8 @@ type Deck =
 
 // ---------- the page ----------
 
+export const url = 'localhost:4321/door';
+
 export const door: MountApp = (el, initial) => {
   let stage: DoorStage = normalize(initial);
   let query = '';
@@ -486,3 +488,5 @@ export const door: MountApp = (el, initial) => {
     },
   };
 };
+
+export const app = door;

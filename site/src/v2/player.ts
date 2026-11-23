@@ -13,7 +13,8 @@
  */
 import { Scene, type Script } from '../journey/scene';
 import { route, reverse, type SceneState } from '../journey/picture';
-import { LESSONS, TOC, STATUS, whereIs, uiAt, type Move, type Point, type Ui, type Part } from './content';
+import { TOC, STATUS, whereIs, type Move, type Point, type Ui, type Part } from './content';
+import { LESSONS, uiAt } from './lessons';
 import type { Preview } from './preview';
 import { LEVEL_EVENT, isLevel, type Level } from '../lib/levels';
 import { esc } from './html';
