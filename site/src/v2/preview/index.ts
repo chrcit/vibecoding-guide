@@ -22,7 +22,18 @@ export type DoorStage =
   /** The three "done when" cases run at phone size; one fails. */
   | 'testing'
   /** Fixed: a second tap shows when they arrived; all three cases pass. */
-  | 'fixed';
+  | 'fixed'
+  // Lessons 7 and 8 (door/late.ts): Rico Vance is on Noor's list, then marked do-not-admit.
+  /** Rico Vance is on Noor's list tonight, not marked yet: he could still be tapped in (lesson 7, part 1). */
+  | 'listed'
+  /** Do-not-admit guests show in red with no tap-in (lesson 7, part 2). */
+  | 'dna'
+  /** Tapping one says what to do: the reason and who to call (lesson 7, part 4). */
+  | 'dnaFull'
+  /** The agent tries four cases in the shared browser at phone size (lesson 8, part 2). */
+  | 'proof'
+  /** Practice mode: made-up guests that never reach tonight's list, tried by the reader (lesson 8, part 4). */
+  | 'practice';
 
 export interface PreviewApp { set(stage: string): void; destroy(): void }
 export type MountApp = (el: HTMLElement, stage: string) => PreviewApp;

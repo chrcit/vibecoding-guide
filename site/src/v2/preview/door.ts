@@ -12,15 +12,19 @@
  * through the lesson. Everything here is made up.
  */
 import './door.css';
+import './door-late.css';
 import type { DoorStage, MountApp } from './index';
-import { GUESTS, LISTS, CAPACITY, START_MIN, ALREADY_IN, WALK_INS, ANA, type Guest, type ListId } from './door/guests';
+import { GUESTS, LISTS, CAPACITY, START_MIN, ALREADY_IN, WALK_INS, ANA, LATER, RICO, type Guest, type ListId } from './door/guests';
 import { find, highlight, tokensOf } from './door/search';
 import { runAgent, type Run } from './door/agent';
+// Lessons 7 and 8: do-not-admit, the agent's four-case proof, and practice mode (door/late.ts).
+import { LATE_STAGES, DNA_STAGES, FULL_STAGES, dnaRow, dnaDeck, dnaSheet, dnaLists, practiceBar } from './door/late';
+import { runProof } from './door/proof';
 
 // ---------- tonight's state, shared by every mount ----------
 
 interface Arrival { id: string; at: number; plus: number; seq: number }
-const byId = new Map(GUESTS.map((g) => [g.id, g]));
+const byId = new Map([...GUESTS, ...LATER].map((g) => [g.id, g]));
 const arrivals: Arrival[] = [];
 let seq = 0;
 const toMin = (hhmm: string) => { const [h, m] = hhmm.split(':').map(Number); return h! * 60 + m!; };
@@ -72,7 +76,8 @@ type Deck =
   | { kind: 'hint' }
   | { kind: 'in'; a: Arrival }
   | { kind: 'already'; g: Guest; at: number }
-  | { kind: 'undone'; g: Guest };
+  | { kind: 'undone'; g: Guest }
+  | { kind: 'dna'; g: Guest };
 
 // ---------- the page ----------
 
@@ -96,10 +101,24 @@ export const door: MountApp = (el, initial) => {
   const clock = window.setInterval(() => { const c = $('[data-clock]'); if (c) c.textContent = hhmm(now()); }, 15_000);
 
   function normalize(s: string): DoorStage {
-    return (['none', 'first', 'buggy', 'testing', 'fixed'] as const).includes(s as DoorStage) ? (s as DoorStage) : 'first';
+    return (['none', 'first', 'buggy', 'testing', 'fixed', 'listed', 'dna', 'dnaFull', 'proof', 'practice'] as const).includes(s as DoorStage) ? (s as DoorStage) : 'first';
   }
-  /** The first version counts a second tap again; only the fixed one refuses it. */
-  const refusesSecondTap = () => stage === 'fixed';
+  /** The first version counts a second tap again; the fixed one and every later stage refuse it. */
+  const refusesSecondTap = () => stage === 'fixed' || LATE_STAGES.includes(stage);
+  /** Tonight's lists at this stage: guests who join later (Rico) only from the stage that adds them. */
+  const pool = () => (LATE_STAGES.includes(stage) ? [...GUESTS, ...LATER] : GUESTS);
+  /** Do-not-admit, from lesson 7 on: red, no tap-in. */
+  const isDna = (g: Guest) => DNA_STAGES.includes(stage) && g.id === RICO;
+  const full = () => FULL_STAGES.includes(stage);
+  /** Practice mode (lesson 8): tonight's arrivals are put aside on entry and back on exit; four cases tick. */
+  let saved: Arrival[] | null = null;
+  const tried = [false, false, false, false];
+  function tick(i: number) {
+    if (stage !== 'practice' || tried[i]) return;
+    tried[i] = true;
+    const bar = $('[data-practice]');
+    if (bar) { bar.innerHTML = practiceBar(tried); enter(bar.querySelectorAll('li')[i] ?? null, { transform: 'scale(0.96)', opacity: 0.4 }, 200); }
+  }
 
   // ---------- shell ----------
 
@@ -112,6 +131,7 @@ export const door: MountApp = (el, initial) => {
     root.className = 'dr';
     root.innerHTML = `
       <div class="dr-agent" data-agent hidden></div>
+      ${stage === 'practice' ? `<div class="dr-practice" data-practice>${practiceBar(tried)}</div>` : ''}
       <header class="dr-head">
         <div class="dr-brand">
           <span class="dr-lantern">${ICON.lantern}</span>
@@ -193,6 +213,7 @@ export const door: MountApp = (el, initial) => {
   }
 
   function rowHtml(g: Guest, marks: number[]) {
+    if (isDna(g)) return dnaRow(g, highlight(g, marks), full());
     const mine = arrivalsOf(g.id);
     const label = mine.length
       ? `${g.name}, ${LISTS[g.list].label}, in since ${hhmm(mine[0]!.at)}${mine.length > 1 ? `, checked in ${mine.length} times` : ''}`
@@ -211,6 +232,7 @@ export const door: MountApp = (el, initial) => {
   function listsHtml() {
     const order: ListId[] = ['kai', 'noor', 'guest', 'staff'];
     const inIds = new Set(arrivals.map((a) => a.id));
+    const GUESTS = pool();
     return `<section class="dr-lists" aria-label="Tonight’s lists">
       <h2 class="dr-lists-head">Tonight’s lists</h2>
       <ul>${order.map((l) => {
@@ -218,6 +240,7 @@ export const door: MountApp = (el, initial) => {
         const n = on.filter((g) => inIds.has(g.id)).length;
         return `<li class="dr-l-${l}"><span class="dr-lists-name"><i class="dr-dot"></i>${esc(LISTS[l].label)}</span><span class="dr-lists-n"><b>${n}</b> of ${on.length} in</span><span class="dr-lists-bar" aria-hidden="true"><i style="transform:scaleX(${(n / on.length).toFixed(3)})"></i></span></li>`;
       }).join('')}</ul>
+      ${dnaLists(GUESTS.filter(isDna))}
     </section>`;
   }
 
@@ -225,8 +248,10 @@ export const door: MountApp = (el, initial) => {
     const $r = $('[data-results]'), $s = $('[data-scroll]');
     if (!$r || !$s) return;
     const tokens = tokensOf(query);
-    const hits = find(GUESTS, query);
+    const hits = find(pool(), query);
     root.dataset.view = !tokens.length ? 'idle' : hits.length ? 'hits' : 'none';
+    if (root.dataset.view === 'none') tick(1);
+    if (hits.some((h) => isDna(h.guest))) tick(3);
     if (!tokens.length) $r.innerHTML = listsHtml();
     else if (!hits.length) {
       $r.innerHTML = `<div class="dr-none" role="status">
@@ -247,7 +272,7 @@ export const door: MountApp = (el, initial) => {
   function hint() {
     const tokens = tokensOf(query);
     if (!tokens.length) return 'Type any part of a name';
-    const n = find(GUESTS, query).length;
+    const n = find(pool(), query).length;
     return n ? `${n} on the list · tap a name to check them in` : '';
   }
 
@@ -270,6 +295,8 @@ export const door: MountApp = (el, initial) => {
         <span class="dr-toast-icon">${ICON.again}</span>
         <span class="dr-toast-text"><b>Already in · ${hhmm(deck.at)}</b><span>${esc(deck.g.name)} wasn’t counted again</span></span>
       </div>`;
+    } else if (deck.kind === 'dna') {
+      html = dnaDeck(deck.g, full());
     } else {
       html = `<div class="dr-toast" data-kind="undone"><span class="dr-toast-text"><b>Undone</b><span>${esc(deck.g.name)} is not checked in</span></span></div>`;
     }
@@ -294,6 +321,7 @@ export const door: MountApp = (el, initial) => {
   function checkIn(g: Guest, plus: number) {
     const a: Arrival = { id: g.id, at: now(), plus, seq: seq++ };
     arrivals.push(a);
+    if (g.id === ANA) tick(0);
     afterChange();
     showDeck({ kind: 'in', a }, UNDO_MS);
     announce(`${g.name} checked in. ${headCount()} of ${CAPACITY} in.`);
@@ -302,8 +330,18 @@ export const door: MountApp = (el, initial) => {
   function tap(id: string, fromAgent = false) {
     const g = byId.get(id);
     if (!g) return;
+    // Do-not-admit: nothing to tap in. The deck says so; from lesson 7 part 4 the sheet says what to do.
+    if (isDna(g)) {
+      if (full() && !fromAgent) { openDna(g); return; }
+      showDeck({ kind: 'dna', g }, 3600);
+      announce(`${g.name}: do not admit. Not checked in.`);
+      const row = $(`.dr-row[data-id="${id}"]`);
+      if (row && !reduced()) row.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(-2px)' }, { transform: 'translateX(0)' }], { duration: 260, easing: 'ease-out' });
+      return;
+    }
     const mine = arrivalsOf(id);
     if (mine.length && refusesSecondTap()) {
+      if (id === ANA) tick(2);
       showDeck({ kind: 'already', g, at: mine[0]!.at }, 3200);
       announce(`${g.name} is already in, since ${hhmm(mine[0]!.at)}. Not counted again.`);
       const row = $(`.dr-row[data-id="${id}"]`);
@@ -329,6 +367,23 @@ export const door: MountApp = (el, initial) => {
     paintCount(true);
     paintRecent(true);
     paintResults();
+  }
+
+  // ---------- do-not-admit: what to do (door/late.ts) ----------
+
+  function openDna(g: Guest) {
+    closeSheet(false);
+    const sheet = document.createElement('div');
+    sheet.className = 'dr-sheet';
+    sheet.innerHTML = dnaSheet(g);
+    root.append(sheet);
+    if (!reduced()) {
+      sheet.querySelector<HTMLElement>('.dr-scrim')!.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease-out' });
+      sheet.querySelector<HTMLElement>('.dr-panel')!.animate([{ transform: 'translateY(100%)' }, { transform: 'none' }], { duration: 260, easing: 'cubic-bezier(0.32, 0.72, 0, 1)' });
+    }
+    showDeck({ kind: 'dna', g }, 3600);
+    announce(`${g.name}: do not admit.`);
+    sheet.querySelector<HTMLElement>('[data-close].dr-cancel')?.focus({ preventScroll: true });
   }
 
   // ---------- plus-ones sheet ----------
@@ -403,13 +458,14 @@ export const door: MountApp = (el, initial) => {
   });
   /** A tap on a guest. After a check-in the box clears for the next guest; the deck confirms. */
   function pick(id: string) {
-    const refused = arrivalsOf(id).length > 0 && refusesSecondTap();
+    const g = byId.get(id);
+    const refused = (arrivalsOf(id).length > 0 && refusesSecondTap()) || (!!g && isDna(g));
     tap(id);
     if (!refused && !$('.dr-sheet')) setQuery('', false);
   }
   root.addEventListener('submit', (e) => {
     e.preventDefault();
-    const hits = find(GUESTS, query);
+    const hits = find(pool(), query);
     if (hits.length === 1) pick(hits[0]!.guest.id);
   });
   root.addEventListener('keydown', (e) => {
@@ -434,6 +490,8 @@ export const door: MountApp = (el, initial) => {
     setQuery: (q: string) => setQuery(q, false),
     tapRow: (id: string) => { tap(id, true); setQuery('', false); },
     count: headCount,
+    deck: () => deck.kind,
+    view: () => root.dataset.view ?? '',
     resetGuest: (id: string) => {
       for (let i = arrivals.length - 1; i >= 0; i--) if (arrivals[i]!.id === id) arrivals.splice(i, 1);
       if (deck.kind === 'in' && deck.a.id === id) showDeck({ kind: 'hint' });
@@ -452,6 +510,14 @@ export const door: MountApp = (el, initial) => {
     io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) go(); }, { threshold: 0.4 });
     io.observe(root);
   }
+  /** Lesson 8, part 2: the agent's four cases (door/proof.ts). */
+  function startProof() {
+    stopRun();
+    const go = () => { io?.disconnect(); io = null; run = runProof(page, byId.get(ANA)!, byId.get(RICO)!, { instant: reduced() }); };
+    if (reduced() || typeof IntersectionObserver === 'undefined') return go();
+    io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) go(); }, { threshold: 0.4 });
+    io.observe(root);
+  }
   function stopRun() {
     io?.disconnect(); io = null;
     if (run && !run.done) run.stop();
@@ -459,17 +525,25 @@ export const door: MountApp = (el, initial) => {
   }
 
   function enterStage(s: DoorStage, from: DoorStage | null) {
-    if (from === 'testing' && s !== 'testing') stopRun();
+    if ((from === 'testing' || from === 'proof') && s !== from) stopRun();
+    // Practice mode keeps tonight's list apart: put the real arrivals aside, and back on the way out.
+    if (s === 'practice' && from !== 'practice') {
+      saved = arrivals.slice();
+      for (let i = arrivals.length - 1; i >= 0; i--) if (arrivals[i]!.id === ANA) arrivals.splice(i, 1);
+      tried.fill(false);
+    }
+    if (from === 'practice' && s !== 'practice' && saved) { arrivals.splice(0, arrivals.length, ...saved); saved = null; }
     stage = s;
-    if (s === 'fixed') dedupe();
+    if (s === 'fixed' || LATE_STAGES.includes(s)) dedupe();
     if (sheetFor) closeSheet(false);
     if (deckTimer) clearTimeout(deckTimer);
     deck = { kind: 'hint' };
     lastCount = headCount();
     shell();
     const bar = $('[data-agent]');
-    if (bar) bar.hidden = s !== 'testing';
+    if (bar) bar.hidden = s !== 'testing' && s !== 'proof';
     if (s === 'testing') startRun();
+    if (s === 'proof') startProof();
   }
 
   enterStage(stage, null);
@@ -482,6 +556,7 @@ export const door: MountApp = (el, initial) => {
     },
     destroy() {
       stopRun();
+      if (saved) { arrivals.splice(0, arrivals.length, ...saved); saved = null; }
       clearInterval(clock);
       if (deckTimer) clearTimeout(deckTimer);
       root.remove();

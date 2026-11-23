@@ -116,9 +116,38 @@ export interface Point {
    * the failed rows of the turn's work log (a point after the reply that says "read the log").
    */
   look?: 'log';
+  /**
+   * Lesson 7: a question the agent is asking at this point, drawn as T3 Code's question panel
+   * inside the composer (t3code.questionPanel). Left out when nothing is being asked.
+   */
+  ask?: Ask;
 }
 
-export interface Row { at: number; label: Lv; detail?: Lv; tone?: 'bad' | 'ok' }
+/** A question in T3 Code's question panel: its header, the question and the options to pick from. */
+export interface Ask {
+  header: string;
+  question: string;
+  options: { label: string; description?: string }[];
+  /** The option you picked, shown selected at this point. */
+  pick?: number;
+  /** This question's number and how many there are, when the agent asks several ("1/3"). */
+  of?: [number, number];
+}
+
+export interface Row {
+  at: number;
+  label: Lv;
+  detail?: Lv;
+  tone?: 'bad' | 'ok';
+  /**
+   * Lesson 7: a pending approval, drawn as T3 Code draws it in the work log (t3code.approvalRow):
+   * the command or the files, "Waiting for approval", Decline and Approve. It shows from `at` until
+   * the point you answer (`until`), then leaves the log; what happens next is in the rows after it.
+   */
+  approval?: { kind: 'command' | 'file-change'; until: number };
+  /** A message you send while the turn runs (a text reply that declines an approval). `label` is your words. */
+  you?: boolean;
+}
 
 export interface Part {
   title: string;

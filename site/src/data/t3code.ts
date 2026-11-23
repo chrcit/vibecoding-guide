@@ -165,6 +165,33 @@ export const t3code = {
     doc('usage'),
   ),
   claudePermissionsStillApply: fact(true, "Claude can still ask for approval in Full access when its own settings require it, so Claude Code's permission settings keep working underneath.", doc('permission-modes')),
+  // Guide v2, lesson 7 (the agent stops for you): approvals, questions and plans, read on main at 7b47a21.
+  approvalRow: fact(
+    ['Command approval', 'File change approval', 'Waiting for approval', 'Decline', 'Approve', 'Cancel', 'Always allow this session'],
+    'A pending approval is a row in the work log, not a separate panel: it shows the command or the file change, "Waiting for approval", and Decline and Approve; a More menu holds Cancel and Always allow this session. Its accessible name is "Command approval" or "File change approval".',
+    `${REPO}/blob/main/apps/web/src/components/chat/TimelinePendingApprovalRow.tsx`,
+    { verified: '2026-11-23', note: 'Buttons from ComposerPendingApprovalActions.tsx (DEFAULT_APPROVAL_OPTIONS). The older ComposerPendingApprovalPanel.tsx above the composer is gone on main.' },
+  ),
+  declineWithText: fact(
+    'Send feedback to decline this request',
+    'While a Claude approval is pending, a text reply declines that request and gives the agent your feedback. The composer then reads "Send feedback to decline this request".',
+    doc('permission-modes'),
+    { verified: '2026-11-23', note: 'The placeholder is in apps/web/src/components/chat/ChatComposer.tsx.' },
+  ),
+  questionPanel: fact(
+    ['Dismiss question without answering', 'Choose an option above', 'Submit answer', 'Next question', 'Submit answers'],
+    'When the agent asks a question, it opens inside the composer: the question\'s header, the question, and its options with radio marks and number keys 1 to 9. Several questions come one at a time with a count such as "1/3"; the send button reads "Next question", then "Submit answers". A question can be dismissed without answering.',
+    `${REPO}/blob/main/apps/web/src/components/chat/ComposerPendingUserInputPanel.tsx`,
+    { verified: '2026-11-23', note: 'Button labels from ComposerPrimaryActions.tsx; the placeholder "Choose an option above" from ChatComposer.tsx.' },
+  ),
+  modeQuestions: fact(true, 'Permission modes do not stop the agent asking questions about the task, in any mode.', doc('permission-modes'), { verified: '2026-11-23' }),
+  supervisedReads: fact(true, 'Providers enforce permissions differently: some read-only actions can go ahead in Supervised without asking.', doc('permission-modes'), { verified: '2026-11-23' }),
+  proposedPlan: fact(
+    ['Proposed plan', 'Plan', 'Download as markdown', 'Save plan to workspace'],
+    'When a provider hands over a formal plan (Claude Code leaving its plan mode, or a Codex plan), T3 Code shows it as a "Proposed plan" card with a Plan badge and actions to copy it, download it as Markdown or save it to the workspace. On main on 23 November 2026 the composer had no plan-mode switch and the sidebar row has no plan status.',
+    `${REPO}/blob/main/apps/web/src/components/chat/ProposedPlanCard.tsx`,
+    { verified: '2026-11-23', note: 'ClaudeAdapterV2.ts captures ExitPlanMode as a proposed plan. The web slash commands are model, side, btw and clear (composer-logic.ts); "Plan Ready" survives only in the command palette status (Sidebar.logic.ts resolveThreadStatusPill).' },
+  ),
   noLocalModels: fact(true, 'T3 Code does not support local models.', doc('faq')),
   codeNotToT3: fact(
     'provider only',

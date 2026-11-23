@@ -55,8 +55,11 @@ const STATUS_ICON: Record<string, string> = {
   working: ico(`<path ${ln} d="M10.1 2.18a9.93 9.93 0 0 1 3.8 0M17.6 3.71a9.95 9.95 0 0 1 2.69 2.7M21.82 10.1a9.93 9.93 0 0 1 0 3.8M20.29 17.6a9.95 9.95 0 0 1-2.7 2.69M13.9 21.82a9.94 9.94 0 0 1-3.8 0M6.4 20.29a9.95 9.95 0 0 1-2.69-2.7M2.18 13.9a9.93 9.93 0 0 1 0-3.8M3.71 6.4a9.95 9.95 0 0 1 2.7-2.69"/>`),
   done: ico(`<circle ${ln} cx="12" cy="12" r="10"/><path ${ln} d="m9 12 2 2 4-4"/>`),
   approval: ico(`<path ${ln} d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path ${ln} d="M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3M12 17h.01"/>`),
+  // Lesson 7: Input, T3 Code's MessageCircleQuestion.
+  input: ico(`<path ${ln} d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path ${ln} d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>`),
 };
-const statusKey = (s: string) => (s === STATUS.working ? 'working' : s === STATUS.done ? 'done' : s === STATUS.approval ? 'approval' : '');
+/** A status word's key for its icon and colour: "Working" → working. Any status T3 Code has works; unknown icons fall back to none. */
+const statusKey = (s: string) => s.toLowerCase().replace(/\s+/g, '-');
 
 export function boot(root: HTMLElement) {
   const $ = <T extends HTMLElement = HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
@@ -216,10 +219,13 @@ export function boot(root: HTMLElement) {
     if (end) t.setAttribute('data-landed', ''); else t.removeAttribute('data-landed');
     for (const li of t.querySelectorAll<HTMLElement>('[data-at]')) {
       const at = Number(li.dataset.at);
-      li.hidden = at > point;
-      const live = current && at === point && !end;
+      // A pending approval leaves the log once you answer it (data-until); your own messages never shine.
+      const until = li.dataset.until ? Number(li.dataset.until) : Infinity;
+      li.hidden = at > point || point >= until;
+      const label = li.querySelector<HTMLElement>('.v2-wlabel');
+      const live = current && at === point && !end && !!label;
       li.toggleAttribute('data-live', live);
-      shine(li.querySelector('.v2-wlabel')!, live);
+      if (label) shine(label, live);
       li.toggleAttribute('data-look', current && li.dataset.tone === 'bad' && point !== Infinity && pointOf()?.look === 'log' && here.lesson === t.dataset.lesson);
     }
     const working = t.querySelector<HTMLElement>('[data-working]')!;
@@ -283,6 +289,28 @@ export function boot(root: HTMLElement) {
     lastUi = ui;
   }
 
+  /**
+   * Lesson 7: the agent's question at this point, as T3 Code's question panel inside the composer:
+   * the header (and "n/N" when it asks several), the question, and its options with radio marks and
+   * number keys. A drawing: the story picks the answer, shown selected at the point you give it.
+   */
+  let lastAsk = '';
+  function showAsk(animate: boolean) {
+    const box = $('[data-ask]');
+    const a = lesson() ? pointOf().ask : undefined;
+    const key = a ? JSON.stringify(a) : '';
+    if (key === lastAsk) return;
+    const opened = !lastAsk && !!a;
+    lastAsk = key;
+    box.hidden = !a;
+    if (!a) { box.replaceChildren(); return; }
+    const dismiss = box.dataset.dismiss ?? '';
+    box.innerHTML = `<div class="v2-ask-head"><span class="v2-ask-h">${esc(a.header)}</span>${a.of ? `<span class="v2-ask-n">${a.of[0]}/${a.of[1]}</span>` : ''}<span class="v2-ask-x" title="${esc(dismiss)}" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14" focusable="false"><path ${ln} d="M18 6 6 18M6 6l12 12"/></svg></span></div>`
+      + `<p class="v2-ask-q">${esc(a.question)}</p>`
+      + `<ol class="v2-ask-opts">${a.options.map((o, i) => `<li${a.pick === i ? ' data-on' : ''}><span class="v2-ask-radio" aria-hidden="true"></span><span class="v2-ask-o"><span class="v2-ask-l">${esc(o.label)}${a.pick === i ? '<span class="visually-hidden"> (chosen)</span>' : ''}</span>${o.description ? `<span class="v2-ask-d">${esc(o.description)}</span>` : ''}</span><kbd aria-hidden="true">${i + 1}</kbd></li>`).join('')}</ol>`;
+    if (opened && animate && !reduced.matches) { box.removeAttribute('data-in'); void box.offsetWidth; box.setAttribute('data-in', ''); }
+  }
+
   /** The story threads of the lesson so far, in order: a part with a new title and `fresh` starts one. */
   function threadsSoFar(): { title: string; part: number }[] {
     const l = lesson();
@@ -300,7 +328,7 @@ export function boot(root: HTMLElement) {
     const key = statusKey(status);
     if (el.dataset.s === key) return;
     el.dataset.s = key;
-    el.innerHTML = key ? `${STATUS_ICON[key]}<span>${esc(status)}</span>` : '';
+    el.innerHTML = key ? `${STATUS_ICON[key] ?? ''}<span>${esc(status)}</span>` : '';
   };
 
   /**
@@ -494,6 +522,7 @@ export function boot(root: HTMLElement) {
     showThread(newPart && animate);
     showHead();
     showUi(via !== 'still');
+    showAsk(animate);
     showSidebar();
     showControls(animate);
     showBrowser();

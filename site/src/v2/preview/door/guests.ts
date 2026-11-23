@@ -75,3 +75,10 @@ export const ALREADY_IN: [string, string, number][] = [
 
 /** People in who are on no list (paid at the door), so the count starts at 142. */
 export const WALK_INS = 118;
+
+// ---------- later in the story (lessons 7 and 8) ----------
+
+/** Rico Vance, on Noor's list by 19:00 with one plus-one, and on nobody's door until lesson 7. */
+export const RICO = 'rico-vance';
+/** Guests who join tonight's lists later in the story. The door shows them only from the stage that adds them. */
+export const LATER: Guest[] = [{ id: RICO, name: 'Rico Vance', list: 'noor', plus: 1 }];
