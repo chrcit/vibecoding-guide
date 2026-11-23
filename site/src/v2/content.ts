@@ -13,7 +13,7 @@
  * This file holds the table of contents, the types and the shared helpers. Each lesson lives in its
  * own file, v2/lessons/l<N>.ts, and v2/lessons/index.ts collects them (LESSONS, uiAt).
  */
-import type { SceneState, Block, Kind, P3 } from '../journey/picture';
+import type { SceneState, Block, Kind, P3, XY } from '../journey/picture';
 import { lab } from '../journey/presets';
 import type { Level } from '../lib/levels';
 import type { Preview } from './preview';
@@ -80,7 +80,13 @@ export type Move =
   | { to: 'agent' }
   | { to: 'you'; kind: Kind }
   | { to: 'tool'; tool: string; file?: number; back: Kind }
-  | { to: 'gate'; kind: Kind; through?: boolean };
+  | { to: 'gate'; kind: Kind; through?: boolean }
+  /**
+   * A puck along any route on the floor (journey/picture's `route.*`, or points of your own), for
+   * scenes beyond one agent and its tools: a meter, the gate before main, other people, machines.
+   * Added for lessons 14–17.
+   */
+  | { to: 'path'; path: XY[]; kind: Kind; ms?: number };
 
 /** The parts of the app a lesson teaches. Each appears at the point that teaches it and stays. */
 export interface Ui {
@@ -95,6 +101,19 @@ export interface Ui {
   context?: number;
   /** The work log above the reply. */
   log?: boolean;
+  /**
+   * Thread details: the provider's usage limits, as T3 Code's "{label}: {left}% left" rows
+   * (t3code.screen.usageLimits, limitWindows), with example numbers. Lesson 14 teaches them. An
+   * empty list hides them again.
+   */
+  limits?: { label: string; left: number }[];
+  /**
+   * The model chip's words when they aren't the default model's name (lesson 14 shows the model and
+   * effort a job was started on). An empty string goes back to the default.
+   */
+  modelName?: string;
+  /** The "Run on" picker under the composer (t3code.screen.runOn): the machine the thread runs on. Lesson 17 teaches it; an empty string hides it. */
+  env?: string;
 }
 
 export interface Point {

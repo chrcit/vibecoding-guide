@@ -225,6 +225,43 @@ export const t3code = {
     "A T3 Code handoff keeps the selected messages in full, in order and with their roles, but leaves out the previous provider's reasoning, tool-call state and attachments. Omitted history can be fetched with T3 Code's thread-reading tool.",
     doc('portable-handoffs'),
   ),
+  // Guide v2, lessons 14 to 17 and Set up (read on 2026-11-23 at main 7b47a21).
+  usageLimitsInThread: fact(
+    '/usage-limits',
+    'Send /usage-limits to check the current model\'s limits above the composer without running the agent. To keep them in view, turn on Usage limits in Settings → Appearance → Thread details: the card then shows how much is left in each limit window of the current provider account.',
+    doc('usage'),
+    { verified: '2026-11-23' },
+  ),
+  guestLinks: fact(
+    'Share with guest',
+    'A guest link (beta, needs T3 Connect) lets one person follow a thread in their browser for 24 hours and send messages. Each message waits at the end of the thread, the row shows Request, and you choose Send or Dismiss; once sent it runs with the thread\'s permission mode. Guests see what the agent read or printed, but not diffs, and cannot change the thread.',
+    doc('guest-links'),
+    { verified: '2026-11-23' },
+  ),
+  prText: fact(
+    'commit, push, pull request',
+    'A thread\'s Git actions commit, push and create a pull request. T3 Code can write the commit message and the pull request\'s title and description from your changes; the description also draws on the work in the thread, including the checks it ran.',
+    doc('source-control'),
+    { verified: '2026-11-23' },
+  ),
+  reviewGuides: fact(
+    'Guide tab (beta)',
+    'Review guides (beta) add a Guide tab to a pull request: stops through the change in reading order, each pointing at the lines worth reading, with "Look closely" on a call only a maintainer can make. Claude and Codex can write them.',
+    doc('source-control'),
+    { verified: '2026-11-23' },
+  ),
+  publishRepo: fact(
+    'Create private repository on GitHub',
+    'New project can also create a private repository on GitHub. For a local repository without a remote, Publish Repository creates the hosted repository, adds it as origin and pushes your commits.',
+    doc('source-control'),
+    { verified: '2026-11-23' },
+  ),
+  backgroundService: fact(
+    't3 service install',
+    'On Linux, macOS and Windows T3 Code can run as a background service for your user (t3 service install), so no terminal has to stay open; t3 up sets up how your other devices reach the machine.',
+    doc('background-service'),
+    { verified: '2026-11-23' },
+  ),
   /** The words on T3 Code's own screen, for the schematic screen beside the journey's picture (journey/screen.ts). */
   screen: {
     composer: fact(
@@ -317,6 +354,18 @@ export const t3code = {
       'The same thread details show provider limits under "Usage limits", as "{label}: {left}% left".',
       `${REPO}/blob/main/apps/web/src/components/chat/ThreadDetailsUsage.tsx`,
       { verified: '2026-11-22' },
+    ),
+    limitWindows: fact(
+      ['Session', 'Weekly'],
+      'For a Claude account T3 Code names the two usage-limit windows "Session" (five hours) and "Weekly".',
+      `${REPO}/blob/main/apps/server/src/provider/claudeUsageLimits.ts`,
+      { verified: '2026-11-23' },
+    ),
+    runOn: fact(
+      'Run on',
+      'Under the composer, a picker named "Run on" shows the machine (environment) a thread runs on, with each connected machine, "Auto balance" and "Add to another machine" as choices.',
+      `${REPO}/blob/main/apps/web/src/components/BranchToolbarEnvironmentSelector.tsx`,
+      { verified: '2026-11-23' },
     ),
     statuses: fact(
       ['Setting up', 'Goal', 'Working', 'Waiting', 'Approval', 'Input', 'Request', 'Limited', 'Failed', 'Woke', 'Done'],

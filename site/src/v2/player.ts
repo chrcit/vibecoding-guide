@@ -13,7 +13,7 @@
  */
 import { Scene, type Script } from '../journey/scene';
 import { route, reverse, type SceneState } from '../journey/picture';
-import { TOC, STATUS, whereIs, type Move, type Point, type Ui, type Part } from './content';
+import { TOC, STATUS, MODEL, whereIs, type Move, type Point, type Ui, type Part } from './content';
 import { LESSONS, uiAt } from './lessons';
 import type { Preview } from './preview';
 import { LEVEL_EVENT, isLevel, type Level } from '../lib/levels';
@@ -54,6 +54,9 @@ const ico = (d: string) => `<svg viewBox="0 0 24 24" width="12" height="12" aria
 const STATUS_ICON: Record<string, string> = {
   working: ico(`<path ${ln} d="M10.1 2.18a9.93 9.93 0 0 1 3.8 0M17.6 3.71a9.95 9.95 0 0 1 2.69 2.7M21.82 10.1a9.93 9.93 0 0 1 0 3.8M20.29 17.6a9.95 9.95 0 0 1-2.7 2.69M13.9 21.82a9.94 9.94 0 0 1-3.8 0M6.4 20.29a9.95 9.95 0 0 1-2.69-2.7M2.18 13.9a9.93 9.93 0 0 1 0-3.8M3.71 6.4a9.95 9.95 0 0 1 2.7-2.69"/>`),
   done: ico(`<circle ${ln} cx="12" cy="12" r="10"/><path ${ln} d="m9 12 2 2 4-4"/>`),
+  // Lessons 14–17: T3 Code's Limited (CircleAlert, warning colour) and a guest's Request (UserRound).
+  limited: ico(`<circle ${ln} cx="12" cy="12" r="10"/><path ${ln} d="M12 8v4M12 16h.01"/>`),
+  request: ico(`<circle ${ln} cx="12" cy="8" r="5"/><path ${ln} d="M20 21a8 8 0 0 0-16 0"/>`),
   approval: ico(`<path ${ln} d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path ${ln} d="M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3M12 17h.01"/>`),
   // Lesson 7: Input, T3 Code's MessageCircleQuestion.
   input: ico(`<path ${ln} d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path ${ln} d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>`),
@@ -120,6 +123,7 @@ export function boot(root: HTMLElement) {
 
   async function move(sc: Scene, h: Script, m: Move) {
     if (m.to === 'agent') return h.send(route.youToAgent(), 'you', { ms: 560 });
+    if (m.to === 'path') return h.send(m.path, m.kind, { ms: m.ms ?? 560 });
     if (m.to === 'you') return h.send(reverse(route.youToAgent()), m.kind, { ms: 560 });
     if (m.to === 'gate') {
       await h.send(route.agentToGate(), m.kind, { ms: 420 });
@@ -268,6 +272,15 @@ export function boot(root: HTMLElement) {
     const model = $('[data-ui="model"]');
     model.hidden = !ui.model;
     if (ui.model && !lastUi.model) flash(model, animate);
+    // Lesson 14: the chip can name another model and effort; it rings when it changes.
+    const modelText = ui.modelName || MODEL;
+    if (model.textContent !== modelText) { model.textContent = modelText; if (lastUi.model) flash(model, animate); }
+    const env = $('[data-ui="env"]');
+    env.hidden = !ui.env;
+    if (ui.env) {
+      env.querySelector('[data-env-name]')!.textContent = ui.env;
+      if (ui.env !== lastUi.env) flash(env, animate);
+    }
     const perm = $('[data-ui="perm"]');
     perm.hidden = !ui.perm;
     if (ui.perm) {
@@ -275,7 +288,21 @@ export function boot(root: HTMLElement) {
       if (ui.perm !== lastUi.perm) flash(perm, animate);
     }
     const details = $('[data-ui="context"]');
-    details.hidden = ui.context == null;
+    const limits = ui.limits ?? [];
+    details.hidden = ui.context == null && !limits.length;
+    $('[data-ctx-sec]').hidden = ui.context == null;
+    // Lesson 14: Usage limits under the context window, one "{label}: {left}% left" row per window.
+    const lim = $('[data-limits]');
+    lim.hidden = !limits.length;
+    const limKey = limits.map((w) => `${w.label}:${w.left}`).join('|');
+    if (lim.dataset.key !== limKey) {
+      lim.dataset.key = limKey;
+      const tpl = lim.dataset.tpl!;
+      lim.querySelector('[data-limit-rows]')!.innerHTML = limits.map((w) => `<li data-low="${w.left <= 10 ? 'yes' : 'no'}"><span class="v2-pop-val">${esc(tpl.replace('{label}', w.label).replace('{left}', String(w.left)))}</span><span class="v2-meter" aria-hidden="true"><span style="transform:scaleX(${Math.max(0.01, w.left / 100)})"></span></span></li>`).join('');
+      if (limits.length) flash($('[data-details-btn]'), animate);
+    }
+    // The button's short value is the context when there is one, else the lowest limit.
+    if (limits.length && ui.context == null) $('[data-ctx-short]').textContent = `${Math.min(...limits.map((w) => w.left))}% left`;
     if (ui.context != null) {
       const text = $('[data-ctx-text]');
       text.textContent = text.dataset.tpl!.replace('{used}', String(ui.context));
@@ -285,7 +312,7 @@ export function boot(root: HTMLElement) {
       if (ui.context !== lastUi.context) flash($('[data-details-btn]'), animate);
     } else setDetails(false);
     root.toggleAttribute('data-has-log', !!ui.log);
-    $('[data-foot]').hidden = !ui.model && !ui.perm;
+    $('[data-foot]').hidden = !ui.model && !ui.perm && !ui.env;
     lastUi = ui;
   }
 
@@ -664,7 +691,7 @@ export function boot(root: HTMLElement) {
     const l = lesson();
     if (!l) return;
     const { lesson: tl } = whereIs(here.lesson);
-    $('[data-parts-head]').textContent = `Lesson ${tl.n} · ${tl.title}`;
+    $('[data-parts-head]').textContent = tl.n ? `Lesson ${tl.n} · ${tl.title}` : `${whereIs(here.lesson).chapter.title} · ${tl.title}`;
     const finished = done.has(here.lesson);
     const nx = nextPlayable(here.lesson);
     $('[data-parts-list]').innerHTML = l.parts.map((pt, j) => {

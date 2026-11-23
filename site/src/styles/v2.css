@@ -811,3 +811,14 @@ main:has(> .v2) { padding: 0; }
   .v2-shine { display: none; }
   .v2-wrow[data-live] .v2-wlabel { color: var(--t3-fg); }
 }
+
+/* ---------- lessons 14–17: two more sidebar statuses, usage limits, the "Run on" chip ---------- */
+.v2-status[data-s='limited'] { color: var(--t3-warning-fg); }
+.v2-status[data-s='request'] { color: var(--t3-info-fg); }
+.v2-limits ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.v2-limits li { display: grid; gap: 0.25rem; }
+.v2-limits .v2-pop-val { margin: 0; }
+.v2-limits li[data-low='yes'] .v2-meter span { background: var(--t3-warning-fg); }
+[data-ctx-sec]:not([hidden]) + .v2-limits { margin-top: 0.75rem; padding-top: 0.625rem; border-top: 1px solid var(--t3-border); }
+.v2-chip-env { gap: 0.3rem; }
+.v2-chip-env svg { flex: none; opacity: 0.8; }

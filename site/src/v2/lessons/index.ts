@@ -5,7 +5,8 @@
  */
 import { TOC, type Lesson, type Ui } from '../content';
 
-const files = import.meta.glob<{ default: Lesson }>('./l*.ts', { eager: true });
+// l<N>.ts for the numbered lessons, s-<name>.ts for the Set up threads (ids s-providers etc.).
+const files = import.meta.glob<{ default: Lesson }>(['./l*.ts', './s-*.ts'], { eager: true });
 export const LESSONS: Record<string, Lesson> = {};
 for (const m of Object.values(files)) LESSONS[m.default.id] = m.default;
 for (const c of TOC) for (const l of c.lessons) l.plays = !!LESSONS[l.id];

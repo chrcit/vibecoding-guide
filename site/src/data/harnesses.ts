@@ -43,6 +43,20 @@ export const harnesses = {
     ),
     queue: fact(true, 'Claude Code queues a message you send while it is working.', CC('interactive-mode')),
     web: fact(true, 'Claude Code also runs on the web, in cloud sessions that work on your GitHub repositories.', CC('claude-code-on-the-web')),
+    cloudClone: fact(
+      'fresh VM, clones the GitHub remote',
+      'A Claude Code cloud session runs in a fresh, isolated virtual machine that clones your GitHub repository at the current branch, not your local checkout.',
+      CC('claude-code-on-the-web'),
+      { verified: '2026-11-23' },
+    ),
+    cloudSetup: fact(
+      'setup script',
+      'Every Claude Code cloud session runs in a cloud environment: a saved configuration of network access, environment variables and a setup script, which runs before Claude starts working.',
+      CC('cloud-environments'),
+      { verified: '2026-11-23' },
+    ),
+    cloudKeepsRunning: fact(true, 'A Claude Code cloud session keeps running after you close your laptop, and you can check on it or steer it from any device; when it is done you can open a pull request.', CC('claude-code-on-the-web'), { verified: '2026-11-23' }),
+    cloudUsage: fact('same plan limits', 'Claude Code cloud sessions count toward your plan\'s usage limits alongside the rest of your Claude and Claude Code usage.', CC('claude-code-on-the-web'), { verified: '2026-11-23' }),
     login: fact('claude auth login', 'Sign in to Claude Code with claude auth login.', CC('quickstart')),
     bestPractice: fact(
       'Before a run goes unattended, make sure it knows what done looks like, can check its own work, and can only touch what it should.',
