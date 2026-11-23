@@ -81,12 +81,10 @@ export type Move =
   | { to: 'you'; kind: Kind }
   | { to: 'tool'; tool: string; file?: number; back: Kind }
   | { to: 'gate'; kind: Kind; through?: boolean }
-  /**
-   * A puck along any route on the floor (journey/picture's `route.*`, or points of your own), for
-   * scenes beyond one agent and its tools: a meter, the gate before main, other people, machines.
-   * Added for lessons 14–17.
-   */
-  | { to: 'path'; path: XY[]; kind: Kind; ms?: number };
+  // Chapter 3 (more agents): a puck along any route on the floor (a lead to a helper, a job to main),
+  // and several moves at once, for agents that work side by side.
+  | { to: 'path'; path: XY[]; kind: Kind; ms?: number }
+  | { to: 'all'; moves: Move[] };
 
 /** The parts of the app a lesson teaches. Each appears at the point that teaches it and stays. */
 export interface Ui {
@@ -125,7 +123,7 @@ export interface Ui {
  * Lesson 4: a story thread in the sidebar, drawn under the lesson's row with its own status.
  * `part` is the part of this lesson that opens it when clicked (none: the row only shows).
  */
-export interface StoryThread { title: string; status?: string; part?: number }
+export interface StoryThread { title: string; status?: string; part?: number; /** Chapter 3: a child thread, indented under the row before it. */ child?: boolean }
 
 export interface Point {
   say: string;
@@ -152,8 +150,9 @@ export interface Point {
    */
   ask?: Ask;
   /**
-   * Lesson 4: every story thread in the sidebar at this point, each with its own status. Without
-   * it the sidebar shows the lesson's threads so far, the newest one live (lesson 1).
+   * Lessons 4 and 9-13: every story thread in the sidebar at this point, each with its own status
+   * (threads side by side, a lead and the threads it started). Without it the sidebar shows the
+   * lesson's threads so far, the newest one live (lesson 1).
    */
   threads?: StoryThread[];
 }
@@ -169,11 +168,19 @@ export interface Ask {
   of?: [number, number];
 }
 
+/**
+ * Chapter 3: one subagent under a "{n} subagents" row (t3code.screen.subagents). It runs from the
+ * row's point until `done` (a point index), when its line settles; `tone: 'bad'` marks a failure.
+ */
+export interface SubRow { name: Lv; /** Its result, shown once it has finished. */ detail?: Lv; /** What it is doing, shown while it runs. */ doing?: Lv; done: number; tone?: 'ok' | 'bad'; /** Shown on hover, as T3 Code's hover card shows a subagent's model. */ model?: string }
+
 export interface Row {
   at: number;
   label: Lv;
   detail?: Lv;
   tone?: 'bad' | 'ok';
+  /** Chapter 3: the row is T3 Code's subagent group, and these are its subagents. */
+  agents?: SubRow[];
   /**
    * Lesson 7: a pending approval, drawn as T3 Code draws it in the work log (t3code.approvalRow):
    * the command or the files, "Waiting for approval", Decline and Approve. It shows from `at` until
@@ -221,6 +228,8 @@ export interface Part {
   goal?: { objective: string; met: number; checks: number[] };
   /** What the agent answered. */
   answer: Lv[];
+  /** Chapter 3: the point where the reply lands, when no point moves a puck to 'you' (see player's replyAt). */
+  replyAt?: number;
   /** Shown to technical and engineer readers under the answer. */
   deeper?: { level: 'technical' | 'engineer'; text: string };
   /** The prompt to try, and the one thing to do in T3 Code. */

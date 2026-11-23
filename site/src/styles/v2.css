@@ -806,6 +806,51 @@ main:has(> .v2) { padding: 0; }
   .v2-dot { height: 2.75rem; }
 }
 
+/*
+ * Chapter 3 (lessons 9 to 13): T3 Code's subagent rows in the work log. Two or more sit under a
+ * "{n} subagents" row with a "{count} working · {count} done" line; each row has an avatar with a
+ * status dot, its title, a line of progress or result, and its status on the right. Also the
+ * usage-limits block in thread details, and a sidebar thread row indented under another.
+ */
+.v2-subs { flex-direction: column; align-items: stretch; gap: 0.125rem; }
+.v2-sub-head { display: flex; align-items: center; gap: 0.375rem; min-width: 0; width: 100%; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; border-radius: calc(var(--t3-radius) - 2px); }
+.v2-sub-head .v2-fold-chev { display: inline-flex; margin-left: auto; transition: transform 150ms var(--ease-out); }
+.v2-sub-head[aria-expanded='false'] .v2-fold-chev { transform: rotate(-90deg); }
+.v2-sub-head[aria-expanded='false'] + .v2-subrows { display: none; }
+@media (hover: hover) and (pointer: fine) { .v2-sub-head:hover .v2-wlabel { color: var(--t3-fg); } }
+@media (pointer: coarse) { .v2-sub-head { min-height: 44px; } }
+.v2-sub-line { flex: none; font-size: 0.75rem; color: color-mix(in srgb, var(--t3-muted-fg) 85%, transparent); font-variant-numeric: tabular-nums; }
+.v2-subrows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.125rem; }
+.v2-sub-head + .v2-subrows { margin-left: 0.75rem; padding-left: 0.875rem; border-left: 1px solid var(--t3-border); }
+.v2-subrow {
+  position: relative; display: flex; align-items: flex-start; gap: 0.5rem; min-width: 0; padding: 0.3rem 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--t3-border) 70%, transparent); border-radius: var(--t3-radius); background: var(--t3-card);
+}
+.v2-sub-av {
+  position: relative; display: grid; place-items: center; flex: none; width: 1.375rem; height: 1.375rem; margin-top: 0.05rem;
+  border-radius: 50%; background: var(--t3-accent); color: var(--t3-fg);
+}
+.v2-sub-av svg { width: 0.8rem; height: 0.8rem; }
+.v2-sub-av::after {
+  content: ''; position: absolute; right: -1px; bottom: -1px; width: 0.45rem; height: 0.45rem; border-radius: 50%;
+  background: var(--t3-info-fg); box-shadow: 0 0 0 2px var(--t3-card);
+}
+.v2-subrow[data-state='done'] .v2-sub-av::after { background: var(--t3-success-fg); }
+.v2-subrow[data-state='bad'] .v2-sub-av::after { background: var(--t3-error); }
+.v2-sub-body { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.v2-sub-title { font-size: 0.8125rem; font-weight: 500; line-height: 1.45; color: var(--t3-fg); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.v2-sub-detail { font-size: 0.75rem; line-height: 1.45; color: var(--t3-muted-fg); overflow-wrap: anywhere; }
+.v2-sub-state { flex: none; font-size: 0.75rem; line-height: 1.6; color: var(--t3-info-fg); }
+.v2-subrow[data-state='done'] .v2-sub-state { color: var(--t3-muted-fg); }
+.v2-subrow[data-state='bad'] .v2-sub-state { color: var(--t3-error-fg); }
+.v2-subrow[data-state='running'] .v2-sub-av::after { animation: v2-sub-pulse 1.6s ease-in-out infinite; }
+@keyframes v2-sub-pulse { 50% { opacity: 0.35; } }
+.v2-subrow[data-state='running'] [data-when='done'], .v2-subrow:not([data-state='running']) [data-when='running'] { display: none; }
+.v2-usage { margin-top: 0.75rem; padding-top: 0.6rem; border-top: 1px solid var(--t3-border); }
+.v2-row-child[data-sub] { padding-left: 4.25rem; }
+.v2-row-child[data-sub]::before { left: 3.6rem; }
+span.v2-row-child { cursor: default; }
+
 @media (prefers-reduced-motion: reduce) {
   .v2 *, .v2 *::before, .v2 *::after { animation: none !important; transition-duration: 0s !important; }
   .v2-shine { display: none; }

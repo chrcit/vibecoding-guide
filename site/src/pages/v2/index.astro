@@ -41,6 +41,10 @@ const lv = (t: Lv) => lvHtml(t);
 /** The first work-log row of every turn: T3 Code's row for a skill, naming this guide's. */
 const skill = t3code.screen.skillRow.value.replace('{name}', 'agentic-guide');
 const firstPart = LESSONS.l1!.parts[0]!;
+// Chapter 3: the subagent group row and each subagent's status words (t3code.screen.subagents, subagentStates, subagentRow).
+const subsLabel = (count: number) => t3code.screen.subagents.value[0].replace('{n}', String(count));
+const [subWorking, subDone, subFailed] = t3code.screen.subagentStates.value;
+const [rowRunning, rowCompleted, rowFailed] = t3code.screen.subagentRow.value;
 const fav = (n?: number) => (n ? String(n) : 'S');
 // Lessons 3 and 4: T3 Code's words for the queued message, the goal line and the workspace.
 const [sendNow, editQueued, removeQueued] = t3code.screen.queued.value;
@@ -85,7 +89,11 @@ const icon = {
     read: svg(`<path ${ln} d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path ${ln} d="M14 2v4a2 2 0 0 0 2 2h4M10 9H8M16 13H8M16 17H8"/>`),
     change: svg(`<path ${ln} d="M12 20h9"/><path ${ln} d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.85.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.85Z"/>`),
     run: svg(`<path ${ln} d="m4 17 6-6-6-6M12 19h8"/>`),
+    // Chapter 3: a delegate_task row, drawn with the subagent icon (lucide's Bot).
+    delegate: svg(`<path ${ln} d="M12 8V4H8"/><rect ${ln} width="16" height="12" x="4" y="8" rx="2"/><path ${ln} d="M2 14h2M20 14h2M15 13v2M9 13v2"/>`),
   } as Record<string, string>,
+  // Chapter 3: subagents (lucide's Bot).
+  bot: svg(`<path ${ln} d="M12 8V4H8"/><rect ${ln} width="16" height="12" x="4" y="8" rx="2"/><path ${ln} d="M2 14h2M20 14h2M15 13v2M9 13v2"/>`, 14),
   skill: svg(`<path ${ln} d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.13-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.13a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.13 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.13a.5.5 0 0 1-.96 0Z"/>`),
   failed: svg(`<path ${ln} d="M18 6 6 18M6 6l12 12"/>`, 12),
   shield: svg(`<path ${ln} d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>`, 12),
@@ -241,7 +249,32 @@ const mark = `<svg class="v2-mark" viewBox="0 0 32 32" width="18" height="18" ar
                       <span class="v2-wicon" set:html={icon.skill} />
                       <span class="v2-wbody"><span class="v2-wline"><span class="v2-wlabel">{skill}</span></span></span>
                     </li>
-                    {part.log?.rows.map((r) => r.you ? (
+                    {part.log?.rows.map((r) => r.agents ? (
+                      /* Chapter 3: T3 Code's subagent rows. Two or more get the "{n} subagents" group row; one stands alone. */
+                      <li class="v2-wrow v2-logrow v2-subs" data-at={r.at} data-kind="subagents" data-tone={r.tone}>
+                        {r.agents.length > 1 && (
+                          /* T3 Code's group row opens and closes; a long group starts closed. */
+                          <button type="button" class="v2-sub-head" data-sub-toggle aria-expanded={r.agents.length > 4 ? 'false' : 'true'}>
+                            <span class="v2-wicon" set:html={icon.bot} />
+                            <span class="v2-wline"><span class="v2-wlabel">{subsLabel(r.agents.length)}</span><span class="v2-sub-line" data-sub-line data-tpl-working={subWorking} data-tpl-done={subDone} data-tpl-failed={subFailed}></span></span>
+                            <span class="v2-fold-chev" set:html={icon.chevDown} />
+                          </button>
+                        )}
+                        <ol class="v2-subrows">
+                          {r.agents.map((a) => (
+                            <li class="v2-subrow" data-sub-done={a.done} data-tone={a.tone} data-state="running" title={a.model}>
+                              <span class="v2-sub-av" aria-hidden="true" set:html={icon.bot} />
+                              <span class="v2-sub-body">
+                                <span class="v2-sub-title" set:html={lv(a.name)} />
+                                {a.doing && <span class="v2-sub-detail" data-when="running" set:html={lv(a.doing)} />}
+                                {a.detail && <span class="v2-sub-detail" data-when="done" set:html={lv(a.detail)} />}
+                              </span>
+                              <span class="v2-sub-state" data-sub-state data-running={rowRunning} data-done={rowCompleted} data-bad={rowFailed}>{rowRunning}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      </li>
+                    ) : r.you ? (
                       /* Lesson 7: a message you send while the turn runs (a text reply that declines an approval). */
                       <li class="v2-wrow v2-logrow v2-wyou" data-at={r.at}><div class="v2-bubble"><p set:html={lv(r.label)} /></div></li>
                     ) : r.approval ? (

@@ -41,6 +41,7 @@ const readLevel = (): Level => { const l = document.documentElement.dataset.leve
 
 /** The point where the agent answers: the first that sends something back to you, else the last. */
 export function replyAt(part: Part): number {
+  if (part.replyAt != null) return part.replyAt;
   const i = part.points.findIndex((p) => p.moves.some((m) => m.to === 'you'));
   return i < 0 ? part.points.length - 1 : i;
 }
@@ -61,6 +62,8 @@ const STATUS_ICON: Record<string, string> = {
   // Lesson 3: T3 Code draws Goal with Working's icon and colour (SidebarThreadRow.tsx).
   goal: ico(`<path ${ln} d="M10.1 2.18a9.93 9.93 0 0 1 3.8 0M17.6 3.71a9.95 9.95 0 0 1 2.69 2.7M21.82 10.1a9.93 9.93 0 0 1 0 3.8M20.29 17.6a9.95 9.95 0 0 1-2.7 2.69M13.9 21.82a9.94 9.94 0 0 1-3.8 0M6.4 20.29a9.95 9.95 0 0 1-2.69-2.7M2.18 13.9a9.93 9.93 0 0 1 0-3.8M3.71 6.4a9.95 9.95 0 0 1 2.7-2.69"/>`),
   approval: ico(`<path ${ln} d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path ${ln} d="M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3M12 17h.01"/>`),
+  // Chapter 3: a lead waiting on its child threads (CircleDotDashed).
+  waiting: ico(`<path ${ln} d="M10.1 2.18a9.93 9.93 0 0 1 3.8 0M17.6 3.71a9.95 9.95 0 0 1 2.69 2.7M21.82 10.1a9.93 9.93 0 0 1 0 3.8M20.29 17.6a9.95 9.95 0 0 1-2.7 2.69M13.9 21.82a9.94 9.94 0 0 1-3.8 0M6.4 20.29a9.95 9.95 0 0 1-2.69-2.7M2.18 13.9a9.93 9.93 0 0 1 0-3.8M3.71 6.4a9.95 9.95 0 0 1 2.7-2.69"/><circle ${ln} cx="12" cy="12" r="1"/>`),
   // Lesson 7: Input, T3 Code's MessageCircleQuestion.
   input: ico(`<path ${ln} d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path ${ln} d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>`),
 };
@@ -127,6 +130,8 @@ export function boot(root: HTMLElement) {
   async function move(sc: Scene, h: Script, m: Move) {
     if (m.to === 'agent') return h.send(route.youToAgent(), 'you', { ms: 560 });
     if (m.to === 'path') return h.send(m.path, m.kind, { ms: m.ms ?? 560 });
+    // Chapter 3: several moves at once, for agents that work side by side.
+    if (m.to === 'all') { await Promise.all(m.moves.map((x) => move(sc, h, x))); return; }
     if (m.to === 'you') return h.send(reverse(route.youToAgent()), m.kind, { ms: 560 });
     if (m.to === 'gate') {
       await h.send(route.agentToGate(), m.kind, { ms: 420 });
@@ -234,6 +239,20 @@ export function boot(root: HTMLElement) {
       li.toggleAttribute('data-live', live);
       if (label) shine(label, live);
       li.toggleAttribute('data-look', current && li.dataset.tone === 'bad' && point !== Infinity && pointOf()?.look === 'log' && here.lesson === t.dataset.lesson);
+    }
+    // Chapter 3: each subagent under a "{n} subagents" row runs until its point, then settles.
+    for (const sub of t.querySelectorAll<HTMLElement>('[data-sub-done]')) {
+      const fin = point >= Number(sub.dataset.subDone);
+      sub.dataset.state = fin ? (sub.dataset.tone === 'bad' ? 'bad' : 'done') : 'running';
+      const run = sub.querySelector<HTMLElement>('[data-sub-state]');
+      if (run) run.textContent = fin ? (sub.dataset.tone === 'bad' ? run.dataset.bad! : run.dataset.done!) : run.dataset.running!;
+    }
+    for (const grp of t.querySelectorAll<HTMLElement>('[data-sub-line]')) {
+      // T3 Code's summary: "{count} working · {count} done · {count} failed", leaving out the zeros.
+      const subs = [...grp.closest('li')!.querySelectorAll<HTMLElement>('[data-sub-done]')];
+      const n = { working: 0, done: 0, failed: 0 };
+      for (const x of subs) n[x.dataset.state === 'running' ? 'working' : x.dataset.state === 'bad' ? 'failed' : 'done']++;
+      grp.textContent = (['working', 'done', 'failed'] as const).filter((k) => n[k]).map((k) => grp.dataset[`tpl${k[0]!.toUpperCase()}${k.slice(1)}`]!.replace('{count}', String(n[k]))).join(' · ');
     }
     const working = t.querySelector<HTMLElement>('[data-working]')!;
     // Lesson 4: a queued request has no turn of its own until it is sent.
@@ -383,8 +402,8 @@ export function boot(root: HTMLElement) {
     // far, the newest one live.
     const story = lesson() ? pointOf().threads : undefined;
     const shownThreads = story
-      ? story.map((t) => ({ title: t.title, part: t.part, status: t.status ?? '', current: t.title === threadOf() }))
-      : threads.map((t, i) => ({ title: t.title, part: t.part as number | undefined, status: i === threads.length - 1 ? live : '', current: i === threads.length - 1 }));
+      ? story.map((t, i) => ({ title: t.title, part: t.part, child: !!t.child, status: t.status ?? '', current: t.title === threadOf() || (i === 0 && !story.some((s) => s.title === threadOf())) }))
+      : threads.map((t, i) => ({ title: t.title, part: t.part as number | undefined, child: false, status: i === threads.length - 1 ? live : '', current: i === threads.length - 1 }));
     const many = story ? story.length > 0 : threads.length > 1;
     for (const a of $$('a.v2-row[data-lesson]')) {
       const id = a.dataset.lesson!;
@@ -400,14 +419,14 @@ export function boot(root: HTMLElement) {
       if (ol.dataset.key !== key) {
         const before = ol.childElementCount;
         ol.dataset.key = key;
-        ol.innerHTML = list.map((t, i) => `<li${before > 0 && i >= before ? ' data-enter' : ''}><button type="button" class="v2-row v2-row-child"${t.part != null ? ` data-thread-part="${t.part}"` : ' disabled'}><span class="v2-row-title">${esc(t.title)}</span><span class="v2-status"></span></button></li>`).join('');
+        ol.innerHTML = list.map((t, i) => `<li${before > 0 && i >= before ? ' data-enter' : ''}><button type="button" class="v2-row v2-row-child"${t.child ? ' data-sub' : ''}${t.part != null ? ` data-thread-part="${t.part}"` : ' disabled'}><span class="v2-row-title">${esc(t.title)}</span><span class="v2-status"></span></button></li>`).join('');
       }
       ol.hidden = !list.length;
       const rows = [...ol.querySelectorAll<HTMLElement>('.v2-row-child')];
       rows.forEach((b, i) => {
         const t = list[i]!;
         if (t.current) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
-        setStatus(b.querySelector<HTMLElement>('.v2-status')!, t.status);
+        setStatus(b.querySelector<HTMLElement>('.v2-status')!, t.status || (t.current && story ? live : ''));
       });
     }
     tree.refresh();
@@ -494,7 +513,9 @@ export function boot(root: HTMLElement) {
       if (j < here.part || (j === here.part && i <= here.point)) found = v;
     }));
     if (!first) return null;
-    return found ?? { app: first.app, stage: 'none', url: first.url };
+    // Chapter 3: before a lesson's first Preview point the tab stays hidden. Every tester read a
+    // dev-server 404 there as broken. A lesson that wants the 404 sets it, as lesson 2 does (door 'none').
+    return found ?? null;
   }
 
   function setTab(t: 'ex' | 'preview', focus = false) {
@@ -542,7 +563,8 @@ export function boot(root: HTMLElement) {
     const p = previewAt();
     tabPreview.hidden = !p;
     if (!p && tab === 'preview') setTab('ex');
-    const key = p ? `${here.lesson}:${p.app}:${p.stage}` : '';
+    // A lesson with no Preview yet keys as `<lesson>:`, so the tab's first appearance gets the changed dot.
+    const key = p ? `${here.lesson}:${p.app}:${p.stage}` : l ? `${here.lesson}:` : '';
     if (key !== lastStage) {
       // The app changed while the reader looks elsewhere, or its test is about to run: a dot on the tab says so.
       const testing = p?.stage === 'testing';
@@ -744,6 +766,13 @@ export function boot(root: HTMLElement) {
     }
   });
   document.addEventListener('pointerdown', (e) => { if (!parts.hidden && !(e.target as HTMLElement).closest('[data-parts], [data-parts-btn]')) setParts(false); });
+
+  // ---------- chapter 3: open or close a "{n} subagents" group ----------
+
+  root.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('[data-sub-toggle]');
+    if (b) b.setAttribute('aria-expanded', String(b.getAttribute('aria-expanded') !== 'true'));
+  });
 
   // ---------- "Worked for …": open or close one turn's log ----------
 

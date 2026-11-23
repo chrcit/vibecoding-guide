@@ -299,6 +299,26 @@ export const t3code = {
     doc('background-service'),
     { verified: '2026-11-23' },
   ),
+  // ---------- Guide v2, chapter 3 (lessons 9 to 13): helpers, leads and child threads. Read on main at 7b47a21. ----------
+  subagentRequests: fact(
+    'Approval',
+    "Subagent approval requests appear in the parent conversation with the subagent's name, and while one waits the parent thread's row reads Approval (Input for a question). Subagents the agent started can't take messages: you answer in the parent thread.",
+    doc('permission-modes'),
+    { verified: '2026-11-23', note: 'Row status: resolveSidebarThreadStatus (pendingSubagentRequest) in apps/web/src/components/Sidebar.logic.ts. Read-only subagents: docs/user/thread-sidebar.md.' },
+  ),
+  delegateChild: fact(
+    'only its task',
+    "delegate_task starts one child agent with only its task, without the parent's history. With isolation set to worktree it gets a checkout of its own, and it can run on another provider or model. Child threads live inside their parent's view, not in the thread list.",
+    `${REPO}/blob/main/apps/server/src/mcp/toolkits/orchestrator/tools.ts`,
+    { verified: '2026-11-23', note: 'Thread lists: isListedThreadLineage in packages/contracts/src/orchestrationV2.ts.' },
+  ),
+  waitingOnChild: fact(
+    'Waiting',
+    "A thread whose agent is blocked waiting on a child thread reads Waiting in the sidebar: it is still that thread's turn, not finished.",
+    `${REPO}/blob/main/apps/web/src/components/Sidebar.logic.ts`,
+    { verified: '2026-11-23', note: 'resolveSidebarThreadStatus: runtime running and blockedOnThreadWait.' },
+  ),
+  stopStopsSubagents: fact(true, 'Stopping a thread also stops the subagents it delegated to.', doc('thread-sidebar'), { verified: '2026-11-23' }),
   /** The words on T3 Code's own screen, for the schematic screen beside the journey's picture (journey/screen.ts). */
   screen: {
     composer: fact(
@@ -458,6 +478,25 @@ export const t3code = {
       'When Claude uses a skill through its Skill tool, the work-log row reads "Skill: {name}".',
       `${REPO}/blob/main/packages/shared/src/toolActivity.ts`,
       { verified: '2026-11-22', note: 'claudeSkillInvocation and dynamicToolTitle, read at commit 3806763. The label is for Claude\'s Skill tool; other providers name skill use their own way.' },
+    ),
+    // Guide v2, chapter 3: the subagent rows and the delegation row, read on main at 7b47a21.
+    subagentStates: fact(
+      ['{count} working', '{count} done', '{count} failed'],
+      'With more than one subagent, the parent\'s "{n} subagents" row sums them up as "{count} working", "{count} done" and "{count} failed", joined by " · ".',
+      `${REPO}/blob/main/packages/client-runtime/src/state/subagentDisplay.ts`,
+      { verified: '2026-11-23' },
+    ),
+    subagentRow: fact(
+      ['Running', 'Completed', 'Failed'],
+      'Each subagent row shows its title, a line of progress or result, and a status such as Queued, Running, Completed or Failed. Its model is in the hover card, not on the row.',
+      `${REPO}/blob/main/apps/web/src/components/chat/V2LifecycleRow.tsx`,
+      { verified: '2026-11-23' },
+    ),
+    delegatedRow: fact(
+      'Delegated {count} tasks',
+      'A delegate_task call shows in the work log as "Delegated {count} tasks" ("Delegated 1 task" for one).',
+      `${REPO}/blob/main/packages/client-runtime/src/t3ToolSummary.ts`,
+      { verified: '2026-11-23' },
     ),
   },
 } as const;

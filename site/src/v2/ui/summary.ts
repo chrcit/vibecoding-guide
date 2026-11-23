@@ -12,10 +12,12 @@ const STARTS: [Kind, string[]][] = [
   ['search', [lead(SEARCHED), lead(t3code.screen.searchRow.value)]],
   ['read', [lead(READ_FILE), lead(t3code.screen.readRow.value)]],
   ['change', [lead(CHANGED)]],
+  // Chapter 3: "Delegated {count} tasks" (t3code.screen.delegatedRow).
+  ['delegate', [lead(t3code.screen.delegatedRow.value)]],
 ];
 const plain = (t: Row['label']) => (typeof t === 'string' ? t : t.plain);
 
-export type Kind = 'search' | 'read' | 'change' | 'run';
+export type Kind = 'search' | 'read' | 'change' | 'run' | 'delegate';
 
 export function kindOf(r: Row): Kind {
   const first = plain(r.label).split(' ')[0]!;
