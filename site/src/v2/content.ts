@@ -109,6 +109,11 @@ export interface Point {
    * Set on every point of a part that builds an app; left out where there is no app yet.
    */
   preview?: Preview;
+  /**
+   * Where this point sends the reader's eye in the chat, when it is not the newest row: 'log' marks
+   * the failed rows of the turn's work log (a point after the reply that says "read the log").
+   */
+  look?: 'log';
 }
 
 export interface Row { at: number; label: Lv; detail?: Lv; tone?: 'bad' | 'ok' }
@@ -325,7 +330,7 @@ const lesson2: Lesson = {
           edit: (s) => { push(s, b('model', 1), b('bad', 3)); file(s, 3, 'bad'); withNote(s, lab('tool:run', 'failed', 'right'), lab('tank:a0', 'the failure goes in too', 'left')); } },
         { say: 'It doesn’t install the browser or try another way. It replies “Done.”', moves: [{ to: 'you', kind: 'bad' }], preview: door('first'),
           edit: (s) => { push(s, b('model', 2)); A(s).lamp = 'off'; withNote(s, atYou('“Done.”')); } },
-        { say: 'The work log says otherwise: one red Ran command row, and nothing after it opened the page. Read the log as well as the reply.', preview: door('first'),
+        { say: 'The work log says otherwise: one red Ran command row, and nothing after it opened the page. Read the log as well as the reply.', preview: door('first'), look: 'log',
           edit: (s) => { withNote(s, lab('tool:run', 'never opened the page', 'right'), atYou('“Done.”')); } },
         { say: 'Open the page yourself and tap Ana twice. She gets checked in twice.', preview: door('buggy'),
           edit: (s) => { withNote(s, atYou('Ana, checked in twice')); } },

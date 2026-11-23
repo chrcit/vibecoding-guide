@@ -118,3 +118,53 @@ The owner flipped through three layout prototypes (planning/guide-v2/PROTOTYPES.
 - UI helpers live in `site/src/v2/ui/` (fit, splitter, sheet, filter, preview, summary).
 
 Known: annotations from the picture engine sometimes overlap parts; lesson 1's scene sits right-heavy; the door app's seed data is a simulated night (22:41) while the lesson runs at 11:00 with made-up guests.
+
+## Redesign 2: a T3 Code sidebar, the menu, a live thread, T3 Code's themes (2026-11-23)
+
+The owner's feedback: remove the sidebar footer note; make the sidebar really look like T3 Code's, with a header in the sidebar whose dropdown holds the site nav; the chat "gets a bit stale and lost"; use T3 Code's default light and dark themes. Where this section and the ones above disagree, this one wins.
+
+### Why the chat went stale (diagnosis)
+
+Played through every point of lessons 1 and 2 at 1440×900 and 390×844, before changing anything:
+
+- **The chat didn't move with the points.** In lesson 1 nothing in the chat changed between the request and the last point: the words for each point lived only under the picture in the browser panel. The chat was a still page beside a moving picture.
+- **The current point was nowhere in the chat.** The summary card showed grey pills of equal weight ("Searched guest in src", "Read src/guests.ts") and one tinted strip. Nothing said "this is the step now", and in lesson 1 there was nothing at all.
+- **The reply came too late.** It landed at a part's last point, even when the agent answered earlier. In lesson 2 part 2 the "Done." arrives at point 3, and points 4 and 5 are about reading that reply against the log, but the chat showed no reply until point 5.
+- **It didn't look like T3 Code's thread.** A bordered card with chips, a collapsed log, a centred grey lede, a dashed try box, and a "Skill" line all at the same muted weight. The real work log is plain rows with icons that grow one by one under "Working for …", then fold under "Worked for …".
+- **Scrolling was all-or-nothing.** The chat scrolled on every point, whether or not the reader had scrolled up to reread something. Every earlier turn kept its full log and try box, so a thread grew into a wall.
+
+### What changed
+
+- **The sidebar is drawn from T3 Code's folder view** (`SidebarProjectFolderHeader`, `SidebarThreadRow` "folder" rows and `SidebarThreadHeader` on `main`):
+  - A chapter is a folder: a 32px header with the project icon, the name and a chevron. It opens and closes; closed, it shows how many lessons it hides and still shows the lesson on show.
+  - A lesson is a one-line 36px row, with the title lined up with the folder name and the status in the time slot (Working, Done; the icon and colour of T3's status).
+  - Lessons not built yet recede, as quiet rows do.
+  - Above the list are the search field ("Search", which filters lessons) and the project filter.
+  - A lesson's story threads show as rows under it once it has more than one (lesson 1, part 3).
+  - Dropped: the footer note, the "T3 Code example" label, Add project, New thread, and the Settings and Usage footer.
+- **The sidebar header is the guide's menu.** The site's name sits in T3 Code's brand style, and a dropdown holds:
+  - every nav item the site header shows (`sections` with `ready: true`), plus Sources and the GitHub link;
+  - Dark theme;
+  - the reading level.
+
+  The site header is gone on `/v2/` only (Base `bare`). On a phone the same menu opens from the thread screen's top bar. The menu code is in `v2/ui/menu.ts`.
+- **The chat plays like a live turn** (`v2/player.ts`):
+  - A part heading (part, title, scene), then the request as T3's user bubble.
+  - "Working for …" with T3's running highlight while the agent works. The work-log rows appear one per point, the newest one live.
+  - The reply lands at the point where the agent answers, the first point that sends something back to you, not the part's last point.
+  - Once the reply lands, "Worked for …" folds the log. Earlier turns stay folded, with their try box hidden.
+  - A point after the reply can send the eye back to the log. `Point.look: 'log'` is new in `content.ts`; lesson 2 part 2, point 4 marks the red row.
+- **The point's words moved into the composer slot**, above the controls, with the part title and "Part n of N · Point n of N". The model and permission chips moved in too, where T3 Code has them. The caption under the picture now shows only in the phone's browser sheet.
+- **The chat follows the newest row** and never scrolls past a reply that just landed or a part that just started (`v2/ui/follow.ts`). Once the reader scrolls up with the wheel, touch or keys, it stays put and shows "Back to the current point".
+- **T3 Code's default themes**, from `apps/web/src/index.css`:
+  - light is zinc with a white card, dark is neutral-950 with a black sidebar;
+  - the primary blue, the 0.5rem radius, and the system font stack (no downloads).
+
+  They are scoped to `.v2`. The site's tokens are mapped onto them, so the picture draws in the same palette. The door app keeps its own palette and the site's type.
+- **New facts in `t3code.ts`**: `screen.search`, `screen.filterMenu`, `screen.folderRow` and `screen.workingFor`.
+
+### Still open
+
+- The picture's annotations still overlap at some points (for example lesson 2 part 3, "installed, unasked" over "your project"). This is the engine's label placement and predates this pass.
+- The "Working for" time is a share of the part's made-up total, by point. It is not a running clock.
+- The T3 Code checkout used here is from October 2026. The folder view is only on `main` (read on 2026-11-23 at fb23f12), so the sidebar follows `main`.

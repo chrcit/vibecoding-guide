@@ -1,9 +1,15 @@
 /*
  * Guide v2 in the browser: plays a lesson thread part by part and point by point. It keeps the
- * sidebar (the table of contents), the turns in the chat, the chips under the controls, the thread
- * details and the browser panel in step. The browser panel holds one picture for the whole lesson
- * (the journey's engine), so a new part glides from the last one instead of starting blank. The
- * page holds every turn's HTML (pages/v2/index.astro); this only shows, hides and animates.
+ * sidebar (the table of contents), the turns in the chat, the lesson controls in the composer slot,
+ * the thread details and the browser panel in step. The browser panel holds one picture for the
+ * whole lesson (the journey's engine), so a new part glides from the last one instead of starting
+ * blank. The page holds every turn's HTML (pages/v2/index.astro); this only shows, hides and
+ * animates.
+ *
+ * A turn plays like a live T3 Code turn: the request, "Working for …" while the agent works, a
+ * work-log row for each step as its point comes, then the reply at the point where the agent
+ * answers, with "Worked for …" folding the log above it. The current point's words sit in the
+ * composer slot, and the chat follows the newest row unless the reader has scrolled away.
  */
 import { Scene, type Script } from '../journey/scene';
 import { route, reverse, type SceneState } from '../journey/picture';
@@ -16,7 +22,9 @@ import { splitter } from './ui/splitter';
 import { sheet } from './ui/sheet';
 import { projectFilter } from './ui/filter';
 import { previewPane } from './ui/preview';
-import { groups } from './ui/summary';
+import { guideMenu } from './ui/menu';
+import { follower } from './ui/follow';
+import { sidebarTree } from './ui/tree';
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 const phone = matchMedia('(max-width: 47.99rem)');
@@ -28,6 +36,26 @@ type Via = 'play' | 'pointer' | 'still';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const readLevel = (): Level => { const l = document.documentElement.dataset.level; return isLevel(l) ? l : 'plain'; };
+
+/** The point where the agent answers: the first that sends something back to you, else the last. */
+export function replyAt(part: Part): number {
+  const i = part.points.findIndex((p) => p.moves.some((m) => m.to === 'you'));
+  return i < 0 ? part.points.length - 1 : i;
+}
+
+/** "1m 50s" → seconds. */
+const seconds = (d: string) => (Number(/(\d+)m/.exec(d)?.[1] ?? 0) * 60) + Number(/(\d+)s/.exec(d)?.[1] ?? 0);
+const duration = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`);
+
+// The sidebar's status icons, drawn after lucide's (CircleDashed, CircleCheck, ShieldQuestion).
+const ln = 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+const ico = (d: string) => `<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" focusable="false">${d}</svg>`;
+const STATUS_ICON: Record<string, string> = {
+  working: ico(`<path ${ln} d="M10.1 2.18a9.93 9.93 0 0 1 3.8 0M17.6 3.71a9.95 9.95 0 0 1 2.69 2.7M21.82 10.1a9.93 9.93 0 0 1 0 3.8M20.29 17.6a9.95 9.95 0 0 1-2.7 2.69M13.9 21.82a9.94 9.94 0 0 1-3.8 0M6.4 20.29a9.95 9.95 0 0 1-2.69-2.7M2.18 13.9a9.93 9.93 0 0 1 0-3.8M3.71 6.4a9.95 9.95 0 0 1 2.7-2.69"/>`),
+  done: ico(`<circle ${ln} cx="12" cy="12" r="10"/><path ${ln} d="m9 12 2 2 4-4"/>`),
+  approval: ico(`<path ${ln} d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path ${ln} d="M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3M12 17h.01"/>`),
+};
+const statusKey = (s: string) => (s === STATUS.working ? 'working' : s === STATUS.done ? 'done' : s === STATUS.approval ? 'approval' : '');
 
 export function boot(root: HTMLElement) {
   const $ = <T extends HTMLElement = HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
@@ -46,9 +74,12 @@ export function boot(root: HTMLElement) {
   let shown = 0;
   let lastUi: Ui = {};
   let lastPart = '';
+  let lastLesson = '';
   let tab: 'ex' | 'preview' = 'ex';
   let lastStage = '';
   let done = new Set<string>();
+  /** Work logs the reader opened or closed by hand, by turn. */
+  const folds = new Map<HTMLElement, boolean>();
   try { done = new Set(JSON.parse(localStorage.getItem(STORE) ?? '[]')); } catch { /* private window */ }
   const saveDone = () => { try { localStorage.setItem(STORE, JSON.stringify([...done])); } catch { /* ignore */ } };
 
@@ -60,6 +91,9 @@ export function boot(root: HTMLElement) {
   const lastPointOf = (part: number) => lesson()!.parts[part]!.points.length - 1;
   const isLast = () => here.point === lastPointOf(here.part);
   const isAtEnd = () => { const l = lesson(); return !!l && here.part === l.parts.length - 1 && isLast(); };
+
+  const follow = follower(scroller, $('[data-jump]'), reduced);
+  const tree = sidebarTree(root);
 
   // ---------- the picture ----------
 
@@ -138,6 +172,7 @@ export function boot(root: HTMLElement) {
   function showThread(enter: boolean) {
     const l = lesson();
     soon.hidden = !!l;
+    if (!l) $('[data-soon-title]').textContent = whereIs(here.lesson).lesson.title;
     let from = 0;
     if (l) for (let p = 0; p <= here.part; p++) if (l.parts[p]!.fresh) from = p;
     for (const t of turns) {
@@ -146,7 +181,7 @@ export function boot(root: HTMLElement) {
       t.hidden = !mine || p > here.part || p < from;
       const current = mine && p === here.part;
       t.toggleAttribute('data-current', current);
-      // An earlier turn rests on its end: every row, the summary closed, the reply in.
+      // An earlier turn rests on its end: every row, the log folded, the reply in.
       if (!t.hidden && !current) fillTurn(t, Infinity);
     }
     const cur = l && turnEl(here.lesson, here.part);
@@ -156,62 +191,60 @@ export function boot(root: HTMLElement) {
     }
   }
 
-  /** A turn at a point: the rows done by then, the summary's groups, and the reply only at the end. */
+  /** The running highlight over a live row's words: a copy of them in full colour, under a moving mask. */
+  function shine(label: HTMLElement, on: boolean) {
+    const had = label.querySelector(':scope > .v2-shine');
+    if (!on) { had?.remove(); return; }
+    if (had) return;
+    const s = document.createElement('span');
+    s.className = 'v2-shine';
+    s.setAttribute('aria-hidden', 'true');
+    s.innerHTML = `<span class="v2-shine-counter"><span class="v2-shine-text">${label.innerHTML}</span></span>`;
+    label.append(s);
+  }
+
+  /**
+   * A turn at a point: the rows done by then (the newest one live), "Working for …" until the agent
+   * answers, then "Worked for …" over the log and the reply. Earlier turns fold their logs.
+   */
   function fillTurn(t: HTMLElement, point: number) {
     const part = LESSONS[t.dataset.lesson!]!.parts[Number(t.dataset.part)]!;
-    const last = part.points.length - 1;
-    const end = point >= last;
-    t.toggleAttribute('data-ended', end);
-    if (end) t.setAttribute('data-landed', '');
-    else t.removeAttribute('data-landed');
-    const rows = part.log?.rows ?? [];
+    const answered = replyAt(part);
+    const end = point >= answered;
+    const current = t.hasAttribute('data-current');
+    if (end) t.setAttribute('data-landed', ''); else t.removeAttribute('data-landed');
     for (const li of t.querySelectorAll<HTMLElement>('[data-at]')) {
       const at = Number(li.dataset.at);
       li.hidden = at > point;
-      li.toggleAttribute('data-now', at === point && !end);
+      const live = current && at === point && !end;
+      li.toggleAttribute('data-live', live);
+      shine(li.querySelector('.v2-wlabel')!, live);
+      li.toggleAttribute('data-look', current && li.dataset.tone === 'bad' && point !== Infinity && pointOf()?.look === 'log' && here.lesson === t.dataset.lesson);
     }
-    const sum = t.querySelector<HTMLElement>('[data-sum-text]');
-    if (sum) sum.textContent = end ? sum.dataset.done! : STATUS.working;
-    const g = t.querySelector<HTMLElement>('[data-groups]');
-    if (g) g.innerHTML = groups(rows, Math.min(point, last)).map((x) =>
-      `<span class="v2-group" data-kind="${x.kind}"${x.tone ? ` data-tone="${x.tone}"` : ''}${x.now && !end ? ' data-now' : ''}>${esc(x.text)}</span>`).join('');
-    // The live line: the newest row at this point, so the evidence shows without opening the log.
-    const now = t.querySelector<HTMLElement>('[data-sum-now]');
-    if (now) {
-      const latest = [...t.querySelectorAll<HTMLElement>('[data-at]')].filter((li) => Number(li.dataset.at) === point).at(-1);
-      now.hidden = end || !latest;
-      if (latest) { now.innerHTML = latest.innerHTML; now.dataset.tone = latest.dataset.tone ?? ''; }
+    const working = t.querySelector<HTMLElement>('[data-working]')!;
+    working.hidden = end;
+    if (!end) {
+      const took = working.dataset.took ? seconds(working.dataset.took) : 0;
+      // The timer stands where the agent is: a share of the turn's time, by point.
+      const text = took ? working.dataset.tpl!.replace('{duration}', duration(Math.max(3, Math.round((took * (point + 1)) / (answered + 1))))) : working.dataset.plain!;
+      const label = working.querySelector<HTMLElement>('[data-working-text]')!;
+      if (label.firstChild?.textContent !== text) { label.textContent = text; }
+      shine(label, current);
+    }
+    const fold = t.querySelector<HTMLElement>('[data-fold]');
+    if (fold) {
+      fold.hidden = !end;
+      const open = !end || (folds.get(t) ?? current);
+      fold.setAttribute('aria-expanded', String(open));
+      t.toggleAttribute('data-folded', !open);
     }
   }
 
-  /** The reply lands: it fades in, and the chat scrolls just enough to show it. */
+  /** The reply lands: it rises in when the move was animated, and the chat shows its start. */
   function land(t: HTMLElement, still: boolean) {
-    if (t.hasAttribute('data-landed')) return;
     t.toggleAttribute('data-still', still || reduced.matches);
-    t.setAttribute('data-landed', '');
-    requestAnimationFrame(() => keepInView(t.querySelector<HTMLElement>('[data-reply]')!, t.querySelector<HTMLElement>('[data-try]') ?? undefined, still));
-  }
-
-  /** Scroll so `top`..`bottom` is in view, `top` first; smooth only over a short way. */
-  function keepInView(top: HTMLElement, bottom: HTMLElement = top, still = false) {
-    const view = scroller.getBoundingClientRect();
-    const a = top.getBoundingClientRect(), b = bottom.getBoundingClientRect();
-    let dy = 0;
-    if (b.bottom > view.bottom - 12) dy = b.bottom - view.bottom + 12;
-    if (a.top - dy < view.top + 12) dy = a.top - view.top - 12;
-    if (Math.abs(dy) < 2) return;
-    scroller.scrollBy({ top: dy, behavior: still || reduced.matches || Math.abs(dy) > 400 ? 'auto' : 'smooth' });
-  }
-  /** A new part: its turn moves to the top of the chat. */
-  function scrollToTurn(t: HTMLElement, still: boolean) {
-    const dy = t.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 12;
-    if (Math.abs(dy) < 2) return;
-    scroller.scrollBy({ top: dy, behavior: still || reduced.matches || Math.abs(dy) > 400 ? 'auto' : 'smooth' });
-  }
-  /** Within a part: the request and the summary under it stay in view as the summary grows. */
-  function keepWorkInView(t: HTMLElement, still: boolean) {
-    const top = t.querySelector<HTMLElement>('.v2-user')!;
-    keepInView(top, t.querySelector<HTMLElement>('[data-sum]:not([hidden])') ?? top, still);
+    if (!t.hasAttribute('data-landed')) t.setAttribute('data-landed', '');
+    follow.follow(t.querySelector<HTMLElement>('[data-reply]'), !still);
   }
 
   // ---------- what the app shows ----------
@@ -262,36 +295,47 @@ export function boot(root: HTMLElement) {
   }
   const threadOf = (): string => threadsSoFar().at(-1)?.title ?? whereIs(here.lesson).lesson.title;
 
+  const setStatus = (el: HTMLElement, status: string) => {
+    const key = statusKey(status);
+    if (el.dataset.s === key) return;
+    el.dataset.s = key;
+    el.innerHTML = key ? `${STATUS_ICON[key]}<span>${esc(status)}</span>` : '';
+  };
+
   /**
-   * The lesson rows, and under the lesson on show its story threads as child rows. A new thread
-   * appears as its own row when the lesson starts it. The live status (Working, Approval) sits on
-   * the thread that is running; the lesson row says Done once the lesson has been played through.
+   * The lesson rows, with T3 Code's status in the time slot: Working on the lesson that plays,
+   * Done once it has been played through. When a lesson opens a second story thread, its threads
+   * show as rows under it, the live one with the status.
    */
   function showSidebar() {
     const live = lesson() ? (pointOf().status ?? (playing ? STATUS.working : '')) : '';
-    const setPill = (pill: HTMLElement, status: string) => { pill.textContent = status; pill.dataset.s = status; };
+    const threads = threadsSoFar();
+    const many = threads.length > 1;
     for (const a of $$('a.v2-row[data-lesson]')) {
       const id = a.dataset.lesson!;
       const cur = id === here.lesson;
       if (cur) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
-      setPill(a.querySelector<HTMLElement>('[data-status]')!, done.has(id) && !(cur && live) ? STATUS.done : '');
+      // With the threads drawn under it, the lesson row keeps Done and the thread row says Working.
+      const s = cur && live && !many ? live : done.has(id) ? STATUS.done : '';
+      setStatus(a.querySelector<HTMLElement>('[data-status]')!, s);
     }
     for (const ol of $$('[data-threads]')) {
-      const list = ol.dataset.threads === here.lesson ? threadsSoFar() : [];
+      const list = ol.dataset.threads === here.lesson && many ? threads : [];
       const key = list.map((t) => t.title).join('|');
       if (ol.dataset.key !== key) {
         const before = ol.childElementCount;
         ol.dataset.key = key;
-        ol.innerHTML = list.map((t, i) => `<li${before > 0 && i >= before ? ' data-enter' : ''}><button type="button" class="v2-thread-row" data-thread-part="${t.part}"><span class="v2-row-title">${esc(t.title)}</span><span class="v2-pill"></span></button></li>`).join('');
+        ol.innerHTML = list.map((t, i) => `<li${before > 0 && i >= before ? ' data-enter' : ''}><button type="button" class="v2-row v2-row-child" data-thread-part="${t.part}"><span class="v2-row-title">${esc(t.title)}</span><span class="v2-status"></span></button></li>`).join('');
       }
       ol.hidden = !list.length;
-      const rows = [...ol.querySelectorAll<HTMLElement>('.v2-thread-row')];
+      const rows = [...ol.querySelectorAll<HTMLElement>('.v2-row-child')];
       rows.forEach((b, i) => {
         const last = i === rows.length - 1;
         if (last) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
-        setPill(b.querySelector<HTMLElement>('.v2-pill')!, last ? live : '');
+        setStatus(b.querySelector<HTMLElement>('.v2-status')!, last ? live : '');
       });
     }
+    tree.refresh();
   }
 
   function showHead() {
@@ -307,7 +351,15 @@ export function boot(root: HTMLElement) {
     return ids[ids.indexOf(id) + 1];
   }
 
-  function showControls() {
+  /** The words for this point in the composer slot: they change with it, gently when it plays. */
+  function sayIt(text: string, animate: boolean) {
+    const say = $('[data-c-say]');
+    if (say.textContent === text) return;
+    say.textContent = text;
+    if (animate && !reduced.matches) { say.removeAttribute('data-in'); void say.offsetWidth; say.setAttribute('data-in', ''); }
+  }
+
+  function showControls(animate = false) {
     const l = lesson();
     for (const play of $$('[data-c="play"]')) {
       play.setAttribute('aria-pressed', String(playing));
@@ -320,8 +372,10 @@ export function boot(root: HTMLElement) {
       prev.disabled = next.disabled = true;
       $('[data-c-title]').textContent = whereIs(here.lesson).lesson.title;
       $('[data-c-where]').textContent = 'Not built yet';
+      sayIt('This lesson isn’t built yet. Lessons 1 and 2 play.', false);
       $('[data-dots]').replaceChildren();
       for (const n of $$('[data-n]')) n.textContent = '';
+      $('[data-mini-sub]').textContent = '';
       return;
     }
     const part = partOf(), total = part.points.length;
@@ -332,8 +386,10 @@ export function boot(root: HTMLElement) {
     next.setAttribute('aria-label', nextLabel);
     next.title = `${nextLabel} (→)`;
     $('[data-c-title]').textContent = part.title;
-    $('[data-c-where]').textContent = `Part ${here.part + 1} of ${l.parts.length} · point ${here.point + 1} of ${total}`;
+    $('[data-c-where]').textContent = `Part ${here.part + 1} of ${l.parts.length} · Point ${here.point + 1} of ${total}`;
+    sayIt(pointOf().say, animate);
     for (const n of $$('[data-n]')) n.textContent = `${here.point + 1} / ${total}`;
+    $('[data-mini-sub]').textContent = `Point ${here.point + 1} of ${total}`;
     // One button per point, so any point is a click away.
     const dots = $('[data-dots]');
     if (dots.childElementCount !== total || dots.dataset.part !== `${here.lesson}:${here.part}`) {
@@ -396,18 +452,17 @@ export function boot(root: HTMLElement) {
    * badge says where to look.
    */
   function setBadge(on: boolean, testing = false) {
-    const badge = $('[data-badge]'), mini = $('[data-mini-badge]');
-    badge.hidden = mini.hidden = !on;
+    const badge = $('[data-badge]'), mb = $('[data-mini-badge]');
+    badge.hidden = mb.hidden = !on;
     badge.querySelector('.visually-hidden')!.textContent = testing ? ': the test runs here' : ': changed';
-    mini.textContent = testing ? 'Test runs in Preview' : 'Preview';
+    mb.textContent = testing ? 'Test runs in Preview' : 'Preview changed';
   }
 
   function showBrowser() {
     const l = lesson();
     const say = $('[data-say]');
     const text = l ? pointOf().say : 'This lesson isn’t built yet.';
-    if (say.textContent !== text) { say.textContent = text; say.removeAttribute('data-in'); void say.offsetWidth; say.setAttribute('data-in', ''); }
-    $('[data-mini-say]').textContent = text;
+    if (say.textContent !== text) say.textContent = text;
     stage.setAttribute('aria-label', l ? `${partOf().title}: ${pointOf().say}` : text);
     const p = previewAt();
     tabPreview.hidden = !p;
@@ -431,31 +486,36 @@ export function boot(root: HTMLElement) {
     const mine = ++shown;
     const key = `${here.lesson}:${here.part}`;
     const newPart = key !== lastPart;
+    const newLesson = here.lesson !== lastLesson;
     lastPart = key;
-    showThread(newPart && via !== 'still');
+    lastLesson = here.lesson;
+    const animate = via !== 'still' && !reduced.matches;
+    showThread(newPart && animate);
     showHead();
     showUi(via !== 'still');
     showSidebar();
-    showControls();
+    showControls(animate);
     showBrowser();
     try { history.replaceState(null, '', `#${here.lesson}${lesson() ? `-p${here.part + 1}` : ''}`); } catch { /* sandboxed */ }
     const l = lesson();
     if (!l) {
       scene.stop(); scene.set({ agents: [] }, true);
+      follow.reset(null);
       scroller.scrollTo({ top: 0 });
       return true;
     }
     const turn = turnEl(here.lesson, here.part);
+    const answered = replyAt(partOf());
     fillTurn(turn, here.point);
-    // The reply waits for the pucks; fillTurn only lets it in at once when nothing animates.
-    const animate = via !== 'still' && !reduced.matches;
-    if (isLast() && animate) turn.removeAttribute('data-landed');
-    requestAnimationFrame(() => { if (newPart) scrollToTurn(turn, !animate); else if (!isLast()) keepWorkInView(turn, !animate); });
+    // The reply waits for the pucks that carry it; with nothing animating it is simply there.
+    const landsNow = here.point === answered;
+    if (landsNow && animate) turn.removeAttribute('data-landed');
+    turn.toggleAttribute('data-still', !animate);
+    const look = pointOf().look === 'log' ? turn.querySelector<HTMLElement>('[data-look]') : null;
+    const anchor = newPart ? turn : look ?? (here.point >= answered ? turn.querySelector<HTMLElement>('[data-reply]') : null);
+    if (newLesson) follow.reset(newPart ? turn : anchor); else follow.follow(anchor, animate);
     const ok = await draw(via);
-    if (ok && mine === shown && isLast()) {
-      turn.removeAttribute('data-landed');
-      land(turn, !animate);
-    }
+    if (ok && mine === shown && landsNow && animate) land(turn, false);
     return ok && mine === shown;
   }
 
@@ -501,7 +561,7 @@ export function boot(root: HTMLElement) {
   function play() {
     if (!lesson()) return;
     // From the end, play starts the lesson again; the first point lands still, then it plays on.
-    if (isAtEnd()) { here = { lesson: here.lesson, part: 0, point: 0 }; void playLoop('still'); return; }
+    if (isAtEnd()) { here = { lesson: here.lesson, part: 0, point: 0 }; lastLesson = ''; void playLoop('still'); return; }
     void playLoop('play');
   }
 
@@ -509,7 +569,7 @@ export function boot(root: HTMLElement) {
   function go(to: Here, via: Via, opts: { play?: boolean } = {}) {
     const keep = opts.play ?? playing;
     if (playing) { playing = false; token++; }
-    if (to.lesson !== here.lesson) { lastStage = ''; lastPart = ''; }
+    if (to.lesson !== here.lesson) { lastStage = ''; lastPart = ''; folds.clear(); }
     here = to;
     if (keep && lesson()) { void playLoop(via); return; }
     showSidebar(); showControls();
@@ -553,7 +613,7 @@ export function boot(root: HTMLElement) {
   document.addEventListener('keydown', (e) => {
     const t = e.target as HTMLElement;
     if (e.altKey || e.metaKey || e.ctrlKey || !lesson() || (root.dataset.view === 'list' && phone.matches)) return;
-    if (t.closest('input, textarea, select, [contenteditable="true"], [role="tablist"], [role="separator"], [data-parts], [data-filter-pop], [data-preview]')) return;
+    if (t.closest('input, textarea, select, [contenteditable="true"], [role="tablist"], [role="separator"], [data-parts], [data-filter-pop], [data-preview], [data-guide-menu]')) return;
     if (e.key === ' ' && !t.closest('button, a, summary')) { e.preventDefault(); if (playing) pause(); else play(); return; }
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
     if (t.closest('.v2-side')) return;
@@ -579,7 +639,7 @@ export function boot(root: HTMLElement) {
     const nx = nextPlayable(here.lesson);
     $('[data-parts-list]').innerHTML = l.parts.map((pt, j) => {
       const s = j === here.part ? 'now' : j < here.part || finished ? 'done' : 'todo';
-      return `<li><button type="button" class="v2-part" data-part-go="${j}"${j === here.part ? ' aria-current="step"' : ''}><span class="v2-part-mark" data-s="${s}" aria-hidden="true">${s === 'done' ? '✓' : s === 'now' ? '●' : '○'}</span><span>${esc(pt.title)}</span><em>${j === here.part ? 'from the start' : ''}</em></button></li>`;
+      return `<li><button type="button" class="v2-part" data-part-go="${j}"${j === here.part ? ' aria-current="step"' : ''}><span class="v2-part-mark" data-s="${s}" aria-hidden="true">${s === 'done' ? STATUS_ICON.done : ''}</span><span>${esc(pt.title)}</span><em>${j === here.part ? 'from the start' : ''}</em></button></li>`;
     }).join('') + (nx ? `<li class="v2-part-next"><button type="button" class="v2-part" data-lesson-go="${nx}"><span class="v2-part-mark" aria-hidden="true">→</span><span>Next lesson: ${esc(whereIs(nx).lesson.title)}</span><em></em></button></li>` : '');
   }
   function setParts(on: boolean, e?: MouseEvent) {
@@ -609,14 +669,16 @@ export function boot(root: HTMLElement) {
   });
   document.addEventListener('pointerdown', (e) => { if (!parts.hidden && !(e.target as HTMLElement).closest('[data-parts], [data-parts-btn]')) setParts(false); });
 
-  // ---------- the summary cards: open one, and they stay open ----------
+  // ---------- "Worked for …": open or close one turn's log ----------
 
   root.addEventListener('click', (e) => {
-    const b = (e.target as HTMLElement).closest<HTMLElement>('[data-sum-toggle]');
+    const b = (e.target as HTMLElement).closest<HTMLElement>('[data-fold]');
     if (!b) return;
+    const t = b.closest<HTMLElement>('[data-turn]')!;
     const open = b.getAttribute('aria-expanded') !== 'true';
-    root.toggleAttribute('data-log-open', open);
-    for (const x of $$('[data-sum-toggle]')) x.setAttribute('aria-expanded', String(open));
+    folds.set(t, open);
+    b.setAttribute('aria-expanded', String(open));
+    t.toggleAttribute('data-folded', !open);
   });
 
   // ---------- tabs ----------
@@ -630,10 +692,13 @@ export function boot(root: HTMLElement) {
 
   // ---------- lessons in the sidebar, their threads, and links to them ----------
 
+  const menu = guideMenu($('[data-guide-menu]'), $$<HTMLButtonElement>('[data-guide-menu-btn]'), reduced);
+  const setView = (v: 'list' | 'thread') => { if (root.dataset.view !== v) { menu.close(false); root.dataset.view = v; } };
+
   root.addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest<HTMLElement>('[data-thread-part]');
     if (!b) return;
-    root.dataset.view = 'thread';
+    setView('thread');
     go({ ...here, part: Number(b.dataset.threadPart), point: 0 }, 'still');
   });
 
@@ -642,7 +707,7 @@ export function boot(root: HTMLElement) {
     if (!a) return;
     e.preventDefault();
     const id = a.dataset.lesson ?? a.dataset.lessonLink!;
-    root.dataset.view = 'thread';
+    setView('thread');
     // The lesson on show carries on where it is; another one plays from its start.
     if (id !== here.lesson) go({ lesson: id, part: 0, point: 0 }, 'still', { play: !!LESSONS[id] && !reduced.matches });
     else if (!playing && lesson() && !isAtEnd() && !reduced.matches) play();
@@ -651,7 +716,7 @@ export function boot(root: HTMLElement) {
   $('[data-to-list]').addEventListener('click', (e) => {
     e.preventDefault();
     pause();
-    root.dataset.view = 'list';
+    setView('list');
     root.querySelector<HTMLElement>('.v2-row[aria-current]')?.focus();
   });
 
@@ -707,6 +772,8 @@ export function boot(root: HTMLElement) {
     const lv = (e as CustomEvent).detail;
     if (!isLevel(lv)) return;
     for (const s of [scene, mini]) if (s) { s.level = lv; s.set(s.state, true); }
+    // The live row's highlight copies the words of the old level: draw it again.
+    for (const label of $$('.v2-shine')) { const host = label.parentElement!; label.remove(); shine(host, true); }
   });
 
   // ---------- start ----------
@@ -730,7 +797,7 @@ export function boot(root: HTMLElement) {
     if (!h || !known(h[1]!)) return;
     const to = fromHash(h);
     if (to.lesson === here.lesson && to.part === here.part) return;
-    root.dataset.view = 'thread';
+    setView('thread');
     go(to, 'still', { play: !!LESSONS[to.lesson] && !reduced.matches });
   });
 }

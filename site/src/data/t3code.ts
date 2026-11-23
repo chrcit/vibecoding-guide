@@ -225,6 +225,30 @@ export const t3code = {
       `${REPO}/blob/main/apps/web/src/components/Sidebar.tsx`,
       { verified: '2026-11-22' },
     ),
+    search: fact(
+      ['Search', 'Search threads', 'No threads found'],
+      'The search field at the top of the sidebar has the placeholder "Search" and is named "Search threads". A search with no results says "No threads found".',
+      `${REPO}/blob/main/apps/web/src/components/sidebar/SidebarThreadHeader.tsx`,
+      { verified: '2026-11-23' },
+    ),
+    filterMenu: fact(
+      ['Search projects...', 'All projects', 'No matching projects.'],
+      'The project filter\'s list opens with a "Search projects..." field and an "All projects" row, and says "No matching projects." when the search finds none.',
+      `${REPO}/blob/main/apps/web/src/components/Sidebar.tsx`,
+      { verified: '2026-11-23' },
+    ),
+    folderRow: fact(
+      'project folder: name, count, chevron',
+      'With project folders on, each folder header shows the project\'s icon and name and a chevron; a closed folder adds the number of threads it hides. Thread rows inside a folder are one line, with the status in the time slot.',
+      `${REPO}/blob/main/apps/web/src/components/sidebar/SidebarProjectFolderHeader.tsx`,
+      { verified: '2026-11-23' },
+    ),
+    workingFor: fact(
+      ['Working for {duration}', 'Working...'],
+      'While a turn runs, the timeline shows "Working for {duration}" with a running timer, or "Working..." before the start time is known.',
+      `${REPO}/blob/main/apps/web/src/components/chat/TimelineWorkGroupRows.tsx`,
+      { verified: '2026-11-23' },
+    ),
     sections: fact(
       ['Pinned', 'Active', 'Working', 'Snoozed', 'Settled'],
       'By default the T3 Code sidebar sorts threads by state into the sections Pinned, Active, Working, Snoozed and Settled.',

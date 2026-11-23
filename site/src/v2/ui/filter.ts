@@ -20,9 +20,11 @@ export function projectFilter(root: HTMLElement) {
   function filterOptions(text: string) {
     const t = text.trim().toLowerCase();
     for (const b of options()) b.parentElement!.hidden = b.dataset.scope === 'all' ? !!t : !b.textContent!.toLowerCase().includes(t);
+    $('[data-filter-empty]').hidden = visible().length > 0;
   }
   function apply() {
-    for (const f of root.querySelectorAll<HTMLElement>('[data-project]')) f.hidden = scope.size > 0 && !scope.has(f.dataset.project!);
+    // A folder outside the scope leaves the list (styles/v2.css); the search keeps its own mark.
+    for (const f of root.querySelectorAll<HTMLElement>('[data-project]')) f.toggleAttribute('data-scoped-out', scope.size > 0 && !scope.has(f.dataset.project!));
     for (const b of options()) b.setAttribute('aria-selected', String(b.dataset.scope === 'all' ? scope.size === 0 : scope.has(b.dataset.scope!)));
     const icon = $('[data-filter-icon]');
     if (!icon.dataset.svg) icon.dataset.svg = icon.innerHTML;
@@ -64,5 +66,5 @@ export function projectFilter(root: HTMLElement) {
     apply();
     if (!e.shiftKey) { setPop(false); btn.focus(); }
   });
-  document.addEventListener('click', (e) => { if (!pop.hidden && !(e.target as HTMLElement).closest('.v2-filter')) setPop(false); });
+  document.addEventListener('pointerdown', (e) => { if (!pop.hidden && !(e.target as HTMLElement).closest('.v2-filter')) setPop(false); });
 }
