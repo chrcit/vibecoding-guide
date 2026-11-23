@@ -37,7 +37,6 @@ const factIds = [
   't3code.voice.maxRecording',
   't3code.voice.shortcut',
   't3code.voice.dictionary',
-  't3code.voice.cloudProviders',
   'claims.voiceApps.wisprFlow',
   'claims.voiceApps.wisprCloud',
   'claims.voiceApps.superwhisper',
@@ -89,7 +88,7 @@ const factIds = [
       There are two places the audio can go. Cloud transcription sends your recording to a company's servers and gets text back; it is usually quick and accurate, and it means a third party hears what you say. Local transcription runs a speech model on your own machine; nothing leaves it, and quality and speed depend on your hardware.
     </p>
     <p>
-      Claude Code and Wispr Flow are cloud only: <Fact id="claims.voiceApps.wisprCloud" show="claim" /> Handy is local only. T3 Code lets you choose per environment. <Fact id="t3code.voice.cloudProviders" show="claim" /> If what you dictate is covered by a confidentiality agreement or your employer's rules, a local model is the simple answer; check the cloud provider's terms before you send anything sensitive.
+      Claude Code and Wispr Flow use cloud transcription. <Fact id="claims.voiceApps.wisprCloud" show="claim" /> Handy runs locally. In T3 Code, a downloaded model runs on the machine hosting the environment. Apple Speech in the Mac app and default phone dictation run on the device you speak into. If what you dictate is covered by a confidentiality agreement or your employer's rules, check where the audio goes and who can access it.
     </p>
     <Deeper level="engineer" title="Vocabulary, limits and settings">
       <p>

@@ -23,6 +23,9 @@ const base = (helper: boolean) => {
   return s;
 };
 const FOUND = [5, 7, 4, 8, 6, 5, 7];
+const ASK = 'Find each date read. Change nothing.';
+/** The windows speak for themselves, at their glass; the project for its files. */
+export const SPEAKERS = { window: 'tank:a0', 'helper window': 'tank:w0', project: 'project' };
 const pct = (ctx: Ctx, id: string) => `${Math.round(ctx.scene.fill(id) * 100)}% full`;
 // One readout for the lesson: how full each window is, and what changed in your project.
 const show = (ctx: Ctx, helper: string, changed: number | string = 0) => ctx.stat([
@@ -33,7 +36,8 @@ const show = (ctx: Ctx, helper: string, changed: number | string = 0) => ctx.sta
 
 export async function alone(ctx: Ctx, h: Script) {
   h.set((s) => { Object.assign(s, base(false)); });
-  ctx.say('you', 'Find every place the app reads a date. Do not change anything yet.');
+  ctx.say('you', ASK);
+  ctx.say(null, 'You ask for every place the app reads a date, and for no changes yet.');
   show(ctx, 'no helper');
   await h.wait(500);
   for (const size of FOUND) {
@@ -42,20 +46,23 @@ export async function alone(ctx: Ctx, h: Script) {
     await h.wait(360);
   }
   h.set((s) => { s.agents[0]!.busy = false; s.agents[0]!.blocks!.push({ t: 'model', h: 2.4 }); });
-  ctx.say('agent', 'Seven files read. Three of them read dates.');
+  ctx.say('agent', 'Read 7 files. 3 of them read dates.');
   show(ctx, 'no helper');
-  await h.wait(2200);
+  await h.wait(1800);
+  ctx.say('window', `${pct(ctx, 'a0')}, and it stays.`);
+  await h.wait(600);
   ctx.say(null, 'Seven whole files now sit in the agent’s window, for a three-line answer. They stay there for the rest of the job.');
 }
 
 export async function handed(ctx: Ctx, h: Script, full = true) {
   h.set((s) => { Object.assign(s, base(true)); });
-  ctx.say('you', 'Find every place the app reads a date. Do not change anything yet.');
+  ctx.say('you', ASK);
   show(ctx, 'empty');
-  await h.wait(500);
-  ctx.say('agent', full
-    ? 'Brief: list every file that reads a date, one line each. Do not change any file.'
-    : 'Brief: sort out the dates.');
+  await h.wait(900);
+  ctx.say('agent', full ? 'Brief: list date files. Change nothing.' : 'Brief: sort out the dates.');
+  ctx.say(null, full
+    ? 'The brief: list every file that reads a date, one line each, and change no file.'
+    : 'The brief says only “Sort out the dates.” Your “change nothing” stays in the agent’s window.');
   h.set((s) => { s.agents[0]!.busy = true; });
   await h.send(route.agentToWorker(AT), 'model');
   h.set((s) => { s.agents[0]!.busy = false; const w = s.agents[1]!; w.blocks = [{ t: 'model', h: full ? 3.4 : 1.2 }]; w.busy = true; w.lamp = 'work'; });
@@ -66,32 +73,37 @@ export async function handed(ctx: Ctx, h: Script, full = true) {
   }
   let changed = 0;
   if (!full) {
-    ctx.say('helper', '“Sort out” sounds like fix. Rewriting the date handling.');
+    ctx.say('helper', '“Sort out” means fix. Rewriting dates.');
     const project = ctx.scene.state.project!;
     for (const f of [1, 3, 4]) {
       await h.send(route.workerToMain(AT, project), 'bad', { ms: 420 });
       h.set((s) => { const files = (s.project!.files ??= ['', '', '', '', '', '']); files[f] = 'bad'; s.agents[1]!.blocks!.push({ t: 'bad', h: 2 }); });
       changed++;
       show(ctx, pct(ctx, 'w0'), `${changed}, and you said none`);
+      ctx.say('project', `${changed} ${changed === 1 ? 'file' : 'files'} edited.`);
     }
   }
   h.set((s) => { s.agents[1]!.busy = false; s.agents[1]!.lamp = full ? 'ok' : 'bad'; });
   const helperFill = Math.round(ctx.scene.fill('w0') * 100);
   await h.send(reverse(route.agentToWorker(AT)), full ? 'tool' : 'bad');
   h.set((s) => { s.agents[0]!.blocks!.push({ t: full ? 'tool' : 'bad', h: 1.6 }); s.agents[1]!.blocks = []; s.agents[1]!.lamp = 'off'; });
-  ctx.say('helper', full ? 'Three files read dates: members.ts (parses), export.ts (formats), import.ts (parses).' : 'Done. I rewrote the date handling in three files.');
+  ctx.say('helper', full ? '3 lines: members, export, import.ts' : 'Done. Rewrote dates in 3 files.');
   show(ctx, `was ${helperFill}% full, thrown away`, full ? 0 : `${changed}, and you said none`);
-  await h.wait(2400);
+  await h.wait(1800);
+  ctx.say('helper window', `Was ${helperFill}% full. Thrown away.`);
+  await h.wait(600);
   ctx.say(null, full
-    ? 'The seven files filled the helper’s window, which is gone now. The agent got three lines.'
-    : '“Do not change anything” was in the agent’s window, not in the brief. The helper never saw it.');
+    ? 'The helper sent back three lines: members.ts parses dates, export.ts formats them, import.ts parses them. The seven files it read went with its window.'
+    : '“Do not change anything” was in the agent’s window, not in the brief. The helper never saw it, and rewrote three files.');
 }
 
 export const handoff: Chapter = {
+  speakers: SPEAKERS,
   steps: {
     alone: { scene: () => base(false), enter: (ctx) => void ctx.scene.run((h) => alone(ctx, h)) },
     hand: { scene: () => base(true), enter: (ctx) => void ctx.scene.run((h) => handed(ctx, h)) },
-    brief: { scene: () => base(true), enter: (ctx) => void ctx.scene.run((h) => handed(ctx, h, false)) },
+    // What this step is about is your project: how many files the helper changed.
+    brief: { scene: () => base(true), counter: (pairs) => `files changed ${String(pairs[2]?.[1] ?? 0).split(',')[0]}`, enter: (ctx) => void ctx.scene.run((h) => handed(ctx, h, false)) },
   },
   actions: {
     alone: (ctx) => void ctx.scene.run((h) => alone(ctx, h)),

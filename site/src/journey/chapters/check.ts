@@ -37,19 +37,27 @@ const NAME: Record<CheckId, string> = {
   spec: 'a test from your rule',
 };
 /** Which check catches which kind of wrong, and what it says when it does. */
+// Each line is a bubble at the check.
 const CATCH: Record<CheckId, Partial<Record<Flaw, string>>> = {
-  run: { types: 'The member list page is blank: it crashed on load.', logic: 'The card shows 3 December. It should be 3 March.' },
-  phone: { layout: 'On a phone the table runs off the right edge.' },
-  types: { types: 'members.ts(14,9): Property “paid” does not exist on type “Member”.' },
-  tests: { logic: '1 of 12 tests fails: parseDate("03.03.2026") gives 3 December.' },
-  browser: { layout: 'At 390 px the page is 458 px wide: the table overflows.' },
-  spec: { spec: 'exportCsv: a hidden rating appears in the file. The test fails.' },
+  run: { types: 'The list page crashed: blank.', logic: 'Wrong date: 3 December.' },
+  phone: { layout: 'The table spills off a phone.' },
+  types: { types: '“paid” is not on Member.' },
+  tests: { logic: 'Test: 03.03 gives 3 December.' },
+  browser: { layout: 'Page is 458 px at 390 px.' },
+  spec: { spec: 'Test: hidden rating in CSV.' },
 };
 const SLIPS: Record<Flaw, string> = {
   types: 'the list page crashes',
   logic: 'the dates are wrong',
   layout: 'the table spills off a phone',
   spec: 'hidden ratings are in the CSV',
+};
+/** What you see when broken work reaches you: a bubble at you. */
+const BROKE: Record<Flaw, string> = {
+  types: 'Broken: the list page crashes.',
+  logic: 'Broken: the dates are wrong.',
+  layout: 'Broken: the table spills off a phone.',
+  spec: 'Broken: hidden ratings in the CSV.',
 };
 export const checkNames = (c: CheckId[]) => (c.length ? c.map((x) => NAME[x]).join(' · ') : 'none');
 
@@ -94,18 +102,21 @@ export async function jobs(ctx: Ctx, h: Script, checks: CheckId[], count = JOBS.
         h.set((s) => { const a = s.agents[0]!; a.blocks!.push({ t: 'tool', h: 2.4 }); a.busy = false; });
         await h.send(toGate, 'model', { ms: 300 });
         flawed = false;
+        h.set((s) => { s.gates![0]!.lamp = 'ok'; });
+        ctx.say('check', 'Fixed. It passes now.');
       }
       h.set((s) => { s.gates![0]!.lamp = flawed ? 'off' : 'ok'; });
+      if (!by || !job.flaw) ctx.say('agent', 'Done.');
       await h.send(gateToYou, flawed ? 'bad' : 'model', { ms: 300 });
     } else {
+      ctx.say('agent', 'Done.');
       await h.send(reverse(route.youToAgent()), flawed ? 'bad' : 'model', { ms: 440 });
     }
     said++;
-    if (flawed) { wrong++; slipped.push(SLIPS[job.flaw!]); }
+    if (flawed) { wrong++; slipped.push(SLIPS[job.flaw!]); ctx.say('you', BROKE[job.flaw!]); }
     h.set((s) => { s.agents[0]!.lamp = 'off'; if (s.gates![0]) s.gates![0]!.lamp = 'off'; });
-    ctx.say('agent', 'Done.');
     stats();
-    await h.wait(380);
+    await h.wait(flawed ? 900 : 380);
   }
   ctx.say(null, !gate
     ? `${wrong} of ${said} were broken, and all ${said} arrived as “done”.`
@@ -117,6 +128,8 @@ export async function jobs(ctx: Ctx, h: Script, checks: CheckId[], count = JOBS.
 const play = (ctx: Ctx) => void ctx.scene.run((h) => jobs(ctx, h, ctx.mem.checks ?? []));
 
 export const check: Chapter = {
+  // The picture is about what reaches you broken; the readout's first line names the checks.
+  counter: 'reached you broken',
   steps: {
     done: { scene: () => base(false), enter: (ctx) => { ctx.mem.checks = []; ctx.scene.speed = 1.4; play(ctx); } },
     tests: { scene: () => base(true), enter: (ctx) => { ctx.mem.checks = FIRST[ctx.level]; ctx.scene.speed = 1.4; play(ctx); } },

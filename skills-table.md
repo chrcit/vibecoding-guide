@@ -86,6 +86,22 @@ The easiest route is still to ask: "I keep asking you to do X. Write a skill for
 
 ## Skills in This Repository
 
+### The guide as a skill: `agentic-guide`
+
+An interactive version of this guide that runs inside your agent, best in T3 Code. Type `$agentic-guide` in a new thread and it asks for one small thing you want done, does it, then explains what just happened using your own request: the model, the harness, the tools, where your work lives. It teaches four mechanisms (it's all text, the window, the loop, the world) and hands you sentences to reuse, such as "try it five times before you come back to me". In T3 Code it answers with themed pages in the thread; elsewhere it falls back to text.
+
+Source: [`skills/agentic-guide/`](https://github.com/chrcit/vibecoding-guide/tree/main/skills/agentic-guide). Install it into one project (the default) or everywhere. The script is for macOS and Linux:
+
+```bash
+# from inside your project folder, with the repository cloned somewhere
+bash path/to/vibecoding-guide/skills/agentic-guide/install.sh            # ./.claude/skills and ./.agents/skills
+bash path/to/vibecoding-guide/skills/agentic-guide/install.sh --global   # ~/.claude/skills and ~/.agents/skills
+```
+
+The script copies the folder (`--link` symlinks it instead), can be run again safely, replaces only an earlier `agentic-guide` install, and prints how to check it worked. The site's Start page does the same from a T3 Code prompt link: the agent reads the skill, waits for your yes, then copies the folder into the same two places, on any system.
+
+### Older prompts
+
 These are older-style system prompts aimed at web builders like v0 and Lovable. They still work as skills in agentic tools.
 
 | Skill | File | When to Use |

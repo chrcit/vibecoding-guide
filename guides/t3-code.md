@@ -1,6 +1,6 @@
 # T3 Code: One Workspace for Every Agent
 
-T3 Code is the tool this guide is written around. It is an **agentic development environment (ADE)**: one window where you run, watch and steer coding agents from different providers. Facts on this page are from the T3 Code README and user docs at version 0.1.10 (17 November 2026); see [Sources and Fact-Check](./fact-check.md#t3-code).
+T3 Code is the tool this guide is written around. It is an **agentic development environment (ADE)**: one window where you run, watch and steer coding agents from different providers. The guide started with release 0.1.10 (17 November 2026) and tracks changes in the upstream user docs. See [Sources and Fact-Check](./fact-check.md#t3-code).
 
 - Website: [t3.codes](https://t3.codes)
 - Source: [github.com/pingdotgg/t3code](https://github.com/pingdotgg/t3code), MIT licence, copyright T3 Tools Inc.
@@ -35,7 +35,7 @@ A thread can run in its own Git worktree, so parallel agents do not edit the sam
 
 ### Queue and steer
 
-Messages you send while the agent works either queue for the next turn or steer the running one. You choose the default in settings and use a shortcut for the opposite action. Queued messages can be edited or removed before they send. Steering needs provider support; where a provider lacks it, messages queue.
+Messages you send while the agent works either queue for the next turn or steer the running one. Choose the default in settings. On web and desktop, use `mod+Enter` for the other action, or add Shift if your Send shortcut already uses `mod+Enter`. Use Command for `mod` on macOS and Ctrl elsewhere. You can edit or remove queued messages before they send. Steering needs provider support. Otherwise, messages queue.
 
 ### HTML renders
 
@@ -55,7 +55,7 @@ Run T3 Code on one machine and use it from another. Pair over your local network
 
 ### Scheduled tasks and voice
 
-Tasks can run on a schedule. Voice dictation works in the composer, with a model downloaded to your machine or a cloud transcription service on your own key; one recording can last up to five minutes.
+Tasks can run on a schedule. On web and desktop, the T3 Code environment can transcribe dictation with a downloaded model or send the audio to OpenAI, Grok Voice Transcribe or OpenRouter using your API account. The desktop app also supports on-device Apple Speech on macOS 26 or later. Phones transcribe on the device by default. Each recording can last up to five minutes.
 
 ### Skills and provider updates
 
@@ -81,15 +81,15 @@ A strong model can manage the work and hand pieces to cheaper models, across pro
 
 **Your network is part of the loop.** Every model call goes over the network. A slow connection makes every step slower.
 
-**It is not looking for feature contributions.** The [CONTRIBUTING](https://github.com/pingdotgg/t3code/blob/main/CONTRIBUTING.md) file says outside pull requests for new features, providers or UI overhauls will be closed; bug fixes from daily users are welcome. Feature ideas go to issues and discussions.
+T3 Code welcomes bug fixes from daily users. Maintainers can invite outside feature pull requests, and vouched contributors can submit small, focused features. Unsolicited pull requests for new providers or UI overhauls are closed. Share feature ideas in issues or discussions. See [CONTRIBUTING](https://github.com/pingdotgg/t3code/blob/main/CONTRIBUTING.md).
 
 ## Getting Started (One Hour)
 
 Block one hour this week and do real work while you learn.
 
 1. **Get one subscription.** A $20 a month Claude Pro or ChatGPT Plus plan is enough to start. Both include their coding agent.
-2. **Install an agent CLI and sign in.** Claude Code: `claude auth login`. Codex: `codex login`, or connect Codex with your ChatGPT account from T3 Code's Welcome page, which installs it for you.
-3. **Install T3 Code** from [t3.codes](https://t3.codes) (desktop app for macOS, Windows and Linux), or try it with `npx t3@latest`.
+2. **Install T3 Code** from [t3.codes](https://t3.codes) (desktop app for macOS, Windows and Linux), or try it with `npx t3@latest`.
+3. **Connect an agent.** The Welcome page lists the agents T3 Code finds. For Claude Code, **Install** and **Sign in** open a terminal with the command ready to run. For Codex, **Set up** lets you sign in with ChatGPT and installs Codex for you. Choose **Start** when an agent is ready, or **Start without an agent** to connect one later.
 4. **Choose a permission mode** for your first threads. Supervised is a good way to see what the agent does before you let it run.
 5. **Start a thread with no project.** Talk to it. Tell it what you work on and two problems you would like solved this month: one easy, one hard.
 6. **Turn it into a project** when something is worth keeping: a Git repository and an `AGENTS.md` with the context you just gave.

@@ -163,6 +163,8 @@ body {
   overflow-x: clip;
 }
 main { flex: 1 0 auto; }
+/* No site footer: the source and sources links live in the header. Room under a page's last line. */
+main:not(:has(> .j-root)) { padding-bottom: var(--space-9); }
 img, svg, video { max-width: 100%; }
 img, video { height: auto; }
 
@@ -317,6 +319,6 @@ hr { border: 0; border-top: 1px solid var(--rule); }
 }
 
 @media print {
-  .topbar, .site-footer, .skip-link, .toc-side { display: none !important; }
+  .topbar, .skip-link, .toc-side { display: none !important; }
   body { background: #fff; color: #000; }
 }

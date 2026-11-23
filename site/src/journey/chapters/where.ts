@@ -49,11 +49,18 @@ const stats = (ctx: Ctx) => {
 };
 const fly = (p: Promise<void>, then?: () => void) => void p.then(then).catch(() => {});
 
+/** Say on a machine's own label what state it is in: "your laptop: asleep", "the cloud: no setup". */
+function relabel(s: SceneState, at: string, text: string) {
+  const l = s.labels?.find((x) => x.at === at);
+  if (l) l.text = text;
+}
+
 function applyLid(ctx: Ctx, h: Script | null, lid: Run['lid']) {
   const change = (s: SceneState) => {
     const z = s.zones?.[0], a = s.agents[0];
     if (!z || !a) return;
     z.off = a.off = lid === 'closed';
+    relabel(s, 'j0', lid === 'closed' ? 'your laptop: asleep' : 'your laptop');
     if (a.off) { a.busy = false; a.lamp = 'off'; } else if ((a.blocks ?? []).length && a.lamp === 'off') { a.busy = true; a.lamp = 'work'; }
   };
   if (h) h.set(change); else ctx.scene.change(change);
@@ -62,7 +69,7 @@ function applyLid(ctx: Ctx, h: Script | null, lid: Run['lid']) {
 
 async function hour(ctx: Ctx, h: Script, n: number, o: { gate?: boolean; phone?: boolean; leave?: boolean } = {}) {
   const run: Run = ctx.mem.run;
-  h.set((s) => { Object.assign(s, scene(n, o)); });
+  h.set((s) => { Object.assign(s, scene(n, o)); if (n > 2) relabel(s, 'j2', run.setup ? 'the cloud: set up' : 'the cloud: no setup'); });
   applyLid(ctx, h, run.lid);
   const landed = Array.from({ length: n }, () => 0);
   ctx.mem.landed = 0;
@@ -98,7 +105,8 @@ async function hour(ctx: Ctx, h: Script, n: number, o: { gate?: boolean; phone?:
           if (cantStart) {
             failed[i] = true;
             h.set((s) => { s.gates!.find((g) => g.id === 'mgate')!.lamp = 'bad'; const b = s.agents[i]!; b.lamp = 'bad'; b.blocks!.push({ t: 'bad', h: 3 }); s.tray!.cards[i]!.mark = 'bad'; });
-            ctx.say('the check', 'Cannot run the tests: there is no test database on the cloud machine. The other jobs carry on.');
+            ctx.say('the check', 'No test database. Can’t run tests.');
+            ctx.say(null, 'The check cannot run the tests: the cloud machine has no test database. The other jobs carry on.');
             stats(ctx);
             fly(h.send([[gateX, BUS_Y], ...up.reverse()], 'bad', { ms: 640 }));
             return;
@@ -143,13 +151,15 @@ export async function demo(ctx: Ctx, h: Script) {
     for (let k = 0; k < turns; k++) { await h.wait(420); h.set((s) => { s.agents[i]!.blocks!.push({ t: k % 2 ? 'model' : 'tool', h: 4 }); }); }
   };
   await Promise.all([work(0, 3), work(1, 3), work(2, 3)]);
-  ctx.say(null, 'The lid closes. The other two carry on.');
-  h.set((s) => { s.zones![0]!.off = true; const a = s.agents[0]!; a.off = true; a.busy = false; a.lamp = 'off'; });
+  ctx.say('you', 'Lid closed. Off home.');
+  h.set((s) => { s.zones![0]!.off = true; const a = s.agents[0]!; a.off = true; a.busy = false; a.lamp = 'off'; relabel(s, 'j0', 'your laptop: asleep'); });
   await Promise.all([work(1, 6), work(2, 6)]);
   await h.wait(800);
 }
 
 export const where: Chapter = {
+  // The chip: how many jobs run right now, and what has landed on main this hour.
+  counter: (p) => (p.length ? `running ${p[0]![1]} · landed ${p[2]![1]}` : null),
   steps: {
     laptop: { scene: () => scene(1), enter: (ctx) => start(ctx, 1, { lid: 'open', setup: true }, {}, 'One job, running on your laptop.') },
     lid: { scene: () => scene(1), enter: (ctx) => start(ctx, 1, { lid: 'open', setup: true }, {}, 'Lid open. The job runs. Close the lid and watch it stop.') },

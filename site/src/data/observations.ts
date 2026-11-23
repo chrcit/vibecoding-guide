@@ -123,6 +123,14 @@ export const experience = {
     status: 'observation',
     note: 'Working experience, not a measurement.',
   },
+  antigravityContextFiles: {
+    value: 'not loaded at thread start',
+    claim: "In a lab test of Antigravity under T3 Code (21 November 2026), a new thread's first request to the model held none of AGENTS.md, GEMINI.md, .agents/rules/ or .agent/rules/; the model read AGENTS.md only when it chose to open it with a tool.",
+    source: 'https://github.com/chrcit/vibecoding-guide',
+    verified: '2026-11-21',
+    status: 'observation',
+    note: "The guide's own test: one machine, Antigravity ACP server 1.1.1 driven by T3 Code 0.1.9, read from the request Antigravity stored. Antigravity's own app or CLI may differ.",
+  },
   linuxFaster: {
     value: 'felt faster',
     claim: 'Linux has felt faster for agentic work in the guide\'s own use. No controlled benchmark was found.',

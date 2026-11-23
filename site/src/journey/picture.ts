@@ -383,7 +383,7 @@ export interface Picture { ents: Ent[]; labels: PlacedLabel[]; cam: Camera; kind
 const depth = ([x, y]: XY) => x + y;
 const blockSig = (blocks?: Block[]) => (blocks ?? []).map((b) => b.t[0] + b.h.toFixed(1)).join('');
 
-function anchorOf(s: SceneState, name: string): P3 | null {
+export function anchorOf(s: SceneState, name: string): P3 | null {
   const [what, id] = name.split(':') as [string, string | undefined];
   const agent = (aid: string) => s.agents.find((a) => a.id === aid);
   if (what === 'you' && s.you) return [s.you[0], s.you[1], 27];
@@ -413,7 +413,7 @@ function anchorOf(s: SceneState, name: string): P3 | null {
 }
 
 /** Corner points of a part, for the camera. */
-function extent(s: SceneState, key: string): P3[] {
+export function extent(s: SceneState, key: string): P3[] {
   const boxPts = ([x, y]: XY, rx: number, ry: number, h: number): P3[] => [
     [x - rx, y - ry, 0], [x + rx, y - ry, 0], [x - rx, y + ry, 0], [x + rx, y + ry, 0], [x - rx, y - ry, h], [x + rx, y + ry, h], [x - rx, y + ry, h], [x + rx, y - ry, h],
   ];
@@ -528,6 +528,8 @@ export function picture(s: SceneState, frame: Frame, prev?: SceneState): Picture
   }
 
   const labels: PlacedLabel[] = [];
+  // Two labels on one anchor are two labels: the second key gets a count, so neither replaces the other.
+  const keys = new Map<string, number>();
   for (const lab of s.labels ?? []) {
     let p = typeof lab.at === 'string' ? anchorOf(s, lab.at) : lab.at;
     // A label below a part hangs from the part's foot, not from its top (where it would sit on
@@ -536,8 +538,12 @@ export function picture(s: SceneState, frame: Frame, prev?: SceneState): Picture
     if (!p) continue;
     const [x, y] = k.iso(p, P);
     const t = lab.term ? resolveTerm(lab.term, frame.level ?? 'plain', lab.text) : lab;
+    let key = (typeof lab.at === 'string' ? lab.at : lab.at.join(',')) + '|' + (t.side ? 'a' : 's');
+    const seen = keys.get(key) ?? 0;
+    keys.set(key, seen + 1);
+    if (seen) key += `#${seen}`;
     labels.push({
-      key: (typeof lab.at === 'string' ? lab.at : lab.at.join(',')) + '|' + (t.side ? 'a' : 's'),
+      key,
       text: t.text ?? '', place: lab.place ?? 'top', side: t.side, def: t.def,
       x: x * cam.s + cam.tx, y: y * cam.s + cam.ty,
     });

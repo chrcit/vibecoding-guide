@@ -1,0 +1,226 @@
+---
+// The first hour: the club's member list, built by a coding agent you direct, in the order you do
+// it. The lesson "Your first real loop" shows the same loop as a picture and links here; this page
+// is the clicks and the prompts. Prompts live in lib/start.ts. The reader level changes the wording
+// of the first message and adds tiles, never the path.
+import { Code } from 'astro:components';
+import Board from '../../layouts/Board.astro';
+import Tile from '../../components/board/Tile.astro';
+import Fact from '../../components/data/Fact.astro';
+import Verified from '../../components/data/Verified.astro';
+import CopyPrompt from '../../components/site/CopyPrompt.astro';
+import LessonRef from '../../components/journey/LessonRef.astro';
+import { LEVELS, levelInfo } from '../../lib/levels';
+import { links } from '../../data/links';
+import { url } from '../../lib/nav';
+import * as p from '../../lib/start';
+
+const factIds = [
+  'plans.claude.pro.price', 'plans.claude.pro.claudeCode', 'plans.chatgpt.limits.codexOnEveryPlan',
+  't3code.price', 't3code.welcome', 't3code.codexWithChatGPT', 't3code.newProject', 't3code.modeSwitch', 't3code.permissionModes', 't3code.localServers',
+  't3code.worktrees', 't3code.manyModels', 't3code.githubAuth', 't3code.providerMissing', 't3code.editFromHere',
+  't3code.usagePage', 'harnesses.claudeCode.contextFile', 'harnesses.codex.contextFile',
+  'harnesses.claudeCode.usageCommand', 'harnesses.codex.sandbox',
+  'harnesses.claudeCode.login', 'harnesses.codex.login',
+];
+---
+<Board
+  title="The first hour"
+  description="Build the club's member list with a coding agent in about an hour: set up, two messages, try it, change it, ask, check, save."
+  section="start"
+>
+  <Tile title="Before you start" span={12} id="before">
+    <p>About an hour, on a laptop or desktop PC (macOS, Windows or Linux). You build the club's member list from <LessonRef id="first" />, which shows this loop as a picture. Three words you will meet:</p>
+    <dl class="words">
+      <div><dt>Your project</dt><dd>The folder the app lives in. T3 Code makes it for you.</dd></div>
+      <div><dt>Supervised</dt><dd>The agent asks for your OK before it runs a command.</dd></div>
+      <div><dt>Git</dt><dd>Saves versions of the folder so you can go back. The agent runs it for you.</dd></div>
+    </dl>
+  </Tile>
+
+  <Tile title="1 · Set up" span={6} id="set-up" side="t3-code/">
+    <ol class="moves">
+      <li>Get one plan: Claude Pro (<Fact id="plans.claude.pro.price" /> a month), or ChatGPT, where Codex is on every plan from Free.</li>
+      <li>Download <a href={links.t3codeDownload.url}>T3 Code</a> and open it. It is <Fact id="t3code.price" />.</li>
+      <li>On its Welcome page, connect your agent. For Codex, choose <b>Set up</b>, then <b>Continue with ChatGPT</b>. For Claude Code, choose <b>Install</b>, then <b>Sign in</b>. Press <b>Start</b> when the agent is ready.</li>
+      <li><kbd>Cmd</kbd>+<kbd>K</kbd> (<kbd>Ctrl</kbd>+<kbd>K</kbd> on Windows), <b>New project</b>, call it <code>club-list</code>. The folder goes in <code><Fact id="t3code.newProject" /></code>.</li>
+      <li>Open the model picker under the message box. Choose <b>Permissions</b>, then <b>Supervised</b>.</li>
+    </ol>
+    <p class="then">You see an empty thread: one conversation with the agent, and a box to type in.</p>
+  </Tile>
+
+  <Tile title="2 · First message: who you are" span={6} id="who">
+    <div class="who">
+      <label class="who-field"><span>I am</span><input type="text" data-who-input placeholder={`for example, ${p.who.placeholder}`} autocomplete="off" spellcheck="true" /></label>
+      <div class="pick" role="group" aria-label="How much you know">
+        {LEVELS.map((id) => <button type="button" data-who-level={id} aria-pressed={id === 'plain' ? 'true' : 'false'}>{levelInfo[id].label}</button>)}
+      </div>
+    </div>
+    <CopyPrompt title="Message 1" id="prompt-who" compact>{p.first.before}<span data-who-text>{p.who.empty}</span>{'. '}<span data-lv="plain">{p.who.plain}</span><span data-lv="technical">{p.who.technical}</span><span data-lv="engineer">{p.who.engineer}</span>{p.first.after}</CopyPrompt>
+    <p class="then">Send it on its own. It writes a short AGENTS.md and says so.</p>
+  </Tile>
+
+  <Tile title="3 · Second message: the member list" span={6} id="describe">
+    <CopyPrompt title="Message 2" id="prompt-describe" compact>{p.describe.app}</CopyPrompt>
+    <p class="then">It is the club from the lessons; swap in your own list if you have one. It asks a question or two, builds, and tells you how to open it. It asks before each command. When you do not follow one: <button type="button" class="say" data-say>{p.say.approval}</button></p>
+  </Tile>
+
+  <Tile title="4 · Try it" span={6} id="try" side="t3-code/">
+    <CopyPrompt title="Open it" id="prompt-try" compact>{p.look}</CopyPrompt>
+    <p class="then">In the thread's details, select the local server it started: the page opens in a browser panel beside the thread. Add a member and tick them as paid.</p>
+  </Tile>
+
+  <Tile title="5 · Change it" span={6} id="change">
+    <CopyPrompt title="Three changes" id="prompt-change" compact>{p.change.app}</CopyPrompt>
+    <p class="then">Look for each of the three. After a correction you will want again: <button type="button" class="say" data-say>{p.say.remember}</button></p>
+  </Tile>
+
+  <Tile title="6 · Ask what it did" span={6} id="ask">
+    <CopyPrompt title="Ask for an explanation" id="prompt-ask" compact>{p.ask}</CopyPrompt>
+    <p class="then"><button type="button" class="say" data-say>{p.say.simpler}</button> <button type="button" class="say" data-say>{p.say.where}</button></p>
+  </Tile>
+
+  <Tile title="7 · Have it checked" span={6} id="check" side="wiki/verification/">
+    <CopyPrompt title="Check it" id="prompt-check" compact>{p.check}</CopyPrompt>
+    <p class="then">It adds tests: small programs that try the app and say pass or fail. Try its three things by hand. When it says done: <button type="button" class="say" data-say>{p.say.proof}</button></p>
+  </Tile>
+
+  <Tile title="8 · Save it" span={6} id="save" side="wiki/version-control/">
+    <CopyPrompt title="Save and update AGENTS.md" id="prompt-save" compact>{p.save}</CopyPrompt>
+    <p class="then">It makes a commit, a version you can go back to. Next time, AGENTS.md is read first, so you can skip message 1.</p>
+  </Tile>
+
+  <Tile title="When it goes wrong" span={12} id="wrong">
+    <dl class="wrong">
+      <div><dt>The agent is not ready</dt><dd>Sign in again on this computer. Still missing: <b>Settings → Providers</b> and set where it is installed (<Fact id="t3code.providerMissing" />).</dd></div>
+      <div><dt>The thread says Limited</dt><dd>Your plan’s allowance is used up for now. Wait for it to refill, or switch the thread to your other provider.</dd></div>
+      <div><dt>It went the wrong way</dt><dd><b>Edit from here</b>, under the message where it turned. It rewinds the conversation; the files only in a worktree thread.</dd></div>
+      <div><dt>Done, but it is not</dt><dd><button type="button" class="say" data-say>{p.say.proof}</button></dd></div>
+      <div><dt>An approval you do not follow</dt><dd>Do not approve it. <button type="button" class="say" data-say>{p.say.approval}</button></dd></div>
+    </dl>
+  </Tile>
+
+  <Tile title="Build on a branch" span={4} level="technical" side="wiki/version-control/">
+    <p>New thread, then <b>New worktree</b> (<kbd>mod</kbd>+<kbd>shift</kbd>+<kbd>x</kbd>). Commit, push and open the pull request from the thread. GitHub needs one of: <Fact id="t3code.githubAuth" />.</p>
+  </Tile>
+
+  <Tile title="A failing test first" span={4} level="technical" side="wiki/verification/">
+    <CopyPrompt title="Test first" id="prompt-test-first" compact>{p.testFirst}</CopyPrompt>
+  </Tile>
+
+  <Tile title="From the terminal" span={4} level="technical">
+    <p><code>brew install --cask t3-code</code> or <code>winget install T3Tools.T3Code</code>. Sign in with <code><Fact id="harnesses.claudeCode.login" /></code> or <code><Fact id="harnesses.codex.login" /></code>. Open a folder with <code>t3 app</code>.</p>
+  </Tile>
+
+  <Tile title="Two models, one prompt" span={4} level="engineer" side="explain/orchestration/">
+    <p><Fact id="t3code.manyModels" show="claim" /> Keep the better result.</p>
+  </Tile>
+
+  <Tile title="A different model reviews" span={4} level="engineer" side="wiki/review/">
+    <CopyPrompt title="Review, do not edit" id="prompt-review" compact>{p.review}</CopyPrompt>
+  </Tile>
+
+  <Tile title="Set what it may do" span={4} level="engineer">
+    <Code code={p.permissions} lang="json" themes={{ light: 'github-light', dark: 'github-dark' }} />
+    <p class="then">In <code>.claude/settings.json</code>; T3 Code passes it through. Codex has sandbox modes instead: <Fact id="harnesses.codex.sandbox" />.</p>
+  </Tile>
+
+  <Tile title="What the hour cost" span={12} level="engineer" side="explain/plans-and-api/">
+    <p><kbd>mod</kbd>+<kbd>u</kbd> opens the Usage page: <Fact id="t3code.usagePage" />. In Claude Code, <code><Fact id="harnesses.claudeCode.usageCommand" /></code>.</p>
+  </Tile>
+
+  <Verified slot="foot" ids={factIds} />
+</Board>
+
+<script>
+  import { getLevel, isLevel, onLevel, setLevel } from '../../lib/levels';
+
+  const store = {
+    get: (k: string) => { try { return localStorage.getItem(k); } catch { return null; } },
+    set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch {} },
+  };
+
+  // Who you are, written into the first message as you type.
+  const input = document.querySelector<HTMLInputElement>('[data-who-input]');
+  const out = document.querySelector<HTMLElement>('[data-who-text]');
+  if (input && out) {
+    const empty = out.textContent ?? '';
+    const show = () => { out.textContent = input.value.trim().replace(/^i am\s+/i, '').replace(/[.\s]+$/, '') || empty; out.toggleAttribute('data-filled', !!input.value.trim()); };
+    input.value = store.get('acg-who') ?? '';
+    show();
+    input.addEventListener('input', () => { show(); store.set('acg-who', input.value); });
+  }
+
+  // The level buttons are the site's level switch.
+  const levelButtons = [...document.querySelectorAll<HTMLButtonElement>('[data-who-level]')];
+  const mark = () => levelButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.whoLevel === getLevel())));
+  levelButtons.forEach((b) => b.addEventListener('click', () => { const l = b.dataset.whoLevel; if (isLevel(l)) setLevel(l); }));
+  onLevel(mark);
+  mark();
+
+  // Short things to send: one press copies them, and says so.
+  document.querySelectorAll<HTMLButtonElement>('[data-say]').forEach((b) => {
+    let timer = 0;
+    b.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(b.textContent?.trim() ?? '');
+        b.setAttribute('data-copied', '');
+        clearTimeout(timer);
+        timer = window.setTimeout(() => b.removeAttribute('data-copied'), 1600);
+      } catch {
+        const range = document.createRange();
+        range.selectNodeContents(b);
+        getSelection()?.removeAllRanges();
+        getSelection()?.addRange(range);
+      }
+    });
+  });
+</script>
+
+<style is:global>
+  /* One wording of the first message per reader level. Plain when unset. */
+  html:not([data-level]) [data-lv]:not([data-lv='plain']),
+  html[data-level='plain'] [data-lv]:not([data-lv='plain']),
+  html[data-level='technical'] [data-lv]:not([data-lv='technical']),
+  html[data-level='engineer'] [data-lv]:not([data-lv='engineer']) { display: none; }
+</style>
+
+<style>
+  .words { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.75rem; margin: 0.75rem 0 0; }
+  .words div { min-width: 0; }
+  .words dt { font-weight: 650; color: var(--ink); }
+  .words dd { margin: 0.15rem 0 0; }
+
+  .moves { margin: 0; padding-left: 1.3em; display: grid; gap: 0.45rem; }
+  .moves li { padding-left: 0.2em; }
+  .moves li::marker { font-family: var(--mono); font-size: var(--text-xs); color: var(--muted); }
+
+  .who { display: flex; flex-wrap: wrap; align-items: center; gap: 0.625rem 0.875rem; margin-bottom: 0.75rem; }
+  .who-field { flex: 1 1 16rem; display: flex; align-items: center; gap: 0.5rem; min-width: 0; font-weight: 650; color: var(--ink); }
+  .who-field span { flex: none; }
+  .who-field input {
+    flex: 1 1 auto; min-width: 0; min-height: 2.75rem; padding: 0 0.75rem;
+    border: 1px solid var(--rule-strong); border-radius: var(--radius-s);
+    background: var(--paper); color: var(--ink); font: inherit; font-weight: 400;
+  }
+  .who-field input::placeholder { color: var(--muted); opacity: 1; }
+  :global([data-who-text]) { background: var(--blue-soft); border-radius: 3px; padding: 0 0.15em; }
+  :global([data-who-text][data-filled]) { background: none; padding: 0; }
+
+  .then { margin: 0.75rem 0 0; }
+  .say {
+    display: inline; padding: 0.15em 0.5em; margin: 0.1em 0;
+    border: 1px solid var(--rule-strong); border-radius: var(--radius-s);
+    background: var(--paper); color: var(--ink); cursor: copy;
+    font-family: var(--mono); font-size: var(--text-xs); line-height: 1.5; text-align: left;
+    box-decoration-break: clone; -webkit-box-decoration-break: clone;
+  }
+  .say:hover { border-color: var(--ink); }
+  .say[data-copied] { border-color: var(--green); background: var(--green-soft); }
+  .say[data-copied]::after { content: ' · copied'; color: var(--green); }
+
+  .wrong { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.75rem; margin: 0; }
+  .wrong div { min-width: 0; }
+  .wrong dt { font-weight: 650; color: var(--ink); margin-bottom: 0.25rem; }
+  .wrong dd { margin: 0; }
+</style>

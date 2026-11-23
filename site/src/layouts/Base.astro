@@ -3,7 +3,6 @@
 import '../styles/global.css';
 import Head from '../components/site/Head.astro';
 import Header from '../components/site/Header.astro';
-import Footer from '../components/site/Footer.astro';
 import LevelBoot from '../components/level/LevelBoot.astro';
 import LevelOffer from '../components/level/LevelOffer.astro';
 import SideView from '../components/site/SideView.astro';
@@ -22,8 +21,10 @@ export interface Props {
   type?: 'website' | 'article';
   /** Legacy prop from the first version; ignored. */
   current?: string;
+  /** Leave out the site header: the page draws its own chrome and carries the nav itself (Guide v2). */
+  bare?: boolean;
 }
-const { title, description, section, progress = false, noindex = false, type = 'website' } = Astro.props;
+const { title, description, section, progress = false, noindex = false, type = 'website', bare = false } = Astro.props;
 ---
 <!doctype html>
 <html lang="en">
@@ -34,12 +35,12 @@ const { title, description, section, progress = false, noindex = false, type = '
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
-    <Header section={section} progress={progress} />
+    {!bare && <Header section={section} progress={progress} />}
     <main id="main">
       <slot />
     </main>
-    <Footer />
-    <LevelOffer />
+    {/* A bare page (Guide v2) has the reading level in its own menu, so the offer stays away. */}
+    {!bare && <LevelOffer />}
     <SideView />
   </body>
 </html>

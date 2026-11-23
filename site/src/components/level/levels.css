@@ -138,8 +138,9 @@ html[data-level='engineer'] .level-current[data-when='engineer'] { display: inli
 .level-picker-button .level-glyph { color: var(--accent); }
 .level-picker-button .deeper-chevron { width: 12px; height: 12px; color: var(--muted); transition: transform 160ms ease; }
 .level-picker-button[aria-expanded='true'] .deeper-chevron { transform: rotate(180deg); }
-@media (max-width: 34rem) {
-  /* On phones the button is the glyph alone; its name still says the level. */
+@media (max-width: 52rem) {
+  /* On phones and narrow windows the button is the glyph alone; its name still says the level.
+     From 44rem the header also shows the nav, so the label waits until there is room for both. */
   .level-picker-button { justify-content: center; width: 2.5rem; padding: 0; }
   .level-picker-label, .level-picker-button .deeper-chevron { display: none; }
 }

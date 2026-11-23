@@ -198,7 +198,7 @@ const pct = (v: number) => `${Math.round(v * 1000) / 10}%`;
   </ul>
 
   <h2 id="explainers">The explainers</h2>
-  <p>To start, go to <a href={url('start/')}>the first hour</a>: install one tool, give an agent one small real task, and check what it did.</p>
+  <p>To start, go to <a href={url('start/first-hour/')}>the first hour</a>: install one tool, give an agent one small real task, and check what it did.</p>
   <CardGrid>
     {explainers.map((e) => <Card href={`explain/${e.slug}/`} title={e.title}>{e.blurb}</Card>)}
     <Card href="t3-code/" title="T3 Code">The workspace this guide is written around, what it does and where it stops.</Card>

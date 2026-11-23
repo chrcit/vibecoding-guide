@@ -97,7 +97,7 @@ async function once(ctx: Ctx, h: Script) {
   show(ctx, t);
   await youAsk(ctx, h, t);
   await h.wait(300);
-  ctx.say('the model', 'Paused members will be hidden from the list.');
+  ctx.say('the model', 'Paused members will be hidden.');
   await work(ctx, h, t, 12, true);
   await done(ctx, h, true);
   await h.wait(900);
@@ -119,15 +119,21 @@ async function plan(ctx: Ctx, h: Script, d: Door) {
   h.set((s) => { s.gates![0]!.lamp = 'wait'; });
   await h.send(toTray(), 'model', { ms: 380 });
   h.set((s) => { s.tray!.cards = planCards('wait'); s.labels = [...planLabels('step 3: hide them').filter((l) => l.at !== 'gate'), termLabel('gate', 'plan-mode', 'top', 'waiting for you')]; });
-  ctx.say('the model', `Plan: ${PLAN[ctx.level].map((x, i) => `${i + 1}. ${x}`).join(' ')} Go ahead?`);
+  // The plan stands on the tray as four cards; the bubble names the guess and asks. The whole plan
+  // is in the step text, under the two answers.
+  ctx.say('the plan', 'Step 3 hides them. Go ahead?');
+  t.open = 1;
+  show(ctx, t);
+  if (d.value === undefined) ctx.say(null, 'It waits for you. Answer with one of the two buttons above.');
   if (d.value !== undefined) await h.wait(1400);
   const answer = await d.wake;
   h.check();
   t.you++;
+  t.open = 0;
   show(ctx, t);
   const change = answer === 'change';
   ctx.keep.plan = answer;
-  ctx.say('you', change ? 'Step 3: keep them in the list, greyed out.' : 'Go ahead.');
+  ctx.say('you', change ? 'Step 3: keep them, greyed out.' : 'Go ahead.');
   h.set((s) => { s.tray!.cards = planCards(change ? 'ok' : undefined); s.labels = planLabels(change ? 'step 3: grey them out' : 'step 3: hide them'); });
   await h.send(reverse(route.gateToYou()), 'you', { ms: 380 });
   h.set((s) => { s.gates![0]!.lamp = 'ok'; });
@@ -153,7 +159,8 @@ async function asking(ctx: Ctx, h: Script, d: Door) {
   // The fork: a question card, and the agent carries on with the rest.
   await h.send(toTray(), 'model', { ms: 380 });
   h.set((s) => { s.tray!.cards = [{ id: 'q', mark: 'wait' }]; s.labels = [...labels(), lab('card:q', 'a question', 'right', 'wiki/giving-feedback/')]; });
-  ctx.say('the model', 'Hidden from the list, or greyed out? I will carry on with the rest meanwhile.');
+  ctx.say('the question', 'Hidden or greyed out?');
+  ctx.say(null, 'It carries on with the parts that do not depend on the answer.');
   t.open = 1;
   show(ctx, t);
   await h.wait(900);
@@ -176,10 +183,11 @@ async function asking(ctx: Ctx, h: Script, d: Door) {
     h.set((s) => { s.agents[0]!.lamp = 'off'; });
     t.open = 1;
     show(ctx, t);
-    await done(ctx, h, false, 'Done, except how a paused member shows. That waits on your answer.');
+    await done(ctx, h, false, 'Done, except how paused ones show.');
     h.set((s) => { s.gates![0]!.lamp = 'off'; });
     await h.wait(900);
-    ctx.say('the model', 'Still waiting: hidden from the list, or greyed out?');
+    ctx.say('the question', 'Still waiting: hidden or greyed out?');
+    ctx.say(null, 'The rest is built; one part waits for your answer. Answer with the button above.');
     await d.wake;
     h.check();
     await take();
@@ -199,9 +207,10 @@ async function pin(ctx: Ctx, h: Script, d: Door) {
   await h.wait(300);
   await h.send(toTray(), 'tool', { ms: 380 });
   h.set((s) => { s.tray!.cards = [{ id: 'shot', b: 'tool', mark: 'wait' }]; s.labels = [...labels(), lab('card:shot', 'screenshot', 'right', 'wiki/browser-check/')]; });
-  ctx.say('the model', 'Here is the list with the new pause badge. Anything off?');
+  ctx.say('the screenshot', 'The new pause badge. Anything off?');
   t.open = 1;
   show(ctx, t);
+  if (d.value === undefined) ctx.say(null, 'It waits for you. Type a note, or pin one on the badge, with the buttons above.');
   if (d.value !== undefined) await h.wait(1200);
   const how = await d.wake;
   h.check();
@@ -239,7 +248,7 @@ async function pin(ctx: Ctx, h: Script, d: Door) {
       engineer: 'In its window: note, screenshot, pin coordinates and the element under them (span.badge-paused in MemberRow). No search needed.',
     }));
     await h.wait(1800);
-    ctx.say('the model', 'Your pin is on the pause badge in the member row. Moving it after the name.');
+    ctx.say('the model', 'Pin on the pause badge. Moving it.');
     await work(ctx, h, t, 2, false, [3]);
     await h.send(toTray(), 'tool', { ms: 360 });
     h.set((s) => { s.tray!.cards = [{ id: 'shot', b: 'tool', mark: 'ok' }]; s.project!.files![3] = 'ok'; });
@@ -255,7 +264,8 @@ async function build(ctx: Ctx, h: Script) {
   h.set((s) => { Object.assign(s, base()); });
   const t: Tally = { turns: 0, wrong: 0, open: 0, you: 0 };
   show(ctx, t);
-  ctx.say('you', 'Build a review page: every screen that changed, with a comment box under each. Save my comments to a notes file and read it at the start of your next turn.');
+  ctx.say('you', 'Build me a review page, with notes.');
+  ctx.say(null, 'Every screen that changed, a comment box under each; comments saved to a notes file it reads at the start of its next turn.');
   await h.send(route.youToAgent(), 'you', { ms: 460 });
   h.set((s) => { s.agents[0]!.blocks!.push({ t: 'you', h: 2.2 }); });
   t.you++;
@@ -268,11 +278,11 @@ async function build(ctx: Ctx, h: Script) {
     const [x, y] = notesAt(s);
     s.labels = [...labels(), lab('card:review', 'review page', 'right', 'wiki/giving-feedback/'), lab([x, y, 6], 'notes file', 'bottom')];
   });
-  ctx.say('the model', 'The review page is up. It lists the three screens the last job changed.');
+  ctx.say('the model', 'Review page is up: 3 screens.');
   await h.wait(1600);
   h.set((s) => { s.tray!.cards[0]!.mark = undefined; });
   // You use it: two comments go from the page into the notes file.
-  for (const note of ['The pause button is too close to delete.', 'Say “paused” in words, not only grey.']) {
+  for (const note of ['Pause is too close to delete.', 'Say “paused” in words, not only grey.']) {
     ctx.say('you', note);
     const [cx] = cardSpot(ctx.scene.state.tray!, 'review');
     const [fx, fy] = notesAt(ctx.scene.state);
@@ -290,9 +300,9 @@ async function build(ctx: Ctx, h: Script) {
   await h.send(reverse(route.toolToFile(tools, 'read', project, 5)), 'you', { ms: 520 });
   await h.send(reverse(route.agentToTool(tools, 'read')), 'you', { ms: 260 });
   h.set((s) => { s.tools!.on = null; s.agents[0]!.blocks!.push({ t: 'you', h: 1.4 }); });
-  ctx.say('the model', 'Read the notes file: two comments. Fixing both.');
+  ctx.say('the model', 'Notes file: two comments. Fixing.');
   await work(ctx, h, t, 4, false, [1, 2]);
-  await done(ctx, h, false, 'Done. Both notes are fixed, and the review page shows the two screens again.');
+  await done(ctx, h, false, 'Done. Both notes fixed.');
   ctx.say(null, 'The review page stays on the tray for every job after this one. The two notes went into the notes file, and it read them at the start of its next turn without being asked.');
   finish(ctx);
 }
@@ -307,9 +317,9 @@ export async function demo(ctx: Ctx, h: Script) {
   h.set((s) => { busy(s, false); });
   await h.send(route.agentToGate(), 'model', { ms: 340 });
   h.set((s) => { s.gates![0]!.lamp = 'wait'; s.tray!.cards = planCards('wait'); s.labels = [...planLabels('step 3: hide them').filter((l) => l.at !== 'gate'), lab('gate', 'waiting for you', 'top')]; });
-  ctx.say('the model', 'Step 3: hide paused members from the list. Go ahead?');
+  ctx.say('the plan', 'Step 3 hides them. Go ahead?');
   await h.wait(1800);
-  ctx.say('you', 'Step 3: keep them in the list, greyed out.');
+  ctx.say('you', 'Step 3: keep them, greyed out.');
   await h.send(reverse(route.gateToYou()), 'you', { ms: 380 });
   h.set((s) => { s.gates![0]!.lamp = 'ok'; s.tray!.cards = planCards('ok'); s.labels = planLabels('step 3: grey them out'); });
   await h.send(reverse(route.agentToGate()), 'you', { ms: 320 });
@@ -334,6 +344,11 @@ const answer = (ctx: Ctx, fn: Waiting, val: string) => {
 };
 
 export const turn: Chapter = {
+  // What the model leaves on the tray speaks from there, so the bubble points at the card it is
+  // about and does not cover it: the plan's step 3, the question, the screenshot.
+  speakers: { 'the plan': 'card:p3', 'the question': 'card:q', 'the screenshot': 'card:shot' },
+  // The chip: turns so far and how many went to what you did not mean, or that it waits on you.
+  counter: (p) => (!p.length ? null : p[2]![1] === 'nothing' ? `turns ${p[0]![1]} · wrong ${p[1]![1]}` : `turns ${p[0]![1]} · waiting on you`),
   steps: {
     once: { scene: () => base(), enter: (ctx) => { note(ctx, 'once'); void ctx.scene.run((h) => once(ctx, h)); } },
     // A choice the reader made stays made: coming back to the step replays it with that answer.
@@ -344,7 +359,7 @@ export const turn: Chapter = {
   },
   actions: {
     plan: (ctx, val) => {
-      ctx.say('you', val === 'change' ? 'Step 3: keep them in the list, greyed out.' : 'Go ahead.');
+      ctx.say('you', val === 'change' ? 'Step 3: keep them, greyed out.' : 'Go ahead.');
       answer(ctx, plan, val);
     },
     answer: (ctx) => {

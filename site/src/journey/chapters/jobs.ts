@@ -24,12 +24,12 @@ const TASKS = ['search', 'CSV export', 'phone layout', 'paid filter', 'reminders
 /** Five separate projects, when each job has its own: the guide's running examples. */
 const PROJECTS = ['club list', 'bakery hours', 'contact tidy', 'club emails', 'bakery menu'];
 const VAGUE = ['fix', 'fix 2', 'new thread', 'fix', 'untitled'];
-const QUESTIONS = ['Hide paused members, or grey them out?', 'Dates as 3 March or 03/03?', 'Stack the table, or scroll it sideways?', 'Count part-payers as paid?', 'Send at 9:00 or at 18:00?'];
-const OTHER_QUESTIONS = ['Hide paused members, or grey them out?', 'Show holiday hours on the home page too?', 'Merge two rows with the same email?', 'Send the reminder at 9:00 or at 18:00?', 'Show prices with or without tax?'];
+const QUESTIONS = ['Hide paused members, or grey them out?', 'Dates as 3 March or 03/03?', 'Stack the table, or scroll sideways?', 'Count part-payers as paid?', 'Send at 9:00 or at 18:00?'];
+const OTHER_QUESTIONS = ['Hide paused members, or grey them out?', 'Holiday hours on the home page too?', 'Merge two rows with the same email?', 'Send the reminder at 9:00 or 18:00?', 'Show prices with or without tax?'];
 const line = (o: Opts, j: number, need: Need) =>
   need === 'question'
     ? o.stop === 'short' ? (o.projects === 'one' ? QUESTIONS : OTHER_QUESTIONS)[j % 5]! : 'Can you take a look?'
-    : o.stop === 'short' ? 'Done. Tests pass; screenshot on the tray.' : 'Done.';
+    : o.stop === 'short' ? 'Done: tests pass, screenshot sent.' : 'Done.';
 const STATE = { work: 'working', question: 'question for you', result: 'ready to check' } as const;
 
 const stopOf = (o: Opts) => STOP[o.stop] + (o.board === 'vague' ? OPEN_THREAD : 0);
@@ -138,14 +138,15 @@ async function hour(ctx: Ctx, h: Script, o: Opts) {
           if (collide) {
             sentBack++;
             stats(Math.min(T, t + 1));
-            ctx.say(nameOf(o, j), tech
-              ? 'Merge conflict in the list page: main changed since I branched. Rebasing on main, re-running tsc and the tests, then merging.'
-              : 'Main changed while I worked: another job edited the same page. Updating my copy, then trying again.');
+            ctx.say(nameOf(o, j), tech ? 'Merge conflict: rebasing on main.' : 'Main changed. Updating my copy.');
+            ctx.say(null, tech
+              ? 'Merge conflict in the list page: main changed since this job branched. It rebases on main, re-runs tsc and the tests, then merges.'
+              : 'Main changed while this job worked: another job edited the same page. It updates its copy and tries again.');
             await h.send([...mergePath(ctx.scene.state, j)].reverse(), 'bad', { ms: 520 });
             await h.wait(900);
             await h.send(mergePath(ctx.scene.state, j), 'model', { ms: 520 });
           } else if (tech && o.projects === 'one' && finished === 1) {
-            ctx.say(nameOf(o, j), 'Branch merged into main after the type check and 14 tests passed.');
+            ctx.say(nameOf(o, j), 'Merged: tsc and 14 tests pass.');
           }
         })
         .then(() => h.set((s) => { (project(s, j).commits ??= []).push('ok'); }))
@@ -188,7 +189,17 @@ export async function demo(ctx: Ctx, h: Script) {
   await h.wait(6000);
 }
 
+/** Each job speaks at its own station: every name a job goes by under any option, to its anchor. */
+const SPEAKERS: Record<string, string> = {};
+for (let j = 0; j < 5; j++) {
+  for (const projects of ['one', 'many'] as const) SPEAKERS[nameOf({ n: 5, stop: 'short', projects }, j)] = `j${j}`;
+  if (j < 3) SPEAKERS[nameOf({ n: 3, stop: 'short', projects: 'one', board: 'vague' }, j)] = `j${j}`;
+}
+
 export const jobsCh: Chapter = {
+  speakers: SPEAKERS,
+  // The chip: the minute of the made-up hour and the jobs finished so far.
+  counter: (p) => (p.length ? `minute ${p[0]![1]} · ${p[1]![1]} done` : null),
   steps: {
     one: { scene: () => floor(O.one), enter: (ctx) => start(ctx, O.one, 'One job on the club list. It works, then stops when it needs you.') },
     three: { scene: () => floor(O.three), enter: (ctx) => start(ctx, O.three, 'Three jobs on the club list, each in its own copy. You go to whichever needs you.') },

@@ -15,6 +15,7 @@ export default defineConfig({
   // Portless (and similar proxies) assign the port via PORT/HOST.
   server: { port: Number(process.env.PORT) || 4321, host: process.env.HOST || false },
   integrations: [comments(), devPages()],
+  devToolbar: { enabled: false },
   markdown: {
     remarkPlugins: [[remarkWikiLinks, { base }], [remarkGuideLinks, { base }], remarkLevels],
     shikiConfig: { themes: { light: 'github-light', dark: 'github-dark' } },

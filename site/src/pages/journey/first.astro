@@ -26,7 +26,7 @@ const ids = ['t3code.price', 't3code.install', 'plans.claude.pro.claudeCode', 'p
       <ul>
         <li><a href={url('t3-code/')}>T3 Code</a> is <Fact id="t3code.price" />: <Fact id="t3code.install" />.</li>
         <li>It drives Claude Code or Codex. <Fact id="plans.claude.pro.claudeCode" show="claim" /> <Fact id="plans.chatgpt.limits.codexOnEveryPlan" show="claim" /></li>
-        <li><a href={url('start/')}>The first hour</a> has every click.</li>
+        <li><a href={url('start/first-hour/')}>The first hour</a> has every click.</li>
       </ul>
     </More>
     <More title="The side road: builders in the browser">
@@ -42,7 +42,7 @@ const ids = ['t3code.price', 't3code.install', 'plans.claude.pro.claudeCode', 'p
   </Step>
 
   <Step id="loop" title="Four beats">
-    <p>You ask, it builds, you look, you say what to change. The readout counts the beats.</p>
+    <p>You ask, it builds, you look, you say what to change. The counter in the corner shows which beat you are on.</p>
     <ForLevel is="technical"><p>“It builds” ends with the tests and the type check, so you look at something that already passed them.</p></ForLevel>
     <div class="row"><button class="btn ghost" type="button" data-do="loop">Play it again</button></div>
   </Step>
@@ -53,7 +53,7 @@ const ids = ['t3code.price', 't3code.install', 'plans.claude.pro.claudeCode', 'p
       <button type="button" data-do="change" data-val="clear" data-default aria-pressed="true">Three clear changes</button>
       <button type="button" data-do="change" data-val="vague" aria-pressed="false">“Make it better”</button>
     </div>
-    <Next from="first" more={[{ href: 'journey/chat/', text: 'Straight to Chat, lesson 5' }, { href: 'start/', text: 'The first hour, click by click' }, { href: 'wiki/web-builders/', text: 'Web builders', side: true }]} />
+    <Next from="first" more={[{ href: 'journey/chat/', text: 'Straight to Chat, lesson 5' }, { href: 'start/first-hour/', text: 'The first hour, click by click' }, { href: 'wiki/web-builders/', text: 'Web builders', side: true }]} />
   </Step>
   <Fragment slot="foot">
     <p>The club, the answers and the file names above are made up.</p>

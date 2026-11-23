@@ -3,6 +3,50 @@
 import type { Correction } from './types.ts';
 
 export const corrections: Correction[] = [
+  // T3 Code re-check of 22 November 2026.
+  {
+    date: '2026-11-22',
+    was: 'The T3 Code FAQ links one blog post, one X post, one video and one gist.',
+    now: "It links Theo's blog post, X post, YouTube video and GitHub gist, plus a second X post from SpaceXAI.",
+    source: 'https://github.com/pingdotgg/t3code/blob/main/docs/user/faq.md',
+    facts: ['t3code.faqLinks'],
+  },
+  {
+    date: '2026-11-22',
+    was: 'T3 Code closes outside pull requests for new features.',
+    now: 'Maintainers can request feature pull requests, and vouched contributors can submit small, focused features.',
+    source: 'https://github.com/pingdotgg/t3code/blob/main/CONTRIBUTING.md',
+    facts: ['t3code.contributing'],
+  },
+  {
+    date: '2026-11-22',
+    was: 'Full access asks for nothing.',
+    now: 'Full access allows commands and file edits without approval prompts. Provider-specific rules still apply.',
+    source: 'https://github.com/pingdotgg/t3code/blob/main/docs/user/permission-modes.md',
+    facts: ['t3code.modeMeaning'],
+  },
+  {
+    date: '2026-11-22',
+    was: 'T3 Code on web and desktop transcribes with an environment model, OpenAI or Grok Voice Transcribe.',
+    now: 'Cloud transcription also supports OpenRouter. The desktop app supports on-device Apple Speech on macOS 26 or later.',
+    source: 'https://github.com/pingdotgg/t3code/blob/main/docs/user/voice-input.md',
+    facts: ['t3code.voice.where'],
+  },
+  {
+    date: '2026-11-22',
+    was: 'The empty T3 Code composer reads “Ask anything...”.',
+    now: 'The default placeholder on web and desktop is “Ask anything. @ files, $ skills, / commands”.',
+    source: 'https://github.com/pingdotgg/t3code/blob/main/apps/web/src/composerPlaceholder.ts',
+    facts: ['t3code.screen.composer'],
+  },
+  {
+    date: '2026-11-22',
+    was: 'The sidebar shows Working, Completed, Pending Approval, Awaiting Input or Plan Ready.',
+    now: 'Sidebar rows can show Setting up, Goal, Working, Waiting, Approval, Input, Request, Limited, Failed, Woke or Done.',
+    source: 'https://github.com/pingdotgg/t3code/blob/main/apps/web/src/components/sidebar/SidebarThreadRow.tsx',
+    facts: ['t3code.screen.statuses'],
+  },
+
   // Re-check of 18 November 2026.
   {
     date: '2026-11-18',

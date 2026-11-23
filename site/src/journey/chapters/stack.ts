@@ -1,6 +1,6 @@
 // Lesson 3 (part one): git as undo, GitHub as the copy online, a branch and a pull request, static
 // and dynamic hosting, and what a server's specs are. Every job and load figure here is made up.
-import type { Chapter, Ctx } from '../chapter';
+import type { Chapter, Ctx, StatPair } from '../chapter';
 import type { Script } from '../scene';
 import { solo, lab } from '../presets';
 import { route, reverse, SPOT, BUS_Y, type SceneState, type XY, type Person } from '../picture';
@@ -27,37 +27,38 @@ const commitScene = (): SceneState => solo({
 async function runCommit(ctx: Ctx, h: Script, saved: boolean) {
   note(ctx, 'stack', 'commit');
   h.set((s) => Object.assign(s, commitScene()));
-  stat(ctx, [0, '–', 'works', '–']);
+  ctx.say(null, '');
+  stat(ctx, [0, 0, 'works', 'none yet']);
   if (saved) {
     ctx.say('you', 'It works. Save this version.');
     await h.send(route.youToAgent(), 'you', { ms: 380 });
     await h.send(route.agentToRules(PROJ), 'model', { ms: 420 });
     h.set((s) => { s.project!.commits = ['ok']; });
-    ctx.say('agent', lv(ctx, 'Saved: “Member list works”.', 'git add -A && git commit -m "Member list works"'));
-    stat(ctx, [1, '–', 'works', '–']);
+    ctx.say('agent', lv(ctx, 'Saved: “Member list works”.', 'git commit -m "Member list works"'));
+    stat(ctx, [1, 0, 'works', 'none yet']);
     await h.wait(900);
   }
-  ctx.say('you', 'Make the list look nicer on a phone.');
+  ctx.say('you', 'Make it look nicer on a phone.');
   await h.send(route.youToAgent(), 'you', { ms: 380 });
   h.set((s) => { s.agents[0]!.busy = true; s.tools!.on = 'edit'; });
   await h.send(route.toolToFile(TOOLS, 'edit', PROJ, 2), 'bad', { ms: 420 });
   h.set((s) => { s.project!.files = ['', 'bad', 'bad', '', '', '']; s.agents[0]!.busy = false; s.tools!.on = null; });
-  ctx.say('agent', 'Done. The list is responsive now.');
-  stat(ctx, [saved ? 1 : 0, '–', 'broken: names cut off', '–']);
+  ctx.say('agent', 'Done. It fits a phone now.');
+  stat(ctx, [saved ? 1 : 0, 0, 'broken: names cut off', 'none yet']);
   await h.wait(1300);
-  ctx.say('you', 'It is worse. Go back to how it was.');
+  ctx.say('you', 'Names are cut off. Go back.');
   await h.send(route.youToAgent(), 'you', { ms: 380 });
   if (saved) {
     await h.send(route.agentToRules(PROJ), 'model', { ms: 420 });
     h.set((s) => { s.project!.files = ['', '', '', '', '', '']; });
-    ctx.say('agent', lv(ctx, 'Back to the save point “Member list works”.', 'git restore . (back to the last commit)'));
-    stat(ctx, [1, '–', 'works again', '–']);
+    ctx.say('agent', lv(ctx, 'Back to “Member list works”.', 'git restore .: back to the commit'));
+    stat(ctx, [1, 0, 'works again', 'none yet']);
     await h.wait(1500);
     ctx.say(null, 'One save point, and the bad change cost you a minute.');
   } else {
     h.set((s) => { s.agents[0]!.lamp = 'bad'; });
-    ctx.say('agent', 'There is no saved version to go back to. I can try to undo it by hand.');
-    stat(ctx, [0, '–', 'still broken', '–']);
+    ctx.say('agent', 'No save point. I can try by hand.');
+    stat(ctx, [0, 0, 'still broken', 'none yet']);
     await h.wait(1500);
     ctx.say(null, 'Without a save point, “go back” is a guess.');
   }
@@ -86,25 +87,26 @@ function ghScene(): SceneState {
 const UP: XY[] = [[SPOT.project[0], -36], [GH[0], GH[1] + 22]];
 async function runGithub(ctx: Ctx, h: Script, pushed: boolean) {
   note(ctx, 'stack', 'github');
+  ctx.say(null, '');
   h.set((s) => Object.assign(s, ghScene()));
-  stat(ctx, [3, 0, 'works', '–']);
+  stat(ctx, [3, 0, 'works', 'none yet']);
   if (pushed) {
-    ctx.say('agent', lv(ctx, 'Sending the 3 save points to GitHub.', 'git push'));
+    ctx.say('agent', lv(ctx, 'Sending 3 save points to GitHub.', 'git push'));
     await h.send(UP, 'model', { ms: 620 });
     h.set((s) => { s.projects![0]!.commits = ['ok', 'ok', 'ok']; });
-    stat(ctx, [3, 3, 'works', '–']);
+    stat(ctx, [3, 3, 'works', 'none yet']);
     await h.wait(900);
   }
   ctx.say(null, 'The laptop is left on a train.');
   h.set((s) => { s.zones![0]!.off = true; s.project = null; s.agents[0]!.off = true; });
-  stat(ctx, [0, pushed ? 3 : 0, pushed ? 'on GitHub only' : 'gone', '–']);
+  stat(ctx, [0, pushed ? 3 : 0, pushed ? 'on GitHub only' : 'gone', 'none yet']);
   await h.wait(1600);
   if (pushed) {
     h.set((s) => { s.zones![0]!.off = false; s.agents[0]!.off = false; s.project = { at: SPOT.project, rules: 'none', commits: [] }; });
-    ctx.say('you', lv(ctx, 'New laptop. Get the club list back from GitHub.', 'git clone https://github.com/you/club-list.git'));
+    ctx.say('you', lv(ctx, 'New laptop. Get it back from GitHub.', 'git clone …/club-list.git'));
     await h.send(reverse(UP), 'model', { ms: 620 });
     h.set((s) => { s.project!.commits = ['ok', 'ok', 'ok']; });
-    stat(ctx, [3, 3, 'works', '–']);
+    stat(ctx, [3, 3, 'works', 'none yet']);
     await h.wait(1200);
     ctx.say(null, 'Everything up to the last push came back, with every save point.');
   } else {
@@ -130,26 +132,27 @@ function prScene(): SceneState {
 }
 async function runBranch(ctx: Ctx, h: Script, branch: boolean) {
   note(ctx, 'stack', 'branch');
+  ctx.say(null, '');
   h.set((s) => { Object.assign(s, prScene()); if (!branch) { s.gates = []; s.agents[0]!.tree = false; } else s.labels![1] = termLabel('a0', 'branch', 'top', 'the agent, on a branch'); });
-  stat(ctx, [3, 3, 'works', '–']);
+  stat(ctx, [3, 3, 'works', 'none yet']);
   ctx.say('you', 'Add a “paid on” date to each member.');
   await h.send(route.youToAgent(), 'you', { ms: 380 });
   h.set((s) => { s.agents[0]!.busy = true; });
-  await h.wait(900);
+  await h.wait(1400);
   h.set((s) => { s.agents[0]!.busy = false; });
   if (!branch) {
     await h.send([[0, -20], [0, BUS_Y], [SPOT.main[0] - 46, BUS_Y]], 'bad', { ms: 700 });
     h.set((s) => { s.project!.commits!.push('bad'); });
     ctx.say('agent', 'Done, it is on main.');
-    stat(ctx, [4, 4, lv(ctx, 'broken for everyone: the dates are blank', 'broken for everyone: dates show as “NaN”'), '–']);
+    stat(ctx, [4, 4, lv(ctx, 'broken for everyone', 'broken: dates show “NaN”'), 'none yet']);
     await h.wait(1600);
     ctx.say(null, 'The change went straight to the version people use, mistake and all.');
     return;
   }
   await h.send(route.agentToMgate(), 'bad', { ms: 600 });
   h.set((s) => { s.gates![0]!.lamp = 'bad'; });
-  ctx.say('check', lv(ctx, 'Tried the page: the dates are blank.', 'CI: npm test failed: formatDate(undefined) returned "NaN".'));
-  stat(ctx, [3, 3, 'works (main untouched)', '–']);
+  ctx.say('check', lv(ctx, 'Tried the page: the dates are blank.', 'CI: formatDate(undefined) is NaN.'));
+  stat(ctx, [3, 3, 'untouched, still works', 'none yet']);
   await h.wait(1200);
   await h.send(reverse(route.agentToMgate()), 'bad', { ms: 600 });
   h.set((s) => { s.agents[0]!.busy = true; });
@@ -163,7 +166,7 @@ async function runBranch(ctx: Ctx, h: Script, branch: boolean) {
   h.set((s) => { s.gates![0]!.lamp = 'ok'; });
   await h.send(route.mgateToMain({ at: SPOT.main }), 'model', { ms: 500 });
   h.set((s) => { s.project!.commits!.push('ok'); s.gates![0]!.lamp = 'off'; });
-  stat(ctx, [4, 4, 'works, with dates', '–']);
+  stat(ctx, [4, 4, 'works, with dates', 'none yet']);
   await h.wait(1200);
   ctx.say(null, 'The mistake was caught at the pull request. Main only got the fixed version.');
 }
@@ -192,16 +195,17 @@ function hostScene(dynamic: boolean): SceneState {
 }
 async function runHosting(ctx: Ctx, h: Script, dynamic: boolean) {
   note(ctx, 'stack', 'hosting');
+  ctx.say(null, '');
   h.set((s) => Object.assign(s, hostScene(dynamic)));
   const server = dynamic ? 'yes, always on' : 'none';
-  stat(ctx, [4, 4, 'live', server]);
-  ctx.say('coach', 'Sam just paid. Marking him as paid.');
+  stat(ctx, [4, 4, 'live, nobody ticked yet', server]);
+  ctx.say('coach', 'Sam just paid. Ticking him off.');
   const toSite: XY[] = [[COACH[0] - 10, COACH[1]], [175, 5]];
   if (!dynamic) {
     ctx.say(null, 'The finished pages go to the phone. The tick stays in that browser.');
     await h.send(reverse(toSite), 'model', { ms: 520 });
-    await h.wait(900);
-    ctx.say('treasurer', 'Sam: not paid.');
+    await h.wait(1300);
+    ctx.say('treasurer', 'Sam? Still says not paid.');
     await h.send([[175, 5], [TREAS[0] - 10, TREAS[1]]], 'bad', { ms: 520 });
     stat(ctx, [4, 4, 'Sam paid on one phone only', server]);
     await h.wait(1400);
@@ -212,9 +216,9 @@ async function runHosting(ctx: Ctx, h: Script, dynamic: boolean) {
   h.set((s) => { s.gear![0]!.lamp = 'work'; });
   await h.send([[136, 10], [158, -10]], 'you', { ms: 380 });
   h.set((s) => { s.gear![1]!.lamp = 'ok'; s.gear![0]!.lamp = 'off'; });
-  ctx.say('server', 'Saved in the database: Sam, paid.');
-  await h.wait(800);
-  ctx.say('treasurer', 'Sam: paid.');
+  ctx.say('server', 'Saved in the database.');
+  await h.wait(1500);
+  ctx.say('treasurer', 'Sam: paid. I see it too.');
   await h.send([[175, 5], [TREAS[0] - 10, TREAS[1]]], 'model', { ms: 520 });
   stat(ctx, [4, 4, 'Sam paid, for everyone', server]);
   await h.wait(1400);
@@ -226,6 +230,7 @@ async function runHosting(ctx: Ctx, h: Script, dynamic: boolean) {
 const SIZES = [40, 400, 4000, 40000];
 function runSpecs(ctx: Ctx, idx: number) {
   note(ctx, 'stack', 'specs');
+  ctx.say(null, '');
   const members = SIZES[Math.max(0, Math.min(3, idx))]!;
   // Made-up: on match day every member opens the list twice within ten minutes; the smallest
   // server answers about 20 page views a second.
@@ -241,13 +246,14 @@ function runSpecs(ctx: Ctx, idx: number) {
       s.people = Array.from({ length: n }, (_, i) => ({ id: `u${i}`, at: [240 + (i % 3) * 22, -40 + Math.floor(i / 3) * 34] as XY, who: 'user' as const, scale: 0.8 }));
       s.labels!.push(lab('u0', `${members.toLocaleString('en-GB')} members`, 'top'));
     });
-    stat(ctx, [4, 4, [`${perSec < 1 ? perSec.toFixed(2) : Math.round(perSec)} views a second on match day`, 'made-up'], busy > 100 ? `1 core · 1 GB · asked for ${(busy / 100).toFixed(1)}× what it can answer` : `1 core · 1 GB · ${busy}% busy`]);
+    stat(ctx, [4, 4, [`${perSec < 1 ? perSec.toFixed(2) : Math.round(perSec)} views a second on match day`, 'made-up'], busy > 100 ? `1 core · 1 GB · ${(busy / 100).toFixed(1)}× too busy` : `1 core · 1 GB · ${busy}% busy`]);
     for (let i = 0; i < 3; i++) {
       await h.send([[240, -10], [175, 5]], 'you', { ms: 300 });
       h.set((s) => { s.gear![0]!.lamp = busy > 100 ? 'bad' : 'work'; });
       await h.send([[175, 5], [240, -10]], busy > 100 ? 'bad' : 'model', { ms: 300 });
     }
     h.set((s) => { s.gear![0]!.lamp = busy > 100 ? 'bad' : 'ok'; });
+    ctx.say('server', busy > 100 ? 'Too many at once. Some pages fail.' : `${busy}% busy.${busy < 5 ? ' Mostly asleep.' : ''}`);
     ctx.say(null, busy > 100
       ? 'Too much for the smallest server: pages slow down and some fail. Now a bigger one pays for itself.'
       : busy < 5 ? 'The smallest server is asleep most of the day. A bigger one would be money for nothing.'
@@ -259,13 +265,20 @@ export async function demo(ctx: Ctx, h: Script) {
   await runCommit(ctx, h, true);
 }
 
+/** The chip: the number each step is about, from the readout. */
+const pair = (pairs: StatPair[], i: number) => String(pairs[i]?.[1] ?? '');
+
 export const stackCh: Chapter = {
+  speakers: { coach: 'coach', treasurer: 'treas', server: 'gear:srv' },
   steps: {
     commit: { scene: () => commitScene(), enter: (ctx) => void ctx.scene.run((h) => runCommit(ctx, h, true)) },
-    github: { scene: () => ghScene(), enter: (ctx) => void ctx.scene.run((h) => runGithub(ctx, h, true)) },
-    branch: { scene: () => prScene(), enter: (ctx) => void ctx.scene.run((h) => runBranch(ctx, h, true)) },
-    hosting: { scene: () => hostScene(false), enter: (ctx) => void ctx.scene.run((h) => runHosting(ctx, h, false)) },
-    specs: { scene: () => hostScene(true), enter: (ctx) => runSpecs(ctx, 0) },
+    github: {
+      scene: () => ghScene(), enter: (ctx) => void ctx.scene.run((h) => runGithub(ctx, h, true)),
+      counter: (p) => `commits: laptop ${pair(p, 0)} · GitHub ${pair(p, 1)}`,
+    },
+    branch: { scene: () => prScene(), enter: (ctx) => void ctx.scene.run((h) => runBranch(ctx, h, true)), counter: (p) => `main: ${pair(p, 2)}` },
+    hosting: { scene: () => hostScene(false), enter: (ctx) => void ctx.scene.run((h) => runHosting(ctx, h, false)), counter: (p) => pair(p, 2) },
+    specs: { scene: () => hostScene(true), enter: (ctx) => runSpecs(ctx, 0), counter: (p) => pair(p, 3) },
   },
   actions: {
     saved: (ctx, val) => void ctx.scene.run((h) => runCommit(ctx, h, val === 'yes')),

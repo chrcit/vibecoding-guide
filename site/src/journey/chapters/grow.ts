@@ -22,7 +22,7 @@ const share = (p: Pick<Proj, 'stacks' | 'junk'>) => Math.round((readFor(p) / CAP
 
 const JOBS = [
   'Add a search box', 'Export to CSV', 'Sort members by team', 'Add a paid filter', 'Send payment reminders',
-  'Make the list fit a phone', 'Add a notes field', 'Show who paid last season', 'Let members hide their phone number',
+  'Make the list fit a phone', 'Add a notes field', 'Show who paid last season', 'Hide members’ phone numbers',
   'Import last year’s list', 'Print a team sheet', 'Add a birthday column', 'Let coaches edit', 'Add a waiting list',
   'Count members per team', 'Email the committee', 'Add a photo per member', 'Archive old members', 'Add a login', 'Add a dark mode',
 ];
@@ -124,7 +124,7 @@ async function feature(ctx: Ctx, h: Script, r: Run, k: number, on = target(k), l
 
 async function cleanUp(ctx: Ctx, h: Script, r: Run) {
   const before = sum(proj(ctx.scene.state).junk!);
-  await brief(ctx, h, 'Clean up: remove copies and code nothing calls. Change nothing else.');
+  await brief(ctx, h, 'Clean up: remove what nothing uses.');
   h.set((s) => { s.gates![0]!.lamp = 'ok'; });
   if (!ctx.mem.quiet) ctx.say(tech(ctx) ? 'the check: npm test' : 'the check', 'Before: all tests pass.');
   await readAll(ctx, h);
@@ -136,8 +136,9 @@ async function cleanUp(ctx: Ctx, h: Script, r: Run) {
   r.cleanups++;
   stats(ctx, r);
   if (!ctx.mem.quiet) ctx.say(tech(ctx) ? 'the check: npm test' : 'the check', before
-    ? `After: all tests pass. ${before} unused ${before === 1 ? 'piece' : 'pieces'} removed; no feature added.`
-    : 'Nothing unused was left to remove. All tests pass.');
+    ? `After: tests pass, ${before} unused removed.`
+    : 'Nothing unused left. Tests pass.');
+  if (!ctx.mem.quiet && before) ctx.say(null, `${before} unused ${before === 1 ? 'piece' : 'pieces'} removed and no feature added; all tests pass before and after.`);
   await h.wait(500);
 }
 const tech = (ctx: Ctx) => ctx.level !== 'plain';
@@ -176,7 +177,7 @@ async function clean(ctx: Ctx, h: Script) {
   stats(ctx, r);
   await feature(ctx, h, r, 12);
   ctx.mem.run = r;
-  ctx.say(null, `Feature 13 read ${r.last}% of its window before its first edit. Run a clean-up and send feature 14.`);
+  ctx.say(null, `Feature 13 read ${r.last}% of its window before its first edit.${ctx.mem.demo ? '' : ' Run a clean-up and send feature 14.'}`);
 }
 /** The button: a clean-up on the project as it stands, then feature 14. */
 async function cleanThenNext(ctx: Ctx, h: Script) {
@@ -201,7 +202,7 @@ async function refactor(ctx: Ctx, h: Script, tests: boolean) {
   const before = share(AFTER_CLEAN);
   ctx.say(null, `On this shape feature 15 would read ${before}% of its window. The list page has grown tallest: every change goes through it.`);
   await h.wait(900);
-  await brief(ctx, h, 'Refactor: split the list page into smaller files. Change no behaviour.');
+  await brief(ctx, h, 'Split the list page. Keep behaviour.');
   await readAll(ctx, h);
   const moves = evenOut(proj(ctx.scene.state).stacks!);
   const breaks = Math.floor(moves.length / 2);
@@ -215,11 +216,11 @@ async function refactor(ctx: Ctx, h: Script, tests: boolean) {
   if (tests) {
     await h.send(route.agentToGate(), 'bad', { ms: 280 });
     h.set((s) => { s.gates![0]!.lamp = 'bad'; });
-    ctx.say('the check', tech(ctx) ? '1 of 24 tests fails: export.test.ts expected a date column, got none.' : '1 of 24 tests fails: the export lost its date column.');
+    ctx.say('the check', tech(ctx) ? 'export.test.ts fails: no date column.' : '1 of 24 fails: export lost its dates.');
     await h.wait(700);
     await h.send([...route.agentToGate()].reverse(), 'bad', { ms: 280 });
     h.set((s) => { s.agents[0]!.blocks!.push({ t: 'bad', h: 2 }); s.agents[0]!.busy = true; });
-    ctx.say('the agent', 'Put the date column back in the export. 24 of 24 pass.');
+    ctx.say('the agent', 'Date column back. 24 of 24 pass.');
     await edit(ctx, h, broken, () => {});
     h.set((s) => { proj(s).files![broken] = ''; });
     await land(ctx, h);
@@ -276,6 +277,8 @@ const go = (ctx: Ctx, fn: (h: Script) => Promise<void>, speed = 1.3) => { ctx.sc
 export async function demo(ctx: Ctx, h: Script) {
   ctx.scene.speed = 1.8;
   ctx.mem.run = undefined;
+  // The overview has no clean-up button: the loop runs it by itself.
+  ctx.mem.demo = true;
   await clean(ctx, h);
   await h.wait(600);
   await cleanThenNext(ctx, h);
@@ -284,6 +287,8 @@ export async function demo(ctx: Ctx, h: Script) {
 }
 
 export const grow: Chapter = {
+  // The chip: which feature, and how much of its window it read before its first edit.
+  counter: (p) => (p.length ? `feature ${p[0]![1]} · read ${String(p[2]![1]).replace(' of its window', '')}` : null),
   steps: {
     adds: { scene: () => floor(fresh()), enter: (ctx) => go(ctx, (h) => adds(ctx, h)) },
     junk: { scene: () => floor(ADDS), enter: (ctx) => go(ctx, (h) => junk(ctx, h)) },

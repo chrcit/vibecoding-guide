@@ -1,0 +1,30 @@
+---
+/*
+  The box at the foot of the lesson panel that leads on, shown on the last step only
+  (styles/journey-panel.css, [data-last]). The same destination as the <Next> card at the end of a
+  lesson: the next lesson, the next part's overview where a part ends, and after the last lesson
+  the first hour. An overview leads to the next part.
+  Props:
+    chapter   the page's chapter key
+*/
+import { url } from '../../lib/nav';
+import { after, rung, rungs, parts } from '../../journey/rungs';
+interface Props { chapter: string }
+const { chapter } = Astro.props;
+const firstHour = { href: 'start/first-hour/', kicker: 'After the last lesson', title: 'The first hour', line: 'Build one small real thing on your laptop, checked before it counts.' };
+const toPart = (n: number) => { const p = parts[n - 1]!; return { href: p.href, kicker: `Next · part ${p.n} · lessons ${p.range}`, title: p.title, line: p.blurb }; };
+const overview = parts.find((p) => p.chapter === chapter);
+let to = firstHour;
+if (overview) to = overview.n < parts.length ? toPart(overview.n + 1) : firstHour;
+else if (rung(chapter)) {
+  const here = rung(chapter), next = after(chapter);
+  if (next && next.part === here.part) to = { href: `journey/${next.id}/`, kicker: `Next · lesson ${next.n} of ${rungs.length}`, title: next.title, line: next.line };
+  else if (next) to = toPart(next.part);
+}
+---
+<a class="jp-next" href={url(to.href)} data-jp-nextbox tabindex="-1">
+  <span class="jp-next-kicker">{to.kicker}</span>
+  <b class="jp-next-title">{to.title}</b>
+  <span class="jp-next-line">{to.line}</span>
+  <svg class="jp-next-arrow" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h11.5M11 5.5 15.5 10 11 14.5" /></svg>
+</a>

@@ -42,6 +42,7 @@ export const links = {
 
   // Anthropic
   claudePricing: { label: 'Claude plans', url: 'https://claude.com/pricing', checked: C },
+  chatgptPricing: { label: 'ChatGPT plans', url: 'https://chatgpt.com/pricing/', checked: '2026-11-21', note: 'The consumer plans page (Free, Go, Plus, Pro, Business). Codex plan details are on codexPricing.' },
   claudeApiPricing: { label: 'Claude API pricing', url: 'https://platform.claude.com/docs/en/about-claude/pricing', checked: C },
   claudeModels: { label: 'Claude models overview', url: 'https://platform.claude.com/docs/en/models/overview', checked: C, note: 'Moved from /docs/en/about-claude/models/overview.' },
   claudeThinking: { label: 'Claude thinking docs', url: 'https://platform.claude.com/docs/en/build-with-claude/thinking', checked: C },

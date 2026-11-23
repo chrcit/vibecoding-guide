@@ -12,6 +12,10 @@ This guide started in early 2026 as *Vibe Coding 101*, built around web builders
 
 ## Quick Start
 
+**Let an agent teach you.** The guide also comes as a skill, [`agentic-guide`](./skills/agentic-guide/SKILL.md), that runs inside T3 Code and teaches on your own work. The site's Start page installs it in four steps: get Claude or ChatGPT, get T3 Code, install the skill with one prompt, then type `$agentic-guide` in a new thread. From a terminal on macOS or Linux, inside a project folder: `bash path/to/skills/agentic-guide/install.sh` (`--global` for every project). More in [Skills](./skills-table.md#the-guide-as-a-skill-agentic-guide).
+
+**Or set it up by hand:**
+
 1. **Get one subscription.** Claude Pro or ChatGPT Plus ($20 a month) includes the coding agent. → [Models and Costs](./guides/models-and-costs.md)
 2. **Install an agent CLI and sign in** (`claude auth login` or `codex login`), then install [T3 Code](./guides/t3-code.md) (desktop app, or `npx t3@latest`).
 3. **Talk to it.** Use voice. Tell it what you work on and two problems you want solved this month.
@@ -28,7 +32,7 @@ This guide started in early 2026 as *Vibe Coding 101*, built around web builders
 | [Ways of Working](./guides/ways-of-working.md) | Context, parallel work, self-verification, reviewing agent work, scientific workflows, permissions, orchestration |
 | [T3 Code](./guides/t3-code.md) | The agentic development environment: what it can do and where it hits walls |
 | [Models and Costs](./guides/models-and-costs.md) | Which model for what, thinking levels, plans, hardware |
-| [Skills](./skills-table.md) | Reusable instructions for your agents, and how to write one |
+| [Skills](./skills-table.md) | Reusable instructions for your agents, how to write one, and the guide as a skill |
 | [Sources and Fact-Check](./guides/fact-check.md) | Every number and tool claim, with its primary source and date |
 
 ### Agentic Coding Basics
@@ -96,6 +100,7 @@ This guide started in early 2026 as *Vibe Coding 101*, built around web builders
 ├── guides/                      ← Educational content
 │   └── fact-check.md            ← Sources for every number and tool claim (generated from site/src/data/)
 ├── skills/                      ← Prompts you can use as skills
+│   └── agentic-guide/           ← The interactive guide skill, with install.sh
 ├── skills-table.md              ← Skills reference
 ├── site/                        ← Visual essay + reference site (Astro); reads guides/ and skills/
 │   └── src/data/                ← Every dated fact, with its source (see UPDATE.md)
