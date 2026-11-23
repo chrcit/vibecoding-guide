@@ -214,9 +214,14 @@ export interface Part {
    * A marker drawn after the reply from point `at`, faint: what a command you did not send would
    * leave in the thread (lesson 5: /clear's "New session"). `note` says it is only a sketch.
    */
-  ghost?: { at: number; label: string; note: string };
+  ghost?: { at: number; label: string; note: string; /** 'sleep' (lesson 17): the machine went to sleep, the turn stopped. Default: /clear's eraser. */ icon?: 'sleep' };
   /** The part starts a new thread: earlier turns leave the chat. */
   fresh?: boolean;
+  /**
+   * The thread already has turns from an earlier lesson: a quiet row above this part says how many
+   * and links to where they were played, so the thread doesn't seem to start in the middle.
+   */
+  earlier?: { turns?: number; from: string; label: string };
   /** Lesson 4: with `fresh`, the chat switches to a story thread that already exists, so it isn't labelled a new thread. */
   resumes?: boolean;
   /**

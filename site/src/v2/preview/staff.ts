@@ -17,6 +17,7 @@
  * What the reader does lives at module level (staff/state.ts): check-ins, bar taps, stock counts,
  * a swap, the gate. It survives `set()` and a remount. Everything here is made up.
  */
+import { cannotGet } from './lantern/notfound';
 import './staff.css';
 import type { MountApp } from './index';
 import { features, normalize, type Features, type Stage, type Tab } from './staff/stages';
@@ -76,7 +77,7 @@ export const staff: MountApp = (el, initial) => {
     root.dataset.stage = stage;
     if (stage === 'none') {
       root.className = 'st st--none';
-      root.innerHTML = `<pre>Cannot GET ${esc(missing)}</pre>`;
+      root.innerHTML = cannotGet(missing);
       return;
     }
     if (stage === 'starter') {
@@ -96,7 +97,7 @@ export const staff: MountApp = (el, initial) => {
     root.innerHTML = `${strip}
       <header class="st-head">
         <span class="st-mark" aria-hidden="true">${ICON.lantern}</span>
-        <span class="st-head-text"><span class="st-over">The Lantern</span><h1 class="st-title" data-title></h1></span>
+        <span class="st-head-text"><span class="st-over" title="The dev server runs on made-up guests, with its clock set to a Friday night, so there is a night to try the page on.">Lantern · dev data</span><h1 class="st-title" data-title></h1></span>
         <span class="st-me" data-me></span>
       </header>
       <div class="st-main">

@@ -20,7 +20,7 @@ export const PROMOTERS: Record<PromoterId, Promoter> = {
 export interface PGuest { id: string; name: string; plus: number; phone: string; by: PromoterId; at: string; /** Added by the reader in the page. */ mine?: boolean }
 
 type Seed = [name: string, plus: number, at: string];
-const SEED: Record<PromoterId, Seed[]> = {
+export const SEED: Record<PromoterId, Seed[]> = {
   kai: [
     ['Jonas Weber', 1, '11:41'], ['Mara Okonkwo', 0, '11:41'], ['Felix Brandauer', 2, '11:42'], ['Yuki Tanaka', 0, '11:42'],
     ['Leon Hartmann', 1, '11:42'], ['Sofia Marino', 0, '11:43'], ['Elif Demir', 1, '11:43'], ['Noah Fischer', 0, '11:43'],

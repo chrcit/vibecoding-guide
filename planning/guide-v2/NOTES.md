@@ -168,3 +168,14 @@ Played through every point of lessons 1 and 2 at 1440×900 and 390×844, before 
 - The picture's annotations still overlap at some points (for example lesson 2 part 3, "installed, unasked" over "your project"). This is the engine's label placement and predates this pass.
 - The "Working for" time is a share of the part's made-up total, by point. It is not a running clock.
 - The T3 Code checkout used here is from October 2026. The folder view is only on `main` (read on 2026-11-23 at fb23f12), so the sidebar follows `main`.
+
+## Holistic pass (2026-11-23)
+
+See `holistic.md` for the assessment, the changes and the verification rounds. Where it and the sections above disagree, it wins. In short:
+- **Label placement.** The picture engine places annotations collision-aware.
+- **Status.** The sidebar status follows the turn, not playback.
+- **One Lantern.** One promoter store serves the door, the promoter pages and the late list, and the night-time apps say "dev data".
+- **Earlier turns.** A part can declare `earlier` to show the turns before it.
+- **Panels.** Thread details that a point opens become a strip under the header. On a phone, the question panel takes the mini player's place.
+- **Branch toolbar.** It holds the workspace, branch and Run on chips under the composer.
+- **Set up** starts from the bare app.

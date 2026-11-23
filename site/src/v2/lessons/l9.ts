@@ -129,7 +129,7 @@ const lesson9: Lesson = {
       lede: 'Monday 11:30. This touches real guests, so you switch the thread to Supervised: it asks before commands and file changes.',
       replyAt: 3,
       points: points(desk(1, { lead: [], meter: 0.74, labels: [project, helper()] }), [
-        { say: 'Supervised now. The agent starts a helper to try the give-back on a copy of Friday’s list.', ui: { context: 18 }, moves: [{ to: 'agent' }, toHelper(0)], ui: { perm: SUPERVISED, limits: [{ label: 'Weekly', left: 74 }] }, preview: invite('fixed'),
+        { say: 'Supervised now. The agent starts a helper to try the give-back on a copy of Friday’s list.', moves: [{ to: 'agent' }, toHelper(0)], ui: { context: 18, perm: SUPERVISED, limits: [{ label: 'Weekly', left: 74 }] }, preview: invite('fixed'),
           edit: (s) => { A(s).blocks = [FIRST, b('you', 3), b('sum', 2), b('model', 2), b('you', 3), b('model', 1.2)]; fillHelper(s, 0, b('model', 2.4)); lamp(s, 0, 'work'); note(s, lab('tank:w0', 'tries it on a copy', 'right')); } },
         { say: 'The helper wants to run a command. You can’t message a helper, so its request comes to you here, and the thread’s row says Approval.', moves: [fromHelper(0, 'model'), { to: 'path', path: [[0, 22], [0, 94]], kind: 'model' }], status: S.approval, preview: invite('fixed'),
           edit: (s) => { lamp(s, 0, 'wait'); A(s).lamp = 'wait'; note(s, lab('w0', 'asks to run a command', 'right')); } },
@@ -142,6 +142,7 @@ const lesson9: Lesson = {
         took: '3m 20s',
         rows: [
           { at: 0, label: '', agents: [{ name: 'Try the give-back on a copy of Friday’s list', doing: { plain: 'trying it on a copy of Friday’s list', technical: 'npm run trial -- --copy data/live/friday.json' }, detail: { plain: 'asked to run the trial on a copy · approved', technical: 'npm run trial -- --copy data/live/friday.json' }, done: 3 }] },
+          { at: 1, label: 'npm run trial -- --copy data/live/friday.json', approval: { kind: 'command', until: 2 }, detail: 'asked by the helper “Try the give-back on a copy of Friday’s list”' },
         ],
       },
       answer: [

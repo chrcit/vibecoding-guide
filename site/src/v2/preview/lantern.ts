@@ -20,10 +20,11 @@
  *
  * The door's late list runs on the dev server's made-up data with its clock set to 00:20, so it has
  * someone to show at 16:00. Every name, number and time here is made up; the phone numbers use the
- * country code +43 followed by 000, which no real number has.
+ * UK's range set aside for drama (+44 7700 900xxx), from the shared store.
  */
 import './lantern.css';
 import type { MountApp } from './index';
+import { PROMOTERS as STORE_PROMOTERS, guestsOf, limitOf } from './lantern/store';
 
 type Stage = 'promoters' | 'late-phone' | 'late-flag' | 'late-ask' | 'late-running' | 'late-shown' | 'close';
 const STAGES: Stage[] = ['promoters', 'late-phone', 'late-flag', 'late-ask', 'late-running', 'late-shown', 'close'];
@@ -32,25 +33,22 @@ type Promoter = 'kai' | 'noor';
 
 interface G { id: string; name: string; by: Promoter; plus: number; phone: string; late?: boolean }
 
-// ---------- made-up data (the promoter lists from lesson 3, as lesson 5's answer counts them) ----------
+// ---------- made-up data: the promoters' lists from lesson 3, in the one store the door shares ----------
 
-const PROMOTERS: Record<Promoter, { name: string; limit: number }> = { kai: { name: 'Kai', limit: 20 }, noor: { name: 'Noor', limit: 20 } };
-const rows: [Promoter, string, number, boolean?][] = [
-  ['kai', 'Lea Brandt', 1, true], ['kai', 'Jonas Weber', 1], ['kai', 'Mara Okonkwo', 0], ['kai', 'Felix Brandauer', 2, true], ['kai', 'Yuki Tanaka', 0, true],
-  ['kai', 'Leon Hartmann', 1], ['kai', 'Sofia Marino', 0], ['kai', 'Elif Demir', 1], ['kai', 'Noah Fischer', 0], ['kai', 'Inês Carvalho', 0],
-  ['kai', 'Mateo Ruiz', 1], ['kai', 'Hanna Kowalczyk', 0], ['kai', 'Ravi Menon', 0], ['kai', 'Clara Vogt', 1], ['kai', 'Tobias Lind', 0],
-  ['kai', 'Amara Diallo', 0], ['kai', 'Nils Petersen', 0], ['kai', 'Zoë Laurent', 0], ['kai', 'Viktor Novak', 0], ['kai', 'Freya Holm', 1],
-  ['noor', 'Anaïs Fournier', 1], ['noor', 'Karim Haddad', 0], ['noor', 'Layla Nasser', 2, true], ['noor', 'Jasper de Vries', 0], ['noor', 'Mina Park', 0],
-  ['noor', 'Theo Brooks', 1], ['noor', 'Aylin Kaya', 0], ['noor', 'Rafael Costa', 0], ['noor', 'Nadia Petrov', 0], ['noor', 'Jun Watanabe', 0, true],
-  ['noor', 'Chiara Russo', 0], ['noor', 'Idris Bello', 0],
-];
-const GUESTS: G[] = rows.map(([by, name, plus, late], i) => ({
-  id: name.toLowerCase().normalize('NFD').replace(/[^a-z]+/g, '-'), name, by, plus, late,
-  phone: `+43 000 000 ${String(1100 + i * 37).slice(-4)}`,
-}));
-const byId = new Map(GUESTS.map((g) => [g.id, g]));
-const of = (p: Promoter) => GUESTS.filter((g) => g.by === p);
-const LATE = GUESTS.filter((g) => g.late);
+// Kai's and Noor's guests, their limits and their links come from ./lantern/store.ts, the store the
+// promoter pages and the door use in lessons 3 and 4, so the counts and names carry across lessons.
+// Guests the reader added through a promoter's link there show up here too.
+const PROMOTERS: Record<Promoter, { name: string; readonly limit: number; link: string }> = {
+  kai: { name: STORE_PROMOTERS.kai.name, get limit() { return limitOf('kai'); }, link: `/p/${STORE_PROMOTERS.kai.token}` },
+  noor: { name: STORE_PROMOTERS.noor.name, get limit() { return limitOf('noor'); }, link: `/p/${STORE_PROMOTERS.noor.token}` },
+};
+/** Who isn't in by midnight on the dev server's made-up night. */
+const LATE_IDS = ['lea-brandt', 'felix-brandauer', 'yuki-tanaka', 'layla-nasser', 'jun-watanabe'];
+/** Oldest first, as the lists were filled. */
+const of = (p: Promoter): G[] => guestsOf(p).reverse().map((g) => ({ id: g.id, name: g.name, by: g.by, plus: g.plus, phone: g.phone, late: LATE_IDS.includes(g.id) }));
+const all = () => [...of('kai'), ...of('noor')];
+const byId = { get: (id: string) => all().find((g) => g.id === id) };
+const late = () => LATE_IDS.map((id) => byId.get(id)).filter((g): g is G => !!g);
 const DEV_CLOCK = '00:20';
 
 const CLOSE = [
@@ -118,7 +116,8 @@ const HOME: Record<Stage, Route> = {
   'late-running': '/p/kai', 'late-shown': '/door/late', close: '/door/close',
 };
 export const url = 'localhost:4321/promoters';
-const address = (r: Route) => `localhost:4321${r}`;
+/** The address bar: Kai's page is at his random link (lesson 3, part 2). */
+const address = (r: Route) => `localhost:4321${r === '/p/kai' ? PROMOTERS.kai.link : r}`;
 
 // ---------- the app ----------
 
@@ -148,7 +147,7 @@ export const lantern: MountApp = (el, initial) => {
   }
 
   function promotersPage() {
-    const total = GUESTS.length, plus = GUESTS.reduce((n, g) => n + g.plus, 0);
+    const total = all().length, plus = all().reduce((n, g) => n + g.plus, 0);
     const cards = (['kai', 'noor'] as Promoter[]).map((p) => {
       const list = of(p), lim = PROMOTERS[p].limit, pl = list.reduce((n, g) => n + g.plus, 0);
       const lateN = runs() ? list.filter((g) => runningLate.has(g.id)).length : 0;
@@ -156,7 +155,7 @@ export const lantern: MountApp = (el, initial) => {
       return `<li class="lt-card lt-p-${p}">
         <button type="button" class="lt-card-top" data-card="${p}" aria-expanded="${isOpen}">
           <span class="lt-av lt-av--l">${PROMOTERS[p].name[0]}</span>
-          <span class="lt-card-who"><b>${PROMOTERS[p].name}</b><span>/p/${p} · limit ${lim}</span></span>
+          <span class="lt-card-who"><b>${PROMOTERS[p].name}</b><span>${PROMOTERS[p].link} · limit ${lim}</span></span>
           <span class="lt-card-n"><b>${list.length}</b><span>of ${lim}</span></span>
           <span class="lt-chev">${ICON.chev}</span>
         </button>
@@ -203,12 +202,12 @@ export const lantern: MountApp = (el, initial) => {
       </${phonesAtDoor() ? 'button' : 'div'}>
       ${!phonesAtDoor() ? side : ''}
       ${isOpen ? `<a class="lt-call" href="#" data-call="${g.id}">${ICON.phone}<span>Call ${esc(first(g.name))}</span><span class="lt-mono">${g.phone}</span></a>` : ''}
-      ${flag && g === LATE[0] ? '<span class="lt-flag-note">Your 13:00 rule: never at the door</span>' : ''}
+      ${flag && g.id === late()[0]?.id ? '<span class="lt-flag-note">Your 13:20 rule: never at the door</span>' : ''}
     </li>`;
   }
 
   function latePage() {
-    const list = [...LATE].sort((a, b) => Number(runs() && runningLate.has(b.id)) - Number(runs() && runningLate.has(a.id)));
+    const list = late().sort((a, b) => Number(runs() && runningLate.has(b.id)) - Number(runs() && runningLate.has(a.id)));
     const lateN = runs() ? list.filter((g) => runningLate.has(g.id)).length : 0;
     return `${head('Late', `Door · not in by 00:00`, `<span class="lt-dev" title="The dev server runs on made-up guests, with its clock set to midnight">Dev data · ${DEV_CLOCK}</span>`)}
       <div class="lt-scroll">
@@ -220,7 +219,7 @@ export const lantern: MountApp = (el, initial) => {
 
   function kaiPage() {
     const list = of('kai');
-    return `${head('Kai', '/p/kai · Friday', `<span class="lt-count"><b>${list.length}</b> / ${PROMOTERS.kai.limit}</span>`)}
+    return `${head('Kai', `${PROMOTERS.kai.link} · Friday`, `<span class="lt-count"><b>${list.length}</b> / ${PROMOTERS.kai.limit}</span>`)}
       <div class="lt-scroll">
         <p class="lt-full">Your list for Friday is full.</p>
         ${runs() ? '<p class="lt-section"><span>Your guests</span><span class="lt-section-late">Running late</span></p>' : ''}
@@ -331,7 +330,7 @@ export const lantern: MountApp = (el, initial) => {
   function enterStage(s: Stage) {
     stage = s;
     // The agent's own try at this stage: Kai marks Lea, so the door has one to show.
-    if (s === 'late-running' || s === 'late-shown') { if (!runningLate.size) runningLate.add(LATE[0]!.id); }
+    if (s === 'late-running' || s === 'late-shown') { if (!runningLate.size) runningLate.add(late()[0]!.id); }
     go(HOME[s], false);
   }
   enterStage(stage);

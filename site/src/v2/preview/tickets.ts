@@ -19,6 +19,7 @@
  * Orders, refunds and scans live at module level (./tickets/state), so they survive `set()` and a
  * remount. Everything here is made up.
  */
+import { cannotGet } from './lantern/notfound';
 import './tickets.css';
 import type { MountApp } from './index';
 import { mountSale, type View } from './tickets/sale';
@@ -50,7 +51,7 @@ export const tickets: MountApp = (el, initial) => {
     root.classList.toggle('tk--none', s === 'none');
     root.innerHTML = '';
     switch (s) {
-      case 'none': root.innerHTML = '<pre class="tk-404">Cannot GET /tickets</pre>'; break;
+      case 'none': root.innerHTML = cannotGet('/tickets'); break;
       case 'sale': view = mountSale(root, 'base'); break;
       case 'design-a': view = mountSale(root, 'a'); break;
       case 'design-b': view = mountSale(root, 'b'); break;

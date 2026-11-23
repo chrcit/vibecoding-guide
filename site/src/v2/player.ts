@@ -389,7 +389,8 @@ export function boot(root: HTMLElement) {
       flash(work, animate);
       if (ui.checkout.branch && !hadBranch) flash(branch, animate);
     }
-    $('[data-foot]').hidden = !ui.model && !ui.perm && !ui.env && !ui.checkout;
+    $('[data-foot]').hidden = !ui.model && !ui.perm;
+    $('[data-branchbar]').hidden = !ui.env && !ui.checkout;
     lastUi = ui;
   }
 
@@ -402,6 +403,7 @@ export function boot(root: HTMLElement) {
   function showAsk(animate: boolean) {
     const box = $('[data-ask]');
     const a = lesson() ? pointOf().ask : undefined;
+    root.toggleAttribute('data-asking', !!a);
     const key = a ? JSON.stringify(a) : '';
     if (key === lastAsk) return;
     const opened = !lastAsk && !!a;
@@ -441,7 +443,10 @@ export function boot(root: HTMLElement) {
    * show as rows under it, the live one with the status.
    */
   function showSidebar() {
-    const live = lesson() ? (pointOf().status ?? (playing ? STATUS.working : '')) : '';
+    // The thread's status is the story's, not the playback's: Working while the agent works on this
+    // turn, then nothing once the reply has landed, as T3 Code shows the thread you have open (Done
+    // marks only a finished thread you haven't looked at yet).
+    const live = lesson() ? (pointOf().status ?? (here.point < replyAt(partOf()) ? STATUS.working : '')) : '';
     const threads = threadsSoFar();
     // Lesson 4: the point lists every story thread with its own status; otherwise the threads so
     // far, the newest one live.
@@ -485,6 +490,7 @@ export function boot(root: HTMLElement) {
     $('[data-crumb-thread]').textContent = lesson() ? threadOf() : tl.title;
   }
 
+  const playableCount = () => TOC.flatMap((c) => c.lessons).filter((x) => LESSONS[x.id]).length;
   function nextPlayable(id: string): string | undefined {
     const ids = TOC.flatMap((c) => c.lessons.map((l) => l.id)).filter((x) => LESSONS[x]);
     return ids[ids.indexOf(id) + 1];
@@ -511,7 +517,7 @@ export function boot(root: HTMLElement) {
       prev.disabled = next.disabled = true;
       $('[data-c-title]').textContent = whereIs(here.lesson).lesson.title;
       $('[data-c-where]').textContent = 'Not built yet';
-      sayIt('This lesson isn’t built yet. Lessons 1 and 2 play.', false);
+      sayIt(`This lesson isn’t built yet. ${playableCount()} of ${TOC.flatMap((c) => c.lessons).length} lessons play.`, false);
       $('[data-dots]').replaceChildren();
       for (const n of $$('[data-n]')) n.textContent = '';
       $('[data-mini-sub]').textContent = '';
@@ -639,7 +645,7 @@ export function boot(root: HTMLElement) {
     showUi(via !== 'still');
     showAsk(animate);
     // A point about the context window opens the thread details on it; the next point closes them.
-    if (l0() && pointOf().look === 'context') { setDetails(true); autoDetails = true; }
+    if (l0() && pointOf().look === 'context') { setDetails(true, true); autoDetails = true; }
     else if (autoDetails) { setDetails(false); autoDetails = false; }
     showSidebar();
     showControls(animate);
@@ -714,10 +720,13 @@ export function boot(root: HTMLElement) {
   }
 
   /** Go somewhere. Moving never changes play state: playing goes on from there, paused stays paused. */
+  /** The lesson on show, scrolled into view in the sidebar (on a short screen it can sit below the fold). */
+  const revealRow = () => requestAnimationFrame(() => root.querySelector<HTMLElement>('a.v2-row[aria-current]')?.scrollIntoView({ block: 'nearest' }));
+
   function go(to: Here, via: Via, opts: { play?: boolean } = {}) {
     const keep = opts.play ?? playing;
     if (playing) { playing = false; token++; }
-    if (to.lesson !== here.lesson) { lastStage = ''; lastPart = ''; folds.clear(); }
+    if (to.lesson !== here.lesson) { lastStage = ''; lastPart = ''; folds.clear(); revealRow(); }
     here = to;
     if (keep && lesson()) { void playLoop(via); return; }
     showSidebar(); showControls();
@@ -878,10 +887,19 @@ export function boot(root: HTMLElement) {
   // ---------- thread details ----------
 
   const dBtn = $<HTMLButtonElement>('[data-details-btn]'), dPop = $('[data-details-pop]');
-  function setDetails(open: boolean) { dPop.hidden = !open; dBtn.setAttribute('aria-expanded', String(open)); }
+  /**
+   * `auto`: a point opened them. Then they show compact (the context row only), and on a phone as a
+   * strip under the header that moves the thread down instead of covering the part's heading.
+   */
+  function setDetails(open: boolean, auto = false) {
+    dPop.hidden = !open;
+    dBtn.setAttribute('aria-expanded', String(open));
+    root.toggleAttribute('data-details-auto', open && auto);
+  }
   dBtn.addEventListener('click', () => setDetails(dPop.hidden));
   document.addEventListener('pointerdown', (e) => { if (!dPop.hidden && !(e.target as HTMLElement).closest('.v2-details')) setDetails(false); });
-  dPop.addEventListener('keydown', (e) => { if (e.key === 'Escape') { setDetails(false); dBtn.focus(); } });
+  // Escape closes them from anywhere, not only from inside.
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !dPop.hidden) { const inside = dPop.contains(document.activeElement); setDetails(false); autoDetails = false; if (inside) dBtn.focus(); } });
 
   // ---------- copy ----------
 
@@ -934,16 +952,19 @@ export function boot(root: HTMLElement) {
 
   // ---------- start ----------
 
-  const HASH = /^#(l\d+|s-[\w-]+)(?:-p(\d+))?$/;
+  // #l5-p3 is what the page writes; #l5/3 (and #l5/3/2 or #l5-p3-2, with a point) also open it.
+  const HASH = /^#(l\d+|s-[a-z-]+?)(?:(?:-p|\/)(\d+)(?:[-/](\d+))?)?$/;
   const known = (id: string) => TOC.some((c) => c.lessons.some((l) => l.id === id));
   const fromHash = (h: RegExpExecArray): Here => {
     const id = h[1]!;
     const part = LESSONS[id] ? Math.min(Math.max(0, Number(h[2] ?? 1) - 1), LESSONS[id]!.parts.length - 1) : 0;
-    return { lesson: id, part, point: 0 };
+    const point = LESSONS[id] ? Math.min(Math.max(0, Number(h[3] ?? 1) - 1), LESSONS[id]!.parts[part]!.points.length - 1) : 0;
+    return { lesson: id, part, point };
   };
   const m = HASH.exec(location.hash);
   if (m && known(m[1]!)) { here = fromHash(m); root.dataset.view = 'thread'; }
   setTab('ex');
+  revealRow();
   // The thread plays as soon as it is on screen: at once on a wide screen, or from a link to a lesson.
   // Under reduced motion it waits on the first point; the reader starts it.
   if (lesson() && !reduced.matches && (!phone.matches || root.dataset.view === 'thread')) play();
@@ -952,7 +973,7 @@ export function boot(root: HTMLElement) {
     const h = HASH.exec(location.hash);
     if (!h || !known(h[1]!)) return;
     const to = fromHash(h);
-    if (to.lesson === here.lesson && to.part === here.part) return;
+    if (to.lesson === here.lesson && to.part === here.part && (!h[3] || to.point === here.point)) return;
     setView('thread');
     go(to, 'still', { play: !!LESSONS[to.lesson] && !reduced.matches });
   });

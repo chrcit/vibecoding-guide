@@ -79,7 +79,7 @@ export const app: MountApp = (el, initial) => {
     const scroll = $('.ln-body')?.scrollTop ?? 0;
     root.className = 'ln';
     root.innerHTML = `
-      <header class="ln-head">${brand('Bar', `The Lantern · Fri ${hhmm(now())}`)}<span class="ln-tag"><i style="background:var(--bar)"></i>Running low</span></header>
+      <header class="ln-head">${brand('Bar', `The Lantern · dev data · Fri ${hhmm(now())}`)}<span class="ln-tag"><i style="background:var(--bar)"></i>Running low</span></header>
       <div class="ln-body"><div class="ln-col">
         ${tab === 'low' ? `
           <div class="br-who" role="group" aria-label="Who is tapping">${STAFF.map((s) => `<button type="button" class="ln-press" data-me="${esc(s)}" aria-pressed="${s === me}"><span class="pr-av" aria-hidden="true">${esc(initials(s))}</span>${esc(first(s))}</button>`).join('')}</div>

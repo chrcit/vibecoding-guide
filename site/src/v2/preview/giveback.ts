@@ -9,6 +9,7 @@
  *
  * Each invite's state lives at module level, so it survives `set()` and a remount. All made up.
  */
+import { cannotGet } from './lantern/notfound';
 import './giveback.css';
 import type { MountApp } from './index';
 import { INVITES, NIGHT, KAI_SPOTS, EXPECTED_BEFORE, type Invite, type InviteId } from './giveback/data';
@@ -69,7 +70,7 @@ export const giveback: MountApp = (el, initial) => {
   function shell() {
     if (stage === 'none') {
       root.className = 'gb gb--none';
-      root.innerHTML = '<pre>Cannot GET /i/ana</pre>';
+      root.innerHTML = cannotGet('/i/ana');
       return;
     }
     if (stage === 'door-bug') {

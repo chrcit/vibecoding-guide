@@ -21,7 +21,7 @@ const out = (kind: 'model' | 'you' | 'bad' = 'model') => all(...EVERY.map((i) =>
 const back = (kind: 'sum' | 'bad' = 'sum') => all(...EVERY.map((i) => fromHelper(i, kind)));
 const toMgate: Move = { to: 'path', path: route.agentToMgate(), kind: 'model' };
 const fromMgate = (kind: 'bad' | 'tool'): Move => ({ to: 'path', path: reverse(route.agentToMgate()), kind });
-const PAGES = [['/door', '/door/late'], ['/door/scan', '/door/close'], ['/tickets', '/sales'], ['/bar', '/bar/order'], ['/rota', '/rota/me'], ['/promoters', '/p/kai'], ['/p/noor', '/i/ana'], ['/guests', '/guests/import'], ['/do-not-admit', '/practice'], ['/login', '/settings'], ['/', '/about'], ['/checks', '/404']] as const;
+const PAGES = [['/door', '/door/late'], ['/door/scan', '/door/close'], ['/tickets', '/sales'], ['/bar', '/bar/order'], ['/rota', '/rota/me'], ['/promoters', '/p/[link]'], ['/p/[link]/edit', '/i/ana'], ['/guests', '/guests/import'], ['/do-not-admit', '/practice'], ['/login', '/settings'], ['/', '/about'], ['/checks', '/404']] as const;
 /** The twelve helpers' rows: each checks two pages. `done` is the point it reports back at. */
 const fleetRows = (done: (i: number) => number, model: string, bad?: number): SubRow[] => PAGES.map(([a, c], i) => ({
   name: `Check ${a} and ${c}`,
@@ -151,7 +151,7 @@ const lesson13: Lesson = {
       ]),
       log: { took: '40s', rows: [] },
       answer: [
-        'Look at these six yourself: /door, /tickets, /bar/order, /p/kai, /i/ana and /guests/import. They changed most, and most of them are pages guests, Sami or Bea use tonight. Each is marked “look” in the browser panel, with what changed.',
+        'Look at these six yourself: /door, /tickets, /bar/order, /p/[link], /i/ana and /guests/import. They changed most, and most of them are pages guests, Sami or Bea use tonight. Each is marked “look” in the browser panel, with what changed.',
         'The other 18 pages pass every check. Their changes were small: focus rings and contrast.',
       ],
       deeper: { level: 'technical', text: 'An observation, not a measurement: one developer described a council of reviewing models that wouldn’t agree, where the coding agent kept going for 50 or more loops, one thread started more than 600 subagents, and a planned 1,000-line change grew past 20,000 lines. In the guide’s own use, past three to five parallel threads, review quality drops.' },

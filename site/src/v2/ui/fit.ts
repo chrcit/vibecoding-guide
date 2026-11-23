@@ -36,7 +36,8 @@ export function fitStage(view: HTMLElement, stage: HTMLElement, reduced: MediaQu
       r = Math.max(r, (q.right - v.left - cam.x) / cam.s); b = Math.max(b, (q.bottom - v.top - cam.y) / cam.s);
     }
     if (!isFinite(l)) return;
-    const s = Math.max(1, Math.min(1.5, (v.width * 0.9) / (r - l), (v.height * 0.86) / (b - t)));
+    // Below 1 too: on a narrow panel the drawing and its annotations shrink to fit instead of clipping.
+    const s = Math.max(0.7, Math.min(1.5, (v.width * 0.9) / (r - l), (v.height * 0.86) / (b - t)));
     const next = { s, x: v.width / 2 - (s * (l + r)) / 2, y: v.height / 2 - (s * (t + b)) / 2 };
     if (Math.abs(next.s - cam.s) < 0.04 * cam.s && Math.abs(next.x - cam.x) < 12 && Math.abs(next.y - cam.y) < 12) return;
     cam = next;

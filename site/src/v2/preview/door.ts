@@ -16,6 +16,7 @@
  * added through their own links (lantern/store.ts). Both open with "lea" typed, Lea Brandt being
  * one of Kai's guests.
  */
+import { cannotGet } from './lantern/notfound';
 import './door.css';
 import './door-late.css';
 import type { DoorStage, MountApp } from './index';
@@ -153,7 +154,7 @@ export const door: MountApp = (el, initial) => {
   function shell() {
     if (stage === 'none') {
       root.className = 'dr dr--none';
-      root.innerHTML = '<pre>Cannot GET /door</pre>';
+      root.innerHTML = cannotGet('/door');
       return;
     }
     root.className = 'dr';
@@ -163,7 +164,7 @@ export const door: MountApp = (el, initial) => {
       <header class="dr-head">
         <div class="dr-brand">
           <span class="dr-lantern">${ICON.lantern}</span>
-          <span class="dr-brand-text"><b>The Lantern</b><span>Door · Fri <time data-clock>${hhmm(now())}</time></span></span>
+          <span class="dr-brand-text"><b>The Lantern</b><span title="The dev server runs on made-up guests, with its clock set to a Friday night, so there is a night to try the page on.">Door · dev data · Fri <time data-clock>${hhmm(now())}</time></span></span>
         </div>
         <div class="dr-count">
           <span class="dr-count-line"><b class="dr-count-n" data-count>${lastCount}</b><span class="dr-count-of">/ ${CAPACITY}</span></span>

@@ -4,6 +4,8 @@
  * agent tests with, "Zed" is on no list, and Lea Brandt and Rico Vance are kept off on purpose
  * (lesson 3 adds Lea through Kai's link, lesson 7 puts Rico on a do-not-admit list).
  */
+import { SEED } from '../lantern/store';
+
 export type ListId = 'kai' | 'noor' | 'guest' | 'staff';
 
 export interface Guest {
@@ -29,19 +31,11 @@ export const START_MIN = 22 * 60 + 41;
 
 type Row = [name: string, plus?: number, role?: string];
 const rows: Record<ListId, Row[]> = {
-  kai: [
-    ['Jonas Weber', 1], ['Mara Okonkwo'], ['Felix Brandauer', 2], ['Yuki Tanaka'], ['Leon Hartmann', 1],
-    ['Sofia Marino'], ['Elif Demir', 1], ['Noah Fischer'], ['Inês Carvalho'], ['Mateo Ruiz', 1],
-    ['Hanna Kowalczyk'], ['Ravi Menon'], ['Clara Vogt', 2], ['Tobias Lind'], ['Amara Diallo', 1],
-    ['Nils Petersen'], ['Zoë Laurent'], ['Viktor Novak'], ['Freya Holm', 1], ['Omar Saleh'],
-    ['Greta Maier'], ['Luca Romano', 1], ['Selin Aydın'], ['Paul Krämer'],
-  ],
-  noor: [
-    ['Anaïs Fournier', 1], ['Karim Haddad'], ['Layla Nasser', 2], ['Jasper de Vries'], ['Mina Park'],
-    ['Theo Brooks', 1], ['Aylin Kaya'], ['Rafael Costa'], ['Nadia Petrov', 1], ['Jun Watanabe'],
-    ['Chiara Russo'], ['Idris Bello', 1], ['Malin Ek'], ['Dario Conti'], ['Leila Rahimi'],
-    ['Oscar Lund', 1], ['Priya Raman'], ['Bruno Teixeira'], ['Sena Yılmaz'], ['Hugo Martin'],
-  ],
+  // Kai's and Noor's lists are the promoter store's (../lantern/store.ts), so the door, the promoter
+  // pages and the late list count the same people. Lea Brandt joins Kai's list through his link in
+  // lesson 3, so the door's own list leaves her off.
+  kai: SEED.kai.filter(([name]) => name !== 'Lea Brandt').map(([name, plus]) => [name, plus] as Row),
+  noor: SEED.noor.map(([name, plus]) => [name, plus] as Row),
   guest: [
     ['Ana Lopez'], ['Anastasia Volkova', 1], ['Ben Adeyemi'], ['Charlotte Hill'], ['David Moreau', 1],
     ['Ella Schmidt'], ['Farah Khan'], ['Gabriel Silva', 1], ['Helena Berg'], ['Isaac Cohen'],

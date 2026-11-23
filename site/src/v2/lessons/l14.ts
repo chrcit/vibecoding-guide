@@ -59,6 +59,7 @@ const lesson14: Lesson = {
   parts: [
     {
       title: 'A long thread costs more per step',
+      earlier: { from: 'l4', label: 'from lesson 4 on, three weeks of bar work' },
       thread: BAR_THREAD,
       fresh: true,
       request: 'Ginger beer is now Ginger ale on the bar list. Done when the bar page shows the new name and last week’s taps still count.',

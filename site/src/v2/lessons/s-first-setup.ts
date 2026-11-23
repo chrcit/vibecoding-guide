@@ -1,4 +1,5 @@
 /* Guide v2, Set up: see v2/content.ts for the words, types and helpers. Script: planning/guide-v2/lessons-14-17-setup.md. */
+import { TONIGHT } from '../preview/staff/data';
 import type { SceneState, Label } from '../../journey/picture';
 import { solo, lab } from '../../journey/presets';
 import { termLabel } from '../../journey/terms';
@@ -6,6 +7,8 @@ import type { Preview } from '../preview';
 import { t3code } from '../../data/t3code';
 import { harnesses } from '../../data/harnesses';
 import { A, CHANGED, CHANGED_N, FIRST, FULL_ACCESS, RAN, atYou, b, file, n, points, push, type Lesson } from '../content';
+/** As many made-up guests as the Preview's first page lists. */
+const GUESTS_N = TONIGHT.length;
 
 // ---------- Set up: First setup ----------
 // The week before lesson 1: the Lantern's project is made, gets its notes, and runs.
@@ -85,7 +88,7 @@ const sFirst: Lesson = {
     {
       title: 'See it run',
       thread: 'Set up the Lantern app',
-      request: 'Put tonight’s guest list on the first page, with 60 made-up guests, and start the app so I can see it.',
+      request: `Put tonight’s guest list on the first page, with ${GUESTS_N} made-up guests, and start the app so I can see it.`,
       lede: 'The project is ready for its first real page: the list that lesson 2’s door page will use.',
       points: points(floor({ files: true, rules: 'plain' }), [
         { say: 'It adds the made-up list and a first page that shows it.', moves: [{ to: 'agent' }, edit(2), edit(0)], ui: { perm: FULL_ACCESS }, preview: staff('none-'),
@@ -98,12 +101,12 @@ const sFirst: Lesson = {
       log: {
         took: '1m 30s',
         rows: [
-          { at: 0, label: n(CHANGED_N, 2), detail: { plain: 'a made-up guest list, and a first page that shows it', technical: 'src/guests.ts (60 made-up guests), src/pages/index.astro' } },
+          { at: 0, label: n(CHANGED_N, 2), detail: { plain: 'a made-up guest list, and a first page that shows it', technical: `src/guests.ts (${GUESTS_N} made-up guests), src/pages/index.astro` } },
           { at: 1, label: RAN, tone: 'ok', detail: { plain: 'started the app on this computer', technical: 'npm run dev: localhost:4321' } },
         ],
       },
       answer: [
-        'Tonight’s list is on the first page: 60 made-up guests with their promoter and plus-ones. The app is running at localhost:4321; open it from the thread details.',
+        `Tonight’s list is on the first page: ${GUESTS_N} made-up guests with their promoter and plus-ones. The app is running at localhost:4321; open it from the thread details.`,
         'localhost only opens on this computer. Lesson 16 shows how to let someone else’s phone open a preview, privately; lesson 17, how to reach this computer from yours. This is the project lesson 2 starts in.',
       ],
       tryIt: { prompt: 'Put [the first useful thing] on the first page, with made-up data, and start the app so I can see it.', t3: 'Change a thread’s permission mode with the chip under the composer or mod+shift+a; the default for new threads is in Settings → Threads.' },

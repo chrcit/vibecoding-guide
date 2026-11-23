@@ -1,4 +1,5 @@
 /* Small pieces the Lantern's pages share: escaping, initials, icons, a made-up clock, entrances. */
+import { cannotGet } from './notfound';
 export const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 export const initials = (name: string) => { const w = name.trim().split(/\s+/); return ((w[0]?.[0] ?? '') + (w.length > 1 ? w[w.length - 1]![0]! : '')).toUpperCase(); };
 export const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -27,4 +28,4 @@ export const ICON = {
   check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17 19 7"/></svg>',
 };
 export const brand = (title: string, sub: string, hue = '') => `<div class="ln-brand${hue ? ` ${hue}` : ''}"><span class="ln-lantern">${ICON.lantern}</span><span class="ln-brand-text"><b>${esc(title)}</b><span>${esc(sub)}</span></span></div>`;
-export const notFound = (root: HTMLElement, path: string) => { root.className = 'ln ln--none'; root.innerHTML = `<pre>Cannot GET ${esc(path)}</pre>`; };
+export const notFound = (root: HTMLElement, path: string) => { root.className = 'ln ln--none'; root.innerHTML = cannotGet(path); };

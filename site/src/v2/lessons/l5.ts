@@ -1,4 +1,5 @@
 /* Guide v2 lesson: see v2/content.ts for the words, types and helpers. */
+import { PROMOTERS } from '../preview/lantern/store';
 import type { SceneState, Block, Label, P3 } from '../../journey/picture';
 import { CAP } from '../../journey/picture';
 import { solo, lab } from '../../journey/presets';
@@ -9,7 +10,7 @@ import { A, CHANGED_N, FIRST, RAN, b, file, fill, n, points, push, readRow, sear
 
 // ---------- lesson 5: the window fills ----------
 // Friday 16:00 to 16:40. The promoter thread ("Promoter links") has run since 11:30: lesson 3 built
-// the promoter links in it, and lesson 4 queued the phone rule into it at 13:00. The window is drawn
+// the promoter links in it, and lesson 4 queued the phone rule into it at 13:20. The window is drawn
 // as v1 draws it (journey/chapters/window.ts): a pile of slabs, oldest at the bottom. The percentage
 // in the thread details is worked out from the pile, so the number and the picture agree. All of it
 // is made up, and window sizes are relative.
@@ -40,7 +41,7 @@ const atFile = (text: string): Label => ({ at: [214, -12, 2] as P3, text, place:
 /** An annotation on the window's front face, beside slab i. */
 const atSlab = (bs: Block[], i: number, text: string): Label => ({ at: [-40, 40, Math.max(16, slabZ(bs, i))] as P3, text, place: 'left' });
 
-// The day in the window. 11:30: the promoter links (lesson 3). 13:00: your phone rule, queued in
+// The day in the window. 11:30: the promoter links (lesson 3). 13:20: your phone rule, queued in
 // (lesson 4), one short slab. Then hours of test runs and fixes on top of it.
 const MORNING: Block[] = [b('you', 1.4), b('model', 0.8), b('tool', 2.6), b('model', 0.8), b('tool', 4.2), b('model', 1), b('tool', 2.2), b('model', 1.2), b('tool', 3), b('model', 1)];
 const RULE = b('you', 1.1);
@@ -55,7 +56,7 @@ const scene = (blocks: Block[]): SceneState => {
   return s;
 };
 const note = (s: SceneState, ...more: Label[]) => { s.labels = frame(more); };
-const lantern = (stage: string): Preview => ({ app: 'lantern', stage, url: `localhost:4321${stage === 'promoters' ? '/promoters' : stage === 'late-running' ? '/p/kai' : '/door/late'}` });
+const lantern = (stage: string): Preview => ({ app: 'lantern', stage, url: `localhost:4321${stage === 'promoters' ? '/promoters' : stage === 'late-running' ? `/p/${PROMOTERS.kai.token}` : '/door/late'}` });
 
 const read = { to: 'tool', tool: 'read', file: 1, back: 'tool' } as const;
 const search = { to: 'tool', tool: 'search', file: 1, back: 'tool' } as const;
@@ -82,20 +83,21 @@ const lesson5: Lesson = {
   parts: [
     {
       title: 'Everything stays in',
+      earlier: { turns: 6, from: 'l3', label: 'lessons 3 and 4' },
       thread: PROMOTER,
       request: 'Show me tonight’s numbers so far. Done when I see, per promoter, guests added, plus-ones and arrived.',
-      lede: 'Friday, 16:00. The promoter thread has run since 11:30: it built Kai’s and Noor’s links (lesson 3), and at 13:00 you queued a rule into it: a guest’s phone number never shows at the door (lesson 4). Now a small question.',
+      lede: 'Friday, 16:00. The promoter thread has run since 11:30: it built Kai’s and Noor’s links (lesson 3), and at 13:20 you queued a rule into it: a guest’s phone number never shows at the door (lesson 4). Now a small question.',
       points: points(scene(DAY), [
         { say: `Your question goes in on top of everything since 11:30: every request, every file it read, every test log. All of it is still in this thread’s window, ${pct([...DAY, ASK1])}% full.`, moves: [{ to: 'agent' }], look: 'context', ui: { context: pct([...DAY, ASK1]) }, preview: lantern('promoters'),
           edit: (s) => { push(s, ASK1); note(s, side('since 11:30: all of it')); } },
         { say: 'Before every turn, the model reads all of it again, from the instructions at the bottom to your question at the top.', think: 1500, preview: lantern('promoters'),
           edit: (s) => { A(s).busy = true; A(s).scan = true; note(s, side('read again, every turn')); } },
-        { say: 'Your phone rule from 13:00 is in there: one short slab, low down, under hours of test output.', preview: lantern('promoters'),
-          edit: (s) => { note(s, atSlab([...DAY, ASK1], RULE_AT, 'your phone rule, 13:00')); } },
+        { say: 'Your phone rule from 13:20 is in there: one short slab, low down, under hours of test output.', preview: lantern('promoters'),
+          edit: (s) => { note(s, atSlab([...DAY, ASK1], RULE_AT, 'your phone rule, 13:20')); } },
         { say: `It reads the promoter lists and counts. The work goes into the window too: ${pct(AFTER1)}% now, and the row turns amber from 80%.`, moves: [read, runOk], look: 'context', ui: { context: pct(AFTER1) }, preview: lantern('promoters'),
           edit: (s) => { A(s).blocks = AFTER1.slice(0, -1); A(s).lamp = 'work'; note(s, side(`${pct(AFTER1)}% full`)); } },
         { say: 'It answers. A small question, answered right, from a window that is nearly full.', moves: [{ to: 'you', kind: 'model' }], preview: lantern('promoters'),
-          edit: (s) => { A(s).blocks = AFTER1; A(s).lamp = 'off'; note(s, belowYou('Kai 20 · Noor 12')); } },
+          edit: (s) => { A(s).blocks = AFTER1; A(s).lamp = 'off'; note(s, belowYou('Kai 20 · Noor 11')); } },
       ]),
       log: {
         took: '40s',
@@ -105,7 +107,7 @@ const lesson5: Lesson = {
         ],
       },
       answer: [
-        'Friday so far: Kai has 20 guests and 9 plus-ones, 0 in. Noor has 12 guests and 4 plus-ones, 0 in. Doors haven’t opened, so nobody has arrived yet.',
+        'Friday so far: Kai has 20 guests and 9 plus-ones, 0 in. Noor has 11 guests and 3 plus-ones, 0 in. Doors haven’t opened, so nobody has arrived yet.',
         'The same numbers are on /promoters.',
       ],
       deeper: { level: 'technical', text: 'The percentage counts the tokens in this thread’s window against the model’s 1M. Each turn sends the whole conversation to the model again. Prompt caching makes that rereading cheaper, not free: on a subscription the cache lasts about an hour, on an API key five minutes.' },
@@ -116,13 +118,13 @@ const lesson5: Lesson = {
       title: 'In the window isn’t the same as followed',
       thread: PROMOTER,
       request: 'Let Sami reach promoter guests who haven’t arrived by midnight. Done when it takes two taps from the door page.',
-      lede: 'Friday, 16:10, same thread. The request doesn’t repeat the phone rule. You said it once, at 13:00, and it’s still in the window.',
+      lede: 'Friday, 16:10, same thread. The request doesn’t repeat the phone rule. You said it once, at 13:20, and it’s still in the window.',
       points: points(scene(AT2), [
         { say: `The request goes on top of a window that is ${pct(AT2)}% full. It says nothing about phone numbers.`, moves: [{ to: 'agent' }], ui: { context: pct(AT2) }, preview: lantern('promoters'),
           edit: (s) => { A(s).lamp = 'work'; note(s, side(`${pct(AT2)}% full`)); } },
         { say: 'It builds a late list for the door, with a Call button. To call, it needs the number, so the number goes on the door screen.', moves: [read, change], preview: lantern('late-phone'),
           edit: (s) => { push(s, b('model', 0.5), b('tool', 1)); file(s, 2, 'edit'); note(s, atFile('door page')); } },
-        { say: 'Its checks pass, 17 of 17. The phone test from 13:00 checks the door’s search results, and this is a new page.', moves: [runOk], preview: lantern('late-phone'),
+        { say: 'Its checks pass, 17 of 17. The phone test from 13:20 checks the door’s search results, and this is a new page.', moves: [runOk], preview: lantern('late-phone'),
           edit: (s) => { push(s, b('model', 0.4), b('tool', 0.8)); A(s).lamp = 'ok'; note(s, ranSays('17 of 17 pass')); } },
         { say: 'It replies: done, two taps, tried at phone size.', moves: [{ to: 'you', kind: 'bad' }], preview: lantern('late-phone'),
           edit: (s) => { A(s).blocks = AFTER2; A(s).lamp = 'off'; note(s, belowYou('“Done.”')); } },
@@ -141,7 +143,7 @@ const lesson5: Lesson = {
         'Done. /door/late lists promoter guests who haven’t arrived by midnight. Tap one, then Call. That’s two taps.',
         { plain: 'I tried it at phone size with made-up guests. All 17 checks pass.', engineer: 'I tried it at 390×844 with made-up guests. All 17 checks pass.' },
       ],
-      deeper: { level: 'engineer', text: 'Anthropic calls it context rot: as the window grows, a model’s recall of what is in it declines. It’s a tendency, not a certainty. A shorter window makes a miss like this less likely, not impossible. And the 13:00 test checked the door’s search results, so the must-never was only as wide as its test.' },
+      deeper: { level: 'engineer', text: 'Anthropic calls it context rot: as the window grows, a model’s recall of what is in it declines. It’s a tendency, not a certainty. A shorter window makes a miss like this less likely, not impossible. And the 13:20 test checked the door’s search results, so the must-never was only as wide as its test.' },
       tryIt: { prompt: 'Before you change anything: which rules from earlier in this thread apply to this?', t3: 'Open the thread details and note the Context window percentage before you send.' },
       sources: ['claims.research.contextRot', 't3code.screen.contextRow', 'claims.lessons.toolCallEvidence'],
     },
@@ -154,8 +156,8 @@ const lesson5: Lesson = {
       points: points((() => { const s = scene(AFTER2); s.project!.files = ['', '', 'bad', '', '', '']; return s; })(), [
         { say: `${pct(FULL)}% used, and the row has turned red. You send /compact first.`, look: 'context', ui: { context: pct(FULL) }, preview: lantern('late-flag'),
           edit: (s) => { A(s).blocks = FULL; A(s).lamp = 'bad'; note(s, side(`${pct(FULL)}% full`)); } },
-        { say: '/compact swaps the whole conversation for a summary of it, plus a few files read again. The summary keeps what was built. The rule you said in passing at 13:00 isn’t in it.', look: 'context', ui: { context: pct(SUMMARY) }, preview: lantern('late-flag'),
-          edit: (s) => { A(s).blocks = SUMMARY; A(s).lamp = 'off'; note(s, atSlab(SUMMARY, 1, 'a summary'), side('13:00 rule: gone')); } },
+        { say: '/compact swaps the whole conversation for a summary of it, plus a few files read again. The summary keeps what was built. The rule you said in passing at 13:20 isn’t in it.', look: 'context', ui: { context: pct(SUMMARY) }, preview: lantern('late-flag'),
+          edit: (s) => { A(s).blocks = SUMMARY; A(s).lamp = 'off'; note(s, atSlab(SUMMARY, 1, 'a summary'), side('13:20 rule: gone')); } },
         { say: 'So this time the request carries the rule. It takes the numbers off and widens the phone test to every door page.', moves: [{ to: 'agent' }, change, runOk], ui: { context: pct([...SUMMARY, ASK3, b('model', 0.6), b('tool', 1.2)]) }, preview: lantern('late-ask'),
           edit: (s) => { push(s, ASK3, b('model', 0.6), b('tool', 1.2)); file(s, 2, 'ok'); A(s).lamp = 'ok'; note(s, side('the rule, in the request', 30)); } },
         { say: 'It replies. The rule holds, for this turn, because it’s in this request.', moves: [{ to: 'you', kind: 'model' }], preview: lantern('late-ask'),
@@ -173,7 +175,7 @@ const lesson5: Lesson = {
       },
       answer: [
         'The door screen no longer shows phone numbers. /door/late now says which promoter to ask, and the promoter’s own list has the number.',
-        'The 13:00 phone test only searched the door. I added one that loads every door page and fails if any made-up guest’s number appears. All 18 checks pass.',
+        'The 13:20 phone test only searched the door. I added one that loads every door page and fails if any made-up guest’s number appears. All 18 checks pass.',
       ],
       deeper: { level: 'technical', text: 'Compaction is lossy: it keeps a summary, not your exact words. Claude Code re-reads up to five recently used files and re-injects the project’s CLAUDE.md from disk, so a rule kept in that file survives compaction. That is lesson 6.' },
       tryIt: { prompt: 'Take [the problem] out. It must never [the rule], on any page.', t3: 'Send /compact to shrink a long thread, when the provider supports it, or /clear on its own to start a new session in the same thread. The thread marks it with New session.' },

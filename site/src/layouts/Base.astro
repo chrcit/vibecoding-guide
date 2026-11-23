@@ -39,7 +39,8 @@ const { title, description, section, progress = false, noindex = false, type = '
     <main id="main">
       <slot />
     </main>
-    <LevelOffer />
+    {/* A bare page (Guide v2) has the reading level in its own menu, so the offer stays away. */}
+    {!bare && <LevelOffer />}
     <SideView />
   </body>
 </html>

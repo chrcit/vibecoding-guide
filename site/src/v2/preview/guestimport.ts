@@ -11,6 +11,7 @@
  * The search, the filter and the open rows live at module level, so they survive `set()` and a
  * remount. Everything here is made up.
  */
+import { cannotGet } from './lantern/notfound';
 import './guestimport.css';
 import type { MountApp } from './index';
 import { ENTRIES, SOURCES, SOURCE_IDS, countOf, type Entry, type SourceId } from './guestimport/data';
@@ -82,7 +83,7 @@ export const guestimport: MountApp = (el, initial) => {
   function shell() {
     if (stage === 'none') {
       root.className = 'gi gi--none';
-      root.innerHTML = '<pre>Cannot GET /guests/import</pre>';
+      root.innerHTML = cannotGet('/guests/import');
       return;
     }
     root.className = 'gi';

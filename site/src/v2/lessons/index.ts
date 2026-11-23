@@ -14,10 +14,16 @@ for (const c of TOC) for (const l of c.lessons) l.plays = !!LESSONS[l.id];
 /** The order lessons are taught in, for features that stay once taught. */
 export const ORDER = TOC.flatMap((c) => c.lessons.map((l) => l.id));
 
-/** What the app shows at a point: everything taught up to and including it. */
+/**
+ * What the app shows at a point: everything taught up to and including it. The Set up threads
+ * happen before lesson 1, so they start from the bare app (model and work log only) and carry
+ * forward only what the Set up threads before them taught.
+ */
 export function uiAt(lessonId: string, part: number, point: number): Ui {
-  const ui: Ui = {};
-  for (const id of ORDER) {
+  const setup = TOC.find((c) => c.id === 'setup')!.lessons.map((l) => l.id);
+  const inSetup = setup.includes(lessonId);
+  const ui: Ui = inSetup ? { model: true, log: true } : {};
+  for (const id of inSetup ? setup : ORDER) {
     const lesson = LESSONS[id];
     if (!lesson) { if (id === lessonId) return ui; continue; }
     for (let p = 0; p < lesson.parts.length; p++) {

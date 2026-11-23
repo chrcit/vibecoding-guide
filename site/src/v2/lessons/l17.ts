@@ -71,6 +71,8 @@ const lesson17: Lesson = {
       ]),
       // No work log and no reply: the laptop slept mid-turn, so the turn never finished and nothing came back.
       answer: [],
+      replyAt: 1,
+      ghost: { at: 1, label: 'Laptop asleep', note: 'the turn stopped mid-step; no reply came back', icon: 'sleep' },
       deeper: { level: 'technical', text: 'The phone apps pair with a machine running T3 Code over your network, Tailscale, SSH or T3 Connect. They show its threads; the work runs on that machine.' },
       tryIt: { prompt: 'Before I close the laptop: how long will this take, and what’s left if it stops halfway?', t3: 'Check the Run on picker under the composer before you send something long: it names the machine that will do the work.' },
       sources: ['t3code.phoneIsRemote', 't3code.remote', 't3code.screen.runOn', 't3code.install'],

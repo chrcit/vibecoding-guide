@@ -113,7 +113,8 @@
 .gi .gi-card-n { flex: none; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
 .gi .gi-card-n b { color: var(--ink); font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
 .gi .gi-card-format { color: var(--ink-2); font-size: 13.5px; }
-.gi .gi-sample { display: flex; flex-direction: column; min-width: 0; padding: 8px 0; border-radius: 10px; background: var(--sunk); font-size: 12.5px; line-height: 1.6; color: var(--ink); }
+/* !important: the site gives every pre a themed background (global.css); this app keeps its own paper. */
+.gi .gi-sample { display: flex; flex-direction: column; min-width: 0; padding: 8px 0; border-radius: 10px; border: 0; background: var(--sunk) !important; font-size: 12.5px; line-height: 1.6; color: var(--ink); }
 .gi .gi-line { display: flex; min-width: 0; }
 .gi .gi-line i { flex: none; width: 34px; padding-right: 12px; color: var(--muted); font-style: normal; text-align: right; font-size: 11px; line-height: inherit; user-select: none; }
 .gi .gi-line span { min-width: 0; padding-right: 10px; white-space: pre; overflow: hidden; text-overflow: ellipsis; }
